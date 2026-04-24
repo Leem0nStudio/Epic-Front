@@ -105,4 +105,16 @@ export class RecruitmentService {
 
         return unit;
     }
+
+    static async discardRecruit(slotId: string) {
+        if (!supabase) throw new Error("Supabase client not initialized");
+        const { error } = await supabase
+            .from('recruitment_queue')
+            .update({ is_claimed: true })
+            .eq('id', slotId);
+
+        if (error) throw error;
+
+        await this.refreshTavern();
+    }
 }

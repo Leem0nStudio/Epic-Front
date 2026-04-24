@@ -1,53 +1,68 @@
 @import "tailwindcss";
 
 @layer utilities {
-  .text-stroke-black {
-    -webkit-text-stroke: 1px #1a1a1a;
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
   }
-  .text-stroke-sm {
-    -webkit-text-stroke: 0.5px #1a1a1a;
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
   }
-  .rpg-panel-shadow {
-    box-shadow: inset 0 0 10px rgba(60, 40, 20, 0.4), 0 2px 4px rgba(0,0,0,0.5);
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
   }
-  .rpg-inner-shadow {
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.2);
-  }
-
-  .wood-border {
-    border: 4px solid #382618;
-    border-image: linear-gradient(to bottom, #5a4227, #382618) 1;
-    box-shadow: 0 0 10px rgba(0,0,0,0.8);
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.1);
   }
 
-  .gold-glow {
-    text-shadow: 0 0 8px rgba(199, 154, 93, 0.6);
+  .text-glow-gold {
+    text-shadow: 0 0 10px rgba(245, 199, 107, 0.4);
   }
 
-  /* Custom scrollbar for webkit with RPG theme */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  .text-glow-blue {
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
   }
-  ::-webkit-scrollbar-track {
-    background: #0d0805;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #382618;
-    border: 1px solid #5a4227;
-    border-radius: 3px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #5a4227;
+
+  .panel-blur {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 }
 
-@keyframes gold-sparkle {
-  0% { transform: scale(1) rotate(0deg); opacity: 0.5; }
-  50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
-  100% { transform: scale(1) rotate(360deg); opacity: 0.5; }
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
 }
 
-.animate-gold-sparkle {
-  animation: gold-sparkle 3s infinite linear;
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes shine {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.animate-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-shine::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transform: skewX(-25deg);
+  animation: shine 3s infinite;
 }

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Mail, Lock, UserPlus, LogIn, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, UserPlus, LogIn, ShieldCheck, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function AuthView() {
@@ -42,26 +42,35 @@ export function AuthView() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full p-4 animate-in fade-in duration-500 w-full max-w-sm">
-      <div className="w-full bg-[#1a110a] border-2 border-[#5a4227] rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden relative">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/dark-wood.png')] opacity-40 pointer-events-none"></div>
-        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#c79a5d] to-transparent"></div>
+    <div className="flex flex-col items-center justify-center h-full p-4 w-full max-w-sm relative">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full bg-[#0B1A2A] border border-white/10 rounded-[40px] shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden relative z-10"
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/10 to-transparent pointer-events-none"></div>
 
-        <div className="bg-gradient-to-b from-[#382618] to-[#1a110a] p-8 border-b border-[#382618] text-center relative z-10">
-           <div className="w-20 h-20 bg-[#0d0805] border-2 border-[#c79a5d] rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-2xl relative group">
-              <ShieldCheck size={40} className="text-[#c79a5d] group-hover:scale-110 transition-transform" />
-              <div className="absolute inset-0 animate-gold-sparkle pointer-events-none opacity-20">
-                <div className="absolute top-0 right-0 w-2 h-2 bg-[#c79a5d] rounded-full blur-[2px]" />
-                <div className="absolute bottom-0 left-0 w-2 h-2 bg-[#c79a5d] rounded-full blur-[2px]" />
-              </div>
+        <div className="p-10 text-center relative z-10">
+           <div className="w-24 h-24 bg-black/40 border border-[#F5C76B]/20 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-2xl relative group overflow-hidden">
+              <div className="absolute inset-0 bg-[#F5C76B]/5 group-hover:bg-[#F5C76B]/10 transition-colors" />
+              <ShieldCheck size={48} className="text-[#F5C76B] drop-shadow-[0_0_15px_rgba(245,199,107,0.4)]" />
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 border border-dashed border-[#F5C76B]/10 rounded-full scale-110"
+              />
            </div>
-           <h1 className="text-2xl font-serif font-black text-[#eacf9b] tracking-[0.2em] uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
-             Etherea RPG
+           <h1 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
+             Project: Etherea
            </h1>
-           <p className="text-[10px] text-[#a68a68] font-black uppercase tracking-widest mt-2 bg-black/40 inline-block px-3 py-1 rounded-full border border-[#382618]">Portal de Acceso</p>
+           <div className="flex items-center justify-center gap-2 mt-4">
+              <div className="h-[1px] w-8 bg-white/10" />
+              <span className="text-[10px] text-white/40 font-black uppercase tracking-[0.3em]">Guardian Access</span>
+              <div className="h-[1px] w-8 bg-white/10" />
+           </div>
         </div>
 
-        <div className="p-8 relative z-10">
+        <div className="px-10 pb-10 relative z-10">
           <AnimatePresence mode="wait">
             {success ? (
               <motion.div
@@ -69,13 +78,14 @@ export function AuthView() {
                 animate={{ opacity: 1, y: 0 }}
                 className="text-center py-8"
               >
-                <div className="text-[#c79a5d] mb-4 font-black uppercase tracking-widest text-sm">¡Inscripción Completa!</div>
-                <p className="text-[#a68a68] text-[10px] uppercase font-bold leading-relaxed">
+                <Sparkles size={48} className="text-[#F5C76B] mx-auto mb-6" />
+                <div className="text-white font-black uppercase tracking-widest text-lg mb-2 italic">Inscripción Completada</div>
+                <p className="text-white/40 text-[10px] uppercase font-bold leading-relaxed tracking-wider">
                   Verifica tu correo electrónico para sellar el pacto y poder entrar al reino.
                 </p>
                 <button
                   onClick={() => { setIsRegistering(false); setSuccess(false); }}
-                  className="mt-8 w-full py-4 bg-gradient-to-b from-[#c79a5d] to-[#8c5a2b] text-[#1a110a] font-black uppercase tracking-widest rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-xl"
+                  className="mt-8 w-full py-4 bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest rounded-2xl hover:bg-white/10 transition-all"
                 >
                   Regresar al Portal
                 </button>
@@ -89,36 +99,40 @@ export function AuthView() {
                 className="space-y-6"
               >
                 {error && (
-                  <div className="bg-red-900/20 border border-red-500/50 p-3 rounded-lg text-[9px] text-red-400 font-black uppercase text-center tracking-tight">
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-[9px] text-red-400 font-black uppercase text-center tracking-tight"
+                  >
                     {error}
-                  </div>
+                  </motion.div>
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-[#a68a68] uppercase tracking-[0.2em] ml-1">Firma Digital (Email)</label>
+                  <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">Firma de Aventurero (Email)</label>
                   <div className="relative">
-                    <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#382618]" />
+                    <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="w-full bg-black/60 border-2 border-[#382618] rounded-xl px-11 py-4 text-sm text-[#eacf9b] placeholder-[#382618] focus:border-[#c79a5d] focus:outline-none transition-colors font-bold"
-                      placeholder="aventurero@etherea.com"
+                      className="w-full bg-black/40 border border-white/5 rounded-2xl px-12 py-4 text-sm text-white placeholder-white/10 focus:border-[#F5C76B]/40 focus:outline-none transition-all font-bold tracking-wider"
+                      placeholder="usuario@etherea.app"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-[#a68a68] uppercase tracking-[0.2em] ml-1">Clave de Bóveda</label>
+                  <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">Código de Encriptación (Clave)</label>
                   <div className="relative">
-                    <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#382618]" />
+                    <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="w-full bg-black/60 border-2 border-[#382618] rounded-xl px-11 py-4 text-sm text-[#eacf9b] placeholder-[#382618] focus:border-[#c79a5d] focus:outline-none transition-colors font-bold"
+                      className="w-full bg-black/40 border border-white/5 rounded-2xl px-12 py-4 text-sm text-white placeholder-white/10 focus:border-[#F5C76B]/40 focus:outline-none transition-all font-bold tracking-wider"
                       placeholder="••••••••"
                     />
                   </div>
@@ -127,32 +141,32 @@ export function AuthView() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-4 bg-gradient-to-b from-[#c79a5d] to-[#8c5a2b] text-[#1a110a] font-black uppercase tracking-[0.2em] rounded-xl hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-3 shadow-[0_4px_20px_rgba(199,154,93,0.3)]"
+                  className="w-full py-5 bg-gradient-to-r from-[#F5C76B] to-[#b88c3a] text-black font-black uppercase tracking-[0.2em] rounded-2xl hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(245,199,107,0.2)]"
                 >
                   {loading ? (
-                    <div className="w-6 h-6 border-4 border-[#1a110a] border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
                   ) : (
                     <>
                       {isRegistering ? <UserPlus size={20} /> : <LogIn size={20} />}
-                      <span>{isRegistering ? 'Unirse al Gremio' : 'Entrar al Reino'}</span>
+                      <span>{isRegistering ? 'Forjar Perfil' : 'Entrar al Reino'}</span>
                     </>
                   )}
                 </button>
 
-                <div className="pt-4 text-center">
+                <div className="pt-2 text-center">
                   <button
                     type="button"
                     onClick={() => setIsRegistering(!isRegistering)}
-                    className="text-[9px] font-black text-[#a68a68] hover:text-[#eacf9b] uppercase tracking-[0.2em] transition-colors"
+                    className="text-[10px] font-black text-white/20 hover:text-white transition-colors uppercase tracking-widest"
                   >
-                    {isRegistering ? '¿Ya posees una cuenta? Conectarse' : '¿Nuevo en el reino? Crear Perfil'}
+                    {isRegistering ? '¿Ya eres un Guardián? Conectarse' : '¿Nuevo Aventurero? Crear Cuenta'}
                   </button>
                 </div>
               </motion.form>
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
