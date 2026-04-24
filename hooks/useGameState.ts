@@ -4,8 +4,8 @@ import { OnboardingService } from '@/lib/services/onboarding-service';
 import { UnitService } from '@/lib/services/unit-service';
 import { RecruitmentService } from '@/lib/services/recruitment-service';
 import { PartyService } from '@/lib/services/party-service';
-import { GachaService } from '@/lib/services/gacha-service';
 import { EquipmentService } from '@/lib/services/equipment-service';
+import { ConfigService } from '@/lib/services/config-service';
 
 export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle';
 
@@ -32,37 +32,29 @@ export function useGameState() {
         if (!user) return;
 
         const [profRes, unitsRes, partyRes, recruitsRes] = await Promise.all([
-            supabase.from('profiles').select('*').eq('id', user.id).single(),
+            supabase.from('players').select('*').eq('id', user.id).single(),
             supabase.from('units').select('*'),
-            supabase.from('party_slots').select('*, unit:units(*)').order('slot_index'),
-            supabase.from('recruitment_slots').select('*').eq('is_claimed', false)
+            supabase.from('party').select('*, unit:units(*)').eq('player_id', user.id).order('slot_index'),
+            supabase.from('recruitment_queue').select('*').eq('player_id', user.id).eq('is_claimed', false)
         ]);
 
         if (profRes.data) setProfile(profRes.data);
         setRoster(unitsRes.data || []);
         setParty(partyRes.data || []);
         setTavernSlots(recruitsRes.data || []);
-
-        if (profRes.error && profRes.error.code !== 'PGRST116') console.error("Error loading profile:", profRes.error);
-        if (unitsRes.error) console.error("Error loading units:", unitsRes.error);
-        if (partyRes.error) console.error("Error loading party:", partyRes.error);
-        if (recruitsRes.error) console.error("Error loading recruits:", recruitsRes.error);
     } catch (e) {
         console.error("Critical error in refreshState:", e);
     }
   };
 
-  // --- INITIALIZATION ---
   useEffect(() => {
     if (!supabase) return;
 
-    // 1. Initial Check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
       setIsAuthLoading(false);
     });
 
-    // 2. Listen for changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
       if (!session) {
@@ -82,9 +74,12 @@ export function useGameState() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data: prof, error: profError } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        // Sync Balance Patch config first
+        await ConfigService.syncConfig();
 
-        if (profError && profError.code !== 'PGRST116') { // PGRST116 is "no rows found"
+        const { data: prof, error: profError } = await supabase.from('players').select('*').eq('id', user.id).single();
+
+        if (profError && profError.code !== 'PGRST116') {
           setError("Error al cargar perfil: " + profError.message);
           return;
         }
@@ -92,8 +87,7 @@ export function useGameState() {
         if (!prof) {
           try {
             await OnboardingService.initializePlayer(user.email?.split('@')[0] || "Héroe");
-            // Fetch profile again after onboarding
-            const { data: newProf } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+            const { data: newProf } = await supabase.from('players').select('*').eq('id', user.id).single();
             if (!newProf) throw new Error("No se pudo crear el perfil.");
             setProfile(newProf);
           } catch (initErr: any) {
@@ -136,7 +130,6 @@ export function useGameState() {
     }
   };
 
-  // --- TAVERN RECRUITMENT ---
   const handleClaimRecruit = async (slotId: string) => {
     try {
       await RecruitmentService.claimRecruit(slotId);
@@ -146,7 +139,6 @@ export function useGameState() {
     }
   };
 
-  // --- PARTY SYSTEM ---
   const handleAssignPartySlot = async (slotIndex: number, unitId: string | null) => {
     try {
       await PartyService.assignToParty(slotIndex, unitId);
@@ -156,8 +148,6 @@ export function useGameState() {
     }
   };
 
-  // Derive useful state
-  const selectedUnit = roster.find((u) => u.id === selectedUnitId) || null;
   const activePartyUnits = Array(5).fill(null).map((_, i) => party.find(p => p.slot_index === i)?.unit || null);
 
   return {
@@ -172,9 +162,9 @@ export function useGameState() {
       tavernSlots,
       view,
       selectedUnitId,
-      selectedUnit,
       activePartyUnits,
-      targetSlot
+      targetSlot,
+      version: ConfigService.getActiveVersion()
     },
     actions: {
       navigateTo,

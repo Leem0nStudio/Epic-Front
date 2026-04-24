@@ -8,7 +8,7 @@ export class OnboardingService {
     static async initializePlayer(username: string) {
         if (!supabase) throw new Error("Supabase client not initialized");
 
-        // Generate the 3 mandatory starting Novices data on client
+        // Requirement: Player starts with exactly 3 Novice units (physical, ranged, magic)
         const novices = [
             generateNovice('physical'),
             generateNovice('ranged'),
@@ -26,12 +26,9 @@ export class OnboardingService {
         const { RecruitmentService } = await import('./recruitment-service');
         await RecruitmentService.refreshTavern();
 
-        // Fetch the created data to return
-        const { data: units } = await supabase.from('units').select('*');
-
         return {
             username,
-            units: units || []
+            success: true
         };
     }
 }

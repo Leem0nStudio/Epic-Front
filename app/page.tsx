@@ -1,14 +1,14 @@
 'use client';
 
 import { useGameState } from '@/hooks/useGameState';
-import { RPGHomeView } from './components/views/RPGHomeView';
-import { TavernView } from './components/views/TavernView';
-import { PartyManagementView } from './components/views/PartyManagementView';
-import { GachaView } from './components/views/GachaView';
-import { UnitDetailsView } from './components/views/UnitDetailsView';
-import { InventoryView } from './components/views/InventoryView';
-import { BattleScreenView } from './components/views/BattleScreenView';
-import { AuthView } from './components/views/AuthView';
+import { RPGHomeView } from '@/components/views/RPGHomeView';
+import { TavernView } from '@/components/views/TavernView';
+import { PartyManagementView } from '@/components/views/PartyManagementView';
+import { GachaView } from '@/components/views/GachaView';
+import { UnitDetailsView } from '@/components/views/UnitDetailsView';
+import { InventoryView } from '@/components/views/InventoryView';
+import { BattleScreenView } from '@/components/views/BattleScreenView';
+import { AuthView } from '@/components/views/AuthView';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
 
