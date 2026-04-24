@@ -11,6 +11,8 @@ export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 
 
 export function useGameState() {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [roster, setRoster] = useState<any[]>([]);
@@ -52,19 +54,33 @@ export function useGameState() {
 
   // --- INITIALIZATION ---
   useEffect(() => {
-    async function loadGame() {
-      if (!supabase) {
-        setError("Error de configuración: Variables de Supabase no encontradas.");
-        return;
+    if (!supabase) return;
+
+    // 1. Initial Check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      setIsAuthLoading(false);
+    });
+
+    // 2. Listen for changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+      if (!session) {
+        setProfile(null);
+        setIsLoaded(false);
       }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    async function loadGame() {
+      if (!supabase || !isAuthenticated) return;
 
       try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-          setError("Error de autenticación. Por favor, inicia sesión.");
-          return;
-        }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
         const { data: prof, error: profError } = await supabase.from('profiles').select('*').eq('id', user.id).single();
 
@@ -146,6 +162,8 @@ export function useGameState() {
   return {
     state: {
       isLoaded,
+      isAuthLoading,
+      isAuthenticated,
       error,
       profile,
       roster,
