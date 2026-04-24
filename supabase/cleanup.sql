@@ -1,23 +1,17 @@
--- Cleanup Script: Deletes everything related to the RPG system
+-- Cleanup Script: Deletes everything related to the RPG system (Fixed Dependency Order)
 
--- 1. Drop Policies (Optional if dropping tables, but cleaner)
-DROP POLICY IF EXISTS "Profiles are private" ON profiles;
-DROP POLICY IF EXISTS "Units are private" ON units;
-DROP POLICY IF EXISTS "Inventory is private" ON inventory_items;
-DROP POLICY IF EXISTS "Party is private" ON party_slots;
-DROP POLICY IF EXISTS "Recruitment is private" ON recruitment_slots;
-
--- 2. Drop Functions/RPCs
+-- 1. Drop Functions/RPCs
 DROP FUNCTION IF EXISTS rpc_initialize_player(TEXT, JSONB[]);
 DROP FUNCTION IF EXISTS rpc_pull_gacha(INTEGER);
 DROP FUNCTION IF EXISTS rpc_evolve_unit(UUID, TEXT);
 
--- 3. Drop Tables (in reverse order of dependencies)
-DROP TABLE IF EXISTS recruitment_slots;
+-- 2. Drop Tables (in correct dependency order)
 DROP TABLE IF EXISTS party_slots;
-DROP TABLE IF EXISTS inventory_items;
-DROP TABLE IF EXISTS units;
-DROP TABLE IF EXISTS profiles CASCADE; -- Profiles linked to auth.users
-DROP TABLE IF EXISTS item_definitions;
-DROP TABLE IF EXISTS job_definitions;
-DROP TABLE IF EXISTS game_data_versions;
+DROP TABLE IF EXISTS recruitment_slots;
+-- Drop units first because inventory_items depends on it via FK (equipped_weapon_instance_id)
+DROP TABLE IF EXISTS units CASCADE;
+DROP TABLE IF EXISTS inventory_items CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+DROP TABLE IF EXISTS item_definitions CASCADE;
+DROP TABLE IF EXISTS job_definitions CASCADE;
+DROP TABLE IF EXISTS game_data_versions CASCADE;
