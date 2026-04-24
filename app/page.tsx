@@ -8,6 +8,7 @@ import { GachaView } from './components/views/GachaView';
 import { UnitDetailsView } from './components/views/UnitDetailsView';
 import { InventoryView } from './components/views/InventoryView';
 import { BattleScreenView } from './components/views/BattleScreenView';
+import { AuthView } from './components/views/AuthView';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
 
@@ -18,6 +19,23 @@ export default function Applet() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  if (!isMounted || state.isAuthLoading) {
+    return (
+      <div className="min-h-screen text-slate-100 bg-slate-900 flex flex-col items-center justify-center font-mono gap-4">
+        <div className="w-12 h-12 border-4 border-t-[#c79a5d] border-[#382618] rounded-full animate-spin"></div>
+        <p className="animate-pulse">CONECTANDO...</p>
+      </div>
+    );
+  }
+
+  if (!state.isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#0d0805] flex items-center justify-center p-4">
+        <AuthView />
+      </div>
+    );
+  }
 
   if (state.error) {
     return (
@@ -30,7 +48,7 @@ export default function Applet() {
     );
   }
 
-  if (!isMounted || !state.isLoaded) {
+  if (!state.isLoaded) {
     return (
       <div className="min-h-screen text-slate-100 bg-slate-900 flex flex-col items-center justify-center font-mono gap-4">
         <div className="w-12 h-12 border-4 border-t-[#c79a5d] border-[#382618] rounded-full animate-spin"></div>
