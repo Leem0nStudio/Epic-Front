@@ -17,6 +17,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
   const [unit, setUnit] = useState<any>(null);
   const [jobDef, setJobDef] = useState<any>(null);
   const [isEvolving, setIsEvolving] = useState(false);
+  const [evolvedJobName, setEvolvedJobName] = useState<string | null>(null);
   const [equippedWeapon, setEquippedWeapon] = useState<any>(null);
   const [equippedCards, setEquippedCards] = useState<any[]>([]);
 
@@ -51,12 +52,12 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
 
   const finalStats = calculateFinalStats(unit, jobDef, equippedWeapon?.definition, equippedCards.map(c => c.definition));
 
-  const handleEvolve = async (targetJobId: string) => {
+  const handleEvolve = async (targetJobId: string, jobName: string) => {
     setIsEvolving(true);
     try {
       await UnitService.evolveUnit(unit.id, targetJobId);
+      setEvolvedJobName(jobName);
       onUpdate();
-      onNavigate('unit_details'); // refresh
     } catch (e: any) {
       alert(e.message);
     } finally {
@@ -75,13 +76,15 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
   };
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300 overflow-y-auto custom-scrollbar pr-1">
+    <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300 overflow-y-auto custom-scrollbar pr-1 overflow-x-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => onNavigate('party')} className="p-2 bg-[#382618] border border-[#5a4227] rounded-full hover:bg-[#4a3423] transition-colors">
-          <ChevronLeft size={20} />
-        </button>
-        <h1 className="text-xl font-serif font-bold text-[#eacf9b] tracking-wider uppercase">{unit.name}</h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <button onClick={() => onNavigate('party')} className="p-2 bg-[#382618] border border-[#5a4227] rounded-full hover:bg-[#4a3423] transition-colors">
+            <ChevronLeft size={20} />
+          </button>
+          <h1 className="text-xl font-serif font-bold text-[#eacf9b] tracking-wider uppercase">{unit.name}</h1>
+        </div>
       </div>
 
       {/* Hero Section */}
@@ -175,7 +178,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
             {unit.current_job_id === 'novice' ? (
               <div className="grid grid-cols-2 gap-2">
                  <button
-                   onClick={() => handleEvolve('swordman')}
+                   onClick={() => handleEvolve('swordman', 'Swordman')}
                    disabled={isEvolving || unit.level < 10}
                    className="bg-gradient-to-br from-[#35251a] to-[#1a110a] border border-[#5a4227] p-4 rounded text-left group hover:border-[#c79a5d] transition-all disabled:opacity-50"
                  >
@@ -184,7 +187,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                     {unit.level < 10 && <span className="block text-[8px] text-[#b53c22] mt-2 font-bold">REQ. NIVEL 10</span>}
                  </button>
                  <button
-                   onClick={() => handleEvolve('mage')}
+                   onClick={() => handleEvolve('mage', 'Mage')}
                    disabled={isEvolving || unit.level < 10}
                    className="bg-gradient-to-br from-[#35251a] to-[#1a110a] border border-[#5a4227] p-4 rounded text-left group hover:border-[#c79a5d] transition-all disabled:opacity-50"
                  >
@@ -200,6 +203,37 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
             )}
          </div>
       </div>
+
+      <AnimatePresence>
+        {evolvedJobName && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center p-8 text-center"
+          >
+             <motion.div
+               initial={{ scale: 0.5, y: 20 }}
+               animate={{ scale: 1, y: 0 }}
+               className="flex flex-col items-center gap-6"
+             >
+                <Sparkles size={80} className="text-[#ffcc00] animate-pulse" />
+                <h2 className="text-3xl font-serif font-black text-[#eacf9b] tracking-[0.2em] uppercase">¡CAMBIO DE CLASE!</h2>
+                <div className="flex items-center gap-4 text-xl font-bold">
+                   <span className="text-[#a68a68] line-through">Novice</span>
+                   <Sparkles size={24} className="text-[#c79a5d]" />
+                   <span className="text-[#ffcc00] uppercase tracking-widest">{evolvedJobName}</span>
+                </div>
+                <p className="text-[#a68a68] text-sm max-w-xs">Has desbloqueado nuevos horizontes y habilidades para tu unidad.</p>
+                <button
+                  onClick={() => { setEvolvedJobName(null); onNavigate('unit_details'); }}
+                  className="mt-8 bg-[#c79a5d] text-[#1a110a] font-black py-4 px-12 rounded tracking-[0.2em] hover:brightness-110 active:scale-95 transition-all"
+                >
+                  CONTINUAR
+                </button>
+             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

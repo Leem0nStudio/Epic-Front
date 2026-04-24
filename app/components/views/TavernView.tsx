@@ -17,13 +17,19 @@ export function TavernView({ saveData, onNavigate, onClaim, onDiscard }: TavernV
   }, []);
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300">
+    <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => onNavigate('home')} className="p-2 bg-[#382618] border border-[#5a4227] rounded-full hover:bg-[#4a3423] transition-colors">
-          <ChevronLeft size={20} />
-        </button>
-        <h1 className="text-xl font-serif font-bold text-[#eacf9b] tracking-wider">TABERNA DEL GREMIO</h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <button onClick={() => onNavigate('home')} className="p-2 bg-[#382618] border border-[#5a4227] rounded-full hover:bg-[#4a3423] transition-colors">
+            <ChevronLeft size={20} />
+          </button>
+          <h1 className="text-xl font-serif font-bold text-[#eacf9b] tracking-wider uppercase">TABERNA</h1>
+        </div>
+        <div className="flex items-center gap-2 bg-black/40 border border-[#c79a5d] px-3 py-1 rounded-full">
+            <span className="text-[10px] text-[#a68a68] font-bold uppercase tracking-tighter">ZENY</span>
+            <span className="text-sm font-mono font-bold text-[#eacf9b]">{saveData.profile.currency}</span>
+        </div>
       </div>
 
       {/* Intro Text */}
@@ -89,7 +95,7 @@ export function TavernView({ saveData, onNavigate, onClaim, onDiscard }: TavernV
                 <div className="flex gap-2 mt-1">
                   <button onClick={() => onClaim(slot.id)} className="flex-1 bg-gradient-to-b from-[#4a2e1a] to-[#2c1d11] border border-[#c79a5d] text-[#eacf9b] font-bold py-2 rounded active:scale-95 transition-all flex items-center justify-center gap-2 hover:brightness-125">
                     <Users size={16} />
-                    <span>RECLUTAR</span>
+                    <span>RECLUTAR (GRATIS)</span>
                   </button>
                 </div>
               )}

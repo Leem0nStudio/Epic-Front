@@ -2,6 +2,7 @@ import React from 'react';
 import { PlayerSaveData } from '@/lib/rpg-system/player-onboarding';
 import { Sword, Sparkles, Shield, Store, TowerControl, Mail, Briefcase } from 'lucide-react';
 import { RPGUnit } from '@/lib/rpg-system/types';
+import { supabase } from '@/lib/supabase';
 
 interface RPGHomeViewProps {
   saveData: any;
@@ -16,6 +17,11 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
     const interval = setInterval(() => setNow(Date.now()), 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleLogout = async () => {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+  };
 
   return (
     <div className="w-full h-full flex flex-col gap-3 relative font-sans animate-in fade-in duration-300">
@@ -42,6 +48,14 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
               </div>
            </div>
            <div className="flex flex-col items-end pr-2">
+             <div className="flex items-center gap-2 mb-1">
+                <button
+                  onClick={handleLogout}
+                  className="text-[8px] font-bold text-[#b53c22] border border-[#b53c22]/50 px-1 rounded hover:bg-[#b53c22]/10 transition-colors uppercase"
+                >
+                  SALIR
+                </button>
+             </div>
              <span className="text-[10px] text-[#a68a68] font-bold uppercase tracking-tighter">Zeny</span>
              <span className="font-mono text-[#eacf9b] font-bold text-sm tracking-wider">{saveData.profile.currency}</span>
            </div>

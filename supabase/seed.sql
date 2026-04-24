@@ -76,6 +76,16 @@ VALUES
 ('wpn_murasame', 'Murasame', 'A cursed katana that causes bleeding.', 'weapon', 'epic', '{"atk": 250, "agi": 40}', ARRAY['Attacks have a 25% chance to cause Bleed.'], '{"weaponCategory": "sword"}', 1),
 ('wpn_staff_of_destruction', 'Staff of Destruction', 'A staff containing chaotic magic.', 'weapon', 'legendary', '{"matk": 400}', ARRAY['Reduces cast time of Burst skills by 50%.'], '{"weaponCategory": "staff"}', 1),
 
+-- Materials for Evolution
+('iron_ore', 'Hierro en Bruto', 'Material básico de forja.', 'material', 'common', NULL, NULL, '{}', 1),
+('badge_of_courage', 'Insignia de Valor', 'Otorgada a guerreros prometedores.', 'material', 'rare', NULL, NULL, '{}', 1),
+('magic_crystal', 'Cristal Mágico', 'Gema que vibra con energía.', 'material', 'common', NULL, NULL, '{}', 1),
+('spellbook_page', 'Página de Hechizo', 'Contiene fórmulas arcanas.', 'material', 'rare', NULL, NULL, '{}', 1),
+('rare_dragon_scale', 'Escama de Dragón', 'Extremadamente dura y valiosa.', 'material', 'epic', NULL, NULL, '{}', 1),
+('heroic_emblem', 'Emblema Heroico', 'Prueba de grandes hazañas.', 'material', 'legendary', NULL, NULL, '{}', 1),
+('rare_meteor_fragment', 'Fragmento de Meteoro', 'Roca estelar con poder cósmico.', 'material', 'epic', NULL, NULL, '{}', 1),
+('ancient_grimoire', 'Grimorio Antiguo', 'Conocimiento prohibido.', 'material', 'legendary', NULL, NULL, '{}', 1),
+
 -- Skills (5 required)
 ('skill_double_strafe', 'Double Strafe', 'Fires two quick shots.', 'skill', 'common', NULL, ARRAY['Fires two quick shots.'], '{"skillType": "active", "cooldown": 1, "scaling": {"stat": "atk", "multiplier": 1.8}}', 1),
 ('skill_heal', 'Heal', 'Restores HP to a target.', 'skill', 'rare', NULL, ARRAY['Restores HP to a target.'], '{"skillType": "active", "cooldown": 2, "scaling": {"stat": "matk", "multiplier": 2.5}}', 1),
