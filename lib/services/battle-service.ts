@@ -1,22 +1,27 @@
-import { BaseStats } from '../rpg-system/types';
+import { UnitStats } from '../rpg-system/types';
 
 export interface CombatUnit {
     id: string;
     name: string;
-    stats: BaseStats;
+    stats: UnitStats;
     currentHp: number;
     team: 'player' | 'enemy';
     isDead: boolean;
     position: number;
+    skills: any[]; // Equipped skills
 }
 
 export class BattleService {
     /**
      * Calculates damage: (Atk * Multiplier) - (Def / 2)
+     * For magic: (Matk * Multiplier) - (Mdef / 2)
      */
-    static calculateDamage(attacker: CombatUnit, defender: CombatUnit, multiplier: number = 1.0): number {
-        const rawDamage = (attacker.stats.atk * multiplier);
-        const reduction = defender.stats.def * 0.5;
+    static calculateDamage(attacker: CombatUnit, defender: CombatUnit, multiplier: number = 1.0, isMagic: boolean = false): number {
+        const atkVal = isMagic ? attacker.stats.matk : attacker.stats.atk;
+        const defVal = isMagic ? defender.stats.mdef : defender.stats.def;
+
+        const rawDamage = (atkVal * multiplier);
+        const reduction = defVal * 0.5;
         const finalDamage = Math.max(1, Math.floor(rawDamage - reduction));
         return finalDamage;
     }
@@ -36,7 +41,7 @@ export class BattleService {
     static getEnemyAction(enemy: CombatUnit, players: CombatUnit[]) {
         const targets = players.filter(p => !p.isDead);
         if (targets.length === 0) return null;
-        // Attack the one with lowest HP
+        // Simple AI: Attack the one with lowest HP
         const target = targets.sort((a, b) => a.currentHp - b.currentHp)[0];
         return target;
     }

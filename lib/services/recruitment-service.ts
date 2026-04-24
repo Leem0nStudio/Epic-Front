@@ -3,7 +3,9 @@ import { generateNovice } from '@/lib/rpg-system/recruitment';
 
 export class RecruitmentService {
     /**
-     * Generates a new batch of recruits if slots are empty or expired.
+     * Hybrid Recruitment System:
+     * - Time-based: 1 every 4 hours, max 3 slots.
+     * - Bonus: Triggered by milestones/bosses (implemented via direct call).
      */
     static async refreshTavern() {
         if (!supabase) throw new Error("Supabase client not initialized");
@@ -11,34 +13,63 @@ export class RecruitmentService {
         if (!user) throw new Error("Not authenticated");
 
         const { data: existingSlots } = await supabase
-            .from('recruitment_slots')
+            .from('recruitment_queue')
             .select('*')
-            .eq('owner_id', user.id)
+            .eq('player_id', user.id)
             .eq('is_claimed', false);
 
-        // If no slots, create initial 3
-        if (!existingSlots || existingSlots.length === 0) {
-            const newSlots = [
-                { owner_id: user.id, slot_index: 0, generated_unit_data: generateNovice('physical'), available_at: new Date().toISOString() },
-                { owner_id: user.id, slot_index: 1, generated_unit_data: generateNovice('ranged'), available_at: new Date(Date.now() + 30 * 60000).toISOString() },
-                { owner_id: user.id, slot_index: 2, generated_unit_data: generateNovice('magic'), available_at: new Date(Date.now() + 60 * 60000).toISOString() }
-            ];
+        // Fill empty slots up to 3
+        const currentCount = existingSlots?.length || 0;
+        if (currentCount < 3) {
+            const slotsToCreate = 3 - currentCount;
+            const newSlots = [];
 
-            const { error } = await supabase.from('recruitment_slots').insert(newSlots);
+            for (let i = 0; i < slotsToCreate; i++) {
+                // Find first available slot index
+                const usedIndices = existingSlots?.map(s => s.slot_index) || [];
+                let slotIdx = 0;
+                while (usedIndices.includes(slotIdx)) slotIdx++;
+
+                // 4 hour cooldown per slot
+                const availableAt = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
+
+                newSlots.push({
+                    player_id: user.id,
+                    slot_index: slotIdx,
+                    unit_data: generateNovice(),
+                    available_at: availableAt
+                });
+            }
+
+            const { error } = await supabase.from('recruitment_queue').insert(newSlots);
             if (error) throw error;
         }
     }
 
     /**
-     * Claims a recruit and adds it to the player's roster.
+     * Bonus recruit (e.g. from dungeon/boss/milestone)
+     * Instantly available.
      */
+    static async addBonusRecruit() {
+        if (!supabase) throw new Error("Supabase client not initialized");
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        await supabase.from('recruitment_queue').insert({
+            player_id: user.id,
+            slot_index: 99, // Special index for bonus
+            unit_data: generateNovice(),
+            available_at: new Date().toISOString() // Instant
+        });
+    }
+
     static async claimRecruit(slotId: string) {
         if (!supabase) throw new Error("Supabase client not initialized");
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("Not authenticated");
 
         const { data: slot, error: slotError } = await supabase
-            .from('recruitment_slots')
+            .from('recruitment_queue')
             .select('*')
             .eq('id', slotId)
             .single();
@@ -46,15 +77,15 @@ export class RecruitmentService {
         if (slotError) throw slotError;
         if (new Date(slot.available_at) > new Date()) throw new Error("Recruit not available yet");
 
-        // 1. Mark as claimed
-        await supabase.from('recruitment_slots').update({ is_claimed: true }).eq('id', slotId);
+        // Mark as claimed
+        await supabase.from('recruitment_queue').update({ is_claimed: true }).eq('id', slotId);
 
-        // 2. Add to units
-        const unitData = slot.generated_unit_data;
+        // Add to units
+        const unitData = slot.unit_data;
         const { data: unit, error: unitError } = await supabase
             .from('units')
             .insert({
-                owner_id: user.id,
+                player_id: user.id,
                 name: unitData.name,
                 level: 1,
                 base_stats: unitData.baseStats,
@@ -69,13 +100,8 @@ export class RecruitmentService {
 
         if (unitError) throw unitError;
 
-        // 3. Generate a replacement slot for the future
-        await supabase.from('recruitment_slots').insert({
-            owner_id: user.id,
-            slot_index: slot.slot_index,
-            generated_unit_data: generateNovice(),
-            available_at: new Date(Date.now() + 120 * 60000).toISOString()
-        });
+        // Auto-refresh tavern for next time-based slot
+        await this.refreshTavern();
 
         return unit;
     }

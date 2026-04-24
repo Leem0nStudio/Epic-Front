@@ -6,12 +6,16 @@ export class PartyService {
      */
     static async getParty() {
         if (!supabase) throw new Error("Supabase client not initialized");
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
         const { data, error } = await supabase
-            .from('party_slots')
+            .from('party')
             .select(`
                 slot_index,
                 unit:units (*)
             `)
+            .eq('player_id', user.id)
             .order('slot_index', { ascending: true });
 
         if (error) throw error;
@@ -28,30 +32,30 @@ export class PartyService {
         if (!user) throw new Error("Not authenticated");
 
         // Check party size limit
-        const { data: profile } = await supabase
-            .from('profiles')
+        const { data: player } = await supabase
+            .from('players')
             .select('party_size_limit')
             .eq('id', user.id)
             .single();
 
-        if (profile && slotIndex >= profile.party_size_limit) {
-            throw new Error(`Party slot ${slotIndex} is locked. Max size: ${profile.party_size_limit}`);
+        if (player && slotIndex >= player.party_size_limit) {
+            throw new Error(`Espacio ${slotIndex + 1} bloqueado. Límite: ${player.party_size_limit}`);
         }
 
         const { error } = await supabase
-            .from('party_slots')
+            .from('party')
             .upsert({
-                owner_id: user.id,
+                player_id: user.id,
                 slot_index: slotIndex,
                 unit_id: unitId
-            }, { onConflict: 'owner_id,slot_index' });
+            }, { onConflict: 'player_id,slot_index' });
 
         if (error) throw error;
         return { success: true };
     }
 
     /**
-     * Unlocks a new party slot (increases party_size_limit).
+     * Unlocks a new party slot.
      */
     static async unlockSlot(newLimit: number) {
         if (!supabase) throw new Error("Supabase client not initialized");
@@ -59,7 +63,7 @@ export class PartyService {
         if (!user) throw new Error("Not authenticated");
 
         const { error } = await supabase
-            .from('profiles')
+            .from('players')
             .update({ party_size_limit: newLimit })
             .eq('id', user.id);
 

@@ -1,25 +1,15 @@
-import { BaseStats, JobDefinition } from '../rpg-system/types';
+import { UnitStats, JobDefinition } from '../rpg-system/types';
 
 export interface DBUnit {
     id: string;
     name: string;
     level: number;
-    base_stats: BaseStats;
-    growth_rates: BaseStats;
+    base_stats: UnitStats;
+    growth_rates: UnitStats;
     affinity: string;
     trait?: string;
     current_job_id: string;
     unlocked_jobs: string[];
-}
-
-export interface DBItem {
-    id: string;
-    name: string;
-    stats?: Partial<BaseStats>;
-    config?: {
-        effectType?: string;
-        weaponCategory?: string;
-    };
 }
 
 /**
@@ -29,29 +19,36 @@ export interface DBItem {
 export function calculateFinalStats(
     unit: DBUnit,
     jobDef: JobDefinition,
-    equippedWeapon: DBItem | null = null,
-    equippedCards: DBItem[] = []
-): BaseStats {
+    equippedWeapon: any | null = null,
+    equippedCards: any[] = []
+): UnitStats {
     const mods = jobDef.statModifiers;
 
-    const calculateStat = (field: keyof BaseStats) => {
+    const calculateStat = (field: keyof UnitStats) => {
         // 1. Level-based Growth: Base + (Growth * (Level - 1))
         const baseAndGrowth = unit.base_stats[field] + (unit.growth_rates[field] * (unit.level - 1));
 
         // 2. Job Multiplier
         let total = baseAndGrowth * (mods[field] || 1.0);
 
-        // 3. Equipment Flat Bonuses
-        if (equippedWeapon && equippedWeapon.stats && equippedWeapon.stats[field]) {
-            total += equippedWeapon.stats[field]!;
+        // 3. Equipment Bonuses (Weapon)
+        if (equippedWeapon && (equippedWeapon.stat_bonuses || equippedWeapon.stats)) {
+            const stats = equippedWeapon.stat_bonuses || equippedWeapon.stats;
+            if (stats[field]) {
+                total += stats[field];
+            }
         }
 
-        // 4. Card Percentage Bonuses
+        // 4. Card Multipliers
         let cardMultiplier = 1.0;
         equippedCards.forEach(card => {
-            if (card.stats && card.stats[field]) {
-                if (card.config?.effectType === 'statBoost') {
-                    cardMultiplier += card.stats[field]!;
+            const val = card.effect_value || card.stats;
+            if (val && val[field]) {
+                if (card.effect_type === 'statBoost') {
+                    cardMultiplier += val[field];
+                } else if (typeof val[field] === 'number' && val[field] < 1) {
+                    // Assuming percentage if less than 1
+                    cardMultiplier += val[field];
                 }
             }
         });
