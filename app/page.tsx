@@ -5,6 +5,7 @@ import { RPGHomeView } from './components/views/RPGHomeView';
 import { TavernView } from './components/views/TavernView';
 import { PartyManagementView } from './components/views/PartyManagementView';
 import { BattleScreenView } from '@/components/views/BattleScreenView';
+import { SummoningScreenView } from '@/components/views/SummoningScreenView';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
 
@@ -20,7 +21,7 @@ export default function Applet() {
   }, []);
 
   if (!isMounted || !state.isLoaded || !state.saveData) {
-    return <div className="min-h-screen text-slate-100 bg-slate-900 flex items-center justify-center font-mono">Loading RPG State...</div>;
+    return <div className="min-h-screen text-[#f2e6d5] bg-[#0d0805] bg-[url('https://www.transparenttextures.com/patterns/dark-wood.png')] flex items-center justify-center font-serif">Loading RPG State...</div>;
   }
 
   const renderView = () => {
@@ -46,6 +47,8 @@ export default function Applet() {
                  onAssignToParty={actions.handleAssignPartySlot}
                  onRemoveFromParty={actions.handleRemovePartySlot}
                />;
+      case 'gacha':
+        return <SummoningScreenView />;
       case 'battle':
         return <BattleScreenView 
                  squad={state.activePartyUnits} 
@@ -54,9 +57,9 @@ export default function Applet() {
       default:
         // Fallback or WIP views
         return (
-          <div className="flex flex-col items-center justify-center h-full space-y-4">
-            <p className="text-slate-400">View [{state.view}] is under construction.</p>
-            <button onClick={() => actions.navigateTo('home')} className="px-4 py-2 bg-slate-800 text-slate-200 rounded">Go Home</button>
+          <div className="flex flex-col items-center justify-center h-full space-y-4 bg-[#0d0805] bg-[url('https://www.transparenttextures.com/patterns/dark-wood.png')]">
+            <p className="text-[#a68a68]">View [{state.view}] is under construction.</p>
+            <button onClick={() => actions.navigateTo('home')} className="px-4 py-2 bg-[#1a110a] border border-[#382618] text-[#eacf9b] rounded font-serif hover:border-[#c79a5d]">Go Home</button>
           </div>
         );
     }
