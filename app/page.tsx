@@ -5,25 +5,16 @@ import { RPGHomeView } from './components/views/RPGHomeView';
 import { TavernView } from './components/views/TavernView';
 import { PartyManagementView } from './components/views/PartyManagementView';
 import { BattleScreenView } from '@/components/views/BattleScreenView';
-import { SummoningScreenView } from './components/views/SummoningScreenView';
+import { SummoningScreenView } from '@/components/views/SummoningScreenView';
 import { motion, AnimatePresence } from 'motion/react';
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Applet() {
   const router = useRouter();
   const { state, actions } = useGameState(() => router.push('/login'));
-  const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    // We defer rendering the state until mounted entirely
-    // to bypass NextJS randomized data hydration mismatch with Math.random() in onboarding.
-    const t = setTimeout(() => setIsMounted(true), 0);
-    return () => clearTimeout(t);
-  }, []);
-
-  if (!isMounted || !state.isLoaded || !state.saveData) {
-    return <div className="min-h-screen text-[#f2e6d5] bg-[#0d0805] bg-[url('https://www.transparenttextures.com/patterns/dark-wood.png')] flex items-center justify-center font-serif">Loading RPG State...</div>;
+  if (!state.isLoaded || !state.saveData) {
+    return <div className="min-h-screen text-[#f2e6d5] bg-[#0d0805] bg-[url('https://www.transinenttextures.com/patterns/dark-wood.png')] flex items-center justify-center font-serif">Loading RPG State...</div>;
   }
 
   const renderView = () => {

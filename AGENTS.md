@@ -23,5 +23,5 @@
 - [ ] Gacha visual con animaciones
 
 ## Bugs
-- [ ] Fix: Recargar página pierde datos del jugador
-- [ ] Fix: Errores de Hydration con Math.random()
+- [x] Fix: Recargar página pierde datos del jugador
+- [x] Fix: Errores de Hydration con Math.random()

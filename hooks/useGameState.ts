@@ -7,12 +7,47 @@ import { PartyService } from '@/lib/services/party-service';
 
 export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle';
 
+const STORAGE_KEY = 'rpg_save_data';
+
+function loadFromStorage(): PlayerSaveData | null {
+  if (typeof window === 'undefined') return null;
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function saveToStorage(data: PlayerSaveData) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
 export function useGameState(onUnauthorized?: () => void) {
-  const [saveData, setSaveData] = useState<PlayerSaveData | null>(() => {
-    // In a real app, you would check if local storage or Supabase has a save.
-    // If not, onboard them.
-    return initializeNewPlayer();
-  });
+  const [saveData, setSaveData] = useState<PlayerSaveData | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    const stored = loadFromStorage();
+    if (stored) {
+      setSaveData(stored);
+    } else {
+      const newPlayer = initializeNewPlayer();
+      setSaveData(newPlayer);
+      saveToStorage(newPlayer);
+    }
+    setIsInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (isInitialized && saveData) {
+      saveToStorage(saveData);
+    }
+  }, [saveData, isInitialized]);
   const [view, setView] = useState<ViewType>('home');
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
 
@@ -87,7 +122,7 @@ export function useGameState(onUnauthorized?: () => void) {
 
   return {
     state: {
-      isLoaded: !!saveData,
+      isLoaded: isInitialized && !!saveData,
       saveData,
       view,
       selectedUnit,
