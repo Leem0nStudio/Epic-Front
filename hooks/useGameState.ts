@@ -3,6 +3,7 @@ import { PlayerSaveData, initializeNewPlayer } from '@/lib/rpg-system/player-onb
 import { RPGUnit } from '@/lib/rpg-system/types';
 import { claimRecruit, discardRecruit, TavernQueueSlot } from '@/lib/rpg-system/recruitment';
 import { assignUnitToParty, removeUnitFromParty, swapPartyPositions } from '@/lib/rpg-system/party-system';
+import { PartyService } from '@/lib/services/party-service';
 
 export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle';
 
@@ -44,16 +45,26 @@ export function useGameState() {
   };
 
   // --- PARTY SYSTEM ---
-  const handleAssignPartySlot = (unitId: string, slotIndex: number) => {
+  const handleAssignPartySlot = async (unitId: string, slotIndex: number) => {
     if (!saveData) return;
-    const newParty = assignUnitToParty(saveData.party, unitId, slotIndex);
-    setSaveData({ ...saveData, party: newParty });
+    try {
+      await PartyService.assignToParty(slotIndex, unitId);
+      const newParty = assignUnitToParty(saveData.party, unitId, slotIndex);
+      setSaveData({ ...saveData, party: newParty });
+    } catch (e) {
+      console.error('Failed to assign to party:', e);
+    }
   };
 
-  const handleRemovePartySlot = (slotIndex: number) => {
+  const handleRemovePartySlot = async (slotIndex: number) => {
     if (!saveData) return;
-    const newParty = removeUnitFromParty(saveData.party, slotIndex);
-    setSaveData({ ...saveData, party: newParty });
+    try {
+      await PartyService.assignToParty(slotIndex, null);
+      const newParty = removeUnitFromParty(saveData.party, slotIndex);
+      setSaveData({ ...saveData, party: newParty });
+    } catch (e) {
+      console.error('Failed to remove from party:', e);
+    }
   };
 
   const handleSwapPartySlots = (index1: number, index2: number) => {
