@@ -17,7 +17,8 @@ import {
   Briefcase,
   ShieldAlert,
   Star,
-  Trash2
+  Trash2,
+  Scale
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -45,7 +46,6 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
       const details = await UnitService.getUnitDetails(unitId);
       setData(details);
 
-      // Dynamic evolution paths
       if (details.job) {
         const paths = await UnitService.getNextJobs(details.job.id);
         setNextJobs(paths);
@@ -105,22 +105,24 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
       <div className="absolute inset-0 bg-gradient-to-b from-blue-900/10 via-transparent to-transparent pointer-events-none" />
 
       {/* Header */}
-      <div className="p-4 flex items-center justify-between z-10">
+      <div className="p-4 flex items-center justify-between z-10 shrink-0">
         <div className="flex items-center gap-4">
           <button onClick={() => onNavigate('party')} className="p-2 bg-black/40 border border-white/10 rounded-xl text-white/60 hover:text-white transition-colors">
             <ChevronLeft size={20} />
           </button>
           <div className="flex flex-col">
-            <h1 className="text-lg font-black text-white tracking-widest uppercase italic">{unit.name}</h1>
+            <h1 className="text-lg font-black text-white tracking-widest uppercase italic truncate max-w-[150px]">{unit.name}</h1>
             <span className="text-[10px] font-black text-[#F5C76B] tracking-widest uppercase opacity-60">{job.name}</span>
           </div>
         </div>
-        <button
-          onClick={handleRelease}
-          className="p-2 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 hover:bg-red-500/20 transition-colors"
-        >
-          <Trash2 size={18} />
-        </button>
+        <div className="flex gap-2">
+            <button
+            onClick={handleRelease}
+            className="p-2 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 hover:bg-red-500/20 transition-colors"
+            >
+            <Trash2 size={18} />
+            </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar pb-10">
@@ -155,9 +157,9 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
              { label: 'DEF', val: finalStats.def, icon: Shield, color: 'text-white/40' },
              { label: 'SPD', val: finalStats.agi, icon: Zap, color: 'text-cyan-400' }
            ].map((stat) => (
-             <div key={stat.label} className="bg-black/40 border border-white/5 p-3 rounded-2xl flex flex-col items-center justify-center gap-1 shadow-inner">
+             <div key={stat.label} className="bg-black/40 border border-white/5 p-3 rounded-2xl flex flex-col items-center justify-center gap-1 shadow-inner min-w-0">
                <stat.icon size={14} className={stat.color} />
-               <span className="text-[14px] font-black text-white">{stat.val}</span>
+               <span className="text-[14px] font-black text-white truncate w-full text-center">{stat.val}</span>
                <span className="text-[7px] font-black text-white/40 uppercase tracking-tighter">{stat.label}</span>
              </div>
            ))}
@@ -165,9 +167,12 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
 
         {/* Arsenal */}
         <div className="space-y-4">
-           <h3 className="text-[10px] font-black text-white/40 tracking-[0.3em] uppercase flex items-center gap-2">
-            <Briefcase size={12} className="text-[#F5C76B]" /> Arsenal de Combate
-           </h3>
+           <div className="flex items-center justify-between">
+              <h3 className="text-[10px] font-black text-white/40 tracking-[0.3em] uppercase flex items-center gap-2">
+                <Briefcase size={12} className="text-[#F5C76B]" /> Arsenal de Combate
+              </h3>
+              <span className="text-[8px] font-black text-[#F5C76B]/40 uppercase tracking-widest">ESPACIOS: {1 + (cards?.length || 0)}/5</span>
+           </div>
            <div className="grid grid-cols-5 gap-3">
               <motion.div
                 whileTap={{ scale: 0.9 }}
