@@ -5,12 +5,14 @@ import { RPGHomeView } from './components/views/RPGHomeView';
 import { TavernView } from './components/views/TavernView';
 import { PartyManagementView } from './components/views/PartyManagementView';
 import { BattleScreenView } from '@/components/views/BattleScreenView';
-import { SummoningScreenView } from '@/components/views/SummoningScreenView';
+import { SummoningScreenView } from './components/views/SummoningScreenView';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Applet() {
-  const { state, actions } = useGameState();
+  const router = useRouter();
+  const { state, actions } = useGameState(() => router.push('/login'));
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
