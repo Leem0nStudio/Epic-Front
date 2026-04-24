@@ -4,28 +4,17 @@ import { useGameState } from '@/hooks/useGameState';
 import { RPGHomeView } from './components/views/RPGHomeView';
 import { TavernView } from './components/views/TavernView';
 import { PartyManagementView } from './components/views/PartyManagementView';
-import { GachaView } from './components/views/GachaView';
-import { UnitDetailsView } from './components/views/UnitDetailsView';
-import { InventoryView } from './components/views/InventoryView';
-import { BattleScreenView } from './components/views/BattleScreenView';
+import { BattleScreenView } from '@/components/views/BattleScreenView';
+import { SummoningScreenView } from '@/components/views/SummoningScreenView';
 import { motion, AnimatePresence } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Applet() {
-  const { state, actions } = useGameState();
-  const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter();
+  const { state, actions } = useGameState(() => router.push('/login'));
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted || !state.isLoaded) {
-    return (
-      <div className="min-h-screen text-slate-100 bg-slate-900 flex flex-col items-center justify-center font-mono gap-4">
-        <div className="w-12 h-12 border-4 border-t-[#c79a5d] border-[#382618] rounded-full animate-spin"></div>
-        <p className="animate-pulse">CARGANDO REINO...</p>
-      </div>
-    );
+  if (!state.isLoaded || !state.saveData) {
+    return <div className="min-h-screen text-[#f2e6d5] bg-[#0d0805] bg-[url('https://www.transinenttextures.com/patterns/dark-wood.png')] flex items-center justify-center font-serif">Loading RPG State...</div>;
   }
 
   const renderView = () => {
