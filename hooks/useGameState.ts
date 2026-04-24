@@ -107,12 +107,13 @@ export function useGameState() {
         await refreshState();
         setIsLoaded(true);
       } catch (e: any) {
-        setError("Error inesperado: " + e.message);
+        console.error("Initialization error:", e);
+        setError("Error inesperado: " + (e.message || "Desconocido"));
       }
     }
 
     loadGame();
-  }, []);
+  }, [isAuthenticated]);
 
   const handleSelectUnit = (id: string) => {
     setSelectedUnitId(id);
