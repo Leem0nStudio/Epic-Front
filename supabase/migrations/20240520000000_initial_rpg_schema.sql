@@ -203,6 +203,8 @@ DECLARE
     v_reqs JSONB;
     v_parent_job_id TEXT;
     v_cost BIGINT;
+    v_materials JSONB;
+    v_material JSONB;
 BEGIN
     v_user_id := auth.uid();
 
@@ -225,10 +227,29 @@ BEGIN
     END IF;
 
     v_cost := (v_reqs->>'currencyCost')::BIGINT;
+    v_materials := v_reqs->'materials';
 
     -- 5. Validation & Deduction: Currency
     UPDATE profiles SET currency = currency - v_cost WHERE id = v_user_id AND currency >= v_cost;
     IF NOT FOUND THEN RAISE EXCEPTION 'Insufficient currency'; END IF;
+
+    -- 5.1 Validation & Deduction: Materials
+    IF v_materials IS NOT NULL AND jsonb_array_length(v_materials) > 0 THEN
+        FOR v_material IN SELECT * FROM jsonb_array_elements(v_materials) LOOP
+            UPDATE inventory_items
+            SET quantity = quantity - (v_material->>'amount')::INTEGER
+            WHERE owner_id = v_user_id
+              AND item_definition_id = v_material->>'itemId'
+              AND quantity >= (v_material->>'amount')::INTEGER;
+
+            IF NOT FOUND THEN
+                RAISE EXCEPTION 'Missing evolution materials: %', v_material->>'itemId';
+            END IF;
+        END LOOP;
+
+        -- Cleanup items with 0 quantity
+        DELETE FROM inventory_items WHERE quantity <= 0;
+    END IF;
 
     -- 6. Update Unit
     UPDATE units SET

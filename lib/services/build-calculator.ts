@@ -32,7 +32,7 @@ export function calculateFinalStats(
     equippedWeapon: DBItem | null = null,
     equippedCards: DBItem[] = []
 ): BaseStats {
-    const mods = jobDef.stat_modifiers;
+    const mods = jobDef.statModifiers;
 
     const calculateStat = (field: keyof BaseStats) => {
         // 1. Level-based Growth: Base + (Growth * (Level - 1))

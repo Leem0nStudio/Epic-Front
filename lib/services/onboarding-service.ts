@@ -22,6 +22,10 @@ export class OnboardingService {
 
         if (error) throw error;
 
+        // Create initial recruitment slots for the tavern
+        const { RecruitmentService } = await import('./recruitment-service');
+        await RecruitmentService.refreshTavern();
+
         // Fetch the created data to return
         const { data: units } = await supabase.from('units').select('*');
 
