@@ -11,6 +11,7 @@ export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 
 
 export function useGameState() {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [roster, setRoster] = useState<any[]>([]);
   const [party, setParty] = useState<any[]>([]);
@@ -23,39 +24,75 @@ export function useGameState() {
 
   const refreshState = async () => {
     if (!supabase) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+        const { data: authData } = await supabase.auth.getUser();
+        const user = authData?.user;
+        if (!user) return;
 
-    const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-    if (prof) setProfile(prof);
+        const [profRes, unitsRes, partyRes, recruitsRes] = await Promise.all([
+            supabase.from('profiles').select('*').eq('id', user.id).single(),
+            supabase.from('units').select('*'),
+            supabase.from('party_slots').select('*, unit:units(*)').order('slot_index'),
+            supabase.from('recruitment_slots').select('*').eq('is_claimed', false)
+        ]);
 
-    const { data: units } = await supabase.from('units').select('*');
-    setRoster(units || []);
+        if (profRes.data) setProfile(profRes.data);
+        setRoster(unitsRes.data || []);
+        setParty(partyRes.data || []);
+        setTavernSlots(recruitsRes.data || []);
 
-    const { data: partySlots } = await supabase.from('party_slots').select('*, unit:units(*)').order('slot_index');
-    setParty(partySlots || []);
-
-    const { data: recruits } = await supabase.from('recruitment_slots').select('*').eq('is_claimed', false);
-    setTavernSlots(recruits || []);
+        if (profRes.error && profRes.error.code !== 'PGRST116') console.error("Error loading profile:", profRes.error);
+        if (unitsRes.error) console.error("Error loading units:", unitsRes.error);
+        if (partyRes.error) console.error("Error loading party:", partyRes.error);
+        if (recruitsRes.error) console.error("Error loading recruits:", recruitsRes.error);
+    } catch (e) {
+        console.error("Critical error in refreshState:", e);
+    }
   };
 
   // --- INITIALIZATION ---
   useEffect(() => {
     async function loadGame() {
-      if (!supabase) return;
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-
-      if (!prof) {
-        await OnboardingService.initializePlayer(user.email?.split('@')[0] || "New Hero");
-        return loadGame();
+      if (!supabase) {
+        setError("Error de configuración: Variables de Supabase no encontradas.");
+        return;
       }
 
-      await refreshState();
-      setIsLoaded(true);
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+          setError("Error de autenticación. Por favor, inicia sesión.");
+          return;
+        }
+
+        const { data: prof, error: profError } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+
+        if (profError && profError.code !== 'PGRST116') { // PGRST116 is "no rows found"
+          setError("Error al cargar perfil: " + profError.message);
+          return;
+        }
+
+        if (!prof) {
+          try {
+            await OnboardingService.initializePlayer(user.email?.split('@')[0] || "Héroe");
+            // Fetch profile again after onboarding
+            const { data: newProf } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+            if (!newProf) throw new Error("No se pudo crear el perfil.");
+            setProfile(newProf);
+          } catch (initErr: any) {
+            setError("Error en Onboarding: " + initErr.message);
+            return;
+          }
+        } else {
+          setProfile(prof);
+        }
+
+        await refreshState();
+        setIsLoaded(true);
+      } catch (e: any) {
+        setError("Error inesperado: " + e.message);
+      }
     }
 
     loadGame();
@@ -109,6 +146,7 @@ export function useGameState() {
   return {
     state: {
       isLoaded,
+      error,
       profile,
       roster,
       party,

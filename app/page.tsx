@@ -19,6 +19,17 @@ export default function Applet() {
     setIsMounted(true);
   }, []);
 
+  if (state.error) {
+    return (
+      <div className="min-h-screen text-slate-100 bg-slate-900 flex flex-col items-center justify-center font-mono p-8 text-center gap-4">
+        <div className="w-16 h-16 bg-red-900/20 border-2 border-red-500 rounded-full flex items-center justify-center text-red-500 text-3xl font-bold">!</div>
+        <h1 className="text-xl font-bold text-red-400">ERROR DE CARGA</h1>
+        <p className="text-slate-400 max-w-md">{state.error}</p>
+        <button onClick={() => window.location.reload()} className="mt-4 px-6 py-2 bg-slate-800 border border-slate-700 rounded hover:bg-slate-700 transition-colors">REINTENTAR</button>
+      </div>
+    );
+  }
+
   if (!isMounted || !state.isLoaded) {
     return (
       <div className="min-h-screen text-slate-100 bg-slate-900 flex flex-col items-center justify-center font-mono gap-4">
