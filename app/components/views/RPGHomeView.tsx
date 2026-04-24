@@ -1,11 +1,11 @@
 import React from 'react';
 import { PlayerSaveData } from '@/lib/rpg-system/player-onboarding';
-import { Sword, Sparkles, Shield, Store, TowerControl, Mail } from 'lucide-react';
+import { Sword, Sparkles, Shield, Store, TowerControl, Mail, Briefcase } from 'lucide-react';
 import { RPGUnit } from '@/lib/rpg-system/types';
 
 interface RPGHomeViewProps {
-  saveData: PlayerSaveData;
-  activePartyUnits: (RPGUnit | null)[];
+  saveData: any;
+  activePartyUnits: (any | null)[];
   onNavigate: (view: 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle') => void;
 }
 
@@ -31,7 +31,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
            </div>
            <div className="flex flex-col flex-1">
               <span className="font-serif font-bold text-[#f2e6d5] text-[16px] text-stroke-sm tracking-wide drop-shadow-md leading-tight">
-                Summoner
+                {saveData.profile.username}
               </span>
               <div className="flex items-center gap-2 mt-1">
                  <span className="bg-[#1a110a] border border-[#a68a68] text-[#eacf9b] text-[10px] font-bold px-1.5 py-[1px] rounded-sm">LV. 1</span>
@@ -42,8 +42,8 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
               </div>
            </div>
            <div className="flex flex-col items-end pr-2">
-             <span className="text-[10px] text-[#a68a68] font-bold">ZENY</span>
-             <span className="font-mono text-[#eacf9b] font-bold text-sm tracking-wider">{saveData.inventory.currency}</span>
+             <span className="text-[10px] text-[#a68a68] font-bold uppercase tracking-tighter">Zeny</span>
+             <span className="font-mono text-[#eacf9b] font-bold text-sm tracking-wider">{saveData.profile.currency}</span>
            </div>
         </div>
       </div>
@@ -54,19 +54,31 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
          
          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[rgba(0,0,0,0.9)] to-transparent pointer-events-none"></div>
 
-         <div className="z-10 p-3 pt-4">
-           {/* Future elements could go here */}
+         {/* Facility Navigation */}
+         <div className="z-10 grid grid-cols-3 gap-2 p-3 mt-2">
+            <button onClick={() => onNavigate('party')} className="flex flex-col items-center gap-1 group">
+               <div className="w-10 h-10 bg-[#1a110a] border border-[#5a4227] rounded flex items-center justify-center group-hover:border-[#c79a5d] transition-colors">
+                  <Briefcase size={18} className="text-[#a68a68] group-hover:text-[#eacf9b]" />
+               </div>
+               <span className="text-[9px] font-bold text-[#eacf9b] tracking-tighter uppercase">Roster</span>
+            </button>
+            <button onClick={() => onNavigate('party')} className="flex flex-col items-center gap-1 group">
+               <div className="w-10 h-10 bg-[#1a110a] border border-[#5a4227] rounded flex items-center justify-center group-hover:border-[#c79a5d] transition-colors">
+                  <Shield size={18} className="text-[#a68a68] group-hover:text-[#eacf9b]" />
+               </div>
+               <span className="text-[9px] font-bold text-[#eacf9b] tracking-tighter uppercase">Party</span>
+            </button>
          </div>
 
          {/* Hot Actions on Billboard */}
          <div className="z-10 flex gap-2 p-2 w-full mt-auto">
             <button onClick={() => onNavigate('battle')} className="flex-1 bg-gradient-to-b from-[#b53c22] to-[#6e1e0a] border-[1.5px] border-[#ea7a5d] rounded p-2 flex flex-col items-center justify-center gap-1 shadow-lg active:scale-95 transition-all hover:brightness-110">
                <Sword size={24} className="text-white drop-shadow-md" />
-               <span className="text-[12px] font-bold font-serif text-white tracking-widest text-stroke-sm">QUESTS</span>
+               <span className="text-[12px] font-bold font-serif text-white tracking-widest text-stroke-sm">AVENTURA</span>
             </button>
             <button onClick={() => onNavigate('gacha')} className="flex-1 bg-gradient-to-b from-[#b59d22] to-[#6e580a] border-[1.5px] border-[#ead15d] rounded p-2 flex flex-col items-center justify-center gap-1 shadow-lg active:scale-95 transition-all hover:brightness-110">
                <Sparkles size={24} className="text-white drop-shadow-md" />
-               <span className="text-[12px] font-bold font-serif text-white tracking-widest text-stroke-sm">THE FORGE</span>
+               <span className="text-[12px] font-bold font-serif text-white tracking-widest text-stroke-sm">LA FORJA</span>
             </button>
          </div>
       </div>
@@ -74,17 +86,11 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
       {/* Facilities Grid */}
       <div className="grid grid-cols-2 gap-2 shrink-0 relative z-10 w-full mb-1">
          
-         <button onClick={() => onNavigate('party')} className="bg-gradient-to-br from-[#35251a] to-[#1a110a] border-[1.5px] border-[#5a4227] rounded shadow-[0_4px_6px_rgba(0,0,0,0.5)] p-3 flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all hover:border-[#c79a5d] relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-16 h-16 bg-white opacity-5 rounded-full blur-xl group-hover:opacity-10 transition-opacity"></div>
-            <Shield size={28} className="text-[#a68a68] group-hover:text-[#c79a5d] transition-colors drop-shadow-md" />
-            <span className="font-serif font-bold text-[#eacf9b] text-[13px] tracking-widest text-stroke-black">FORMATION</span>
-         </button>
-
          <button onClick={() => onNavigate('tavern')} className="bg-gradient-to-br from-[#35251a] to-[#1a110a] border-[1.5px] border-[#5a4227] rounded shadow-[0_4px_6px_rgba(0,0,0,0.5)] p-3 flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all hover:border-[#c79a5d] relative overflow-hidden">
             <div className="absolute top-0 right-0 w-16 h-16 bg-white opacity-5 rounded-full blur-xl group-hover:opacity-10 transition-opacity"></div>
             <Store size={28} className="text-[#a68a68] group-hover:text-[#c79a5d] transition-colors drop-shadow-md" />
-            <span className="font-serif font-bold text-[#eacf9b] text-[13px] tracking-widest text-stroke-black">TAVERN</span>
-            {saveData.tavernQueue.some((q) => now >= q.availableAtTimestamp && q.generatedUnit) && (
+            <span className="font-serif font-bold text-[#eacf9b] text-[13px] tracking-widest text-stroke-black uppercase">Taberna</span>
+            {saveData.tavernSlots.some((slot: any) => now >= new Date(slot.available_at).getTime()) && (
               <div className="absolute top-2 right-2 bg-[#b53c22] w-3 h-3 rounded-full border border-[#ea7a5d] animate-pulse shadow-[0_0_5px_rgba(255,0,0,0.8)] z-20"></div>
             )}
          </button>
@@ -92,18 +98,9 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
          <button className="bg-gradient-to-br from-[#35251a] to-[#1a110a] border-[1.5px] border-[#5a4227] rounded shadow-[0_4px_6px_rgba(0,0,0,0.5)] p-3 flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all hover:border-[#c79a5d] relative overflow-hidden opacity-80">
             <div className="absolute top-0 right-0 w-16 h-16 bg-white opacity-5 rounded-full blur-xl group-hover:opacity-10 transition-opacity"></div>
             <TowerControl size={28} className="text-[#a68a68] group-hover:text-[#c79a5d] transition-colors drop-shadow-md" />
-            <span className="font-serif font-bold text-[#eacf9b] text-[13px] tracking-widest text-stroke-black">ARENA</span>
+            <span className="font-serif font-bold text-[#eacf9b] text-[13px] tracking-widest text-stroke-black uppercase">Arena</span>
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
-               <span className="bg-[#b53c22] text-white text-[10px] font-bold px-2 py-0.5 rounded border border-[#ea7a5d] shadow-sm transform -rotate-12">WIP</span>
-            </div>
-         </button>
-
-         <button className="bg-gradient-to-br from-[#35251a] to-[#1a110a] border-[1.5px] border-[#5a4227] rounded shadow-[0_4px_6px_rgba(0,0,0,0.5)] p-3 flex flex-col items-center justify-center gap-2 group active:scale-95 transition-all hover:border-[#c79a5d] relative overflow-hidden opacity-80">
-            <div className="absolute top-0 right-0 w-16 h-16 bg-white opacity-5 rounded-full blur-xl group-hover:opacity-10 transition-opacity"></div>
-            <Mail size={28} className="text-[#a68a68] group-hover:text-[#c79a5d] transition-colors drop-shadow-md" />
-            <span className="font-serif font-bold text-[#eacf9b] text-[13px] tracking-widest text-stroke-black">PRESENTS</span>
-            <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
-               <span className="bg-[#b53c22] text-white text-[10px] font-bold px-2 py-0.5 rounded border border-[#ea7a5d] shadow-sm transform -rotate-12">WIP</span>
+               <span className="bg-[#b53c22] text-white text-[10px] font-bold px-2 py-0.5 rounded border border-[#ea7a5d] shadow-sm transform -rotate-12">PRÓXIMAMENTE</span>
             </div>
          </button>
 

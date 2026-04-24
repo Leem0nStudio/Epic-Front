@@ -1,106 +1,132 @@
 import { useState, useEffect } from 'react';
-import { PlayerSaveData, initializeNewPlayer } from '@/lib/rpg-system/player-onboarding';
-import { RPGUnit } from '@/lib/rpg-system/types';
-import { claimRecruit, discardRecruit, TavernQueueSlot } from '@/lib/rpg-system/recruitment';
-import { assignUnitToParty, removeUnitFromParty, swapPartyPositions } from '@/lib/rpg-system/party-system';
+import { supabase } from '@/lib/supabase';
+import { OnboardingService } from '@/lib/services/onboarding-service';
+import { UnitService } from '@/lib/services/unit-service';
+import { RecruitmentService } from '@/lib/services/recruitment-service';
 import { PartyService } from '@/lib/services/party-service';
+import { GachaService } from '@/lib/services/gacha-service';
+import { EquipmentService } from '@/lib/services/equipment-service';
 
 export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle';
 
-export function useGameState(onUnauthorized?: () => void) {
-  const [saveData, setSaveData] = useState<PlayerSaveData | null>(() => {
-    // In a real app, you would check if local storage or Supabase has a save.
-    // If not, onboard them.
-    return initializeNewPlayer();
-  });
+export function useGameState() {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+  const [roster, setRoster] = useState<any[]>([]);
+  const [party, setParty] = useState<any[]>([]);
+  const [tavernSlots, setTavernSlots] = useState<any[]>([]);
   const [view, setView] = useState<ViewType>('home');
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
+  const [targetSlot, setTargetSlot] = useState<'weapon' | 'card' | 'skill' | null>(null);
 
   const navigateTo = (newView: ViewType) => setView(newView);
+
+  const refreshState = async () => {
+    if (!supabase) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    if (prof) setProfile(prof);
+
+    const { data: units } = await supabase.from('units').select('*');
+    setRoster(units || []);
+
+    const { data: partySlots } = await supabase.from('party_slots').select('*, unit:units(*)').order('slot_index');
+    setParty(partySlots || []);
+
+    const { data: recruits } = await supabase.from('recruitment_slots').select('*').eq('is_claimed', false);
+    setTavernSlots(recruits || []);
+  };
+
+  // --- INITIALIZATION ---
+  useEffect(() => {
+    async function loadGame() {
+      if (!supabase) return;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+
+      if (!prof) {
+        await OnboardingService.initializePlayer(user.email?.split('@')[0] || "New Hero");
+        return loadGame();
+      }
+
+      await refreshState();
+      setIsLoaded(true);
+    }
+
+    loadGame();
+  }, []);
 
   const handleSelectUnit = (id: string) => {
     setSelectedUnitId(id);
     setView('unit_details');
   };
 
-  // --- TAVERN RECRUITMENT ---
-  const handleClaimRecruit = (queueId: string) => {
-    if (!saveData) return;
+  const handleOpenInventory = (slot: 'weapon' | 'card' | 'skill') => {
+    setTargetSlot(slot);
+    setView('inventory');
+  };
+
+  const handleEquipItem = async (item: any) => {
+    if (!selectedUnitId || !targetSlot) return;
     try {
-      const { newRoster, newQueueList } = claimRecruit(saveData.roster, saveData.tavernQueue, queueId);
-      setSaveData({ ...saveData, roster: newRoster, tavernQueue: newQueueList });
-    } catch (e) {
-      console.error(e);
+        await EquipmentService.equipItem(selectedUnitId, item.id, targetSlot);
+        await refreshState();
+        setView('unit_details');
+    } catch (e: any) {
+        alert(e.message);
     }
   };
 
-  const handleDiscardRecruit = (queueId: string) => {
-    if (!saveData) return;
+  // --- TAVERN RECRUITMENT ---
+  const handleClaimRecruit = async (slotId: string) => {
     try {
-      const newQueueList = discardRecruit(saveData.tavernQueue, queueId);
-      setSaveData({ ...saveData, tavernQueue: newQueueList });
+      await RecruitmentService.claimRecruit(slotId);
+      await refreshState();
     } catch (e) {
       console.error(e);
     }
   };
 
   // --- PARTY SYSTEM ---
-  const handleAssignPartySlot = async (unitId: string, slotIndex: number) => {
-    if (!saveData) return;
+  const handleAssignPartySlot = async (slotIndex: number, unitId: string | null) => {
     try {
       await PartyService.assignToParty(slotIndex, unitId);
-      const newParty = assignUnitToParty(saveData.party, unitId, slotIndex);
-      setSaveData({ ...saveData, party: newParty });
-    } catch (e: any) {
-      if (e.message === "Not authenticated" && onUnauthorized) {
-        onUnauthorized();
-      } else {
-        console.error('Failed to assign to party:', e);
-      }
+      await refreshState();
+    } catch (e) {
+      console.error(e);
     }
-  };
-
-  const handleRemovePartySlot = async (slotIndex: number) => {
-    if (!saveData) return;
-    try {
-      await PartyService.assignToParty(slotIndex, null);
-      const newParty = removeUnitFromParty(saveData.party, slotIndex);
-      setSaveData({ ...saveData, party: newParty });
-    } catch (e: any) {
-      if (e.message === "Not authenticated" && onUnauthorized) {
-        onUnauthorized();
-      } else {
-        console.error('Failed to remove from party:', e);
-      }
-    }
-  };
-
-  const handleSwapPartySlots = (index1: number, index2: number) => {
-    if (!saveData) return;
-    const newParty = swapPartyPositions(saveData.party, index1, index2);
-    setSaveData({ ...saveData, party: newParty });
   };
 
   // Derive useful state
-  const selectedUnit = saveData?.roster.find((u) => u.id === selectedUnitId) || null;
-  const activePartyUnits = saveData?.party.map(id => id ? saveData.roster.find(u => u.id === id) || null : null) || [];
+  const selectedUnit = roster.find((u) => u.id === selectedUnitId) || null;
+  const activePartyUnits = Array(5).fill(null).map((_, i) => party.find(p => p.slot_index === i)?.unit || null);
 
   return {
     state: {
-      isLoaded: !!saveData,
-      saveData,
+      isLoaded,
+      profile,
+      roster,
+      party,
+      tavernSlots,
       view,
+      selectedUnitId,
       selectedUnit,
-      activePartyUnits
+      activePartyUnits,
+      targetSlot
     },
     actions: {
       navigateTo,
       handleSelectUnit,
       handleClaimRecruit,
-      handleDiscardRecruit,
       handleAssignPartySlot,
-      handleRemovePartySlot,
-      handleSwapPartySlots
+      handleOpenInventory,
+      handleEquipItem,
+      refreshState
     }
   };
 }
