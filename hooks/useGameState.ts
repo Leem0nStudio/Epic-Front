@@ -7,7 +7,7 @@ import { PartyService } from '@/lib/services/party-service';
 
 export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle';
 
-export function useGameState() {
+export function useGameState(onUnauthorized?: () => void) {
   const [saveData, setSaveData] = useState<PlayerSaveData | null>(() => {
     // In a real app, you would check if local storage or Supabase has a save.
     // If not, onboard them.
@@ -51,8 +51,12 @@ export function useGameState() {
       await PartyService.assignToParty(slotIndex, unitId);
       const newParty = assignUnitToParty(saveData.party, unitId, slotIndex);
       setSaveData({ ...saveData, party: newParty });
-    } catch (e) {
-      console.error('Failed to assign to party:', e);
+    } catch (e: any) {
+      if (e.message === "Not authenticated" && onUnauthorized) {
+        onUnauthorized();
+      } else {
+        console.error('Failed to assign to party:', e);
+      }
     }
   };
 
@@ -62,8 +66,12 @@ export function useGameState() {
       await PartyService.assignToParty(slotIndex, null);
       const newParty = removeUnitFromParty(saveData.party, slotIndex);
       setSaveData({ ...saveData, party: newParty });
-    } catch (e) {
-      console.error('Failed to remove from party:', e);
+    } catch (e: any) {
+      if (e.message === "Not authenticated" && onUnauthorized) {
+        onUnauthorized();
+      } else {
+        console.error('Failed to remove from party:', e);
+      }
     }
   };
 
