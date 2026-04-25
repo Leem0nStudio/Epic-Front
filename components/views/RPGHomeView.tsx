@@ -2,30 +2,85 @@
 
 import React from 'react';
 import {
-  Users,
-  UserPlus,
-  Sparkles,
-  Sword,
-  Calendar,
-  Bell,
-  ChevronRight,
-  Star,
-  Settings,
-  Mail,
-  Diamond,
-  Coins
+  Users, UserPlus, Sparkles, Sword, Coins, Diamond, Settings,
+  ChevronRight, Calendar, Bell, Mail, Star
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { supabase } from '@/lib/supabase';
+import { motion } from 'motion/react';
 
 interface RPGHomeViewProps {
   saveData: any;
-  activePartyUnits: (any | null)[];
+  activePartyUnits: any[];
   onNavigate: (view: any) => void;
 }
 
+const rarityGlow = (rarity: string) => {
+  switch (rarity?.toLowerCase()) {
+    case 'legendary':
+    case 'ur': return 'drop-shadow-[0_0_15px_rgba(245,199,107,0.6)]';
+    case 'epic':
+    case 'sr': return 'drop-shadow-[0_0_12px_rgba(168,85,247,0.5)]';
+    case 'rare':
+    case 'r': return 'drop-shadow-[0_0_10px_rgba(59,130,246,0.4)]';
+    default: return '';
+  }
+};
+
+const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="relative flex flex-col items-center justify-end h-full w-full"
+    style={{ zIndex, scale }}
+  >
+    <div className={`relative w-full h-[70%] flex items-center justify-center ${emphasized ? 'mb-4' : 'mb-2'}`}>
+      <div className={`w-full aspect-[2/3] max-h-full rounded-2xl bg-gradient-to-t from-blue-900/40 to-transparent border border-white/5 relative overflow-hidden ${emphasized ? rarityGlow('ur') : ''}`}>
+        <motion.div
+          animate={{
+            y: [0, -10, 0],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="w-full h-full relative"
+        >
+          {unit ? (
+            <img
+              src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png"
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200%] h-auto object-contain transform origin-bottom"
+              style={{ imageRendering: 'pixelated' }}
+              alt={unit.name}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center opacity-20">
+              <Users size={48} className="text-white" />
+            </div>
+          )}
+        </motion.div>
+      </div>
+
+      {unit && (
+        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-black/80 border border-white/20 flex items-center gap-1 shadow-xl whitespace-nowrap">
+           <span className="text-[10px] font-black italic text-[#F5C76B]">UR</span>
+           <div className="flex gap-0.5">
+              {[1,2,3,4,5].map(i => <Star key={i} size={8} fill="#F5C76B" className="text-[#F5C76B]" />)}
+           </div>
+        </div>
+      )}
+    </div>
+
+    {unit && (
+      <div className="text-center">
+        <p className="text-white text-sm font-black tracking-widest uppercase drop-shadow-md truncate w-full max-w-[100px]">{unit.name}</p>
+        <p className="text-[#F5C76B] text-[10px] font-bold tracking-tighter opacity-80 uppercase truncate w-full max-w-[100px]">{unit.current_job_id || 'Novice'}</p>
+      </div>
+    )}
+  </motion.div>
+);
+
 export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeViewProps) {
-  // Use first 3 units as per requirements
   const primaryUnit = activePartyUnits[0];
   const leftUnit = activePartyUnits[1];
   const rightUnit = activePartyUnits[2];
@@ -36,71 +91,6 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
     stars: 2,
     maxStars: 3
   };
-
-  const rarityGlow = (rarity: string) => {
-    switch (rarity?.toLowerCase()) {
-      case 'legendary':
-      case 'ur': return 'drop-shadow-[0_0_15px_rgba(245,199,107,0.6)]';
-      case 'epic':
-      case 'sr': return 'drop-shadow-[0_0_12px_rgba(168,85,247,0.5)]';
-      case 'rare':
-      case 'r': return 'drop-shadow-[0_0_10px_rgba(59,130,246,0.4)]';
-      default: return '';
-    }
-  };
-
-  const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="relative flex flex-col items-center justify-end h-full w-full"
-      style={{ zIndex, scale }}
-    >
-      <div className={`relative w-full h-[70%] flex items-center justify-center ${emphasized ? 'mb-4' : 'mb-2'}`}>
-        <div className={`w-full aspect-[2/3] max-h-full rounded-2xl bg-gradient-to-t from-blue-900/40 to-transparent border border-white/5 relative overflow-hidden ${emphasized ? rarityGlow('ur') : ''}`}>
-          <motion.div
-            animate={{
-              y: [0, -10, 0],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="w-full h-full relative"
-          >
-            {unit ? (
-              <img
-                src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png"
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200%] h-auto object-contain transform origin-bottom"
-                style={{ imageRendering: 'pixelated' }}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center opacity-20">
-                <Users size={48} className="text-white" />
-              </div>
-            )}
-          </motion.div>
-        </div>
-
-        {unit && (
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-black/80 border border-white/20 flex items-center gap-1 shadow-xl whitespace-nowrap">
-             <span className="text-[10px] font-black italic text-[#F5C76B]">UR</span>
-             <div className="flex gap-0.5">
-                {[1,2,3,4,5].map(i => <Star key={i} size={8} fill="#F5C76B" className="text-[#F5C76B]" />)}
-             </div>
-          </div>
-        )}
-      </div>
-
-      {unit && (
-        <div className="text-center">
-          <p className="text-white text-sm font-black tracking-widest uppercase drop-shadow-md truncate w-full max-w-[100px]">{unit.name}</p>
-          <p className="text-[#F5C76B] text-[10px] font-bold tracking-tighter opacity-80 uppercase truncate w-full max-w-[100px]">{unit.current_job_id || 'Novice'}</p>
-        </div>
-      )}
-    </motion.div>
-  );
 
   return (
     <div
@@ -113,7 +103,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
       <div className="w-full h-16 shrink-0 flex items-center justify-between px-4 z-30 pt-2">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 border border-white/10 flex items-center justify-center overflow-hidden">
-            <img src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png" className="w-[150%] transform translate-y-1" style={{imageRendering: 'pixelated'}} />
+            <img src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png" className="w-[150%] transform translate-y-1" style={{imageRendering: 'pixelated'}} alt="Profile" />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
