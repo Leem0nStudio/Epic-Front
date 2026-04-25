@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BattleService, CombatUnit } from '@/lib/services/battle-service';
 import { UnitService } from '@/lib/services/unit-service';
-import { ChevronLeft, Sword, Shield, Award, Zap, Heart, Terminal, Swords } from 'lucide-react';
+import { ChevronLeft, Sword, Shield, Award, Zap, Heart, Terminal, Swords, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface BattleScreenViewProps {
@@ -21,6 +21,9 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
   const [isBattleOver, setIsBattleOver] = useState(false);
   const [winner, setWinner] = useState<'player' | 'enemy' | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [initError, setInitError] = useState<string | null>(null);
+
+  const turnInProgress = useRef(false);
 
   useEffect(() => {
     initializeBattle();
@@ -28,9 +31,18 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
 
   const initializeBattle = async () => {
     setIsInitializing(true);
+    setInitError(null);
+    setBattleLog(["Iniciando protocolos de combate..."]);
+
     try {
         const pUnits: CombatUnit[] = [];
-        const activeSquad = squad.filter(u => u !== null);
+        const activeSquad = (squad || []).filter(u => u !== null);
+
+        if (activeSquad.length === 0) {
+            setInitError("No se detectaron unidades activas en tu escuadrón.");
+            setIsInitializing(false);
+            return;
+        }
 
         for (const unit of activeSquad) {
             try {
@@ -51,9 +63,7 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
         }
 
         if (pUnits.length === 0) {
-            addLog("Error: No hay unidades válidas en el escuadrón.");
-            setIsBattleOver(true);
-            setWinner('enemy');
+            setInitError("Fallo al enlazar con las unidades del escuadrón.");
         } else {
             setPlayerUnits(pUnits);
             setEnemyUnits([{
@@ -66,10 +76,11 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
                 position: 0,
                 skills: []
             }]);
-            addLog("Sincronización de combate establecida.");
+            addLog("Enlace de datos completo. Comenzando simulación.");
         }
-    } catch (err) {
+    } catch (err: any) {
         console.error("Initialization error:", err);
+        setInitError("Error crítico de sistema: " + (err.message || "Desconocido"));
     } finally {
         setIsInitializing(false);
     }
@@ -78,17 +89,23 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
   const addLog = (msg: string) => setBattleLog(prev => [msg, ...prev].slice(0, 5));
 
   const processTurn = async () => {
-    if (isBattleOver || playerUnits.length === 0 || enemyUnits.length === 0) return;
+    if (isBattleOver || isInitializing || turnInProgress.current || initError) return;
+
+    const alivePlayers = playerUnits.filter(p => !p.isDead);
+    const aliveEnemies = enemyUnits.filter(e => !e.isDead);
+
+    if (alivePlayers.length === 0 || aliveEnemies.length === 0) return;
+
+    turnInProgress.current = true;
 
     const allUnits = [...playerUnits, ...enemyUnits].filter(u => !u.isDead);
-    if (allUnits.length === 0) return;
-
     const order = BattleService.getTurnOrder(allUnits);
     const actorIdx = turn % order.length;
     const actor = order[actorIdx];
 
     if (!actor || actor.isDead) {
         setTurn(t => t + 1);
+        turnInProgress.current = false;
         return;
     }
 
@@ -131,53 +148,79 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
         }
     }
 
-    // Check Win/Loss immediately after state updates would have applied
-    // (Using functional updates in React, so we check the NEXT state conceptually)
     setTurn(t => t + 1);
     setActiveUnitId(null);
+    turnInProgress.current = false;
   };
 
-  // Monitor Win/Loss Conditions
   useEffect(() => {
-    if (playerUnits.length > 0 && playerUnits.every(p => p.isDead)) {
-        setIsBattleOver(true);
-        setWinner('enemy');
+    if (isInitializing || initError) return;
+
+    const alivePlayers = playerUnits.filter(p => !p.isDead);
+    const aliveEnemies = enemyUnits.filter(e => !e.isDead);
+
+    if (playerUnits.length > 0 && alivePlayers.length === 0) {
+        setTimeout(() => {
+            setIsBattleOver(true);
+            setWinner('enemy');
+        }, 1000);
+    } else if (enemyUnits.length > 0 && aliveEnemies.length === 0) {
+        setTimeout(() => {
+            setIsBattleOver(true);
+            setWinner('player');
+        }, 1000);
     }
-    if (enemyUnits.length > 0 && enemyUnits.every(e => e.isDead)) {
-        setIsBattleOver(true);
-        setWinner('player');
-    }
-  }, [playerUnits, enemyUnits]);
+  }, [playerUnits, enemyUnits, isInitializing, initError]);
 
   useEffect(() => {
-    if (!isBattleOver && !isInitializing && playerUnits.length > 0 && enemyUnits.length > 0) {
-        const timer = setTimeout(processTurn, 1500);
+    if (!isBattleOver && !isInitializing && !initError) {
+        const timer = setTimeout(processTurn, 1200);
         return () => clearTimeout(timer);
     }
-  }, [turn, isBattleOver, isInitializing]);
+  }, [turn, isBattleOver, isInitializing, initError]);
 
   if (isInitializing) {
     return (
         <div className="flex-1 flex flex-col items-center justify-center bg-[#020508] gap-4">
             <Swords size={48} className="text-[#F5C76B] animate-bounce" />
-            <p className="text-[10px] font-black text-white/40 tracking-[0.5em] uppercase">Preparando Simulación...</p>
+            <p className="text-[10px] font-black text-white/40 tracking-[0.5em] uppercase">Estableciendo Conexión...</p>
+        </div>
+    );
+  }
+
+  if (initError) {
+    return (
+        <div className="flex-1 flex flex-col items-center justify-center bg-[#020508] p-8 text-center gap-6">
+            <div className="w-20 h-20 bg-amber-500/10 border border-amber-500/20 rounded-3xl flex items-center justify-center">
+                <AlertTriangle size={40} className="text-amber-400" />
+            </div>
+            <div className="space-y-2">
+                <h2 className="text-white font-black uppercase tracking-widest italic text-lg">Incompatibilidad de Datos</h2>
+                <p className="text-white/40 text-[10px] uppercase tracking-wider leading-relaxed">{initError}</p>
+            </div>
+            <button
+                onClick={onBack}
+                className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors"
+            >
+                Regresar al Cuartel
+            </button>
         </div>
     );
   }
 
   return (
     <div className="flex flex-col h-full bg-[#020508] overflow-hidden relative">
-      <div className="p-4 flex items-center justify-between border-b border-white/5 bg-[#0B1A2A] z-10 shadow-2xl">
+      <div className="p-4 flex items-center justify-between border-b border-white/5 bg-[#0B1A2A] z-10 shadow-2xl shrink-0">
          <button onClick={onBack} className="text-white/40 hover:text-white flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors"><ChevronLeft size={16} /> Retirada</button>
          <div className="flex flex-col items-center">
-            <span className="text-[10px] text-[#F5C76B] font-black uppercase tracking-[0.4em] italic">Sector 18-4</span>
-            <span className="text-[9px] text-white/20 font-mono tracking-widest mt-0.5 uppercase">Turno Actual: {turn + 1}</span>
+            <span className="text-[10px] text-[#F5C76B] font-black uppercase tracking-[0.4em] italic">Zona Hostil</span>
+            <span className="text-[9px] text-white/20 font-mono tracking-widest mt-0.5 uppercase">Sync Cycle: {turn + 1}</span>
          </div>
          <div className="w-20"></div>
       </div>
 
       <div className="flex-1 relative overflow-hidden flex flex-col items-center justify-center py-6">
-         <div className="absolute inset-0 bg-gradient-to-b from-blue-900/10 via-transparent to-red-900/10" />
+         <div className="absolute inset-0 bg-gradient-to-b from-blue-900/10 via-transparent to-red-900/10 pointer-events-none" />
 
          <div className="flex-1 w-full flex items-center justify-center gap-12 relative">
             {enemyUnits.map(enemy => (
@@ -279,15 +322,15 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
                     </div>
                     <div className="space-y-2">
                       <h2 className="text-4xl font-black text-white tracking-[0.4em] uppercase italic">Victoria</h2>
-                      <p className="text-[#F5C76B] text-[10px] font-black tracking-[0.5em] uppercase">Misión Cumplida</p>
+                      <p className="text-[#F5C76B] text-[10px] font-black tracking-[0.5em] uppercase">Objetivo Cumplido</p>
                     </div>
                   </>
                 ) : (
                   <>
                     <Shield size={80} className="text-red-500 opacity-20" />
                     <div className="space-y-2">
-                      <h2 className="text-4xl font-black text-white tracking-[0.4em] uppercase italic text-glow-blue">Derrota</h2>
-                      <p className="text-red-500/40 text-[10px] font-black tracking-[0.5em] uppercase">Conexión Perdida</p>
+                      <h2 className="text-4xl font-black text-white tracking-[0.4em] uppercase italic">Derrota</h2>
+                      <p className="text-red-500/40 text-[10px] font-black tracking-[0.5em] uppercase">Incompatibilidad de Combate</p>
                     </div>
                   </>
                 )}

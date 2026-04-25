@@ -79,6 +79,7 @@ export default function Applet() {
                  onNavigate={actions.navigateTo}
                  onAssignToParty={actions.handleAssignPartySlot}
                  onRemoveFromParty={(idx) => actions.handleAssignPartySlot(idx, null)}
+                 onSelectUnit={actions.handleSelectUnit}
                />;
       case 'gacha':
         return <GachaView

@@ -18,7 +18,7 @@ import {
   ShieldAlert,
   Star,
   Trash2,
-  Scale
+  AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -34,6 +34,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
   const [isEvolving, setIsEvolving] = useState(false);
   const [evolvedJobName, setEvolvedJobName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [nextJobs, setNextJobs] = useState<any[]>([]);
 
   useEffect(() => {
@@ -42,16 +43,27 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
 
   const loadData = async () => {
     setLoading(true);
+    setError(null);
     try {
+      if (!unitId) throw new Error("ID de unidad no válido");
+
       const details = await UnitService.getUnitDetails(unitId);
+      if (!details || !details.unit) throw new Error("No se pudo encontrar la unidad");
+
       setData(details);
 
       if (details.job) {
-        const paths = await UnitService.getNextJobs(details.job.id);
-        setNextJobs(paths);
+        try {
+            const paths = await UnitService.getNextJobs(details.job.id);
+            setNextJobs(paths || []);
+        } catch (jobErr) {
+            console.warn("Could not fetch next jobs:", jobErr);
+            setNextJobs([]);
+        }
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error("UnitDetails Error:", e);
+      setError(e.message || "Error desconocido al cargar unidad");
     } finally {
       setLoading(false);
     }
@@ -92,9 +104,28 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
     }
   };
 
-  if (loading || !data) return (
-    <div className="flex-1 flex items-center justify-center bg-[#0B1A2A]">
-      <div className="w-10 h-10 border-2 border-t-[#F5C76B] border-white/5 rounded-full animate-spin"></div>
+  if (loading) return (
+    <div className="flex-1 flex flex-col items-center justify-center bg-[#0B1A2A] gap-4">
+      <div className="w-12 h-12 border-2 border-t-[#F5C76B] border-white/5 rounded-full animate-spin"></div>
+      <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em]">Sincronizando...</p>
+    </div>
+  );
+
+  if (error || !data) return (
+    <div className="flex-1 flex flex-col items-center justify-center bg-[#0B1A2A] p-8 text-center gap-6">
+       <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-center justify-center">
+          <AlertCircle size={40} className="text-red-400" />
+       </div>
+       <div className="space-y-2">
+          <h2 className="text-white font-black uppercase tracking-widest italic text-lg">Falla de Enlace</h2>
+          <p className="text-white/40 text-[10px] uppercase tracking-wider leading-relaxed">{error || "La unidad solicitada no existe en los registros."}</p>
+       </div>
+       <button
+        onClick={() => onNavigate('party')}
+        className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors"
+       >
+        Regresar a Formación
+       </button>
     </div>
   );
 
@@ -115,14 +146,12 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
             <span className="text-[10px] font-black text-[#F5C76B] tracking-widest uppercase opacity-60">{job.name}</span>
           </div>
         </div>
-        <div className="flex gap-2">
-            <button
-            onClick={handleRelease}
-            className="p-2 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 hover:bg-red-500/20 transition-colors"
-            >
-            <Trash2 size={18} />
-            </button>
-        </div>
+        <button
+          onClick={handleRelease}
+          className="p-2 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 hover:bg-red-500/20 transition-colors"
+        >
+          <Trash2 size={18} />
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar pb-10">
