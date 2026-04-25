@@ -1,8 +1,9 @@
--- Seeding Initial Game Data
+-- Fresh Seed Data for v1.0.0
 
 -- 1. Game Config
 INSERT INTO game_configs (version, is_active, config_data)
-VALUES ('1.0.0', true, '{"description": "Initial Release"}');
+VALUES ('1.0.0', true, '{"description": "Lanzamiento Oficial"}')
+ON CONFLICT DO NOTHING;
 
 -- 2. Jobs
 INSERT INTO jobs (id, version, name, tier, parent_job_id, stat_modifiers, allowed_weapons, skills_unlocked, passive_effects, evolution_requirements)
