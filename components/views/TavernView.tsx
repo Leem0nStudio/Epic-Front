@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, UserPlus, Clock, Star, Coins, Sword, Heart, Zap, Trash2 } from 'lucide-react';
+import { ChevronLeft, UserPlus, Clock, Star, Sword, Heart, Zap, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { RecruitmentService } from '@/lib/services/recruitment-service';
 
@@ -13,7 +13,7 @@ interface TavernViewProps {
 }
 
 export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
-  const [now, setNow] = useState(0);
+  const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
     setNow(Date.now());
@@ -31,6 +31,8 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
     }
   };
 
+  const currentTime = now || Date.now();
+
   return (
     <div className="flex flex-col h-full bg-[#0B1A2A] p-4 overflow-hidden relative">
       <div className="absolute inset-0 bg-gradient-to-b from-amber-900/10 via-transparent to-transparent pointer-events-none" />
@@ -46,8 +48,8 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
         {saveData.tavernSlots.map((slot: any) => {
           const unit = slot.unit_data;
           const availableAt = new Date(slot.available_at).getTime();
-          const isReady = now >= availableAt;
-          const timeLeft = Math.max(0, Math.floor((availableAt - now) / 1000));
+          const isReady = currentTime >= availableAt;
+          const timeLeft = Math.max(0, Math.floor((availableAt - currentTime) / 1000));
 
           const hours = Math.floor(timeLeft / 3600);
           const mins = Math.floor((timeLeft % 3600) / 60);
