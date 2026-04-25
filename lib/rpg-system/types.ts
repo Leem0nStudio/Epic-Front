@@ -1,8 +1,4 @@
-export type Affinity = 'physical' | 'magic' | 'support' | 'ranged';
-export type Tier = 0 | 1 | 2 | 3;
-export type WeaponCategory = 'sword' | 'staff' | 'bow' | 'dagger' | 'none';
-
-export interface BaseStats {
+export interface UnitStats {
   hp: number;
   atk: number;
   def: number;
@@ -11,45 +7,51 @@ export interface BaseStats {
   agi: number;
 }
 
-export interface EvolutionRequirement {
+export type BaseStats = UnitStats;
+export type Affinity = 'physical' | 'magic' | 'support' | 'ranged';
+export type WeaponCategory = 'sword' | 'staff' | 'dagger' | 'bow' | 'spear' | 'shield';
+
+export interface EvolutionRequirements {
   minLevel: number;
   materials: { itemId: string; amount: number }[];
   currencyCost: number;
 }
 
-export interface GameSkill {
+export interface SkillUnlocked {
   id: string;
   name: string;
-  type: 'basic' | 'active' | 'burst' | 'ultimate' | 'passive';
-  powerMod: number; // Multiplier on attack
+  type: 'basic' | 'active' | 'burst' | 'ultimate';
+  powerMod: number;
   description: string;
 }
 
 export interface JobDefinition {
   id: string;
+  version: string;
   name: string;
-  tier: Tier;
+  tier: number;
   parentJobId: string | null;
-  statModifiers: BaseStats; // Multipliers (e.g. 1.2 = +20%)
-  allowedWeapons: WeaponCategory[];
-  skillsUnlocked: GameSkill[];
+  statModifiers: UnitStats;
+  allowedWeapons: string[];
+  skillsUnlocked: SkillUnlocked[];
   passiveEffects: string[];
-  evolutionRequirements: EvolutionRequirement;
+  evolutionRequirements: EvolutionRequirements;
 }
 
-export interface RPGUnit {
+export interface UnitData {
   id: string;
+  player_id: string;
   name: string;
   level: number;
-  baseStats: BaseStats; // Starting stats at level 1
-  growthRates: BaseStats; // Added per level
+  baseStats: UnitStats;
+  growthRates: UnitStats;
   affinity: Affinity;
-  trait?: string; // Optional modifier name
+  trait?: string;
   currentJobId: string;
   unlockedJobs: string[];
-  
-  // ==== BUILD COMPONENTS (GACHA) ====
-  equippedWeaponId: string | null;
-  equippedCardsIds: string[]; // e.g. Max 4
-  equippedSkillsIds: string[]; // e.g. Max 3 active skills
+  equippedWeaponId?: string;
+  equippedCardIds: string[];
+  equippedSkillIds: string[];
 }
+
+export type RPGUnit = UnitData;
