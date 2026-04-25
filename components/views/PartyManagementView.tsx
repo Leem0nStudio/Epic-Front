@@ -10,9 +10,17 @@ interface PartyManagementViewProps {
   onNavigate: (view: any) => void;
   onAssignToParty: (slotIndex: number, unitId: string | null) => void;
   onRemoveFromParty: (slotIndex: number) => void;
+  onSelectUnit: (unitId: string) => void;
 }
 
-export function PartyManagementView({ saveData, activePartyUnits, onNavigate, onAssignToParty, onRemoveFromParty }: PartyManagementViewProps) {
+export function PartyManagementView({
+    saveData,
+    activePartyUnits,
+    onNavigate,
+    onAssignToParty,
+    onRemoveFromParty,
+    onSelectUnit
+}: PartyManagementViewProps) {
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const partySizeLimit = saveData.profile.party_size_limit;
 
@@ -32,14 +40,14 @@ export function PartyManagementView({ saveData, activePartyUnits, onNavigate, on
     <div className="flex flex-col h-full bg-[#0B1A2A] p-4 overflow-hidden relative">
       <div className="absolute inset-0 bg-gradient-to-b from-blue-900/5 to-transparent pointer-events-none" />
 
-      <div className="flex items-center gap-4 mb-6 z-10">
+      <div className="flex items-center gap-4 mb-6 z-10 shrink-0">
         <button onClick={() => onNavigate('home')} className="p-2 bg-black/40 border border-white/10 rounded-xl text-white/60 hover:text-white transition-colors">
           <ChevronLeft size={20} />
         </button>
         <h1 className="text-xl font-black text-white tracking-widest uppercase italic">Formación de Combate</h1>
       </div>
 
-      <div className="bg-black/40 backdrop-blur-md border border-white/5 p-6 rounded-2xl shadow-2xl mb-6 relative z-10">
+      <div className="bg-black/40 backdrop-blur-md border border-white/5 p-6 rounded-2xl shadow-2xl mb-6 relative z-10 shrink-0">
          <div className="flex justify-between items-center mb-4">
             <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Escuadrón Activo</h3>
             <span className="text-[10px] font-black text-[#F5C76B]">{activePartyUnits.filter(u => u).length}/{partySizeLimit}</span>
@@ -91,7 +99,7 @@ export function PartyManagementView({ saveData, activePartyUnits, onNavigate, on
             exit={{ opacity: 0, y: 20 }}
             className="flex-1 flex flex-col gap-4 overflow-hidden z-10"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between shrink-0">
               <h3 className="text-[10px] font-black text-[#F5C76B] uppercase tracking-widest flex items-center gap-2">
                 <ArrowRight size={12} /> Asignar Posición {selectedSlot + 1}
               </h3>
@@ -120,14 +128,14 @@ export function PartyManagementView({ saveData, activePartyUnits, onNavigate, on
                       <img src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png" className="w-[180%] transform translate-y-2" style={{imageRendering: 'pixelated'}} />
                     </div>
                     <div className="flex-1 flex flex-col">
-                      <span className="font-black text-white uppercase text-sm tracking-wider">{unit.name}</span>
+                      <span className="font-black text-white uppercase text-sm tracking-wider truncate max-w-[120px]">{unit.name}</span>
                       <div className="flex gap-4 mt-1">
                         <div className="flex items-center gap-1 text-[10px] text-white/40 font-bold"><Sword size={10} className="text-[#F5C76B]" /> {unit.base_stats.atk}</div>
                         <div className="flex items-center gap-1 text-[10px] text-white/40 font-bold"><Heart size={10} className="text-red-400" /> {unit.base_stats.hp}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-[8px] font-black text-white/40 uppercase mb-1">{unit.current_job_id}</p>
+                      <p className="text-[8px] font-black text-white/40 uppercase mb-1 truncate max-w-[60px]">{unit.current_job_id}</p>
                       <Plus size={16} className="text-[#F5C76B]" />
                     </div>
                  </motion.div>
@@ -141,29 +149,29 @@ export function PartyManagementView({ saveData, activePartyUnits, onNavigate, on
             animate={{ opacity: 1 }}
             className="flex-1 flex flex-col gap-4 overflow-hidden z-10"
           >
-             <h3 className="text-[10px] font-black text-white/40 tracking-[0.2em] uppercase">Reserva General ({saveData.roster.length})</h3>
+             <h3 className="text-[10px] font-black text-white/40 tracking-[0.2em] uppercase shrink-0">Reserva General ({saveData.roster.length})</h3>
              <div className="flex-1 overflow-y-auto pr-1 space-y-2 custom-scrollbar">
                 {saveData.roster.map((unit: any) => (
                     <motion.div
                       key={unit.id}
                       whileHover={{ scale: 1.02 }}
-                      onClick={() => { saveData.selectedUnitId = unit.id; onNavigate('unit_details'); }}
+                      onClick={() => onSelectUnit(unit.id)}
                       className="bg-black/40 border border-white/5 p-3 rounded-2xl flex items-center gap-4 hover:border-white/10 cursor-pointer group"
                     >
                         <div className="w-14 h-14 bg-black/60 border border-white/10 rounded-xl flex items-center justify-center overflow-hidden">
                           <img src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png" className="w-[180%] transform translate-y-2" style={{imageRendering: 'pixelated'}} />
                         </div>
-                        <div className="flex-1 flex flex-col">
+                        <div className="flex-1 flex flex-col min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-black text-white uppercase text-sm tracking-wider">{unit.name}</span>
-                            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-sm border ${rarityColor('r')} uppercase`}>R</span>
+                            <span className="font-black text-white uppercase text-sm tracking-wider truncate flex-1">{unit.name}</span>
+                            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-sm border ${rarityColor('r')} uppercase shrink-0`}>R</span>
                           </div>
                           <div className="flex gap-3 mt-1 items-center">
                             <span className="text-[10px] font-black text-[#F5C76B] italic">LV.{unit.level}</span>
-                            <span className="text-[9px] font-bold text-white/40 uppercase tracking-tighter">{unit.current_job_id}</span>
+                            <span className="text-[9px] font-bold text-white/40 uppercase tracking-tighter truncate">{unit.current_job_id}</span>
                           </div>
                         </div>
-                        <ArrowRight size={18} className="text-white/10 group-hover:text-[#F5C76B] transition-colors" />
+                        <ArrowRight size={18} className="text-white/10 group-hover:text-[#F5C76B] transition-colors shrink-0" />
                     </motion.div>
                 ))}
              </div>
