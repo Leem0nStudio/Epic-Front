@@ -7,13 +7,15 @@ VALUES ('1.0.0', true, '{"description": "Initial Release"}');
 -- 2. Jobs
 INSERT INTO jobs (id, version, name, tier, parent_job_id, stat_modifiers, allowed_weapons, skills_unlocked, passive_effects, evolution_requirements)
 VALUES
-('novice', '1.0.0', 'Novice', 0, NULL, '{"hp": 1.0, "atk": 1.0, "def": 1.0, "matk": 1.0, "mdef": 1.0, "agi": 1.0}', '{"dagger", "sword"}', '[]', '[]', '{"minLevel": 1, "currencyCost": 0, "materials": []}'),
-('swordman', '1.0.0', 'Swordman', 1, 'novice', '{"hp": 1.2, "atk": 1.15, "def": 1.1, "matk": 0.8, "mdef": 0.9, "agi": 1.0}', '{"sword", "dagger"}', '[]', '[]', '{"minLevel": 10, "currencyCost": 1000, "materials": []}'),
-('knight', '1.0.0', 'Knight', 2, 'swordman', '{"hp": 1.5, "atk": 1.3, "def": 1.4, "matk": 0.7, "mdef": 1.0, "agi": 0.9}', '{"sword"}', '[]', '[]', '{"minLevel": 40, "currencyCost": 5000, "materials": [{"itemId": "iron_ore", "amount": 10}]}'),
-('rune_knight', '1.0.0', 'Rune Knight', 3, 'knight', '{"hp": 2.0, "atk": 1.8, "def": 1.6, "matk": 1.2, "mdef": 1.3, "agi": 1.1}', '{"sword"}', '[]', '[]', '{"minLevel": 70, "currencyCost": 50000, "materials": [{"itemId": "rare_scale", "amount": 5}]}'),
-('mage', '1.0.0', 'Mage', 1, 'novice', '{"hp": 0.8, "atk": 0.7, "def": 0.8, "matk": 1.4, "mdef": 1.3, "agi": 0.9}', '{"staff", "dagger"}', '[]', '[]', '{"minLevel": 10, "currencyCost": 1000, "materials": []}'),
-('wizard', '1.0.0', 'Wizard', 2, 'mage', '{"hp": 0.85, "atk": 0.6, "def": 0.8, "matk": 1.8, "mdef": 1.5, "agi": 1.0}', '{"staff"}', '[]', '[]', '{"minLevel": 40, "currencyCost": 5000, "materials": [{"itemId": "magic_crystal", "amount": 10}]}'),
-('warlock', '1.0.0', 'Warlock', 3, 'wizard', '{"hp": 1.0, "atk": 0.5, "def": 1.0, "matk": 2.5, "mdef": 2.0, "agi": 1.1}', '{"staff"}', '[]', '[]', '{"minLevel": 70, "currencyCost": 50000, "materials": [{"itemId": "rare_meteor", "amount": 5}]}');
+('novice', '1.0.0', 'Novice', 0, NULL, '{"hp": 1.0, "atk": 1.0, "def": 1.0, "matk": 1.0, "mdef": 1.0, "agi": 1.0}', '{"dagger", "sword"}', '[]', '{}', '{"minLevel": 1, "currencyCost": 0, "materials": []}'),
+('swordman', '1.0.0', 'Swordman', 1, 'novice', '{"hp": 1.2, "atk": 1.15, "def": 1.1, "matk": 0.8, "mdef": 0.9, "agi": 1.0}', '{"sword", "dagger"}', '[]', '{}', '{"minLevel": 10, "currencyCost": 1000, "materials": []}'),
+('knight', '1.0.0', 'Knight', 2, 'swordman', '{"hp": 1.5, "atk": 1.3, "def": 1.4, "matk": 0.7, "mdef": 1.0, "agi": 0.9}', '{"sword"}', '[]', '{}', '{"minLevel": 40, "currencyCost": 5000, "materials": [{"itemId": "iron_ore", "amount": 10}]}'),
+('rune_knight', '1.0.0', 'Rune Knight', 3, 'knight', '{"hp": 2.0, "atk": 1.8, "def": 1.6, "matk": 1.2, "mdef": 1.3, "agi": 1.1}', '{"sword"}', '[]', '{}', '{"minLevel": 70, "currencyCost": 50000, "materials": [{"itemId": "rare_scale", "amount": 5}]}'),
+('mage', '1.0.0', 'Mage', 1, 'novice', '{"hp": 0.8, "atk": 0.7, "def": 0.8, "matk": 1.4, "mdef": 1.3, "agi": 0.9}', '{"staff", "dagger"}', '[]', '{}', '{"minLevel": 10, "currencyCost": 1000, "materials": []}'),
+('wizard', '1.0.0', 'Wizard', 2, 'mage', '{"hp": 0.85, "atk": 0.6, "def": 0.8, "matk": 1.8, "mdef": 1.5, "agi": 1.0}', '{"staff"}', '[]', '{}', '{"minLevel": 40, "currencyCost": 5000, "materials": [{"itemId": "magic_crystal", "amount": 10}]}'),
+('warlock', '1.0.0', 'Warlock', 3, 'wizard', '{"hp": 1.0, "atk": 0.5, "def": 1.0, "matk": 2.5, "mdef": 2.0, "agi": 1.1}', '{"staff"}', '[]', '{}', '{"minLevel": 70, "currencyCost": 50000, "materials": [{"itemId": "rare_meteor", "amount": 5}]}'),
+('crusader', '1.0.0', 'Crusader', 2, 'swordman', '{"hp": 1.6, "atk": 1.1, "def": 1.6, "matk": 1.1, "mdef": 1.3, "agi": 0.8}', '{"sword", "shield"}', '[]', '{}', '{"minLevel": 40, "currencyCost": 5000, "materials": [{"itemId": "holy_water", "amount": 10}]}'),
+('royal_guard', '1.0.0', 'Royal Guard', 3, 'crusader', '{"hp": 2.2, "atk": 1.5, "def": 2.0, "matk": 1.4, "mdef": 1.6, "agi": 1.0}', '{"sword", "spear"}', '[]', '{}', '{"minLevel": 70, "currencyCost": 50000, "materials": [{"itemId": "divine_shield_fragment", "amount": 5}]}');
 
 -- 3. Skills
 INSERT INTO skills (id, version, name, description, cooldown, effect, scaling, rarity)
@@ -35,12 +37,3 @@ VALUES
 ('wpn_blade', '1.0.0', 'Iron Blade', 'sword', 'common', '{"atk": 50, "def": 5}', '{}'),
 ('wpn_wand', '1.0.0', 'Apprentice Wand', 'staff', 'common', '{"matk": 60, "mdef": 10}', '{}'),
 ('wpn_murasame', '1.0.0', 'Murasame', 'sword', 'epic', '{"atk": 250, "agi": 40}', '{"bleed": 0.25}');
--- Add Crusader branching path
-INSERT INTO jobs (id, version, name, tier, parent_job_id, stat_modifiers, allowed_weapons, skills_unlocked, passive_effects, evolution_requirements)
-VALUES
-('crusader', '1.0.0', 'Crusader', 2, 'swordman', '{"hp": 1.6, "atk": 1.1, "def": 1.6, "matk": 1.1, "mdef": 1.3, "agi": 0.8}', '{"sword", "shield"}', '[]', '[]', '{"minLevel": 40, "currencyCost": 5000, "materials": [{"itemId": "holy_water", "amount": 10}]}');
-
--- Add Job 3 for Crusader
-INSERT INTO jobs (id, version, name, tier, parent_job_id, stat_modifiers, allowed_weapons, skills_unlocked, passive_effects, evolution_requirements)
-VALUES
-('royal_guard', '1.0.0', 'Royal Guard', 3, 'crusader', '{"hp": 2.2, "atk": 1.5, "def": 2.0, "matk": 1.4, "mdef": 1.6, "agi": 1.0}', '{"sword", "spear"}', '[]', '[]', '{"minLevel": 70, "currencyCost": 50000, "materials": [{"itemId": "divine_shield_fragment", "amount": 5}]}');

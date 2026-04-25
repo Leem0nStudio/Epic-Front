@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { ChevronLeft, Sparkles, Diamond, Coins, Star } from 'lucide-react';
 import { GachaService } from '@/lib/services/gacha-service';
-import { ChevronLeft, Diamond, Sparkles, Box, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface GachaViewProps {
@@ -11,77 +11,172 @@ interface GachaViewProps {
 }
 
 export function GachaView({ profile, onNavigate }: GachaViewProps) {
+  const [results, setResults] = useState<any[]>([]);
   const [isPulling, setIsPulling] = useState(false);
-  const [results, setResults] = useState<any[] | null>(null);
-  const [currencyType, setCurrencyType] = useState<'soft' | 'premium'>('soft');
 
-  const handlePull = async (amount: number) => {
-    const cost = amount === 10 ? 9 : amount;
-    const price = currencyType === 'premium' ? cost * 50 : cost * 100;
-    const balance = currencyType === 'premium' ? profile.premium_currency : profile.currency;
-    if (balance < price) { alert("Moneda insuficiente"); return; }
-    setIsPulling(true); setResults(null);
+  const handlePull = async (amount: number, currency: 'soft' | 'premium') => {
+    setIsPulling(true);
     try {
-      const rewards = await GachaService.pull(amount, currencyType);
-      setResults(rewards);
-    } catch (e: any) { alert(e.message || "Error."); } finally { setIsPulling(false); }
+      const items = await GachaService.pull(amount, currency);
+      setResults(items);
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setIsPulling(false);
+    }
   };
 
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'legendary': return 'text-[#ffaa00] drop-shadow-[0_0_8px_#ffaa00]';
-      case 'epic': return 'text-[#cc44ff] drop-shadow-[0_0_8px_#cc44ff]';
-      case 'rare': return 'text-[#44aaff]';
-      default: return 'text-[#a68a68]';
+  const rarityColor = (rarity: string) => {
+    switch (rarity?.toLowerCase()) {
+      case 'legendary': return 'from-yellow-400 to-orange-600 shadow-orange-500/50';
+      case 'epic': return 'from-purple-400 to-indigo-600 shadow-purple-500/50';
+      case 'rare': return 'from-blue-400 to-cyan-600 shadow-blue-500/50';
+      default: return 'from-gray-400 to-gray-600 shadow-gray-500/50';
     }
   };
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300 overflow-hidden">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-            <button onClick={() => results ? setResults(null) : onNavigate('home')} className="p-2 bg-[#382618] border border-[#5a4227] rounded-full hover:bg-[#4a3423] transition-colors"><ChevronLeft size={20} /></button>
-            <h1 className="text-xl font-serif font-bold text-[#eacf9b] tracking-wider uppercase">Forja</h1>
+    <div className="flex flex-col h-full bg-[#0B1A2A] p-4 overflow-hidden relative">
+      <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 via-transparent to-transparent pointer-events-none" />
+
+      <div className="flex items-center justify-between mb-8 z-10">
+        <div className="flex items-center gap-4">
+          <button onClick={() => onNavigate('home')} className="p-2 bg-black/40 border border-white/10 rounded-xl text-white/60 hover:text-white transition-colors">
+            <ChevronLeft size={20} />
+          </button>
+          <h1 className="text-xl font-black text-white tracking-widest uppercase italic">Invocación</h1>
+        </div>
+        <div className="flex gap-4">
+          <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5">
+            <Coins size={14} className="text-[#F5C76B]" />
+            <span className="text-xs font-bold text-white">{profile.currency}</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5">
+            <Diamond size={14} className="text-cyan-400" />
+            <span className="text-xs font-bold text-white">{profile.premium_currency}</span>
+          </div>
         </div>
       </div>
-      {!results ? (
-        <div className="flex-1 flex flex-col gap-6 items-center">
-            <div className="w-full flex bg-black/40 rounded-lg p-1 border border-[#382618]">
-                <button onClick={() => setCurrencyType('soft')} className={`flex-1 py-2 text-[10px] font-bold uppercase rounded ${currencyType === 'soft' ? 'bg-[#382618] text-[#eacf9b]' : 'text-[#a68a68]'}`}>Zeny</button>
-                <button onClick={() => setCurrencyType('premium')} className={`flex-1 py-2 text-[10px] font-bold uppercase rounded ${currencyType === 'premium' ? 'bg-[#c79a5d] text-[#1a110a]' : 'text-[#a68a68]'}`}>Gem</button>
-            </div>
-            <div className="flex-1 flex flex-col justify-center w-full gap-4">
-                 <div className="bg-[#1a110a] border border-[#382618] p-4 rounded-lg flex flex-col items-center">
-                    <h4 className="text-[10px] text-[#a68a68] font-bold uppercase mb-2">Probabilidades</h4>
-                    <div className="grid grid-cols-4 gap-4 w-full text-center">
-                        <div><span className="block text-[#ffaa00] font-mono text-xs">2%</span><span className="text-[8px] text-[#a68a68] uppercase font-bold">LEG</span></div>
-                        <div><span className="block text-[#cc44ff] font-mono text-xs">10%</span><span className="text-[8px] text-[#a68a68] uppercase font-bold">EPIC</span></div>
-                        <div><span className="block text-[#44aaff] font-mono text-xs">35%</span><span className="text-[8px] text-[#a68a68] uppercase font-bold">RARE</span></div>
-                        <div><span className="block text-[#a68a68] font-mono text-xs">53%</span><span className="text-[8px] text-[#a68a68] uppercase font-bold">COM</span></div>
+
+      <div className="flex-1 flex flex-col items-center justify-center relative z-10">
+        <AnimatePresence mode="wait">
+          {results.length > 0 ? (
+            <motion.div
+              key="results"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.1 }}
+              className="grid grid-cols-5 gap-3 w-full max-w-md bg-black/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-2xl"
+            >
+              <div className="col-span-5 flex items-center justify-between mb-2">
+                <h2 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Resultados de Invocación</h2>
+                <button onClick={() => setResults([])} className="text-[10px] font-black text-[#F5C76B] uppercase">Cerrar</button>
+              </div>
+              {results.map((item, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div className={`w-full aspect-square rounded-xl bg-gradient-to-br ${rarityColor(item.item_rarity)} p-0.5 shadow-lg`}>
+                    <div className="w-full h-full bg-black/40 rounded-[10px] flex items-center justify-center relative overflow-hidden">
+                      <Sparkles size={16} className="text-white/60" />
+                      <div className="absolute inset-0 bg-white/5 animate-pulse" />
                     </div>
-                 </div>
+                  </div>
+                  <span className="text-[7px] font-black text-white/60 uppercase truncate w-full text-center tracking-tighter">{item.item_name}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center">
+              <motion.div
+                animate={{
+                  scale: [1, 1.05, 1],
+                  rotate: [0, 2, -2, 0]
+                }}
+                transition={{ duration: 5, repeat: Infinity }}
+                className="w-48 h-48 relative flex items-center justify-center mb-12"
+              >
+                <div className="absolute inset-0 bg-cyan-500/10 blur-[60px] rounded-full" />
+                <Sparkles size={120} className="text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]" />
+              </motion.div>
+
+              <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={isPulling}
+                  onClick={() => handlePull(1, 'soft')}
+                  className="bg-black/40 backdrop-blur-md border border-white/5 p-6 rounded-3xl flex flex-col items-center gap-3 hover:bg-white/5 transition-colors relative overflow-hidden group"
+                >
+                  <div className="absolute top-0 inset-x-0 h-1 bg-[#F5C76B]/20" />
+                  <Coins size={24} className="text-[#F5C76B]" />
+                  <div className="text-center">
+                    <p className="text-[10px] font-black text-white/40 tracking-widest mb-1">NORMAL</p>
+                    <p className="text-lg font-black text-white">x1</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-2 opacity-60">
+                    <Coins size={12} className="text-[#F5C76B]" />
+                    <span className="text-xs font-bold text-white">100</span>
+                  </div>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={isPulling}
+                  onClick={() => handlePull(10, 'premium')}
+                  className="bg-gradient-to-br from-[#1a1c2e] to-[#0B1A2A] border border-cyan-500/20 p-6 rounded-3xl flex flex-col items-center gap-3 hover:border-cyan-500/40 transition-all relative overflow-hidden group shadow-xl"
+                >
+                  <div className="absolute top-0 inset-x-0 h-1 bg-cyan-500/40" />
+                  <Diamond size={24} className="text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)]" />
+                  <div className="text-center">
+                    <p className="text-[10px] font-black text-cyan-400/60 tracking-widest mb-1">PREMIUM</p>
+                    <p className="text-lg font-black text-white">x10</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <Diamond size={12} className="text-cyan-400" />
+                    <span className="text-xs font-bold text-white">450</span>
+                    <span className="text-[8px] font-black text-cyan-400 bg-cyan-500/10 px-1 rounded-sm ml-1">-10%</span>
+                  </div>
+                </motion.button>
+              </div>
+
+              <div className="mt-12 flex flex-col items-center gap-2">
+                <div className="flex items-center gap-3 text-white/40">
+                   <div className="h-[1px] w-12 bg-white/5" />
+                   <span className="text-[9px] font-black tracking-[0.4em] uppercase">Garantía Pity</span>
+                   <div className="h-[1px] w-12 bg-white/5" />
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full border border-white/5">
+                     <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                     <span className="text-[8px] font-black text-white/60 tracking-wider">ÉPICO EN: <span className="text-purple-400">10</span></span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full border border-white/5">
+                     <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                     <span className="text-[8px] font-black text-white/60 tracking-wider">UR EN: <span className="text-orange-400">80</span></span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="w-full flex gap-4 p-4 mb-2">
-                <button disabled={isPulling} onClick={() => handlePull(1)} className="flex-1 bg-[#1a110a] border border-[#5a4227] p-4 rounded-lg uppercase text-xs font-bold text-[#eacf9b]">x1</button>
-                <button disabled={isPulling} onClick={() => handlePull(10)} className="flex-1 bg-[#c79a5d] p-4 rounded-lg uppercase text-xs font-black text-[#1a110a]">x10</button>
-            </div>
-        </div>
-      ) : (
-        <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 grid grid-cols-2 sm:grid-cols-5 gap-3 p-2 overflow-y-auto">
-                <AnimatePresence>
-                    {results.map((item, idx) => (
-                        <motion.div key={idx} initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#2c1d11] border border-[#5a4227] p-2 rounded flex flex-col items-center gap-2 text-center">
-                            <span className="text-[9px] font-bold text-[#f2e6d5] uppercase leading-tight">{item.item_name}</span>
-                            <span className={`text-[8px] font-bold uppercase ${getRarityColor(item.item_rarity)}`}>{item.item_rarity}</span>
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
-            </div>
-            <button onClick={() => setResults(null)} className="mt-6 w-full bg-[#382618] py-4 rounded text-[#eacf9b] font-bold uppercase">Confirmar</button>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {isPulling && (
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center flex-col gap-4">
+           <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="w-16 h-16 border-4 border-t-[#F5C76B] border-white/5 rounded-full"
+           />
+           <p className="text-[10px] font-black text-[#F5C76B] tracking-[0.5em] animate-pulse">INVOCANDO...</p>
         </div>
       )}
-      {isPulling && <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center"><h3 className="text-xl font-serif font-bold text-[#eacf9b] animate-pulse">FORJANDO...</h3></div>}
     </div>
   );
 }

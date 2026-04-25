@@ -78,4 +78,23 @@ export class UnitService {
     if (error) throw error;
     return { success: true };
   }
+
+  static async getNextJobs(jobId: string) {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*')
+      .eq('parent_job_id', jobId);
+    if (error) return [];
+    return data;
+  }
+
+  static async releaseUnit(unitId: string) {
+    if (!supabase) return;
+    const { error } = await supabase
+      .from('units')
+      .delete()
+      .eq('id', unitId);
+    if (error) throw error;
+  }
 }
