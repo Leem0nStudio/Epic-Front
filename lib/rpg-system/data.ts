@@ -1,5 +1,9 @@
 import { JobDefinition } from './types';
 
+/**
+ * Static Job Definitions.
+ * Note: In production these should be fetched from the 'jobs' table.
+ */
 export const INITIAL_JOBS: JobDefinition[] = [
     {
         id: 'novice',
@@ -22,10 +26,9 @@ export const INITIAL_JOBS: JobDefinition[] = [
         tier: 1,
         parent_job_id: 'novice',
         stat_modifiers: { hp: 1.2, atk: 1.15, def: 1.1, matk: 0.8, mdef: 0.9, agi: 1.0 },
-        allowed_weapons: ['sword', 'spear'],
+        allowed_weapons: ['sword', 'dagger'],
         skills_unlocked: [
-            { id: 'bash', name: 'Bash', type: 'active', powerMod: 1.5, description: 'Strong physical strike' },
-            { id: 'magnum_break', name: 'Magnum Break', type: 'burst', powerMod: 2.5, description: 'Fire AoE' }
+            { id: 'bash', name: 'Bash', type: 'active', powerMod: 1.5, description: 'Strong physical strike' }
         ],
         passive_effects: ['HP Recovery+10%'],
         evolution_requirements: { minLevel: 10, materials: [], currencyCost: 1000 }
@@ -36,8 +39,8 @@ export const INITIAL_JOBS: JobDefinition[] = [
         name: 'Knight',
         tier: 2,
         parent_job_id: 'swordman',
-        stat_modifiers: { hp: 1.5, atk: 1.4, def: 1.3, matk: 0.7, mdef: 0.8, agi: 1.1 },
-        allowed_weapons: ['sword', 'spear'],
+        stat_modifiers: { hp: 1.5, atk: 1.3, def: 1.4, matk: 0.7, mdef: 1.0, agi: 0.9 },
+        allowed_weapons: ['sword'],
         skills_unlocked: [
             { id: 'bowling_bash', name: 'Bowling Bash', type: 'active', powerMod: 3.0, description: 'Double hit physical' }
         ],
@@ -48,5 +51,19 @@ export const INITIAL_JOBS: JobDefinition[] = [
             currencyCost: 5000,
             requiredJobCore: 'core_knight'
         }
+    },
+    {
+        id: 'mage',
+        version: '1.0.0',
+        name: 'Mage',
+        tier: 1,
+        parent_job_id: 'novice',
+        stat_modifiers: { hp: 0.8, atk: 0.7, def: 0.8, matk: 1.4, mdef: 1.3, agi: 0.9 },
+        allowed_weapons: ['staff', 'dagger'],
+        skills_unlocked: [
+            { id: 'fire_bolt', name: 'Fire Bolt', type: 'active', powerMod: 1.8, description: 'Fire magic strike' }
+        ],
+        passive_effects: [],
+        evolution_requirements: { minLevel: 10, materials: [], currencyCost: 1000 }
     }
 ];

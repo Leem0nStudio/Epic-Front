@@ -20,13 +20,14 @@ import { CombatUnit, SkillDefinition } from '@/lib/types/combat';
 import { BattleManager } from '@/lib/services/battle-manager';
 import { CombatAdapter } from '@/lib/services/combat-adapter';
 import { CampaignService } from '@/lib/services/campaign-service';
-import { Stage } from '@/lib/rpg-system/campaign-types';
+import { AssetHelper } from '@/lib/utils/asset-helper';
+import { GameTooltip } from '@/components/ui/GameTooltip';
 
 interface BattleScreenViewProps {
   squad: any[];
   onBack: () => void;
   onRefresh: () => void;
-  stageId?: string; // New: optional stage context
+  stageId?: string;
 }
 
 export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleScreenViewProps) {
@@ -43,11 +44,9 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
   const [completionData, setCompletionData] = useState<any>(null);
   const [isRecordingResult, setIsRecordingResult] = useState(false);
 
-  // Statistics for Star calculation
-  const [stats, setStats] = useState({
-    totalTurns: 0,
-    playerDeaths: 0
-  });
+  // Visual Effects State
+  const [floatingTexts, setFloatingTexts] = useState<{id: string, x: number, y: number, text: string, color: string}[]>([]);
+  const [activeSkillName, setActiveSkillName] = useState<string | null>(null);
 
   useEffect(() => {
     async function initBattle() {
@@ -64,7 +63,6 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
         );
 
         let enemies: CombatUnit[] = [];
-
         if (stageId) {
             const stage = CampaignService.getStageById(stageId);
             if (stage) {
@@ -72,7 +70,6 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
             }
         }
 
-        // Fallback for demo/testing
         if (enemies.length === 0) {
             enemies = [
               CombatAdapter.createEnemy('e1', 'Limo Débil', 1, 0),
@@ -94,15 +91,30 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
   const runTurn = (actor: CombatUnit, skill: SkillDefinition, manualTargetId?: string) => {
     if (isBattleOver) return;
 
+    setActiveSkillName(skill.name);
+    setTimeout(() => setActiveSkillName(null), 1200);
+
     const { results, updatedUnits } = BattleManager.executeTurn(actor, skill, units, manualTargetId);
+
+    // Process floating numbers
+    results.forEach(res => {
+        if (res.type === 'damage' || res.type === 'heal') {
+            const id = Math.random().toString();
+            setFloatingTexts(prev => [...prev, {
+                id,
+                x: 0, // Handled by CSS relative to target
+                y: 0,
+                text: res.type === 'damage' ? `-${res.value}` : `+${res.value}`,
+                color: res.type === 'damage' ? 'text-red-500' : 'text-green-400'
+            }]);
+            setTimeout(() => setFloatingTexts(prev => prev.filter(t => t.id !== id)), 1000);
+        }
+    });
 
     setBattleLog(prev => [...prev, ...results.map(r => r.log)].slice(-20));
     setUnits(updatedUnits);
     setTurn(prev => prev + 1);
     setTargetId(null);
-
-    // Track total turn cycles (roughly equivalent to rounds or individual unit turns)
-    setStats(prev => ({ ...prev, totalTurns: prev.totalTurns + 1 }));
   };
 
   useEffect(() => {
@@ -112,14 +124,8 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
     const alivePlayers = units.filter(u => u.side === 'player' && !u.isDead);
     const deadPlayers = units.filter(u => u.side === 'player' && u.isDead).length;
 
-    if (aliveEnemies.length === 0) {
-      handleBattleOver('player', deadPlayers);
-      return;
-    }
-    if (alivePlayers.length === 0) {
-      handleBattleOver('enemy', deadPlayers);
-      return;
-    }
+    if (aliveEnemies.length === 0) { handleBattleOver('player', deadPlayers); return; }
+    if (alivePlayers.length === 0) { handleBattleOver('enemy', deadPlayers); return; }
 
     const order = BattleManager.getTurnOrder(units);
     if (order.length === 0) return;
@@ -136,7 +142,7 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
 
     if (currentActor.side === 'enemy') {
       const skill = currentActor.skills[0];
-      const timer = setTimeout(() => runTurn(currentActor, skill), 1000);
+      const timer = setTimeout(() => runTurn(currentActor, skill), 1500);
       return () => clearTimeout(timer);
     }
   }, [units, turn, isInitializing, isBattleOver, initError]);
@@ -144,51 +150,44 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
   const handleBattleOver = async (winner: 'player' | 'enemy', deaths: number) => {
     setIsBattleOver(true);
     setWinner(winner);
-
     if (winner === 'player' && stageId) {
         setIsRecordingResult(true);
         try {
-            // Stats for star calculation: total turns taken by player/enemy
-            // simplified: we use the 'round' count for turn limits in stars
-            const result = await CampaignService.completeStage(stageId, {
-                turns: round,
-                deaths: deaths
-            });
+            const result = await CampaignService.completeStage(stageId, { turns: round, deaths: deaths });
             setCompletionData(result);
-        } catch (e) {
-            console.error("Failed to record stage completion:", e);
-        } finally {
-            setIsRecordingResult(false);
-        }
+        } catch (e) { console.error(e); } finally { setIsRecordingResult(false); }
     }
   };
-
-  if (isInitializing) {
-    return (
-        <div className="flex-1 flex flex-col items-center justify-center bg-[#020508] gap-4">
-            <Swords size={48} className="text-[#F5C76B] animate-bounce" />
-            <p className="text-[10px] font-black text-white/40 tracking-[0.5em] uppercase">Preparando escenario...</p>
-        </div>
-    );
-  }
-
-  if (initError) {
-    return (
-        <div className="flex-1 flex flex-col items-center justify-center bg-[#020508] p-8 text-center gap-6">
-            <AlertTriangle size={40} className="text-amber-400" />
-            <h2 className="text-white font-black uppercase tracking-widest text-lg italic">Incompatibilidad de Batallón</h2>
-            <p className="text-white/40 text-[10px] uppercase tracking-wider leading-relaxed">{initError}</p>
-            <button onClick={onBack} className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest">Regresar</button>
-        </div>
-    );
-  }
 
   const order = BattleManager.getTurnOrder(units);
   const currentActor = order[turn];
 
+  if (isInitializing) return (
+    <div className="flex-1 flex flex-col items-center justify-center bg-[#020508] gap-4">
+        <Swords size={48} className="text-[#F5C76B] animate-bounce" />
+        <p className="text-[10px] font-black text-white/40 tracking-[0.5em] uppercase">Estableciendo Ciclo...</p>
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-full bg-[#020508] overflow-hidden relative">
-      <div className="p-4 flex items-center justify-between border-b border-white/5 bg-[#0B1A2A] z-10 shadow-2xl shrink-0">
+      {/* Skill Pop-up Effect */}
+      <AnimatePresence>
+        {activeSkillName && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5, y: 100 }}
+            animate={{ opacity: 1, scale: 1.2, y: 0 }}
+            exit={{ opacity: 0, scale: 2, y: -100 }}
+            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+          >
+             <div className="bg-[#F5C76B] text-black px-12 py-4 rounded-full font-black uppercase italic tracking-[0.4em] shadow-[0_0_50px_rgba(245,199,107,0.5)]">
+                {activeSkillName}
+             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="p-4 flex items-center justify-between border-b border-white/5 bg-[#0B1A2A] z-10 shadow-2xl shrink-0 font-sans">
          <button onClick={onBack} className="text-white/40 hover:text-white flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors"><ChevronLeft size={16} /> Retirada</button>
          <div className="flex flex-col items-center">
             <span className="text-[10px] text-[#F5C76B] font-black uppercase tracking-[0.4em] italic">Round {round}</span>
@@ -200,10 +199,8 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
       <div className="flex-1 relative overflow-hidden flex flex-col py-4 px-4 gap-8">
          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,100,255,0.05),transparent)] pointer-events-none" />
 
-         {/* Battlefield Layout: BF Side-view */}
          <div className="flex flex-1 items-center justify-between relative px-2">
-
-            {/* Player Side (Left) */}
+            {/* Player Side */}
             <div className="flex flex-col gap-6 relative">
               <div className="absolute left-[-60px] top-1/2 -translate-y-1/2 flex flex-col gap-8 opacity-60">
                 {units.filter(u => u.side === 'player' && u.row === 'back').map(player => (
@@ -221,7 +218,7 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[8px] font-black text-white/10 uppercase tracking-widest bg-[#020508] px-2 py-4 rounded-full border border-white/5">VS</div>
             </div>
 
-            {/* Enemy Side (Right) */}
+            {/* Enemy Side */}
             <div className="flex flex-col gap-6 relative text-right items-end">
               <div className="flex flex-col gap-8">
                 {units.filter(u => u.side === 'enemy' && u.row === 'front').map(enemy => (
@@ -250,12 +247,11 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
       </div>
 
       {/* Control Interface */}
-      <div className="h-64 bg-[#0B1A2A] border-t border-white/5 p-4 flex flex-col gap-4 shrink-0 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
+      <div className="h-64 bg-[#0B1A2A] border-t border-white/5 p-4 flex flex-col gap-4 shrink-0 shadow-[0_-20px_40px_rgba(0,0,0,0.5)] font-sans">
          <div className="flex gap-4 h-full">
-           {/* Skill Board */}
            <div className="flex-1 bg-black/20 rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden">
              <div className="flex items-center justify-between mb-1">
-               <span className="text-[8px] font-black text-white/40 uppercase tracking-widest flex items-center gap-2"><Target size={10} /> Habilidades</span>
+               <span className="text-[8px] font-black text-white/40 uppercase tracking-widest flex items-center gap-2"><Target size={10} /> Tácticas</span>
                {currentActor?.side === 'player' && (
                  <span className="text-[10px] font-black text-[#F5C76B] uppercase italic">{currentActor.name}</span>
                )}
@@ -264,30 +260,31 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
              {currentActor?.side === 'player' ? (
                <div className="grid grid-cols-2 gap-2">
                  {currentActor.skills.map((skill, idx) => (
-                   <button
-                     key={skill.id}
-                     disabled={!!currentActor.cooldowns[skill.id]}
-                     onClick={() => runTurn(currentActor, skill, targetId || undefined)}
-                     className={`relative overflow-hidden group flex flex-col p-2 rounded-xl border transition-all ${
-                       currentActor.cooldowns[skill.id]
-                       ? 'bg-white/5 border-white/5 text-white/10 opacity-50'
-                       : 'bg-white/5 border-white/10 text-white/80 hover:border-[#F5C76B]/40 hover:bg-white/10'
-                     }`}
-                   >
-                     <div className="flex items-center justify-between w-full mb-1">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-left truncate">{skill.name}</span>
-                        {currentActor.cooldowns[skill.id] ? (
-                          <span className="text-[8px] font-mono text-[#F5C76B]">{currentActor.cooldowns[skill.id]}T</span>
-                        ) : (
-                          <Zap size={10} className="text-[#F5C76B] group-hover:animate-pulse" />
-                        )}
-                     </div>
-                     <div className="flex gap-0.5">
-                       {Array(5).fill(0).map((_, i) => (
-                         <div key={i} className={`w-1 h-0.5 rounded-full ${i < (skill.cooldown || 0) ? 'bg-[#F5C76B]/30' : 'bg-white/5'}`} />
-                       ))}
-                     </div>
-                   </button>
+                   <GameTooltip key={skill.id} content={
+                       <div className="flex flex-col gap-1">
+                           <span className="text-[9px] font-black text-[#F5C76B] uppercase">{skill.name}</span>
+                           <p className="text-[8px] text-white/60 leading-tight">{skill.description || 'Habilidad de combate estándar.'}</p>
+                       </div>
+                   }>
+                        <button
+                            disabled={!!currentActor.cooldowns[skill.id]}
+                            onClick={() => runTurn(currentActor, skill, targetId || undefined)}
+                            className={`w-full relative overflow-hidden group flex flex-col p-2 rounded-xl border transition-all ${
+                            currentActor.cooldowns[skill.id]
+                            ? 'bg-white/5 border-white/5 text-white/10 opacity-50'
+                            : 'bg-white/5 border-white/10 text-white/80 hover:border-[#F5C76B]/40 hover:bg-white/10'
+                            }`}
+                        >
+                            <div className="flex items-center justify-between w-full mb-1">
+                                <span className="text-[9px] font-black uppercase tracking-wider text-left truncate">{skill.name}</span>
+                                {currentActor.cooldowns[skill.id] ? (
+                                <span className="text-[8px] font-mono text-[#F5C76B]">{currentActor.cooldowns[skill.id]}T</span>
+                                ) : (
+                                <Zap size={10} className="text-[#F5C76B] group-hover:animate-pulse" />
+                                )}
+                            </div>
+                        </button>
+                   </GameTooltip>
                  ))}
                  {currentActor.burst >= 100 && (
                    <button
@@ -301,15 +298,13 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
              ) : (
                <div className="flex-1 flex flex-col items-center justify-center gap-2 opacity-20">
                  <Activity size={24} className="animate-pulse" />
-                 <span className="text-[8px] font-black uppercase tracking-widest">Esperando respuesta táctica...</span>
+                 <span className="text-[8px] font-black uppercase tracking-widest">Respuesta Enemiga...</span>
                </div>
              )}
            </div>
 
-           {/* Battle Log */}
            <div className="w-32 bg-black/40 rounded-2xl p-3 flex flex-col gap-2 overflow-y-auto border border-white/5">
-             <div className="text-[7px] font-black text-white/20 uppercase tracking-widest border-b border-white/5 pb-1">Sucesos</div>
-             {battleLog.length === 0 && <div className="text-[7px] text-white/10 uppercase italic mt-2 text-center">Sin registros</div>}
+             <div className="text-[7px] font-black text-white/20 uppercase tracking-widest border-b border-white/5 pb-1">Registros</div>
              {battleLog.map((log, i) => (
                 <div key={i} className="text-[7px] text-white/40 leading-tight uppercase font-medium">{log}</div>
              ))}
@@ -319,7 +314,7 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
 
       <AnimatePresence>
         {isBattleOver && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-50 bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-8 text-center overflow-y-auto">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-50 bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-8 text-center overflow-y-auto font-sans">
              <motion.div initial={{ scale: 0.5, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring' }}>
                <Award size={80} className={winner === 'player' ? 'text-[#F5C76B] drop-shadow-[0_0_30px_rgba(245,199,107,0.4)]' : 'text-red-500'} />
              </motion.div>
@@ -339,36 +334,18 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
                     <div className="bg-white/5 border border-white/10 rounded-3xl p-6 min-w-[280px]">
                         <div className="flex items-center gap-2 mb-4 text-[#F5C76B]">
                             <Gift size={14} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Recompensas Obtenidas</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest">Recompensas</span>
                         </div>
                         <div className="flex flex-wrap justify-center gap-3">
-                            <div className="px-4 py-2 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center gap-1">
-                                <span className="text-[8px] font-black text-white/40 uppercase">Zeny</span>
-                                <span className="text-xs font-black text-white">+{completionData.rewards.currency}</span>
-                            </div>
-                            {completionData.rewards.premium_currency > 0 && (
-                                <div className="px-4 py-2 bg-black/40 rounded-2xl border border-[#F5C76B]/20 flex flex-col items-center gap-1">
-                                    <span className="text-[8px] font-black text-[#F5C76B] uppercase">Gemas</span>
-                                    <span className="text-xs font-black text-[#F5C76B]">+{completionData.rewards.premium_currency}</span>
-                                </div>
-                            )}
+                            <RewardItem label="Zeny" value={completionData.rewards.currency} color="text-white" />
                             {completionData.rewards.materials.map((mat: any, i: number) => (
-                                <div key={i} className="px-4 py-2 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center gap-1">
-                                    <span className="text-[8px] font-black text-white/40 uppercase">{mat.itemId}</span>
-                                    <span className="text-xs font-black text-cyan-400">x{mat.amount}</span>
-                                </div>
+                                <RewardItem key={i} label={mat.itemId} value={`x${mat.amount}`} color="text-cyan-400" />
                             ))}
                         </div>
                     </div>
                 </motion.div>
              )}
-
-             {isRecordingResult && (
-                <p className="mt-8 text-[10px] font-black text-[#F5C76B] uppercase tracking-[0.4em] animate-pulse">Registrando Hazaña...</p>
-             )}
-
-             <div className="h-px w-32 bg-white/10 my-8" />
-             <button onClick={() => { onRefresh(); onBack(); }} className="bg-white/5 border border-white/10 text-white font-black py-5 px-16 rounded-3xl tracking-[0.3em] uppercase text-[10px] hover:bg-white/10 transition-all active:scale-95 shadow-2xl">Confirmar y Continuar</button>
+             <button onClick={() => { onRefresh(); onBack(); }} className="mt-12 bg-white/5 border border-white/10 text-white font-black py-5 px-16 rounded-3xl tracking-[0.3em] uppercase text-[10px] hover:bg-white/10 transition-all shadow-2xl">Confirmar</button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -378,6 +355,7 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
 
 function UnitSprite({ unit, isActive, isTarget, onClick }: { unit: CombatUnit, isActive?: boolean, isTarget?: boolean, onClick?: () => void }) {
   const isEnemy = unit.side === 'enemy';
+  const sprite = AssetHelper.getUnitSprite(unit.instanceId, '');
 
   return (
     <motion.div
@@ -399,7 +377,7 @@ function UnitSprite({ unit, isActive, isTarget, onClick }: { unit: CombatUnit, i
       <div className="relative group">
         <div className={`w-14 h-14 bg-black/40 rounded-full border ${isActive ? 'border-[#F5C76B]/40' : 'border-white/5'} flex items-center justify-center relative overflow-visible`}>
           <img
-            src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png"
+            src={sprite}
             className={`w-[240%] max-w-none transform translate-y-3 ${isEnemy ? 'scale-x-[-1] brightness-50' : 'brightness-110'}`}
             style={{imageRendering: 'pixelated'}}
           />
@@ -430,7 +408,9 @@ function UnitSprite({ unit, isActive, isTarget, onClick }: { unit: CombatUnit, i
            )}
            <div className="flex gap-0.5 mt-0.5 justify-end">
               {unit.statusEffects.map(s => (
-                <div key={s.id} className={`w-1.5 h-1.5 rounded-sm ${s.type === 'buff' ? 'bg-green-400' : 'bg-red-400'} animate-pulse`} title={s.name} />
+                <GameTooltip key={s.id} content={<span className="text-[8px] font-black uppercase text-[#F5C76B]">{s.name}</span>}>
+                    <div className={`w-1.5 h-1.5 rounded-sm ${s.type === 'buff' ? 'bg-green-400' : 'bg-red-400'} animate-pulse`} />
+                </GameTooltip>
               ))}
            </div>
         </div>
@@ -439,19 +419,18 @@ function UnitSprite({ unit, isActive, isTarget, onClick }: { unit: CombatUnit, i
   );
 }
 
+function RewardItem({ label, value, color }: any) {
+    return (
+        <div className="px-4 py-2 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center gap-1">
+            <span className="text-[8px] font-black text-white/40 uppercase">{label}</span>
+            <span className={`text-xs font-black ${color}`}>{value}</span>
+        </div>
+    );
+}
+
 function Star({ size, className }: { size: number, className: string }) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-        >
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
         </svg>
     );

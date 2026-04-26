@@ -21,11 +21,11 @@ VALUES
 ('skill_meteor', '1.0.0', 'Meteoro', 'Daño masivo', 4, '{"damage": 4.0}', '{"stat": "matk", "mult": 4.0}', 'epic');
 
 -- 4. Cards
-INSERT INTO cards (id, version, name, rarity, effect_type, effect_value, applicable_jobs)
+INSERT INTO cards (id, version, name, rarity, effect_type, effect_target, effect_value, applicable_jobs)
 VALUES
-('card_goblin', '1.0.0', 'Goblin Card', 'common', 'statBoost', '0.10', '{"ALL"}'),
-('card_zombie', '1.0.0', 'Zombie Card', 'common', 'statBoost', '0.15', '{"ALL"}'),
-('card_baphomet', '1.0.0', 'Baphomet Card', 'legendary', 'skillModifier', '1', '{"ALL"}');
+('card_goblin', '1.0.0', 'Goblin Card', 'common', 'statBoost', 'atk', '0.10', '{"ALL"}'),
+('card_zombie', '1.0.0', 'Zombie Card', 'common', 'statBoost', 'hp', '0.15', '{"ALL"}'),
+('card_baphomet', '1.0.0', 'Baphomet Card', 'legendary', 'skillModifier', 'aoe', '1', '{"ALL"}');
 
 -- 5. Weapons
 INSERT INTO weapons (id, version, name, weapon_type, rarity, stat_bonuses, special_effects)
