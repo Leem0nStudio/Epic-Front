@@ -1,17 +1,9 @@
 'use client';
 
-import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import {
-  ChevronLeft,
-  UserPlus,
-  Timer,
-  Trash2,
-  Check,
-  Sparkles,
-  Zap,
-  Info
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, UserPlus, Clock, Star, Sword, Heart, Zap, Trash2 } from 'lucide-react';
+import { motion } from 'motion/react';
+import { RecruitmentService } from '@/lib/services/recruitment-service';
 
 interface TavernViewProps {
   saveData: any;
@@ -20,116 +12,122 @@ interface TavernViewProps {
   onDiscard: (slotId: string) => void;
 }
 
-export function TavernView({ saveData, onNavigate, onClaim, onDiscard }: TavernViewProps) {
-  const slots = saveData.tavernSlots || [];
+export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
+  const [now, setNow] = useState<number | null>(null);
 
-  const getStatus = (availableAt: string) => {
-    const isAvailable = new Date(availableAt) <= new Date();
-    if (isAvailable) return 'READY';
+  useEffect(() => {
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-    const diff = new Date(availableAt).getTime() - Date.now();
-    const mins = Math.ceil(diff / 60000);
-    return `${mins}m`;
+  const handleDiscard = async (slotId: string) => {
+    if (!confirm("¿Deseas descartar este recluta? Se generará uno nuevo en el siguiente ciclo.")) return;
+    try {
+        await RecruitmentService.discardRecruit(slotId);
+        window.location.reload();
+    } catch (e) {
+        console.error(e);
+    }
   };
 
+  const currentTime = now || Date.now();
+
   return (
-    <div className="flex flex-col h-full bg-[#020508] overflow-hidden relative">
-      {/* Header */}
-      <div className="p-6 flex items-center justify-between border-b border-white/5 bg-[#0B1A2A] z-10 shadow-2xl">
-        <button onClick={() => onNavigate('home')} className="text-white/40 hover:text-white flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors"><ChevronLeft size={16} /> Volver</button>
-        <div className="flex flex-col items-center">
-            <span className="text-[10px] text-[#F5C76B] font-black uppercase tracking-[0.4em] italic">Taberna Real</span>
-            <span className="text-[9px] text-white/20 font-mono tracking-widest mt-0.5 uppercase">Reclutamiento de Novatos</span>
-        </div>
-        <div className="w-16"></div>
+    <div className="flex flex-col h-full bg-[#0B1A2A] p-4 overflow-hidden relative">
+      <div className="absolute inset-0 bg-gradient-to-b from-amber-900/10 via-transparent to-transparent pointer-events-none" />
+
+      <div className="flex items-center gap-4 mb-6 z-10">
+        <button onClick={() => onNavigate('home')} className="p-2 bg-black/40 border border-white/10 rounded-xl text-white/60 hover:text-white transition-colors">
+          <ChevronLeft size={20} />
+        </button>
+        <h1 className="text-xl font-black text-white tracking-widest uppercase italic">Gremio de Reclutamiento</h1>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.05),transparent)] pointer-events-none" />
+      <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar z-10">
+        {saveData.tavernSlots.map((slot: any) => {
+          const unit = slot.unit_data;
+          const availableAt = new Date(slot.available_at).getTime();
+          const isReady = currentTime >= availableAt;
+          const timeLeft = Math.max(0, Math.floor((availableAt - currentTime) / 1000));
 
-        <div className="mb-8 text-center relative">
-            <h2 className="text-2xl font-black text-white tracking-widest uppercase italic">Aventureros en Espera</h2>
-            <p className="text-[10px] text-white/30 uppercase tracking-wider mt-2">Nuevos novatos llegan al gremio cada 4 horas</p>
-        </div>
+          const hours = Math.floor(timeLeft / 3600);
+          const mins = Math.floor((timeLeft % 3600) / 60);
+          const secs = timeLeft % 60;
 
-        <div className="grid grid-cols-1 gap-6">
-          {slots.map((slot: any, i: number) => {
-            const status = getStatus(slot.available_at);
-            const isReady = status === 'READY';
-            const unit = slot.unit_data;
+          return (
+            <motion.div
+              key={slot.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className={`bg-black/40 border border-white/5 p-5 rounded-3xl relative overflow-hidden transition-all ${isReady ? 'border-[#F5C76B]/40 shadow-[0_0_20px_rgba(245,199,107,0.1)]' : 'opacity-60'}`}
+            >
+              {!isReady && (
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2 z-20">
+                  <Clock size={32} className="text-white/40" />
+                  <p className="text-sm font-black text-white/60 tracking-widest font-mono">
+                    {hours.toString().padStart(2, '0')}:{mins.toString().padStart(2, '0')}:{secs.toString().padStart(2, '0')}
+                  </p>
+                </div>
+              )}
 
-            return (
-              <motion.div
-                key={slot.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className={`relative bg-white/5 border ${isReady ? 'border-[#F5C76B]/20' : 'border-white/5'} rounded-[32px] p-6 overflow-hidden group`}
-              >
-                <div className="flex items-start justify-between relative z-10">
-                   <div className="flex gap-4">
-                      <div className={`w-14 h-14 rounded-2xl border ${isReady ? 'border-[#F5C76B]/20 bg-[#F5C76B]/5' : 'border-white/5 bg-white/5'} flex items-center justify-center overflow-hidden`}>
-                         {isReady ? (
-                           <img
-                             src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png"
-                             className="w-[180%] transform translate-y-2"
-                             style={{imageRendering: 'pixelated'}}
-                           />
-                         ) : (
-                           <UserPlus size={20} className="text-white/10" />
-                         )}
-                      </div>
-                      <div className="flex flex-col">
-                         <span className={`text-xs font-black uppercase tracking-wider ${isReady ? 'text-white' : 'text-white/20'}`}>
-                           {isReady ? unit.name : 'Aventurero Incógnito'}
-                         </span>
-                         <div className="flex items-center gap-2 mt-1">
-                            <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${isReady ? 'bg-[#F5C76B] text-black' : 'bg-white/5 text-white/20'} uppercase`}>
-                              {isReady ? unit.affinity : 'Pendiente'}
-                            </span>
-                            {unit.trait && isReady && (
-                                <span className="text-[8px] font-black text-cyan-400 uppercase tracking-widest">{unit.trait}</span>
-                            )}
-                         </div>
-                      </div>
-                   </div>
-
-                   <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${isReady ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-black/40 border-white/5 text-white/40'}`}>
-                      {isReady ? <Sparkles size={10} /> : <Timer size={10} />}
-                      <span className="text-[9px] font-black uppercase tracking-widest">{status}</span>
-                   </div>
+              <div className="flex gap-6">
+                <div className="w-24 h-24 bg-black/60 rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                  <img src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png" className="w-[180%] transform translate-y-3" style={{imageRendering: 'pixelated'}} alt="Unit Sprite" />
                 </div>
 
-                {isReady && (
-                    <div className="mt-6 flex gap-3 relative z-10">
-                        <button
-                          onClick={() => onClaim(slot.id)}
-                          className="flex-1 bg-gradient-to-r from-[#F5C76B] to-[#b88c3a] text-black font-black text-[9px] uppercase tracking-widest py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
-                        >
-                            <Check size={14} /> Reclutar
-                        </button>
-                        <button
-                          onClick={() => onDiscard(slot.id)}
-                          className="w-12 bg-white/5 border border-white/10 text-white/40 hover:text-red-400 hover:border-red-400/40 rounded-2xl flex items-center justify-center transition-all active:scale-95"
-                        >
-                            <Trash2 size={14} />
-                        </button>
+                <div className="flex-1 flex flex-col justify-center">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                        <h3 className="font-black text-white text-lg tracking-wider uppercase">{unit.name}</h3>
+                        <span className="text-[10px] font-black text-[#F5C76B] bg-[#F5C76B]/10 px-1.5 rounded border border-[#F5C76B]/20 italic">NOVICE</span>
                     </div>
-                )}
+                    {isReady && (
+                        <button onClick={() => handleDiscard(slot.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                            <Trash2 size={16} />
+                        </button>
+                    )}
+                  </div>
 
-                {/* Background Decor */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#F5C76B]/5 blur-[60px] rounded-full pointer-events-none -mr-16 -mt-16 group-hover:bg-[#F5C76B]/10 transition-colors" />
-              </motion.div>
-            );
-          })}
+                  <div className="flex gap-4 mt-2">
+                    <div className="flex flex-col">
+                      <span className="text-[8px] font-black text-white/40 uppercase tracking-tighter">Afinidad</span>
+                      <span className="text-[10px] font-bold text-white uppercase">{unit.affinity}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[8px] font-black text-white/40 uppercase tracking-tighter">Rasgo</span>
+                      <span className="text-[10px] font-bold text-[#F5C76B] uppercase">{unit.trait || 'Ninguno'}</span>
+                    </div>
+                  </div>
 
-          {slots.length === 0 && (
-             <div className="py-20 flex flex-col items-center gap-4 opacity-20">
-                <Timer size={48} />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em]">Taberna Vacía...</span>
-             </div>
-          )}
-        </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-white/60"><Sword size={10} className="text-[#F5C76B]" /> {unit.base_stats?.atk || unit.baseStats?.atk}</div>
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-white/60"><Heart size={10} className="text-red-400" /> {unit.base_stats?.hp || unit.baseStats?.hp}</div>
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-white/60"><Zap size={10} className="text-cyan-400" /> {unit.base_stats?.agi || unit.baseStats?.agi}</div>
+                  </div>
+                </div>
+              </div>
+
+              {isReady && (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => onClaim(slot.id)}
+                  className="w-full mt-5 bg-gradient-to-r from-[#F5C76B] to-[#b88c3a] text-black font-black py-3 rounded-xl uppercase tracking-[0.2em] text-xs shadow-xl flex items-center justify-center gap-2"
+                >
+                  <UserPlus size={16} /> Reclutar Unidad
+                </motion.button>
+              )}
+            </motion.div>
+          );
+        })}
+
+        {saveData.tavernSlots.length === 0 && (
+          <div className="flex-1 flex flex-col items-center justify-center py-20 text-center gap-4 opacity-40">
+             <UserPlus size={48} />
+             <p className="text-xs font-black tracking-widest uppercase">No hay candidatos esperando...</p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -93,8 +93,7 @@ export class CampaignService {
             .eq('id', user.id)
             .single();
 
-        // DESIGN: If energy is not found or is less than amount, return false
-        if (!player || player.energy === undefined || player.energy < amount) return false;
+        if (!player || player.energy < amount) return false;
 
         const { error } = await supabase
             .from('players')

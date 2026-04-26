@@ -1,32 +1,21 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'motion/react';
 import {
-  Users,
-  UserPlus,
-  Sparkles,
-  Sword,
-  Settings,
-  Coins,
-  Diamond,
-  ChevronRight,
-  Star,
-  Calendar,
-  Bell,
-  Mail,
-  Map as MapIcon
+  Users, UserPlus, Sparkles, Sword, Coins, Diamond, Settings,
+  ChevronRight, Calendar, Bell, Mail, Star
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { motion } from 'motion/react';
 
 interface RPGHomeViewProps {
   saveData: any;
   activePartyUnits: any[];
-  onNavigate: (view: 'party' | 'tavern' | 'gacha' | 'battle' | 'campaign') => void;
+  onNavigate: (view: any) => void;
 }
 
 const rarityGlow = (rarity: string) => {
-  switch (rarity.toLowerCase()) {
+  switch (rarity?.toLowerCase()) {
     case 'legendary':
     case 'ur': return 'drop-shadow-[0_0_15px_rgba(245,199,107,0.6)]';
     case 'epic':
@@ -96,31 +85,33 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
   const leftUnit = activePartyUnits[1];
   const rightUnit = activePartyUnits[2];
 
+  const mockObjective = {
+    chapter: "Capítulo 18",
+    title: "El Templo Sumergido",
+    stars: 2,
+    maxStars: 3
+  };
+
   return (
     <div
         className="w-full h-full flex flex-col relative bg-[#0B1A2A] bg-cover bg-center bg-no-repeat overflow-hidden"
+        style={{ backgroundImage: "url('/assets/backgrounds/homebg.png')" }}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2A]/40 via-transparent to-[#020508]/80 pointer-events-none" />
 
       {/* Top Bar */}
-      <div className="w-full h-16 shrink-0 flex items-center justify-between px-4 z-30 pt-2 font-sans">
+      <div className="w-full h-16 shrink-0 flex items-center justify-between px-4 z-30 pt-2">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 border border-white/10 flex items-center justify-center overflow-hidden">
             <img src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png" className="w-[150%] transform translate-y-1" style={{imageRendering: 'pixelated'}} alt="Profile" />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black bg-[#F5C76B] text-black px-1.5 rounded-sm italic uppercase">Lvl. 1</span>
+              <span className="text-[10px] font-black bg-[#F5C76B] text-black px-1.5 rounded-sm italic">LV. 18</span>
               <span className="text-white text-xs font-bold tracking-wider uppercase">{saveData.profile.username}</span>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-                <div className="w-24 h-1 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: '20%' }} className="h-full bg-[#F5C76B]" />
-                </div>
-                <div className="flex items-center gap-1 text-[#F5C76B]">
-                    <MapIcon size={8} />
-                    <span className="text-[7px] font-black uppercase">Progreso 1-1</span>
-                </div>
+            <div className="w-32 h-1 bg-white/10 rounded-full mt-1 overflow-hidden">
+              <motion.div initial={{ width: 0 }} animate={{ width: '65%' }} className="h-full bg-[#F5C76B]" />
             </div>
           </div>
         </div>
@@ -142,6 +133,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
 
       {/* Main Display Area */}
       <div className="flex-1 relative flex items-center justify-center px-4 overflow-hidden">
+        {/* Character Backdrop Glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] aspect-square bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
 
         <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-28">
@@ -175,20 +167,21 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
           ))}
         </div>
 
-        {/* Objective Panel */}
-        <motion.button
-          onClick={() => onNavigate('campaign')}
-          whileHover={{ x: 5 }}
-          className="absolute left-4 top-1/4 z-30 text-left"
-        >
+        {/* Objective Panel (Mock Data) */}
+        <div className="absolute left-4 top-1/4 z-30 pointer-events-none">
           <div className="bg-black/40 backdrop-blur-md border-l-4 border-l-[#F5C76B] border border-white/5 p-3 rounded-r-xl shadow-2xl">
-            <p className="text-[#F5C76B] text-[10px] font-black uppercase tracking-widest">Misión Actual</p>
+            <p className="text-[#F5C76B] text-[10px] font-black uppercase tracking-widest">{mockObjective.chapter}</p>
             <h3 className="text-white text-sm font-bold tracking-wide mt-0.5 flex items-center gap-2">
-              Explorar Campaña
+              {mockObjective.title}
               <ChevronRight size={14} className="opacity-40" />
             </h3>
+            <div className="flex gap-1 mt-2">
+              {[...Array(mockObjective.maxStars)].map((_, i) => (
+                <Star key={i} size={10} fill={i < mockObjective.stars ? "#F5C76B" : "none"} className={i < mockObjective.stars ? "text-[#F5C76B]" : "text-white/20"} />
+              ))}
+            </div>
           </div>
-        </motion.button>
+        </div>
       </div>
 
       {/* Bottom Dock */}
@@ -215,12 +208,12 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => onNavigate('campaign')}
+            onClick={() => onNavigate('battle')}
             className="w-20 h-20 bg-gradient-to-br from-[#F5C76B] to-[#b88c3a] rounded-full shadow-[0_0_30px_rgba(245,199,107,0.4)] flex flex-col items-center justify-center group relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
             <Sword size={32} className="text-black transform -rotate-45" />
-            <span className="text-[10px] font-black text-black mt-0.5 uppercase">Mundo</span>
+            <span className="text-[10px] font-black text-black mt-0.5">BATTLE</span>
           </motion.button>
         </div>
       </div>

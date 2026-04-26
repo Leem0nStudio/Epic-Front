@@ -64,7 +64,7 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
         );
 
         let enemies: CombatUnit[] = [];
-        
+
         if (stageId) {
             const stage = CampaignService.getStageById(stageId);
             if (stage) {
@@ -95,7 +95,7 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
     if (isBattleOver) return;
 
     const { results, updatedUnits } = BattleManager.executeTurn(actor, skill, units, manualTargetId);
-    
+
     setBattleLog(prev => [...prev, ...results.map(r => r.log)].slice(-20));
     setUnits(updatedUnits);
     setTurn(prev => prev + 1);
