@@ -84,7 +84,13 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
     } finally {
         setIsInitializing(false);
     }
-  };
+    if (alivePlayers.length === 0) {
+      handleBattleOver('enemy', deadPlayers);
+      return;
+    }
+
+    const order = BattleManager.getTurnOrder(units);
+    if (order.length === 0) return;
 
   const addLog = (msg: string) => setBattleLog(prev => [msg, ...prev].slice(0, 5));
 

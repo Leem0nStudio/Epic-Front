@@ -7,7 +7,7 @@ import { PartyService } from '@/lib/services/party-service';
 import { EquipmentService } from '@/lib/services/equipment-service';
 import { ConfigService } from '@/lib/services/config-service';
 
-export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle';
+export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'stage_details';
 
 export function useGameState() {
   const [isLoaded, setIsLoaded] = useState(false);

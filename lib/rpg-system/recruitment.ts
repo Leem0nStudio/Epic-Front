@@ -31,16 +31,16 @@ export function generateNovice(forcedAffinity?: Affinity) {
     // Apply affinity bias to growths
     switch (affinity) {
         case 'physical':
-            growthRates.hp += 2; growthRates.atk += 1.5; growthRates.def += 1.0;
+            growth_rates.hp += 2; growth_rates.atk += 1.5; growth_rates.def += 1.0;
             break;
         case 'magic':
-            growthRates.matk += 2.0; growthRates.mdef += 1.5;
+            growth_rates.matk += 2.0; growth_rates.mdef += 1.5;
             break;
         case 'ranged':
-            growthRates.atk += 1.0; growthRates.agi += 2.0;
+            growth_rates.atk += 1.0; growth_rates.agi += 2.0;
             break;
         case 'support':
-            growthRates.hp += 3; growthRates.def += 1.5; growthRates.mdef += 1.5;
+            growth_rates.hp += 3; growth_rates.def += 1.5; growth_rates.mdef += 1.5;
             break;
     }
 

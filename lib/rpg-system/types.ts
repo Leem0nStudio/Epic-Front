@@ -15,6 +15,7 @@ export interface EvolutionRequirements {
   minLevel: number;
   materials: { itemId: string; amount: number }[];
   currencyCost: number;
+  requiredJobCore?: string; // New: Job Core requirement
 }
 
 export interface SkillUnlocked {
@@ -23,6 +24,9 @@ export interface SkillUnlocked {
   type: 'basic' | 'active' | 'burst' | 'ultimate';
   powerMod: number;
   description: string;
+  // Metadata for combat engine
+  cooldown?: number;
+  effects?: any[];
 }
 
 export interface JobDefinition {
