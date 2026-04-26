@@ -8,6 +8,8 @@ export interface UnitStats {
 }
 
 export type BaseStats = UnitStats;
+export type StatKey = keyof UnitStats;
+
 export type Affinity = 'physical' | 'magic' | 'support' | 'ranged';
 export type WeaponCategory = 'sword' | 'staff' | 'dagger' | 'bow' | 'spear' | 'shield';
 
@@ -34,12 +36,12 @@ export interface JobDefinition {
   version: string;
   name: string;
   tier: number;
-  parentJobId: string | null;
-  statModifiers: UnitStats;
-  allowedWeapons: string[];
-  skillsUnlocked: SkillUnlocked[];
-  passiveEffects: string[];
-  evolutionRequirements: EvolutionRequirements;
+  parent_job_id: string | null;
+  stat_modifiers: UnitStats; // These act as multipliers (e.g. 1.2 = +20%)
+  allowed_weapons: string[];
+  skills_unlocked: SkillUnlocked[];
+  passive_effects: string[];
+  evolution_requirements: EvolutionRequirements;
 }
 
 export interface UnitData {
@@ -47,15 +49,20 @@ export interface UnitData {
   player_id: string;
   name: string;
   level: number;
-  baseStats: UnitStats;
-  growthRates: UnitStats;
+  base_stats: UnitStats; // Stats at level 1
+  growth_rates: UnitStats; // Growth per level
   affinity: Affinity;
   trait?: string;
-  currentJobId: string;
-  unlockedJobs: string[];
-  equippedWeaponId?: string;
-  equippedCardIds: string[];
-  equippedSkillIds: string[];
+  current_job_id: string;
+  unlocked_jobs: string[];
+  equipped_weapon_instance_id?: string;
+  equipped_card_instance_ids: string[]; // Max 3? (Usually cards are tied to weapons/gear but let's stick to unit for now)
+  equipped_skill_instance_ids: string[]; // Max 2 from Gacha
 }
 
 export type RPGUnit = UnitData;
+
+// Shared constants
+export const MAX_GACHA_SKILLS = 2;
+export const MAX_JOB_SKILLS = 3;
+export const MAX_PARTY_SIZE = 5;

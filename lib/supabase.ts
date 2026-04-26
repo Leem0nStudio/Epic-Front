@@ -14,31 +14,6 @@ export type Player = {
   party_size_limit: number;
 };
 
-export type Unit = {
-  id: string;
-  player_id: string;
-  name: string;
-  level: number;
-  base_stats: any;
-  growth_rates: any;
-  affinity: string;
-  trait: string;
-  current_job_id: string;
-  unlocked_jobs: string[];
-  equipped_weapon_instance_id?: string;
-  equipped_card_instance_ids: string[];
-  equipped_skill_instance_ids: string[];
-};
-
-export type Job = {
-    id: string;
-    version: string;
-    name: string;
-    tier: number;
-    parent_job_id: string | null;
-    stat_modifiers: any;
-    allowed_weapons: string[];
-    skills_unlocked: any;
-    passive_effects: string[];
-    evolution_requirements: any;
-};
+// Use the consolidated types from the RPG system
+export type Unit = UnitData;
+export type Job = JobDefinition;
