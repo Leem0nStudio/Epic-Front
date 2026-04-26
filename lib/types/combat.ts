@@ -1,6 +1,6 @@
 export type StatKey = 'hp' | 'atk' | 'def' | 'matk' | 'mdef' | 'agi';
 
-export type Affinity = 'physical' | 'magic' | 'support';
+export type Affinity = 'physical' | 'magic' | 'support' | 'ranged';
 
 export type EffectType = 'damage' | 'heal' | 'buff' | 'debuff' | 'dot' | 'taunt' | 'shield' | 'apply_status';
 

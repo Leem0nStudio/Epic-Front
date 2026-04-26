@@ -1,18 +1,16 @@
 import { supabase } from '@/lib/supabase';
+import { MAX_GACHA_SKILLS } from '../rpg-system/types';
 
 export class EquipmentService {
     /**
      * Equips an item to a unit.
+     * Enforces the 3+2 skill rule and 3 card slot rule.
      */
     static async equipItem(unitId: string, itemInstanceId: string, slot: 'weapon' | 'card' | 'skill') {
         if (!supabase) return;
 
-        // Fetch unit and job to check slot limits
-        const { data: unit } = await supabase.from('units').select('*, current_job_id').eq('id', unitId).single();
+        const { data: unit } = await supabase.from('units').select('*').eq('id', unitId).single();
         if (!unit) throw new Error("Unit not found");
-
-        const { data: job } = await supabase.from('jobs').select('tier').eq('id', unit.current_job_id).single();
-        const tier = job?.tier || 0;
 
         if (slot === 'weapon') {
             const { error } = await supabase
@@ -23,8 +21,8 @@ export class EquipmentService {
         } else if (slot === 'card') {
             const currentCards = unit.equipped_card_instance_ids || [];
 
-            // Limit to 4 cards (Base requirement: 4 slots)
-            if (currentCards.length >= 4) throw new Error("Máximo 4 cartas equipadas");
+            // Standardizing on 3 cards for now (flexible)
+            if (currentCards.length >= 3) throw new Error("Máximo 3 cartas equipadas");
 
             const newCards = [...currentCards, itemInstanceId];
             const { error } = await supabase
@@ -35,9 +33,10 @@ export class EquipmentService {
         } else if (slot === 'skill') {
             const currentSkills = unit.equipped_skill_instance_ids || [];
 
-            // Skill Limits: Novice: 1, Job1: 2, Job2: 3, Job3: 4+Ult
-            const limit = tier === 0 ? 1 : tier === 1 ? 2 : tier === 2 ? 3 : 5;
-            if (currentSkills.length >= limit) throw new Error(`Límite de habilidades alcanzado para Tier ${tier} (${limit})`);
+            // 3 Job Skills are automatic, 2 Equippable are from Gacha
+            if (currentSkills.length >= MAX_GACHA_SKILLS) {
+                throw new Error("Límite de habilidades adicionales alcanzado (Máximo 2)");
+            }
 
             const newSkills = [...currentSkills, itemInstanceId];
             const { error } = await supabase

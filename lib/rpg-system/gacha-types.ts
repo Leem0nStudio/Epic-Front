@@ -9,6 +9,7 @@ export interface BaseGachaItem {
     description: string;
     type: GachaItemType;
     rarity: Rarity;
+    version: string;
 }
 
 // ==== CARDS ====
@@ -50,13 +51,10 @@ export interface JobCoreItem extends BaseGachaItem {
 // Union Type for logic handling
 export type AnyGachaItem = CardItem | WeaponItem | SkillItem | JobCoreItem;
 
-// ==== PLAYER INVENTORY EXTENSION ====
-export interface ExtendedInventory {
-    currency: number; // Gold/Standard Money
-    premiumCurrency: number; // Gems for gacha
-    materials: Record<string, number>;
-    weapons: string[];    // Array of weapon instances (IDs)
-    cards: string[];      // Array of card IDs
-    skills: string[];     // Array of skill IDs
-    jobCores: string[];   // Array of job core IDs
+// Pity Tracking
+export interface GachaState {
+    player_id: string;
+    pulls_since_epic: number;
+    pulls_since_legendary: number;
+    last_pull_at: string;
 }

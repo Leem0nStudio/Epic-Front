@@ -14,6 +14,9 @@ export class BattleManager {
 
   /**
    * Finds the best target(s) based on the targeting rules.
+   * Logic:
+   * 1. Check for Taunt (global)
+   * 2. Target must pass Front Row if they are targeting Back Row (unless Ranged/Magic)
    */
   static getTargets(
     actor: CombatUnit,
@@ -26,22 +29,25 @@ export class BattleManager {
 
     // Primary target logic for single target effects
     const getPrimaryEnemy = () => {
+      // 1. Manual override
       if (manualTargetId) {
         const manual = enemies.find(e => e.id === manualTargetId);
         if (manual) return manual;
       }
 
-      // 1. Check for Taunt
+      // 2. Check for Taunt
       const taunters = enemies.filter(e => e.statusEffects.some(s => s.id === 'taunt'));
       if (taunters.length > 0) {
         return taunters[Math.floor(Math.random() * taunters.length)];
       }
 
-      // 2. Front Row Priority
+      // 3. Row logic: Back row units can only be targeted if front row is empty
+      // EXCEPT if the skill is ranged/magic or the actor is ranged.
+      // (For this BF-style demo, let's keep it simple: Front Row is priority for Melee)
       const frontRow = enemies.filter(e => e.row === 'front');
       const targetPool = frontRow.length > 0 ? frontRow : enemies;
 
-      // 3. Lowest HP% Priority
+      // 4. Fallback: Lowest HP%
       return [...targetPool].sort((a, b) => (a.currentHp / a.maxHp) - (b.currentHp / b.maxHp))[0];
     };
 
@@ -100,9 +106,9 @@ export class BattleManager {
         target.currentHp = Math.max(0, target.currentHp - result.value);
         if (target.currentHp <= 0) target.isDead = true;
 
-        // Burst Charging
-        if (actorInState) actorInState.burst = Math.min(100, actorInState.burst + (result.value * 0.1));
-        target.burst = Math.min(100, target.burst + (result.value * 0.05));
+        // Burst Charging: Damage dealt adds 10%, damage taken adds 5%
+        if (actorInState) actorInState.burst = Math.min(100, actorInState.burst + 10);
+        target.burst = Math.min(100, target.burst + 5);
       } else if (result.type === 'heal' && result.value) {
         target.currentHp = Math.min(target.maxHp, target.currentHp + result.value);
       } else if (result.status) {
@@ -118,7 +124,7 @@ export class BattleManager {
     }
 
     // Flat turn gain
-    if (actorInState) actorInState.burst = Math.min(100, actorInState.burst + 2);
+    if (actorInState) actorInState.burst = Math.min(100, actorInState.burst + 5);
 
     return { results, updatedUnits };
   }

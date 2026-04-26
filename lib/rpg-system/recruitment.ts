@@ -9,7 +9,7 @@ export function generateNovice(forcedAffinity?: Affinity) {
     const affinity = forcedAffinity || affinities[Math.floor(Math.random() * affinities.length)];
 
     // 1. Establish absolute base Novice stats
-    const baseStats: UnitStats = {
+    const base_stats: UnitStats = {
         hp: Math.floor(randomRange(90, 110)),
         atk: Math.floor(randomRange(8, 12)),
         def: Math.floor(randomRange(8, 12)),
@@ -19,7 +19,7 @@ export function generateNovice(forcedAffinity?: Affinity) {
     };
 
     // 2. Establish base growth rates per level depending on affinity
-    const growthRates: UnitStats = {
+    const growth_rates: UnitStats = {
         hp: randomRange(8, 10),
         atk: randomRange(1, 1.5),
         def: randomRange(1, 1.5),
@@ -31,16 +31,16 @@ export function generateNovice(forcedAffinity?: Affinity) {
     // Apply affinity bias to growths
     switch (affinity) {
         case 'physical':
-            growthRates.hp += 2; growthRates.atk += 1.5; growthRates.def += 1.0;
+            growth_rates.hp += 2; growth_rates.atk += 1.5; growth_rates.def += 1.0;
             break;
         case 'magic':
-            growthRates.matk += 2.0; growthRates.mdef += 1.5;
+            growth_rates.matk += 2.0; growth_rates.mdef += 1.5;
             break;
         case 'ranged':
-            growthRates.atk += 1.0; growthRates.agi += 2.0;
+            growth_rates.atk += 1.0; growth_rates.agi += 2.0;
             break;
         case 'support':
-            growthRates.hp += 3; growthRates.def += 1.5; growthRates.mdef += 1.5;
+            growth_rates.hp += 3; growth_rates.def += 1.5; growth_rates.mdef += 1.5;
             break;
     }
 
@@ -52,7 +52,7 @@ export function generateNovice(forcedAffinity?: Affinity) {
         if (traitDef) {
             (Object.keys(traitDef.growthModifiers) as Array<keyof UnitStats>).forEach(stat => {
                 if (traitDef.growthModifiers[stat]) {
-                    growthRates[stat] *= traitDef.growthModifiers[stat]!;
+                    growth_rates[stat] *= traitDef.growthModifiers[stat]!;
                 }
             });
         }
@@ -62,10 +62,10 @@ export function generateNovice(forcedAffinity?: Affinity) {
 
     return {
         name: NAMES[Math.floor(Math.random() * NAMES.length)],
-        baseStats,
-        growthRates: {
-            hp: Number(growthRates.hp.toFixed(2)), atk: Number(growthRates.atk.toFixed(2)), def: Number(growthRates.def.toFixed(2)),
-            matk: Number(growthRates.matk.toFixed(2)), mdef: Number(growthRates.mdef.toFixed(2)), agi: Number(growthRates.agi.toFixed(2))
+        base_stats,
+        growth_rates: {
+            hp: Number(growth_rates.hp.toFixed(2)), atk: Number(growth_rates.atk.toFixed(2)), def: Number(growth_rates.def.toFixed(2)),
+            matk: Number(growth_rates.matk.toFixed(2)), mdef: Number(growth_rates.mdef.toFixed(2)), agi: Number(growth_rates.agi.toFixed(2))
         },
         affinity,
         trait: traitId

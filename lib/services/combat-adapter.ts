@@ -1,10 +1,12 @@
 import { supabase } from '../supabase';
 import { UnitService } from './unit-service';
 import { CombatUnit, SkillDefinition, StatKey } from '../types/combat';
+import { MAX_GACHA_SKILLS, MAX_JOB_SKILLS } from '../rpg-system/types';
 
 export class CombatAdapter {
   /**
    * Fetches full data for a unit and converts it to a CombatUnit.
+   * Merges Job skills (fixed) and Gacha skills (equippable).
    */
   static async dbUnitToCombatUnit(
     unitId: string,
@@ -13,7 +15,6 @@ export class CombatAdapter {
   ): Promise<CombatUnit> {
     const details = await UnitService.getUnitDetails(unitId);
 
-    // Convert final stats to the structure we need
     const stats = {
       hp: details.finalStats.hp,
       atk: details.finalStats.atk,
@@ -23,17 +24,43 @@ export class CombatAdapter {
       agi: details.finalStats.agi,
     };
 
-    // Skills conversion (ensure they match the SkillDefinition interface)
-    const skills: SkillDefinition[] = (details.skills || []).map((s: any) => ({
-      id: s.id,
-      name: s.name,
-      type: s.type || 'active',
-      cooldown: s.cooldown || 0,
-      effects: s.effects || [],
-      description: s.description
-    }));
+    // 1. Get Job Skills (up to MAX_JOB_SKILLS)
+    const jobSkills: SkillDefinition[] = (details.job.skills_unlocked || [])
+      .slice(0, MAX_JOB_SKILLS)
+      .map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        type: (s.type === 'ultimate' || s.type === 'burst') ? 'burst' : 'active',
+        cooldown: s.cooldown || 0,
+        effects: s.effects || [{
+          type: 'damage',
+          scaling: details.unit.affinity === 'magic' ? 'matk' : 'atk',
+          power: s.powerMod || 1.0,
+          target: 'enemy'
+        }],
+        description: s.description
+      }));
 
-    // Add a basic attack skill if none exists
+    // 2. Get Equipped Gacha Skills (up to MAX_GACHA_SKILLS)
+    const gachaSkills: SkillDefinition[] = (details.skills || [])
+      .slice(0, MAX_GACHA_SKILLS)
+      .map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        type: s.skillType === 'burst' ? 'burst' : 'active',
+        cooldown: s.cooldown || 0,
+        effects: s.effects || [{
+          type: 'damage',
+          scaling: s.scaling?.stat || 'atk',
+          power: s.scaling?.multiplier || 1.0,
+          target: 'enemy'
+        }],
+        description: s.description
+      }));
+
+    const skills = [...jobSkills, ...gachaSkills];
+
+    // Add a basic attack if no skills exist (shouldn't happen with Job skills)
     if (skills.length === 0) {
       skills.push({
         id: 'basic_attack',
@@ -78,7 +105,7 @@ export class CombatAdapter {
     level: number,
     position: number
   ): CombatUnit {
-    const baseStats = {
+    const base_stats = {
       hp: Math.floor(60 + (level * 12)),
       atk: Math.floor(6 + (level * 1.5)),
       def: Math.floor(4 + (level * 1.2)),
@@ -94,9 +121,9 @@ export class CombatAdapter {
       side: 'enemy',
       position,
       row: position < 3 ? 'front' : 'back',
-      stats: baseStats,
-      currentHp: baseStats.hp,
-      maxHp: baseStats.hp,
+      stats: base_stats,
+      currentHp: base_stats.hp,
+      maxHp: base_stats.hp,
       burst: 0,
       skills: [{
         id: 'enemy_strike',
