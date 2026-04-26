@@ -8,6 +8,8 @@ import { GachaView } from '@/components/views/GachaView';
 import { UnitDetailsView } from '@/components/views/UnitDetailsView';
 import { InventoryView } from '@/components/views/InventoryView';
 import { BattleScreenView } from '@/components/views/BattleScreenView';
+import { CampaignMapView } from '@/components/views/CampaignMapView';
+import { StageDetailsView } from '@/components/views/StageDetailsView';
 import { AuthView } from '@/components/views/AuthView';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
@@ -99,10 +101,24 @@ export default function Applet() {
                  onBack={() => actions.navigateTo('unit_details')}
                  onEquip={actions.handleEquipItem}
                />;
+      case 'campaign':
+        return <CampaignMapView
+                 playerEnergy={state.profile?.energy || 0}
+                 onNavigate={actions.navigateTo}
+                 onSelectStage={actions.handleSelectStage}
+               />;
+      case 'stage_details':
+        return <StageDetailsView
+                 stage={state.selectedStage!}
+                 playerEnergy={state.profile?.energy || 0}
+                 onBack={() => actions.navigateTo('campaign')}
+                 onStartBattle={actions.handleStartBattle}
+               />;
       case 'battle':
         return <BattleScreenView 
                  squad={state.activePartyUnits} 
-                 onBack={() => actions.navigateTo('home')} 
+                 stageId={state.selectedStage?.id}
+                 onBack={() => actions.navigateTo('campaign')}
                  onRefresh={actions.refreshState}
                />;
       default:

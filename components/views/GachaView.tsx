@@ -36,7 +36,7 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0B1A2A] p-4 overflow-hidden relative">
+    <div className="flex flex-col h-full bg-[#0B1A2A] p-4 overflow-hidden relative" style={{ backgroundImage: "url('/assets/backgrounds/gachabg.png')" }}>
       <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 via-transparent to-transparent pointer-events-none" />
 
       <div className="flex items-center justify-between mb-8 z-10">
