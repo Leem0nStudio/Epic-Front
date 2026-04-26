@@ -109,7 +109,7 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
     setActiveUnitId(currentActor.id);
     if (currentActor.side === 'enemy') {
       const skill = currentActor.skills[0];
-      const timer = setTimeout(() => runTurn(currentActor, skill), 1000);
+      const timer = setTimeout(() => runTurn(currentActor, skill), 1500);
       return () => clearTimeout(timer);
     }
   }, [units, turn, isInitializing, isBattleOver, initError]);
@@ -180,6 +180,13 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
 
   const order = BattleManager.getTurnOrder(units);
   const currentActor = order[turn];
+
+  if (isInitializing) return (
+    <div className="flex-1 flex flex-col items-center justify-center bg-[#020508] gap-4">
+        <Swords size={48} className="text-[#F5C76B] animate-bounce" />
+        <p className="text-[10px] font-black text-white/40 tracking-[0.5em] uppercase">Estableciendo Ciclo...</p>
+    </div>
+  );
 
   return (
     <div className="relative min-h-screen bg-[#050505] overflow-hidden font-sans selection:bg-[#F5C76B] selection:text-black">
@@ -351,6 +358,15 @@ function UnitSprite({ unit, isActive, isTarget, onClick, activeFX = [], onFXComp
       </div>
     </motion.div>
   );
+}
+
+function RewardItem({ label, value, color }: any) {
+    return (
+        <div className="px-4 py-2 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center gap-1">
+            <span className="text-[8px] font-black text-white/40 uppercase">{label}</span>
+            <span className={`text-xs font-black ${color}`}>{value}</span>
+        </div>
+    );
 }
 
 function Star({ size, className }: { size: number, className: string }) {
