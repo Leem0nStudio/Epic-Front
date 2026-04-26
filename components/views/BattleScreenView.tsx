@@ -56,8 +56,8 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
         }
         
         const eUnits = [
-          CombatAdapter.createEnemy('enemy_1', 'Guardián Arcano', 5, 0),
-          CombatAdapter.createEnemy('enemy_2', 'Bestia de Sombra', 3, 1)
+          CombatAdapter.createEnemy('enemy_1', 'Limo Débil', 1, 0),
+          CombatAdapter.createEnemy('enemy_2', 'Murciélago Menor', 1, 1)
         ];
 
         setUnits([...pUnits, ...eUnits]);

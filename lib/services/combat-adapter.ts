@@ -70,7 +70,7 @@ export class CombatAdapter {
   }
 
   /**
-   * Creates a sample enemy CombatUnit.
+   * Creates a sample enemy CombatUnit with balanced early-game scaling.
    */
   static createEnemy(
     id: string,
@@ -79,12 +79,12 @@ export class CombatAdapter {
     position: number
   ): CombatUnit {
     const baseStats = {
-      hp: 100 + (level * 20),
-      atk: 15 + (level * 3),
-      def: 10 + (level * 2),
-      matk: 5 + (level * 2),
-      mdef: 5 + (level * 2),
-      agi: 8 + Math.floor(level / 2)
+      hp: Math.floor(60 + (level * 12)),
+      atk: Math.floor(6 + (level * 1.5)),
+      def: Math.floor(4 + (level * 1.2)),
+      matk: Math.floor(4 + (level * 1.2)),
+      mdef: Math.floor(4 + (level * 1.2)),
+      agi: Math.floor(4 + (level * 0.8))
     };
 
     return {
