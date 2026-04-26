@@ -9,19 +9,19 @@ export class QuestService {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data: player } = await supabase
-            .from('players')
+        const { data: profile } = await supabase
+            .from('profiles')
             .select('currency, premium_currency')
             .eq('id', user.id)
             .single();
 
-        if (!player) return;
+        if (!profile) return;
 
         const { error } = await supabase
-            .from('players')
+            .from('profiles')
             .update({
-                currency: BigInt(player.currency) + BigInt(amountZeny),
-                premium_currency: BigInt(player.premium_currency) + BigInt(amountGems)
+                currency: profile.currency + amountZeny,
+                premium_currency: profile.premium_currency + amountGems
             })
             .eq('id', user.id);
 

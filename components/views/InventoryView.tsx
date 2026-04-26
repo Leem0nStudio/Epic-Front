@@ -39,7 +39,7 @@ export function InventoryView({ targetSlot, onBack, onEquip }: InventoryViewProp
   return (
     <div className="flex flex-col h-full bg-[#0B1A2A] p-4 overflow-hidden relative">
       <div className="absolute inset-0 bg-gradient-to-b from-blue-900/10 via-transparent to-transparent pointer-events-none" />
-      
+
       <div className="flex items-center justify-between mb-6 z-10">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="p-2 bg-black/40 border border-white/10 rounded-xl text-white/60 hover:text-white transition-colors">
