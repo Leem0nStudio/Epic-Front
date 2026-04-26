@@ -13,6 +13,8 @@ import {
   Info
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { AssetHelper } from '@/lib/utils/asset-helper';
+import { GameTooltip } from '@/components/ui/GameTooltip';
 
 interface InventoryViewProps {
   targetSlot: 'weapon' | 'card' | 'skill' | null;
@@ -23,7 +25,6 @@ interface InventoryViewProps {
 export function InventoryView({ targetSlot, onBack, onEquip }: InventoryViewProps) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('');
 
   useEffect(() => {
     async function load() {
@@ -43,8 +44,7 @@ export function InventoryView({ targetSlot, onBack, onEquip }: InventoryViewProp
         return true;
       });
 
-      // Hydrate with names (Simplified for demo)
-      setItems(filtered.map(i => ({ ...i, name: `Item ${i.item_id}` })));
+      setItems(filtered.map(i => ({ ...i, name: i.item_id.split('_').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ') })));
       setLoading(false);
     }
     load();
@@ -52,7 +52,6 @@ export function InventoryView({ targetSlot, onBack, onEquip }: InventoryViewProp
 
   return (
     <div className="flex flex-col h-full bg-[#020508] overflow-hidden relative">
-      {/* Header */}
       <div className="p-6 flex items-center justify-between border-b border-white/5 bg-[#0B1A2A] z-10">
         <button onClick={onBack} className="text-white/40 hover:text-white flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors"><ChevronLeft size={16} /> Detalle</button>
         <div className="flex flex-col items-center">
@@ -81,18 +80,23 @@ export function InventoryView({ targetSlot, onBack, onEquip }: InventoryViewProp
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.05 }}
                         onClick={() => onEquip(item)}
-                        className="group relative bg-white/5 border border-white/10 p-4 rounded-3xl flex items-center justify-between hover:border-[#F5C76B]/40 hover:bg-white/10 transition-all active:scale-95"
+                        className="group relative bg-white/5 border border-white/10 p-4 rounded-3xl flex items-center justify-between hover:border-[#F5C76B]/40 hover:bg-white/10 transition-all active:scale-95 overflow-hidden"
                     >
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-center text-[#F5C76B]">
-                                {item.item_type === 'weapon' ? <Sword size={20} /> : item.item_type === 'card' ? <Sparkles size={20} /> : <Zap size={20} />}
+                            <div className="w-12 h-12 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-center text-[#F5C76B] overflow-hidden">
+                                <img src={AssetHelper.getItemIcon(item.item_id, item.item_type)} className="w-full h-full object-cover" />
                             </div>
                             <div className="flex flex-col text-left">
                                 <span className="text-xs font-black text-white uppercase tracking-wider">{item.name}</span>
-                                <span className="text-[8px] font-black text-white/20 uppercase tracking-widest mt-1">ID: {item.item_id}</span>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-[7px] text-white/20 font-black uppercase tracking-widest">{item.item_type}</span>
+                                    <div className="w-1 h-1 rounded-full bg-white/10" />
+                                    <span className="text-[7px] text-[#F5C76B] font-black uppercase tracking-widest">Cantidad: {item.quantity}</span>
+                                </div>
                             </div>
                         </div>
                         <CheckCircle2 size={18} className="text-white/5 group-hover:text-[#F5C76B] transition-colors" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#F5C76B]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </motion.button>
                 ))}
             </div>
