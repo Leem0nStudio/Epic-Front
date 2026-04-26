@@ -13,19 +13,23 @@ import {
   Terminal,
   Activity,
   Heart,
-  Target
+  Target,
+  Gift
 } from 'lucide-react';
 import { CombatUnit, SkillDefinition } from '@/lib/types/combat';
 import { BattleManager } from '@/lib/services/battle-manager';
 import { CombatAdapter } from '@/lib/services/combat-adapter';
+import { CampaignService } from '@/lib/services/campaign-service';
+import { Stage } from '@/lib/rpg-system/campaign-types';
 
 interface BattleScreenViewProps {
   squad: any[];
   onBack: () => void;
   onRefresh: () => void;
+  stageId?: string; // New: optional stage context
 }
 
-export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewProps) {
+export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleScreenViewProps) {
   const [units, setUnits] = useState<CombatUnit[]>([]);
   const [turn, setTurn] = useState(0);
   const [round, setRound] = useState(1);
@@ -36,6 +40,14 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
   const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
   const [targetId, setTargetId] = useState<string | null>(null);
+  const [completionData, setCompletionData] = useState<any>(null);
+  const [isRecordingResult, setIsRecordingResult] = useState(false);
+
+  // Statistics for Star calculation
+  const [stats, setStats] = useState({
+    totalTurns: 0,
+    playerDeaths: 0
+  });
 
   useEffect(() => {
     async function initBattle() {
@@ -51,11 +63,23 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
           validSquad.map((unit, idx) => CombatAdapter.dbUnitToCombatUnit(unit.id, 'player', idx))
         );
 
-        const enemies = [
-          CombatAdapter.createEnemy('e1', 'Limo Débil', 1, 0),
-          CombatAdapter.createEnemy('e2', 'Murciélago', 1, 1),
-          CombatAdapter.createEnemy('e3', 'Limo Débil', 1, 3) // Back row
-        ];
+        let enemies: CombatUnit[] = [];
+
+        if (stageId) {
+            const stage = CampaignService.getStageById(stageId);
+            if (stage) {
+                enemies = stage.enemies.map(e => CombatAdapter.createEnemy(e.id, e.name, e.level, e.position));
+            }
+        }
+
+        // Fallback for demo/testing
+        if (enemies.length === 0) {
+            enemies = [
+              CombatAdapter.createEnemy('e1', 'Limo Débil', 1, 0),
+              CombatAdapter.createEnemy('e2', 'Murciélago', 1, 1),
+              CombatAdapter.createEnemy('e3', 'Limo Débil', 1, 3)
+            ];
+        }
 
         setUnits([...playerUnits, ...enemies]);
         setIsInitializing(false);
@@ -65,7 +89,7 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
       }
     }
     initBattle();
-  }, [squad]);
+  }, [squad, stageId]);
 
   const runTurn = (actor: CombatUnit, skill: SkillDefinition, manualTargetId?: string) => {
     if (isBattleOver) return;
@@ -76,6 +100,9 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
     setUnits(updatedUnits);
     setTurn(prev => prev + 1);
     setTargetId(null);
+
+    // Track total turn cycles (roughly equivalent to rounds or individual unit turns)
+    setStats(prev => ({ ...prev, totalTurns: prev.totalTurns + 1 }));
   };
 
   useEffect(() => {
@@ -83,15 +110,14 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
 
     const aliveEnemies = units.filter(u => u.side === 'enemy' && !u.isDead);
     const alivePlayers = units.filter(u => u.side === 'player' && !u.isDead);
+    const deadPlayers = units.filter(u => u.side === 'player' && u.isDead).length;
 
     if (aliveEnemies.length === 0) {
-      setIsBattleOver(true);
-      setWinner('player');
+      handleBattleOver('player', deadPlayers);
       return;
     }
     if (alivePlayers.length === 0) {
-      setIsBattleOver(true);
-      setWinner('enemy');
+      handleBattleOver('enemy', deadPlayers);
       return;
     }
 
@@ -101,7 +127,6 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
     if (turn >= order.length) {
       setTurn(0);
       setRound(prev => prev + 1);
-      // Process turn-start effects for everyone
       setUnits(prev => prev.map(u => BattleManager.updateUnitStartTurn(u)));
       return;
     }
@@ -115,6 +140,28 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
       return () => clearTimeout(timer);
     }
   }, [units, turn, isInitializing, isBattleOver, initError]);
+
+  const handleBattleOver = async (winner: 'player' | 'enemy', deaths: number) => {
+    setIsBattleOver(true);
+    setWinner(winner);
+
+    if (winner === 'player' && stageId) {
+        setIsRecordingResult(true);
+        try {
+            // Stats for star calculation: total turns taken by player/enemy
+            // simplified: we use the 'round' count for turn limits in stars
+            const result = await CampaignService.completeStage(stageId, {
+                turns: round,
+                deaths: deaths
+            });
+            setCompletionData(result);
+        } catch (e) {
+            console.error("Failed to record stage completion:", e);
+        } finally {
+            setIsRecordingResult(false);
+        }
+    }
+  };
 
   if (isInitializing) {
     return (
@@ -158,13 +205,11 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
 
             {/* Player Side (Left) */}
             <div className="flex flex-col gap-6 relative">
-              {/* Back Row */}
               <div className="absolute left-[-60px] top-1/2 -translate-y-1/2 flex flex-col gap-8 opacity-60">
                 {units.filter(u => u.side === 'player' && u.row === 'back').map(player => (
                   <UnitSprite key={player.id} unit={player} isActive={activeUnitId === player.id} isTarget={targetId === player.id} />
                 ))}
               </div>
-              {/* Front Row */}
               <div className="flex flex-col gap-8">
                 {units.filter(u => u.side === 'player' && u.row === 'front').map(player => (
                   <UnitSprite key={player.id} unit={player} isActive={activeUnitId === player.id} isTarget={targetId === player.id} />
@@ -178,7 +223,6 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
 
             {/* Enemy Side (Right) */}
             <div className="flex flex-col gap-6 relative text-right items-end">
-              {/* Front Row */}
               <div className="flex flex-col gap-8">
                 {units.filter(u => u.side === 'enemy' && u.row === 'front').map(enemy => (
                   <UnitSprite
@@ -190,7 +234,6 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
                   />
                 ))}
               </div>
-              {/* Back Row */}
               <div className="absolute right-[-60px] top-1/2 -translate-y-1/2 flex flex-col gap-8 opacity-60">
                 {units.filter(u => u.side === 'enemy' && u.row === 'back').map(enemy => (
                   <UnitSprite
@@ -203,7 +246,6 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
                 ))}
               </div>
             </div>
-
          </div>
       </div>
 
@@ -277,14 +319,56 @@ export function BattleScreenView({ squad, onBack, onRefresh }: BattleScreenViewP
 
       <AnimatePresence>
         {isBattleOver && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-50 bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-8 text-center">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-50 bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-8 text-center overflow-y-auto">
              <motion.div initial={{ scale: 0.5, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring' }}>
                <Award size={80} className={winner === 'player' ? 'text-[#F5C76B] drop-shadow-[0_0_30px_rgba(245,199,107,0.4)]' : 'text-red-500'} />
              </motion.div>
              <h2 className="text-4xl font-black text-white tracking-[0.4em] uppercase italic mt-6">{winner === 'player' ? 'Victoria' : 'Derrota'}</h2>
-             <div className="h-px w-32 bg-white/10 my-6" />
-             <p className="text-[10px] text-white/40 uppercase tracking-[0.5em] mb-8 font-black">Ciclo de combate finalizado</p>
-             <button onClick={() => { onRefresh(); onBack(); }} className="bg-white/5 border border-white/10 text-white font-black py-5 px-16 rounded-3xl tracking-[0.3em] uppercase text-[10px] hover:bg-white/10 transition-all active:scale-95 shadow-2xl">Confirmar</button>
+
+             {winner === 'player' && completionData && (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 flex flex-col items-center gap-6">
+                    <div className="flex gap-4">
+                        {[1, 2, 3].map(s => (
+                            <Star
+                                key={s}
+                                size={32}
+                                className={`${s <= (completionData.stars || 0) ? 'text-[#F5C76B] fill-current shadow-[0_0_20px_rgba(245,199,107,0.5)]' : 'text-white/10'}`}
+                            />
+                        ))}
+                    </div>
+                    <div className="bg-white/5 border border-white/10 rounded-3xl p-6 min-w-[280px]">
+                        <div className="flex items-center gap-2 mb-4 text-[#F5C76B]">
+                            <Gift size={14} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Recompensas Obtenidas</span>
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-3">
+                            <div className="px-4 py-2 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center gap-1">
+                                <span className="text-[8px] font-black text-white/40 uppercase">Zeny</span>
+                                <span className="text-xs font-black text-white">+{completionData.rewards.currency}</span>
+                            </div>
+                            {completionData.rewards.premium_currency > 0 && (
+                                <div className="px-4 py-2 bg-black/40 rounded-2xl border border-[#F5C76B]/20 flex flex-col items-center gap-1">
+                                    <span className="text-[8px] font-black text-[#F5C76B] uppercase">Gemas</span>
+                                    <span className="text-xs font-black text-[#F5C76B]">+{completionData.rewards.premium_currency}</span>
+                                </div>
+                            )}
+                            {completionData.rewards.materials.map((mat: any, i: number) => (
+                                <div key={i} className="px-4 py-2 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center gap-1">
+                                    <span className="text-[8px] font-black text-white/40 uppercase">{mat.itemId}</span>
+                                    <span className="text-xs font-black text-cyan-400">x{mat.amount}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </motion.div>
+             )}
+
+             {isRecordingResult && (
+                <p className="mt-8 text-[10px] font-black text-[#F5C76B] uppercase tracking-[0.4em] animate-pulse">Registrando Hazaña...</p>
+             )}
+
+             <div className="h-px w-32 bg-white/10 my-8" />
+             <button onClick={() => { onRefresh(); onBack(); }} className="bg-white/5 border border-white/10 text-white font-black py-5 px-16 rounded-3xl tracking-[0.3em] uppercase text-[10px] hover:bg-white/10 transition-all active:scale-95 shadow-2xl">Confirmar y Continuar</button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -307,13 +391,11 @@ function UnitSprite({ unit, isActive, isTarget, onClick }: { unit: CombatUnit, i
       onClick={onClick}
       className={`relative flex flex-col ${isEnemy ? 'items-end' : 'items-start'} ${onClick ? 'cursor-pointer' : ''}`}
     >
-      {/* Name Tag */}
       <div className={`flex items-center gap-1.5 mb-1 ${isEnemy ? 'flex-row-reverse' : ''}`}>
         <span className={`text-[7px] font-black uppercase tracking-widest ${isEnemy ? 'text-red-400' : 'text-cyan-400'}`}>{unit.name}</span>
         {unit.isTaunting && <Shield size={8} className="text-[#F5C76B]" />}
       </div>
 
-      {/* Sprite Container */}
       <div className="relative group">
         <div className={`w-14 h-14 bg-black/40 rounded-full border ${isActive ? 'border-[#F5C76B]/40' : 'border-white/5'} flex items-center justify-center relative overflow-visible`}>
           <img
@@ -337,7 +419,6 @@ function UnitSprite({ unit, isActive, isTarget, onClick }: { unit: CombatUnit, i
           )}
         </div>
 
-        {/* Vital Indicators */}
         <div className={`absolute ${isEnemy ? 'right-full mr-2' : 'left-full ml-2'} top-0 flex flex-col gap-1 w-12`}>
            <div className="h-1 bg-black/60 rounded-full overflow-hidden border border-white/5">
               <motion.div animate={{ width: `${(unit.currentHp / unit.maxHp) * 100}%` }} className={`h-full ${isEnemy ? 'bg-red-500' : 'bg-cyan-500'}`} />
@@ -356,4 +437,22 @@ function UnitSprite({ unit, isActive, isTarget, onClick }: { unit: CombatUnit, i
       </div>
     </motion.div>
   );
+}
+
+function Star({ size, className }: { size: number, className: string }) {
+    return (
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={className}
+        >
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+    );
 }

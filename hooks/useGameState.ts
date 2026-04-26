@@ -6,8 +6,10 @@ import { RecruitmentService } from '@/lib/services/recruitment-service';
 import { PartyService } from '@/lib/services/party-service';
 import { EquipmentService } from '@/lib/services/equipment-service';
 import { ConfigService } from '@/lib/services/config-service';
+import { CampaignService } from '@/lib/services/campaign-service';
+import { Stage } from '@/lib/rpg-system/campaign-types';
 
-export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle';
+export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'stage_details';
 
 export function useGameState() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -20,6 +22,7 @@ export function useGameState() {
   const [tavernSlots, setTavernSlots] = useState<any[]>([]);
   const [view, setView] = useState<ViewType>('home');
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
+  const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
   const [targetSlot, setTargetSlot] = useState<'weapon' | 'card' | 'skill' | null>(null);
 
   const navigateTo = (newView: ViewType) => setView(newView);
@@ -74,7 +77,6 @@ export function useGameState() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Sync Balance Patch config first
         await ConfigService.syncConfig();
 
         const { data: prof, error: profError } = await supabase.from('players').select('*').eq('id', user.id).single();
@@ -148,6 +150,20 @@ export function useGameState() {
     }
   };
 
+  const handleSelectStage = (stage: Stage) => {
+    setSelectedStage(stage);
+    setView('stage_details');
+  };
+
+  const handleStartBattle = async (stage: Stage) => {
+    const success = await CampaignService.deductEnergy(stage.energy_cost);
+    if (!success) {
+        alert("No tienes suficiente energía para esta incursión.");
+        return;
+    }
+    setView('battle');
+  };
+
   const activePartyUnits = Array(5).fill(null).map((_, i) => party.find(p => p.slot_index === i)?.unit || null);
 
   return {
@@ -162,6 +178,7 @@ export function useGameState() {
       tavernSlots,
       view,
       selectedUnitId,
+      selectedStage,
       activePartyUnits,
       targetSlot,
       version: ConfigService.getActiveVersion()
@@ -173,6 +190,8 @@ export function useGameState() {
       handleAssignPartySlot,
       handleOpenInventory,
       handleEquipItem,
+      handleSelectStage,
+      handleStartBattle,
       refreshState
     }
   };
