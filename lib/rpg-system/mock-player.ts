@@ -1,31 +1,16 @@
 import { RPGUnit } from './types';
 
-// The blank slate character.
-export const SAMPLE_NOVICE: RPGUnit = {
-  id: 'unit_hero_01',
-  name: 'Hero',
+export const SAMPLE_NOVICE: any = {
+  id: 'unit_1',
+  player_id: 'player_1',
+  name: 'Arthur',
   level: 1,
-  baseStats: { 
-    hp: 100, 
-    atk: 20, 
-    def: 15, 
-    matk: 10, 
-    mdef: 10, 
-    agi: 10 
-  },
-  growthRates: { 
-    hp: 12.5, 
-    atk: 2.2, 
-    def: 1.8, 
-    matk: 1.5, 
-    mdef: 1.5, 
-    agi: 1.2 
-  },
+  base_stats: { hp: 100, atk: 10, def: 10, matk: 10, mdef: 10, agi: 10 },
+  growth_rates: { hp: 10, atk: 1.5, def: 1.2, matk: 1.2, mdef: 1.2, agi: 1.2 },
   affinity: 'physical',
-  trait: 'Determined', // Minor passive
-  currentJobId: 'novice',
-  unlockedJobs: ['novice'],
-  equippedWeaponId: null,
-  equippedCardsIds: [],
-  equippedSkillsIds: []
+  current_job_id: 'novice',
+  unlocked_jobs: ['novice'],
+  equipped_weapon_instance_id: undefined,
+  equipped_card_instance_ids: [],
+  equipped_skill_instance_ids: []
 };

@@ -1,8 +1,4 @@
-export type Affinity = 'physical' | 'magic' | 'support' | 'ranged';
-export type Tier = 0 | 1 | 2 | 3;
-export type WeaponCategory = 'sword' | 'staff' | 'bow' | 'dagger' | 'none';
-
-export interface BaseStats {
+export interface UnitStats {
   hp: number;
   atk: number;
   def: number;
@@ -11,45 +7,60 @@ export interface BaseStats {
   agi: number;
 }
 
-export interface EvolutionRequirement {
+export type BaseStats = UnitStats;
+export type StatKey = keyof UnitStats;
+
+export type Affinity = 'physical' | 'magic' | 'support' | 'ranged';
+export type WeaponCategory = 'sword' | 'staff' | 'dagger' | 'bow' | 'spear' | 'shield';
+
+export interface EvolutionRequirements {
   minLevel: number;
   materials: { itemId: string; amount: number }[];
   currencyCost: number;
+  requiredJobCore?: string;
 }
 
-export interface GameSkill {
+export interface SkillUnlocked {
   id: string;
   name: string;
-  type: 'basic' | 'active' | 'burst' | 'ultimate' | 'passive';
-  powerMod: number; // Multiplier on attack
+  type: 'basic' | 'active' | 'burst' | 'ultimate';
+  powerMod: number;
   description: string;
+  cooldown?: number;
+  effects?: any[];
 }
 
 export interface JobDefinition {
   id: string;
+  version: string;
   name: string;
-  tier: Tier;
-  parentJobId: string | null;
-  statModifiers: BaseStats; // Multipliers (e.g. 1.2 = +20%)
-  allowedWeapons: WeaponCategory[];
-  skillsUnlocked: GameSkill[];
-  passiveEffects: string[];
-  evolutionRequirements: EvolutionRequirement;
+  tier: number;
+  parent_job_id: string | null;
+  stat_modifiers: UnitStats;
+  allowed_weapons: string[];
+  skills_unlocked: SkillUnlocked[];
+  passive_effects: string[] | Record<string, string>; // Unified handling
+  evolution_requirements: EvolutionRequirements;
 }
 
-export interface RPGUnit {
+export interface UnitData {
   id: string;
+  player_id: string;
   name: string;
   level: number;
-  baseStats: BaseStats; // Starting stats at level 1
-  growthRates: BaseStats; // Added per level
+  base_stats: UnitStats;
+  growth_rates: UnitStats;
   affinity: Affinity;
-  trait?: string; // Optional modifier name
-  currentJobId: string;
-  unlockedJobs: string[];
-  
-  // ==== BUILD COMPONENTS (GACHA) ====
-  equippedWeaponId: string | null;
-  equippedCardsIds: string[]; // e.g. Max 4
-  equippedSkillsIds: string[]; // e.g. Max 3 active skills
+  trait?: string;
+  current_job_id: string;
+  unlocked_jobs: string[];
+  equipped_weapon_instance_id?: string;
+  equipped_card_instance_ids: string[];
+  equipped_skill_instance_ids: string[];
 }
+
+export type RPGUnit = UnitData;
+
+export const MAX_GACHA_SKILLS = 2;
+export const MAX_JOB_SKILLS = 3;
+export const MAX_PARTY_SIZE = 5;

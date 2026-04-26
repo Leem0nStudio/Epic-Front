@@ -1,292 +1,458 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Flame, Droplet, Leaf, Moon, Zap, Sparkles } from 'lucide-react';
-import { SpriteIcon } from '@/components/ui/SpriteIcon';
-import { ITEMS_MOCK } from '@/lib/mock-data';
-import { RPGUnit, Affinity } from '@/lib/rpg-system/types';
+'use client';
 
-// Helper functions outside the component to avoid react-hooks/purity linter errors
-const calcPlayerDamage = (atk: number) => {
-  const isCrit = Math.random() > 0.75;
-  const damage = Math.floor(atk * (isCrit ? 1.5 : 1) * (0.8 + Math.random() * 0.4));
-  return { isCrit, damage };
-};
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  ChevronLeft,
+  Swords,
+  Shield,
+  Zap,
+  PlayCircle,
+  Award,
+  AlertTriangle,
+  Terminal,
+  Activity,
+  Heart,
+  Target,
+  Gift
+} from 'lucide-react';
+import { CombatUnit, SkillDefinition } from '@/lib/types/combat';
+import { BattleManager } from '@/lib/services/battle-manager';
+import { CombatAdapter } from '@/lib/services/combat-adapter';
+import { CampaignService } from '@/lib/services/campaign-service';
+import { Stage } from '@/lib/rpg-system/campaign-types';
 
-const calcEnemyDamage = (def: number) => {
-  return Math.max(10, Math.floor((1500 + Math.random() * 500) - (def * 0.4)));
-};
+interface BattleScreenViewProps {
+  squad: any[];
+  onBack: () => void;
+  onRefresh: () => void;
+  stageId?: string; // New: optional stage context
+}
 
-const generateOffsets = () => {
-  return { leftOffset: 20 + Math.random() * 10, topOffset: 35 + Math.random() * 10 };
-};
+export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleScreenViewProps) {
+  const [units, setUnits] = useState<CombatUnit[]>([]);
+  const [turn, setTurn] = useState(0);
+  const [round, setRound] = useState(1);
+  const [isBattleOver, setIsBattleOver] = useState(false);
+  const [winner, setWinner] = useState<'player' | 'enemy' | null>(null);
+  const [battleLog, setBattleLog] = useState<string[]>([]);
+  const [activeUnitId, setActiveUnitId] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [initError, setInitError] = useState<string | null>(null);
+  const [targetId, setTargetId] = useState<string | null>(null);
+  const [completionData, setCompletionData] = useState<any>(null);
+  const [isRecordingResult, setIsRecordingResult] = useState(false);
 
-export function BattleScreenView({ squad, onBack }: { squad: (RPGUnit | null)[], onBack: () => void }) {
-  const [enemyHp, setEnemyHp] = useState(18000);
-  const enemyMaxHp = 18000;
-  
-  const activeUnits = squad.filter((u): u is RPGUnit => u !== null);
-
-  const [squadHp, setSquadHp] = useState<Record<string, number>>(() => {
-    const initialHp: Record<string, number> = {};
-    activeUnits.forEach(unit => {
-      // In a real scenario we'd use the calc function, doing a simple approximation
-      initialHp[unit.id] = unit.baseStats.hp + (unit.growthRates.hp * unit.level) * 10;
-    });
-    return initialHp;
+  // Statistics for Star calculation
+  const [stats, setStats] = useState({
+    totalTurns: 0,
+    playerDeaths: 0
   });
-  
-  const [squadBB, setSquadBB] = useState<Record<string, number>>(() => {
-    const initialBB: Record<string, number> = {};
-    activeUnits.forEach(unit => { initialBB[unit.id] = 0; });
-    return initialBB;
-  });
 
-  const [attackedThisTurn, setAttackedThisTurn] = useState<Set<string>>(new Set());
-  const [animatingUnits, setAnimatingUnits] = useState<Set<string>>(new Set());
-  const [enemyHit, setEnemyHit] = useState(false);
-  const [floatingDamage, setFloatingDamage] = useState<{id: number, damage: number, type: 'player'|'enemy', isCrit: boolean, leftOffset: number, topOffset: number, targetId?: string}[]>([]);
+  useEffect(() => {
+    async function initBattle() {
+      try {
+        const validSquad = squad.filter(u => !!u);
+        if (validSquad.length === 0) {
+          setInitError("Equipo vacío. Asigna héroes antes de la batalla.");
+          setIsInitializing(false);
+          return;
+        }
 
-  const triggerEnemyTurn = () => {
-     setTimeout(() => {
-        if (activeUnits.length === 0) return;
-        const targetIdx = Math.floor(Math.random() * activeUnits.length);
-        const target = activeUnits[targetIdx];
+        const playerUnits = await Promise.all(
+          validSquad.map((unit, idx) => CombatAdapter.dbUnitToCombatUnit(unit.id, 'player', idx))
+        );
+
+        let enemies: CombatUnit[] = [];
         
-        const def = target.baseStats.def + (target.growthRates.def * target.level);
+        if (stageId) {
+            const stage = CampaignService.getStageById(stageId);
+            if (stage) {
+                enemies = stage.enemies.map(e => CombatAdapter.createEnemy(e.id, e.name, e.level, e.position));
+            }
+        }
 
-        const damage = calcEnemyDamage(def);
-        const { leftOffset, topOffset } = generateOffsets();
-        
-        setSquadHp(prev => ({
-           ...prev,
-           [target.id]: Math.max(0, (prev[target.id] || 0) - damage)
-        }));
+        // Fallback for demo/testing
+        if (enemies.length === 0) {
+            enemies = [
+              CombatAdapter.createEnemy('e1', 'Limo Débil', 1, 0),
+              CombatAdapter.createEnemy('e2', 'Murciélago', 1, 1),
+              CombatAdapter.createEnemy('e3', 'Limo Débil', 1, 3)
+            ];
+        }
 
-        const dmgId = Date.now();
-        setFloatingDamage(prev => [...prev, {id: dmgId, damage, type: 'player', isCrit: false, leftOffset: leftOffset + 40, topOffset, targetId: target.id}]);
-        setTimeout(() => setFloatingDamage(prev => prev.filter(d => d.id !== dmgId)), 1000);
-
-        setTimeout(() => {
-           setAttackedThisTurn(new Set()); 
-        }, 500);
-     }, 1200);
-  };
-
-  const handleAttack = (unitId: string) => {
-    if (attackedThisTurn.has(unitId) || enemyHp <= 0) return;
-    
-    // Check if it's the last unit attacking to trigger enemy turn
-    const newAttacked = new Set(attackedThisTurn).add(unitId);
-    setAttackedThisTurn(newAttacked);
-    
-    setAnimatingUnits(prev => new Set(prev).add(unitId));
-    
-    const unit = activeUnits.find(u => u.id === unitId);
-    if (!unit) return;
-
-    // Use MATK for magic/support, ATK for physical/ranged
-    const atkBase = (unit.affinity === 'magic' || unit.affinity === 'support') ? unit.baseStats.matk : unit.baseStats.atk;
-    const atkGrowth = (unit.affinity === 'magic' || unit.affinity === 'support') ? unit.growthRates.matk : unit.growthRates.atk;
-    const atk = atkBase + (atkGrowth * unit.level) * 5;
-
-    const { isCrit, damage } = calcPlayerDamage(atk);
-    const { leftOffset, topOffset } = generateOffsets();
-
-    setTimeout(() => {
-      setEnemyHit(true);
-      setTimeout(() => setEnemyHit(false), 200);
-
-      setEnemyHp(prev => {
-         const newHp = Math.max(0, prev - damage);
-         return newHp;
-      });
-
-      setSquadBB(prev => ({...prev, [unitId]: Math.min(100, (prev[unitId] || 0) + 20)}));
-      
-      const dmgId = Date.now() + Math.random();
-      setFloatingDamage(prev => [...prev, {id: dmgId, damage, type: 'enemy', isCrit, leftOffset, topOffset}]);
-      setTimeout(() => setFloatingDamage(prev => prev.filter(d => d.id !== dmgId)), 1000);
-    }, 250); 
-
-    setTimeout(() => {
-      setAnimatingUnits(prev => {
-        const next = new Set(prev);
-        next.delete(unitId);
-        return next;
-      });
-
-      if (newAttacked.size === activeUnits.length && enemyHp - damage > 0) {
-         triggerEnemyTurn();
+        setUnits([...playerUnits, ...enemies]);
+        setIsInitializing(false);
+      } catch (e: any) {
+        setInitError(e.message || "Error al inicializar combate");
+        setIsInitializing(false);
       }
-    }, 500);
+    }
+    initBattle();
+  }, [squad, stageId]);
+
+  const runTurn = (actor: CombatUnit, skill: SkillDefinition, manualTargetId?: string) => {
+    if (isBattleOver) return;
+
+    const { results, updatedUnits } = BattleManager.executeTurn(actor, skill, units, manualTargetId);
+    
+    setBattleLog(prev => [...prev, ...results.map(r => r.log)].slice(-20));
+    setUnits(updatedUnits);
+    setTurn(prev => prev + 1);
+    setTargetId(null);
+
+    // Track total turn cycles (roughly equivalent to rounds or individual unit turns)
+    setStats(prev => ({ ...prev, totalTurns: prev.totalTurns + 1 }));
   };
 
-  const getElementColor = (affinity: Affinity) => {
-    switch (affinity) {
-      case 'physical': return "from-[#b53c22] to-[#6e1e0a] border-[#8a2d18]";
-      case 'magic': return "from-[#4a267a] to-[#1a0833] border-[#311b92]";
-      case 'support': return "from-[#38703a] to-[#123614] border-[#1b5e20]";
-      case 'ranged': return "from-[#b59d22] to-[#6e580a] border-[#a18116]";
-      default: return "from-[#295a8f] to-[#0a233b] border-[#1a4a7f]";
+  useEffect(() => {
+    if (isInitializing || isBattleOver || initError) return;
+
+    const aliveEnemies = units.filter(u => u.side === 'enemy' && !u.isDead);
+    const alivePlayers = units.filter(u => u.side === 'player' && !u.isDead);
+    const deadPlayers = units.filter(u => u.side === 'player' && u.isDead).length;
+
+    if (aliveEnemies.length === 0) {
+      handleBattleOver('player', deadPlayers);
+      return;
+    }
+    if (alivePlayers.length === 0) {
+      handleBattleOver('enemy', deadPlayers);
+      return;
+    }
+
+    const order = BattleManager.getTurnOrder(units);
+    if (order.length === 0) return;
+
+    if (turn >= order.length) {
+      setTurn(0);
+      setRound(prev => prev + 1);
+      setUnits(prev => prev.map(u => BattleManager.updateUnitStartTurn(u)));
+      return;
+    }
+
+    const currentActor = order[turn];
+    setActiveUnitId(currentActor.id);
+
+    if (currentActor.side === 'enemy') {
+      const skill = currentActor.skills[0];
+      const timer = setTimeout(() => runTurn(currentActor, skill), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [units, turn, isInitializing, isBattleOver, initError]);
+
+  const handleBattleOver = async (winner: 'player' | 'enemy', deaths: number) => {
+    setIsBattleOver(true);
+    setWinner(winner);
+
+    if (winner === 'player' && stageId) {
+        setIsRecordingResult(true);
+        try {
+            // Stats for star calculation: total turns taken by player/enemy
+            // simplified: we use the 'round' count for turn limits in stars
+            const result = await CampaignService.completeStage(stageId, {
+                turns: round,
+                deaths: deaths
+            });
+            setCompletionData(result);
+        } catch (e) {
+            console.error("Failed to record stage completion:", e);
+        } finally {
+            setIsRecordingResult(false);
+        }
     }
   };
 
-  const getElementIcon = (affinity: Affinity, size = 12) => {
-    switch (affinity) {
-      case 'physical': return <Flame size={size} className="fill-[#e85433] text-[#a62c12]" />;
-      case 'magic': return <Moon size={size} className="fill-[#7e57c2] text-[#311b92]" />;
-      case 'support': return <Leaf size={size} className="fill-[#4caf50] text-[#1b5e20]" />;
-      case 'ranged': return <Zap size={size} className="fill-[#f2da3e] text-[#a18116]" />;
-      default: return <Droplet size={size} className="fill-[#2a5a8f] text-[#1a4a7f]" />;
-    }
-  };
+  if (isInitializing) {
+    return (
+        <div className="flex-1 flex flex-col items-center justify-center bg-[#020508] gap-4">
+            <Swords size={48} className="text-[#F5C76B] animate-bounce" />
+            <p className="text-[10px] font-black text-white/40 tracking-[0.5em] uppercase">Preparando escenario...</p>
+        </div>
+    );
+  }
 
-  const genericSprite = 'https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png';
+  if (initError) {
+    return (
+        <div className="flex-1 flex flex-col items-center justify-center bg-[#020508] p-8 text-center gap-6">
+            <AlertTriangle size={40} className="text-amber-400" />
+            <h2 className="text-white font-black uppercase tracking-widest text-lg italic">Incompatibilidad de Batallón</h2>
+            <p className="text-white/40 text-[10px] uppercase tracking-wider leading-relaxed">{initError}</p>
+            <button onClick={onBack} className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest">Regresar</button>
+        </div>
+    );
+  }
+
+  const order = BattleManager.getTurnOrder(units);
+  const currentActor = order[turn];
 
   return (
-    <div className="w-full flex-1 flex flex-col gap-2 relative font-sans select-none animate-in fade-in duration-300 h-full max-h-full overflow-hidden">
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-6px) rotate(-2deg); }
-          50% { transform: translateX(6px) rotate(2deg); }
-          75% { transform: translateX(-6px) rotate(-1deg); }
-        }
-        @keyframes floatUp {
-          0% { transform: translateY(0) scale(0.8); opacity: 1; }
-          40% { transform: translateY(-40px) scale(1.2); opacity: 1; }
-          100% { transform: translateY(-70px) scale(1); opacity: 0; }
-        }
-        .animate-shake { animation: shake 0.25s ease-in-out; }
-        .animate-floatUp { animation: floatUp 1.2s ease-out forwards; }
-      `}} />
-      
-      {/* 1. Battlefield Environment (Framed) */}
-      <div className="w-full bg-gradient-to-b from-[#e3cfb4] to-[#c7b08d] rounded-[4px] border-[2px] border-[#5a4227] p-1 rpg-panel-shadow relative flex-shrink-0 flex flex-col">
-        <div className="absolute inset-0 border border-[#f3e5ca] rounded-[2px] pointer-events-none z-20"></div>
-        
-        {/* Header row with back button */}
-        <div className="w-full flex justify-between items-start mb-1 relative z-30">
-          <button onClick={onBack} className="bg-gradient-to-b from-[#e3cfb4] to-[#c7b08d] border-[2px] border-[#5a4227] rounded shadow-[0_2px_4px_rgba(0,0,0,0.5)] px-1 py-1 flex items-center hover:brightness-110 active:scale-95 transition-all duration-200 text-[#3c2a16]">
-             <ChevronLeft size={16} />
-          </button>
-          
-          <div className="bg-[#1a110a] border-[1.5px] border-[#5a4227] rounded px-3 py-1 flex items-center shadow-inner mt-[2px] mr-[2px]">
-             <span className="font-serif font-bold text-white text-[12px] tracking-widest text-stroke-sm leading-none">BATTLE ACTIVE</span>
-          </div>
-        </div>
+    <div className="flex flex-col h-full bg-[#020508] overflow-hidden relative">
+      <div className="p-4 flex items-center justify-between border-b border-white/5 bg-[#0B1A2A] z-10 shadow-2xl shrink-0">
+         <button onClick={onBack} className="text-white/40 hover:text-white flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors"><ChevronLeft size={16} /> Retirada</button>
+         <div className="flex flex-col items-center">
+            <span className="text-[10px] text-[#F5C76B] font-black uppercase tracking-[0.4em] italic">Round {round}</span>
+            <span className="text-[8px] text-white/20 font-mono tracking-widest mt-0.5 uppercase">Activo: {currentActor?.name}</span>
+         </div>
+         <div className="w-20"></div>
+      </div>
 
-        <div className="relative w-full h-[180px] sm:h-[220px] bg-cover bg-center rounded-[2px] overflow-hidden border-[1.5px] border-[#5a4227] shadow-[inset_0_4px_10px_rgba(0,0,0,0.5)]" style={{ backgroundImage: "url('https://raw.githubusercontent.com/Leem0nGames/gameassets/main/file_000000004e3071f5a7171db25e254771.png')" }}>
-        
-          {/* Mock Players Sprites (Right side) */}
-          <div className="absolute right-[5%] top-[40%] flex flex-col gap-6 scale-90 sm:scale-100 z-20">
-             {activeUnits[1] && <img src={genericSprite} className={`w-[60px] h-[60px] object-contain drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] filter ${animatingUnits.has(activeUnits[1].id) ? 'brightness-150' : 'brightness-110'}`} style={{imageRendering: 'pixelated', transform: animatingUnits.has(activeUnits[1].id) ? 'translate(-40px, -10px) scale(1.1)' : 'translate(0px, 0px) scale(1)', transition: 'transform 0.2s ease, filter 0.2s ease'}} alt="" />}
-             {activeUnits[3] && <img src={genericSprite} className={`w-[60px] h-[60px] object-contain drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] filter ${animatingUnits.has(activeUnits[3].id) ? 'brightness-120' : 'opacity-80'}`} style={{imageRendering: 'pixelated', transform: animatingUnits.has(activeUnits[3].id) ? 'translate(-40px, -10px) scale(1.1)' : 'translate(0px, 0px) scale(1)', transition: 'transform 0.2s ease, filter 0.2s ease'}} alt="" />}
-          </div>
-          <div className="absolute right-[25%] top-[25%] flex flex-col gap-8 scale-75 sm:scale-90 z-10">
-             {activeUnits[2] && <img src={genericSprite} className={`w-[50px] h-[50px] object-contain drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] filter ${animatingUnits.has(activeUnits[2].id) ? 'brightness-120' : 'opacity-90'}`} style={{imageRendering: 'pixelated', transform: animatingUnits.has(activeUnits[2].id) ? 'translate(-40px, -10px) scale(1.1)' : 'translate(0px, 0px) scale(1)', transition: 'transform 0.2s ease, filter 0.2s ease'}} alt="" />}
-             {activeUnits[0] && <img src={genericSprite} className={`w-[50px] h-[50px] object-contain drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] filter ${animatingUnits.has(activeUnits[0].id) ? 'brightness-120' : 'opacity-90'}`} style={{imageRendering: 'pixelated', transform: animatingUnits.has(activeUnits[0].id) ? 'translate(-40px, -10px) scale(1.1)' : 'translate(0px, 0px) scale(1)', transition: 'transform 0.2s ease, filter 0.2s ease'}} alt="" />}
-          </div>
+      <div className="flex-1 relative overflow-hidden flex flex-col py-4 px-4 gap-8">
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,100,255,0.05),transparent)] pointer-events-none" />
 
-          {/* Enemy Sprite Mock (Left side) */}
-          <div className={`absolute left-[15%] top-[25%] flex items-center justify-center z-10 ${enemyHit ? 'animate-shake' : ''}`}>
-              <img src={'https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png'} className={`w-[100px] h-[100px] object-contain drop-shadow-[0_10px_10px_rgba(0,0,0,0.6)] filter sepia(1) hue-rotate-180 scale-[1.5] -scale-x-[1.5] ${enemyHit ? 'brightness-150 saturate-200' : 'brightness-75'}`} style={{imageRendering: 'pixelated', transition: 'filter 0.1s'}} alt="" />
-          </div>
+         {/* Battlefield Layout: BF Side-view */}
+         <div className="flex flex-1 items-center justify-between relative px-2">
 
-          {/* Floating Damage Text */}
-          {floatingDamage.map(dmg => (
-             <div key={dmg.id} className={`absolute z-50 font-serif font-bold ${dmg.isCrit ? 'text-[#ffcc00] text-[26px] sm:text-[30px]' : 'text-white text-[20px] sm:text-[24px]'} text-stroke-black drop-shadow-xl animate-floatUp pointer-events-none`} style={{ left: `${dmg.leftOffset}%`, top: `${dmg.topOffset}%` }}>
-                {dmg.damage}
-             </div>
-          ))}
-
-          {/* Enemy Name / HP Overlay */}
-          <div className="absolute bottom-0 w-full bg-gradient-to-t from-[rgba(0,0,0,0.9)] via-[rgba(0,0,0,0.5)] to-transparent pt-6 pb-2 px-1 flex flex-col justify-end z-10 border-t border-[rgba(255,255,255,0.1)]">
-            <div className="flex items-end gap-1 mb-1 ml-1 sm:ml-4 relative">
-               <div className="w-8 h-8 flex items-center justify-center absolute -left-1 sm:-left-3 -bottom-1 z-20"><Sparkles size={24} className="text-[#f5d796] fill-[#f5d796] drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]" /></div>
-               <span className="text-white font-bold text-[15px] sm:text-[18px] text-stroke-black drop-shadow-[0_2px_2px_rgba(0,0,0,1)] tracking-wide ml-6">Mímico alado</span>
-            </div>
-            <div className="w-full px-1">
-              <div className="w-full h-[10px] sm:h-[12px] bg-[#111] border-[1.5px] border-[#eacf9b] rounded-sm p-[1px] relative shadow-lg">
-                 <div className="h-full bg-gradient-to-b from-[#ff3333] via-[#cc0000] to-[#660000] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] transition-all duration-300" style={{ width: `${Math.max(0, Math.min(100, (enemyHp / enemyMaxHp) * 100))}%` }}></div>
+            {/* Player Side (Left) */}
+            <div className="flex flex-col gap-6 relative">
+              <div className="absolute left-[-60px] top-1/2 -translate-y-1/2 flex flex-col gap-8 opacity-60">
+                {units.filter(u => u.side === 'player' && u.row === 'back').map(player => (
+                  <UnitSprite key={player.id} unit={player} isActive={activeUnitId === player.id} isTarget={targetId === player.id} />
+                ))}
+              </div>
+              <div className="flex flex-col gap-8">
+                {units.filter(u => u.side === 'player' && u.row === 'front').map(player => (
+                  <UnitSprite key={player.id} unit={player} isActive={activeUnitId === player.id} isTarget={targetId === player.id} />
+                ))}
               </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* 2. Squad Roster (Framed) */}
-      <div className="w-full bg-gradient-to-b from-[#e3cfb4] to-[#c7b08d] rounded-[4px] border-[2px] border-[#5a4227] p-1.5 rpg-panel-shadow flex-shrink-0 relative overflow-y-auto">
-          <div className="absolute inset-0 border border-[#f3e5ca] rounded-[2px] pointer-events-none z-20"></div>
-          
-          <div className="grid grid-cols-2 gap-[4px] relative z-10 w-full min-h-[160px]">
-              {activeUnits.map((unit, idx) => {
-                 const maxHp = unit.baseStats.hp + (unit.growthRates.hp * unit.level) * 10;
-                 const currentHp = squadHp[unit.id] ?? maxHp;
-                 const hpPercent = Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
-                 const currentBB = squadBB[unit.id] ?? 0;
-                 const isAttacked = attackedThisTurn.has(unit.id) || currentHp <= 0;
+            <div className="h-full w-px bg-white/5 relative">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[8px] font-black text-white/10 uppercase tracking-widest bg-[#020508] px-2 py-4 rounded-full border border-white/5">VS</div>
+            </div>
 
-                 return (
-                 <div key={unit.id} onClick={() => handleAttack(unit.id)} className={`relative bg-gradient-to-b ${getElementColor(unit.affinity)} border-[1.5px] border-[#5a4227] rounded-[3px] flex shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] overflow-hidden transition-all duration-200 ${isAttacked ? 'opacity-60 grayscale cursor-default' : 'hover:brightness-110 active:scale-[0.98] cursor-pointer'}`}>
-                    
-                    {/* Portrait */}
-                    <div className="w-[50px] sm:w-[60px] bg-black border-r-[1.5px] border-[#382618] flex-shrink-0 relative overflow-hidden flex justify-center items-end bg-[url('data:image/svg+xml,%3Csvg width=\\'4\\' height=\\'4\\' viewBox=\\'0 0 4 4\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cpath d=\\'M0 0h4v4H0V0zm2 2h2v2H2V2z\\' fill=\\'%23ffffff\\' fill-opacity=\\'0.05\\' fill-rule=\\'evenodd\\'/%3E%3C/svg%3E')]">
-                       <img src={genericSprite} className="w-[180%] max-w-none text-center scale-[1.7] transform translate-y-3 origin-center filter drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" style={{imageRendering: 'pixelated'}} alt="" />
-                    </div>
-                    
-                    {/* Stats */}
-                    <div className="flex-1 flex flex-col justify-center px-1 sm:px-2 relative bg-gradient-to-r from-[rgba(0,0,0,0.5)] to-transparent h-full py-1">
-                        <div className="flex items-center gap-[2px]">
-                           {getElementIcon(unit.affinity, 11)}
-                           <span className="text-[10px] sm:text-[11px] font-bold text-white text-stroke-sm drop-shadow-sm leading-none truncate max-w-[90px]">
-                             {unit.name}
-                           </span>
-                        </div>
-                        <div className="text-[12px] sm:text-[14px] font-bold text-white text-stroke-sm drop-shadow-[0_1px_1px_rgba(0,0,0,1)] leading-none text-right w-full pr-1 font-serif tracking-tighter mt-[2px] mb-[1px]">
-                           {currentHp}/{maxHp}
-                        </div>
-                        {/* HP Bar */}
-                        <div className="w-full h-[6px] sm:h-[8px] bg-[#1a1105] border-[1px] border-[#000] rounded-[2px] p-[1px] shadow-sm relative">
-                           <div className="h-full bg-gradient-to-r from-[#88ff00] to-[#20cc20] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] rounded-sm transition-all duration-500 ease-in-out" style={{ width: `${hpPercent}%` }}></div>
-                        </div>
-                        {/* BB Bar */}
-                        <div className="w-full h-[6px] sm:h-[8px] bg-[#1a1105] border-[1px] border-[#000] rounded-[2px] p-[1px] mt-[2px] shadow-sm relative overflow-hidden">
-                           <div className="h-full bg-gradient-to-r from-[#aaffff] via-[#44aaff] to-[#0055ff] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] rounded-sm transition-all duration-500 ease-in-out" style={{ width: `${currentBB}%` }}></div>
-                        </div>
-                    </div>
-                 </div>
-              )})}
-          </div>
-      </div>
-
-      {/* 3. Items Panel (Dark Strip style) */}
-      <div className="bg-[#2c1d11] border-[2px] border-[#1a110a] rounded-[4px] p-2 mt-auto relative shadow-[inset_0_0_10px_rgba(0,0,0,0.8)] pb-1 flex flex-col items-center flex-shrink-0">
-         <div className="absolute -top-[10px] left-1/2 -translate-x-1/2 bg-[#4a2e1a] border border-[#1a110a] px-3 rounded-full text-[10px] font-bold text-[#c79a5d] tracking-wide shadow-md">
-            ITEMS
+            {/* Enemy Side (Right) */}
+            <div className="flex flex-col gap-6 relative text-right items-end">
+              <div className="flex flex-col gap-8">
+                {units.filter(u => u.side === 'enemy' && u.row === 'front').map(enemy => (
+                  <UnitSprite
+                    key={enemy.id}
+                    unit={enemy}
+                    isActive={activeUnitId === enemy.id}
+                    isTarget={targetId === enemy.id}
+                    onClick={() => !enemy.isDead && currentActor?.side === 'player' && setTargetId(enemy.id)}
+                  />
+                ))}
+              </div>
+              <div className="absolute right-[-60px] top-1/2 -translate-y-1/2 flex flex-col gap-8 opacity-60">
+                {units.filter(u => u.side === 'enemy' && u.row === 'back').map(enemy => (
+                  <UnitSprite
+                    key={enemy.id}
+                    unit={enemy}
+                    isActive={activeUnitId === enemy.id}
+                    isTarget={targetId === enemy.id}
+                    onClick={() => !enemy.isDead && currentActor?.side === 'player' && setTargetId(enemy.id)}
+                  />
+                ))}
+              </div>
+            </div>
          </div>
-         <div className="flex justify-between items-end w-full px-1 flex-1 pt-[6px]">
-            {ITEMS_MOCK.map((item, idx) => (
-               <div key={idx} className="flex flex-col items-center w-[18%] relative group cursor-pointer hover:brightness-110 transition-all duration-200">
-                  <span className="font-serif text-[12px] sm:text-[14px] font-bold text-white text-stroke-sm leading-none drop-shadow-[0_2px_2px_rgba(0,0,0,1)] z-20 mb-[-6px] text-right w-[80%] pr-1 group-active:scale-95 transition-transform duration-200">
-                     x{item.count}
-                  </span>
-                  {/* Pedestal */}
-                  <div className="relative w-full aspect-square max-h-[50px] flex items-center justify-center group-active:scale-95 transition-transform duration-200">
-                     <div className="absolute bottom-[2px] w-[90%] h-[12px] bg-gradient-to-r from-[#8b6131] via-[#e2bb7a] to-[#8b6131] rounded-full border-[1.5px] border-[#3d240d] shadow-[0_4px_6px_rgba(0,0,0,0.8)] z-0"></div>
-                     <div className="absolute bottom-[4px] w-[80%] h-[10px] bg-[#1a0f05] rounded-full z-0 border border-[#000]"></div>
-                     
-                     {/* Icon from Atlas */}
-                     <div className="relative z-10 translate-y-[-2px] flex items-center justify-center filter drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]">
-                         <SpriteIcon col={item.sprite.col} row={item.sprite.row} size={28} />
+      </div>
+
+      {/* Control Interface */}
+      <div className="h-64 bg-[#0B1A2A] border-t border-white/5 p-4 flex flex-col gap-4 shrink-0 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
+         <div className="flex gap-4 h-full">
+           {/* Skill Board */}
+           <div className="flex-1 bg-black/20 rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden">
+             <div className="flex items-center justify-between mb-1">
+               <span className="text-[8px] font-black text-white/40 uppercase tracking-widest flex items-center gap-2"><Target size={10} /> Habilidades</span>
+               {currentActor?.side === 'player' && (
+                 <span className="text-[10px] font-black text-[#F5C76B] uppercase italic">{currentActor.name}</span>
+               )}
+             </div>
+
+             {currentActor?.side === 'player' ? (
+               <div className="grid grid-cols-2 gap-2">
+                 {currentActor.skills.map((skill, idx) => (
+                   <button
+                     key={skill.id}
+                     disabled={!!currentActor.cooldowns[skill.id]}
+                     onClick={() => runTurn(currentActor, skill, targetId || undefined)}
+                     className={`relative overflow-hidden group flex flex-col p-2 rounded-xl border transition-all ${
+                       currentActor.cooldowns[skill.id]
+                       ? 'bg-white/5 border-white/5 text-white/10 opacity-50'
+                       : 'bg-white/5 border-white/10 text-white/80 hover:border-[#F5C76B]/40 hover:bg-white/10'
+                     }`}
+                   >
+                     <div className="flex items-center justify-between w-full mb-1">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-left truncate">{skill.name}</span>
+                        {currentActor.cooldowns[skill.id] ? (
+                          <span className="text-[8px] font-mono text-[#F5C76B]">{currentActor.cooldowns[skill.id]}T</span>
+                        ) : (
+                          <Zap size={10} className="text-[#F5C76B] group-hover:animate-pulse" />
+                        )}
                      </div>
-                  </div>
-                  <span className="text-[9px] sm:text-[10px] font-bold text-[#e1c59f] text-stroke-black text-center leading-[1.1] mt-[2px] w-[120%] drop-shadow-md line-clamp-2">
-                    {item.name}
-                  </span>
+                     <div className="flex gap-0.5">
+                       {Array(5).fill(0).map((_, i) => (
+                         <div key={i} className={`w-1 h-0.5 rounded-full ${i < (skill.cooldown || 0) ? 'bg-[#F5C76B]/30' : 'bg-white/5'}`} />
+                       ))}
+                     </div>
+                   </button>
+                 ))}
+                 {currentActor.burst >= 100 && (
+                   <button
+                     onClick={() => runTurn(currentActor, currentActor.skills.find(s => s.type === 'burst') || currentActor.skills[0])}
+                     className="col-span-2 p-3 bg-red-600 border border-red-500 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] text-white shadow-[0_0_20px_rgba(239,68,68,0.4)] animate-pulse"
+                   >
+                     ¡BURST OVERDRIVE!
+                   </button>
+                 )}
                </div>
-            ))}
+             ) : (
+               <div className="flex-1 flex flex-col items-center justify-center gap-2 opacity-20">
+                 <Activity size={24} className="animate-pulse" />
+                 <span className="text-[8px] font-black uppercase tracking-widest">Esperando respuesta táctica...</span>
+               </div>
+             )}
+           </div>
+
+           {/* Battle Log */}
+           <div className="w-32 bg-black/40 rounded-2xl p-3 flex flex-col gap-2 overflow-y-auto border border-white/5">
+             <div className="text-[7px] font-black text-white/20 uppercase tracking-widest border-b border-white/5 pb-1">Sucesos</div>
+             {battleLog.length === 0 && <div className="text-[7px] text-white/10 uppercase italic mt-2 text-center">Sin registros</div>}
+             {battleLog.map((log, i) => (
+                <div key={i} className="text-[7px] text-white/40 leading-tight uppercase font-medium">{log}</div>
+             ))}
+           </div>
          </div>
       </div>
+
+      <AnimatePresence>
+        {isBattleOver && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-50 bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-8 text-center overflow-y-auto">
+             <motion.div initial={{ scale: 0.5, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring' }}>
+               <Award size={80} className={winner === 'player' ? 'text-[#F5C76B] drop-shadow-[0_0_30px_rgba(245,199,107,0.4)]' : 'text-red-500'} />
+             </motion.div>
+             <h2 className="text-4xl font-black text-white tracking-[0.4em] uppercase italic mt-6">{winner === 'player' ? 'Victoria' : 'Derrota'}</h2>
+
+             {winner === 'player' && completionData && (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 flex flex-col items-center gap-6">
+                    <div className="flex gap-4">
+                        {[1, 2, 3].map(s => (
+                            <Star
+                                key={s}
+                                size={32}
+                                className={`${s <= (completionData.stars || 0) ? 'text-[#F5C76B] fill-current shadow-[0_0_20px_rgba(245,199,107,0.5)]' : 'text-white/10'}`}
+                            />
+                        ))}
+                    </div>
+                    <div className="bg-white/5 border border-white/10 rounded-3xl p-6 min-w-[280px]">
+                        <div className="flex items-center gap-2 mb-4 text-[#F5C76B]">
+                            <Gift size={14} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Recompensas Obtenidas</span>
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-3">
+                            <div className="px-4 py-2 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center gap-1">
+                                <span className="text-[8px] font-black text-white/40 uppercase">Zeny</span>
+                                <span className="text-xs font-black text-white">+{completionData.rewards.currency}</span>
+                            </div>
+                            {completionData.rewards.premium_currency > 0 && (
+                                <div className="px-4 py-2 bg-black/40 rounded-2xl border border-[#F5C76B]/20 flex flex-col items-center gap-1">
+                                    <span className="text-[8px] font-black text-[#F5C76B] uppercase">Gemas</span>
+                                    <span className="text-xs font-black text-[#F5C76B]">+{completionData.rewards.premium_currency}</span>
+                                </div>
+                            )}
+                            {completionData.rewards.materials.map((mat: any, i: number) => (
+                                <div key={i} className="px-4 py-2 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center gap-1">
+                                    <span className="text-[8px] font-black text-white/40 uppercase">{mat.itemId}</span>
+                                    <span className="text-xs font-black text-cyan-400">x{mat.amount}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </motion.div>
+             )}
+
+             {isRecordingResult && (
+                <p className="mt-8 text-[10px] font-black text-[#F5C76B] uppercase tracking-[0.4em] animate-pulse">Registrando Hazaña...</p>
+             )}
+
+             <div className="h-px w-32 bg-white/10 my-8" />
+             <button onClick={() => { onRefresh(); onBack(); }} className="bg-white/5 border border-white/10 text-white font-black py-5 px-16 rounded-3xl tracking-[0.3em] uppercase text-[10px] hover:bg-white/10 transition-all active:scale-95 shadow-2xl">Confirmar y Continuar</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
+}
+
+function UnitSprite({ unit, isActive, isTarget, onClick }: { unit: CombatUnit, isActive?: boolean, isTarget?: boolean, onClick?: () => void }) {
+  const isEnemy = unit.side === 'enemy';
+
+  return (
+    <motion.div
+      initial={{ x: isEnemy ? 20 : -20, opacity: 0 }}
+      animate={{
+        x: 0,
+        opacity: unit.isDead ? 0.2 : 1,
+        scale: isActive ? 1.1 : 1,
+        filter: isTarget ? 'brightness(1.5) drop-shadow(0 0 10px rgba(255,0,0,0.5))' : 'brightness(1)'
+      }}
+      onClick={onClick}
+      className={`relative flex flex-col ${isEnemy ? 'items-end' : 'items-start'} ${onClick ? 'cursor-pointer' : ''}`}
+    >
+      <div className={`flex items-center gap-1.5 mb-1 ${isEnemy ? 'flex-row-reverse' : ''}`}>
+        <span className={`text-[7px] font-black uppercase tracking-widest ${isEnemy ? 'text-red-400' : 'text-cyan-400'}`}>{unit.name}</span>
+        {unit.isTaunting && <Shield size={8} className="text-[#F5C76B]" />}
+      </div>
+
+      <div className="relative group">
+        <div className={`w-14 h-14 bg-black/40 rounded-full border ${isActive ? 'border-[#F5C76B]/40' : 'border-white/5'} flex items-center justify-center relative overflow-visible`}>
+          <img
+            src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png"
+            className={`w-[240%] max-w-none transform translate-y-3 ${isEnemy ? 'scale-x-[-1] brightness-50' : 'brightness-110'}`}
+            style={{imageRendering: 'pixelated'}}
+          />
+
+          {isActive && (
+            <motion.div
+              animate={{ opacity: [0, 1, 0], scale: [0.8, 1.2, 1.5] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+              className="absolute inset-0 border border-[#F5C76B] rounded-full"
+            />
+          )}
+
+          {isTarget && (
+            <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity }} className="absolute -top-6 left-1/2 -translate-x-1/2">
+              <Target size={16} className="text-red-500" />
+            </motion.div>
+          )}
+        </div>
+
+        <div className={`absolute ${isEnemy ? 'right-full mr-2' : 'left-full ml-2'} top-0 flex flex-col gap-1 w-12`}>
+           <div className="h-1 bg-black/60 rounded-full overflow-hidden border border-white/5">
+              <motion.div animate={{ width: `${(unit.currentHp / unit.maxHp) * 100}%` }} className={`h-full ${isEnemy ? 'bg-red-500' : 'bg-cyan-500'}`} />
+           </div>
+           {!isEnemy && (
+             <div className="h-1 bg-black/60 rounded-full overflow-hidden border border-white/5">
+                <motion.div animate={{ width: `${unit.burst}%` }} className="h-full bg-yellow-500" />
+             </div>
+           )}
+           <div className="flex gap-0.5 mt-0.5 justify-end">
+              {unit.statusEffects.map(s => (
+                <div key={s.id} className={`w-1.5 h-1.5 rounded-sm ${s.type === 'buff' ? 'bg-green-400' : 'bg-red-400'} animate-pulse`} title={s.name} />
+              ))}
+           </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function Star({ size, className }: { size: number, className: string }) {
+    return (
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={className}
+        >
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+    );
 }
