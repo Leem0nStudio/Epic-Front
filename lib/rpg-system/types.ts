@@ -17,7 +17,7 @@ export interface EvolutionRequirements {
   minLevel: number;
   materials: { itemId: string; amount: number }[];
   currencyCost: number;
-  requiredJobCore?: string; // New: Job Core requirement
+  requiredJobCore?: string;
 }
 
 export interface SkillUnlocked {
@@ -26,7 +26,6 @@ export interface SkillUnlocked {
   type: 'basic' | 'active' | 'burst' | 'ultimate';
   powerMod: number;
   description: string;
-  // Metadata for combat engine
   cooldown?: number;
   effects?: any[];
 }
@@ -37,10 +36,10 @@ export interface JobDefinition {
   name: string;
   tier: number;
   parent_job_id: string | null;
-  stat_modifiers: UnitStats; // These act as multipliers (e.g. 1.2 = +20%)
+  stat_modifiers: UnitStats;
   allowed_weapons: string[];
   skills_unlocked: SkillUnlocked[];
-  passive_effects: string[];
+  passive_effects: string[] | Record<string, string>; // Unified handling
   evolution_requirements: EvolutionRequirements;
 }
 
@@ -49,20 +48,19 @@ export interface UnitData {
   player_id: string;
   name: string;
   level: number;
-  base_stats: UnitStats; // Stats at level 1
-  growth_rates: UnitStats; // Growth per level
+  base_stats: UnitStats;
+  growth_rates: UnitStats;
   affinity: Affinity;
   trait?: string;
   current_job_id: string;
   unlocked_jobs: string[];
   equipped_weapon_instance_id?: string;
-  equipped_card_instance_ids: string[]; // Max 3? (Usually cards are tied to weapons/gear but let's stick to unit for now)
-  equipped_skill_instance_ids: string[]; // Max 2 from Gacha
+  equipped_card_instance_ids: string[];
+  equipped_skill_instance_ids: string[];
 }
 
 export type RPGUnit = UnitData;
 
-// Shared constants
 export const MAX_GACHA_SKILLS = 2;
 export const MAX_JOB_SKILLS = 3;
 export const MAX_PARTY_SIZE = 5;
