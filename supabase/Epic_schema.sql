@@ -302,7 +302,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Complete Stage
 CREATE OR REPLACE FUNCTION rpc_complete_stage(p_stage_id TEXT, p_stars INTEGER, p_turns INTEGER, p_rewards JSONB)
-RETURNS void AS 8823
+RETURNS void AS $$
 DECLARE
     v_user_id UUID := auth.uid();
     v_material RECORD;
@@ -320,10 +320,9 @@ BEGIN
         premium_currency = premium_currency + COALESCE((p_rewards->>'premium_currency')::INTEGER, 0)
     WHERE id = v_user_id;
 
-    -- 2. Apply EXP Gain to Units in the Party
+    -- 2. Apply EXP Gain to Units in the Party (Auto Level Up for feel)
     v_exp_gain := COALESCE((p_rewards->>'exp')::INTEGER, 0);
     IF v_exp_gain > 0 THEN
-        -- Each stage clear grants a level for now to make it feel rewarding in early dev
         UPDATE units
         SET level = level + 1
         WHERE id IN (SELECT unit_id FROM party WHERE player_id = v_user_id);
@@ -337,178 +336,6 @@ BEGIN
             ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + v_material.amount;
         END LOOP;
     END IF;
-END;
-8823 LANGUAGE plpgsql SECURITY DEFINER;ema for the RPG system
-
--- 1. Metadata & Config
-CREATE TABLE game_configs (
-    version TEXT PRIMARY KEY,
-    is_active BOOLEAN DEFAULT false,
-    config_data JSONB NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- 2. Static Data (Content)
-CREATE TABLE jobs (
-    id TEXT PRIMARY KEY,
-    version TEXT REFERENCES game_configs(version),
-    name TEXT NOT NULL,
-    tier INTEGER NOT NULL,
-    parent_job_id TEXT REFERENCES jobs(id),
-    stat_modifiers JSONB NOT NULL,
-    allowed_weapons TEXT[] NOT NULL,
-    skills_unlocked JSONB NOT NULL,
-    passive_effects TEXT[] NOT NULL,
-    evolution_requirements JSONB NOT NULL
-);
-
-CREATE TABLE skills (
-    id TEXT PRIMARY KEY,
-    version TEXT REFERENCES game_configs(version),
-    name TEXT NOT NULL,
-    description TEXT,
-    cooldown INTEGER DEFAULT 0,
-    effect JSONB,
-    scaling JSONB,
-    rarity TEXT NOT NULL
-);
-
-CREATE TABLE cards (
-    id TEXT PRIMARY KEY,
-    version TEXT REFERENCES game_configs(version),
-    name TEXT NOT NULL,
-    rarity TEXT NOT NULL,
-    effect_type TEXT NOT NULL,
-    effect_target TEXT NOT NULL, -- Added missing column
-    effect_value JSONB,
-    applicable_jobs TEXT[] NOT NULL
-);
-
-CREATE TABLE weapons (
-    id TEXT PRIMARY KEY,
-    version TEXT REFERENCES game_configs(version),
-    name TEXT NOT NULL,
-    weapon_type TEXT NOT NULL,
-    rarity TEXT NOT NULL,
-    stat_bonuses JSONB,
-    special_effects JSONB
-);
-
-CREATE TABLE job_cores (
-    id TEXT PRIMARY KEY,
-    version TEXT REFERENCES game_configs(version),
-    name TEXT NOT NULL,
-    rarity TEXT NOT NULL,
-    unlocks_job_id TEXT REFERENCES jobs(id)
-);
-
--- 3. Player Data
-CREATE TABLE players (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    username TEXT,
-    currency BIGINT DEFAULT 1000,
-    premium_currency BIGINT DEFAULT 100,
-    energy INTEGER DEFAULT 20,
-    max_energy INTEGER DEFAULT 20,
-    last_energy_regen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    party_size_limit INTEGER DEFAULT 3,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE gacha_state (
-    player_id UUID PRIMARY KEY REFERENCES players(id) ON DELETE CASCADE,
-    pulls_since_epic INTEGER DEFAULT 0,
-    pulls_since_legendary INTEGER DEFAULT 0,
-    last_pull_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE units (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    level INTEGER DEFAULT 1,
-    base_stats JSONB NOT NULL,
-    growth_rates JSONB NOT NULL,
-    affinity TEXT NOT NULL,
-    trait TEXT,
-    current_job_id TEXT NOT NULL,
-    unlocked_jobs TEXT[] DEFAULT ARRAY['novice'],
-    equipped_weapon_instance_id UUID,
-    equipped_card_instance_ids UUID[] DEFAULT ARRAY[]::UUID[],
-    equipped_skill_instance_ids UUID[] DEFAULT ARRAY[]::UUID[],
-    sprite_id TEXT,
-    icon_id TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE inventory (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
-    item_id TEXT NOT NULL,
-    item_type TEXT NOT NULL,
-    quantity INTEGER DEFAULT 1,
-    metadata JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    CONSTRAINT unique_player_item UNIQUE (player_id, item_id)
-);
-
-CREATE TABLE party (
-    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
-    slot_index INTEGER NOT NULL,
-    unit_id UUID REFERENCES units(id) ON DELETE SET NULL,
-    PRIMARY KEY (player_id, slot_index)
-);
-
-CREATE TABLE recruitment_queue (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
-    slot_index INTEGER NOT NULL,
-    unit_data JSONB NOT NULL,
-    available_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    is_claimed BOOLEAN DEFAULT false,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE campaign_progress (
-    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
-    stage_id TEXT NOT NULL,
-    stars INTEGER DEFAULT 0,
-    best_turns INTEGER,
-    cleared_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    PRIMARY KEY (player_id, stage_id)
-);
-
--- 4. RPC Functions
-
--- Initialize Player
-CREATE OR REPLACE FUNCTION rpc_initialize_player(p_username TEXT, p_novices JSONB[])
-RETURNS void AS $$
-DECLARE
-    v_user_id UUID := auth.uid();
-    v_novice JSONB;
-    v_unit_id UUID;
-    v_idx INTEGER := 0;
-BEGIN
-    INSERT INTO players (id, username) VALUES (v_user_id, p_username)
-    ON CONFLICT (id) DO UPDATE SET username = EXCLUDED.username;
-
-    INSERT INTO gacha_state (player_id) VALUES (v_user_id)
-    ON CONFLICT (player_id) DO NOTHING;
-
-    DELETE FROM party WHERE player_id = v_user_id;
-    DELETE FROM units WHERE player_id = v_user_id;
-
-    FOREACH v_novice IN ARRAY p_novices LOOP
-        INSERT INTO units (player_id, name, base_stats, growth_rates, affinity, trait, current_job_id, sprite_id, icon_id)
-        VALUES (v_user_id, v_novice->>'name', (v_novice->'baseStats'), (v_novice->'growthRates'), v_novice->>'affinity', v_novice->>'trait', 'novice', v_novice->>'spriteId', v_novice->>'iconId')
-        RETURNING id INTO v_unit_id;
-
-        INSERT INTO party (player_id, slot_index, unit_id)
-        VALUES (v_user_id, v_idx, v_unit_id);
-
-        v_idx := v_idx + 1;
-    END LOOP;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
