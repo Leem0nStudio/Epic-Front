@@ -64,10 +64,10 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any)
 
       {unit && (
         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-black/80 border border-white/20 flex items-center gap-1 shadow-xl whitespace-nowrap">
-           <span className="text-[10px] font-black italic text-[#F5C76B]">UR</span>
-           <div className="flex gap-0.5">
-              {[1,2,3,4,5].map(i => <Star key={i} size={8} fill="#F5C76B" className="text-[#F5C76B]" />)}
-           </div>
+          <span className="text-[10px] font-black italic text-[#F5C76B]">UR</span>
+          <div className="flex gap-0.5">
+            {[1, 2, 3, 4, 5].map(i => <Star key={i} size={8} fill="#F5C76B" className="text-[#F5C76B]" />)}
+          </div>
         </div>
       )}
     </div>
@@ -99,8 +99,8 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
 
   return (
     <div
-        className="w-full h-full flex flex-col relative bg-[#0B1A2A] bg-cover bg-center bg-no-repeat overflow-hidden"
-        style={{ backgroundImage: "url('/assets/backgrounds/homebg.png')" }}
+      className="w-full h-full flex flex-col relative bg-[#0B1A2A] bg-cover bg-center bg-no-repeat overflow-hidden"
+      style={{ backgroundImage: "url('/assets/backgrounds/homebg.png')" }}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2A]/40 via-transparent to-[#020508]/80 pointer-events-none" />
 
@@ -108,27 +108,33 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
       <div className="w-full h-16 shrink-0 flex items-center justify-between px-4 z-30 pt-2">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 border border-white/10 flex items-center justify-center overflow-hidden">
-            <img src={AssetService.getSpriteUrl(primaryUnit?.sprite_id)} className="w-[150%] transform translate-y-1" style={{imageRendering: 'pixelated'}} alt="Profile" />
+            <img src={AssetService.getSpriteUrl(primaryUnit?.sprite_id)} className="w-[150%] transform translate-y-1" style={{ imageRendering: 'pixelated' }} alt="Profile" />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black bg-[#F5C76B] text-black px-1.5 rounded-sm italic">LV. 18</span>
-              <span className="text-white text-xs font-bold tracking-wider uppercase">{saveData.profile.username}</span>
+              <span className="text-[10px] font-black bg-[#F5C76B] text-black px-1.5 rounded-sm italic uppercase">Lvl. 1</span>
+              <span className="text-white text-xs font-bold tracking-[0.2em] uppercase">{saveData.profile.username}</span>
             </div>
-            <div className="w-32 h-1 bg-white/10 rounded-full mt-1 overflow-hidden">
-              <motion.div initial={{ width: 0 }} animate={{ width: '65%' }} className="h-full bg-[#F5C76B]" />
+            <div className="flex items-center gap-2 mt-1">
+              <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
+                <motion.div initial={{ width: 0 }} animate={{ width: '20%' }} className="h-full bg-cyan-400" />
+              </div>
+              <div className="flex items-center gap-1 text-[#F5C76B]">
+                <Zap size={8} className="fill-current" />
+                <span className="text-[7px] font-black uppercase">{saveData.profile.energy}/{saveData.profile.max_energy}</span>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/5">
-            <Coins size={14} className="text-[#F5C76B]" />
-            <span className="text-xs font-bold text-white">{saveData.profile.currency}</span>
+          <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
+            <Coins size={16} className="text-[#F5C76B]" />
+            <span className="text-sm font-bold text-white">{displayCurrency}</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/5">
-            <Diamond size={14} className="text-cyan-400" />
-            <span className="text-xs font-bold text-white">{saveData.profile.premium_currency}</span>
+          <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
+            <Diamond size={16} className="text-cyan-400" />
+            <span className="text-sm font-bold text-white">{displayGems}</span>
           </div>
           <button onClick={() => supabase?.auth.signOut()} className="text-white/60 hover:text-white transition-colors">
             <Settings size={18} />
@@ -143,13 +149,13 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
 
         <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-28">
           <div className="w-[30%] h-full pb-4">
-            <motion.div style={{ x: useTransform(mouseX, [ -20, 20 ], [ -5, 5 ]), y: useTransform(mouseY, [ -20, 20 ], [ -2, 2 ]) }} className="w-full h-full flex items-end"><CharacterSlot unit={leftUnit} scale={0.75} zIndex={10} opacity={0.7} /></motion.div>
+            <motion.div style={{ x: useTransform(mouseX, [-20, 20], [-5, 5]), y: useTransform(mouseY, [-20, 20], [-2, 2]) }} className="w-full h-full flex items-end"><CharacterSlot unit={leftUnit} scale={0.75} zIndex={10} opacity={0.7} /></motion.div>
           </div>
           <div className="w-[40%] h-full">
-            <motion.div style={{ x: mouseX, y: useTransform(mouseY, [ -20, 20 ], [ -10, 10 ]) }} className="w-full h-full flex items-end"><CharacterSlot unit={primaryUnit} scale={1.1} zIndex={20} emphasized /></motion.div>
+            <motion.div style={{ x: mouseX, y: useTransform(mouseY, [-20, 20], [-10, 10]) }} className="w-full h-full flex items-end"><CharacterSlot unit={primaryUnit} scale={1.1} zIndex={20} emphasized /></motion.div>
           </div>
           <div className="w-[30%] h-full pb-4">
-            <motion.div style={{ x: useTransform(mouseX, [ -20, 20 ], [ -5, 5 ]), y: useTransform(mouseY, [ -20, 20 ], [ -2, 2 ]) }} className="w-full h-full flex items-end"><CharacterSlot unit={rightUnit} scale={0.75} zIndex={10} opacity={0.7} /></motion.div>
+            <motion.div style={{ x: useTransform(mouseX, [-20, 20], [-5, 5]), y: useTransform(mouseY, [-20, 20], [-2, 2]) }} className="w-full h-full flex items-end"><CharacterSlot unit={rightUnit} scale={0.75} zIndex={10} opacity={0.7} /></motion.div>
           </div>
         </div>
 
