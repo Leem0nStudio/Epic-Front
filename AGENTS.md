@@ -30,5 +30,28 @@ Execute `supabase/setup_complete.sql` in Supabase SQL Editor to:
 5. Insert campaign progress (3 stages)
 6. Create/update RPC functions
 
+## Assets Structure (`public/assets/`)
+```
+public/assets/
+├── backgrounds/    # Fondos de vistas (battle, home, party, gacha, etc.)
+├── sprites/         # Sprites de personajes (pixel art)
+│   ├── novice_idle.png
+│   ├── warrior_idle.png
+│   ├── mage_idle.png
+│   └── ranger_idle.png
+├── ui/             # Elementos de interfaz
+│   ├── icon_novice.png
+│   ├── icon_warrior.png
+│   ├── icon_mage.png
+│   └── currency_gold_icon.png
+├── bg/             # Fondos home y parallax
+└── items/          # Iconos de armas, cartas, habilidades
+```
+
+## Asset Keys (AssetService)
+- Sprites: `novice_idle.png`, `warrior_idle.png`, `mage_idle.png`, `ranger_idle.png`
+- Icons: `icon_novice.png`, `icon_warrior.png`, `icon_mage.png`, `icon_ranger.png`
+- UI: `currency_gold_icon.png`, `currency_gem_icon.png`
+
 ## Known Issues
 - Onboarding fails if Supabase RPC `rpc_initialize_player` is not deployed (run setup_complete.sql)
