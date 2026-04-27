@@ -4,19 +4,20 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Users,
-  UserPlus,
-  Sparkles,
-  Sword,
-  Settings,
   Coins,
   Diamond,
-  ChevronRight,
-  Star,
+  Settings,
   Calendar,
   Bell,
   Mail,
+  ChevronRight,
+  Zap,
   Map as MapIcon,
-  Zap
+  Sparkles,
+  UserPlus,
+  Sword,
+  Star,
+  Info
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { AssetHelper } from '@/lib/utils/asset-helper';
@@ -24,18 +25,15 @@ import { AssetHelper } from '@/lib/utils/asset-helper';
 interface RPGHomeViewProps {
   saveData: any;
   activePartyUnits: any[];
-  onNavigate: (view: 'party' | 'tavern' | 'gacha' | 'battle' | 'campaign') => void;
+  onNavigate: (view: any) => void;
 }
 
 const rarityGlow = (rarity: string) => {
-  switch (rarity.toLowerCase()) {
-    case 'legendary':
-    case 'ur': return 'drop-shadow-[0_0_15px_rgba(245,199,107,0.6)]';
-    case 'epic':
-    case 'sr': return 'drop-shadow-[0_0_12px_rgba(168,85,247,0.5)]';
-    case 'rare':
-    case 'r': return 'drop-shadow-[0_0_10px_rgba(59,130,246,0.4)]';
-    default: return '';
+  switch (rarity?.toLowerCase()) {
+    case 'ur': return 'shadow-[0_0_30px_rgba(245,199,107,0.4)] border-[#F5C76B]/40';
+    case 'sr': return 'shadow-[0_0_25px_rgba(168,85,247,0.3)] border-purple-500/40';
+    case 'r': return 'shadow-[0_0_20px_rgba(59,130,246,0.2)] border-blue-500/40';
+    default: return 'border-white/5';
   }
 };
 
@@ -110,23 +108,31 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
     return () => clearTimeout(timer);
   }, [saveData.profile.currency, saveData.profile.premium_currency, displayCurrency, displayGems]);
 
+  const playerLevel = saveData.profile.level || 1;
+  const playerExp = saveData.profile.exp || 0;
+  const nextLevelExp = playerLevel * 100;
+  const expProgress = (playerExp / nextLevelExp) * 100;
+
   return (
-    <div className="w-full h-full flex flex-col relative bg-[#0B1A2A] overflow-hidden font-sans text-left">
+    <div
+        className="w-full h-full flex flex-col relative bg-[#0B1A2A] bg-cover bg-center bg-no-repeat overflow-hidden font-sans"
+        style={{ backgroundImage: "url('/assets/backgrounds/homebg.png')" }}
+    >
       <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2A]/40 via-transparent to-[#020508]/80 pointer-events-none" />
 
       <div className="w-full h-16 shrink-0 flex items-center justify-between px-4 z-30 pt-2">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 border border-white/10 flex items-center justify-center overflow-hidden">
-            <img alt="Player Profile" src={AssetHelper.getUnitSprite('novice')} className="w-[150%] transform translate-y-1" style={{imageRendering: 'pixelated'}} />
+            <img alt="Player Profile" src={AssetHelper.getUnitSprite(primaryUnit?.sprite_id || 'novice')} className="w-[150%] transform translate-y-1" style={{imageRendering: 'pixelated'}} />
           </div>
           <div className="flex flex-col text-left">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black bg-[#F5C76B] text-black px-1.5 rounded-sm italic uppercase">Lvl. 1</span>
+              <span className="text-[10px] font-black bg-[#F5C76B] text-black px-1.5 rounded-sm italic uppercase">Lvl. {playerLevel}</span>
               <span className="text-white text-xs font-bold tracking-wider uppercase">{saveData.profile.username}</span>
             </div>
             <div className="flex items-center gap-2 mt-1">
                 <div className="w-24 h-1 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: '20%' }} className="h-full bg-[#F5C76B]" />
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${expProgress}%` }} className="h-full bg-[#F5C76B]" />
                 </div>
                 <div className="flex items-center gap-1 text-[#F5C76B]">
                     <Zap size={8} className="fill-current" />
