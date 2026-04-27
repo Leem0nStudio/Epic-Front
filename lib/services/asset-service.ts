@@ -3,78 +3,97 @@
 export type AssetArchetype = 'melee' | 'magic' | 'ranged' | 'support' | 'neutral';
 
 export class AssetService {
-  private static SPRITE_BASE_URL = 'https://cdn.jsdelivr.net/gh/Leemonztuff/gameassets@main/Characters/';
-  private static ICON_BASE_URL = 'https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/icons/';
+  private static LOCAL_BASE = '/assets';
+  
+  private static SPRITE_PATH = `${this.LOCAL_BASE}/sprites`;
+  private static UI_PATH = `${this.LOCAL_BASE}/ui`;
+  private static BG_PATH = `${this.LOCAL_BASE}/bg`;
+  private static ITEMS_PATH = `${this.LOCAL_BASE}/items`;
 
   private static JOB_SPRITE_MAP: Record<string, string> = {
-    'novice': 'novice_f.png',
-    'swordman': 'F/1/swordman_.png',
-    'mage': 'F/1/mage_.png',
-    'archer': 'F/1/archer_.png',
-    'acolyte': 'F/1/acolyte_.png',
-    'merchant': 'F/1/merchant_.png',
-    'thief': 'F/1/thief_.png',
-    'knight': 'F/2-1/knight_.png',
-    'wizard': 'F/2-1/wizard_.png',
-    'priest': 'F/2-1/priest_.png',
-    'blacksmith': 'F/2-1/blacksmith_.png',
-    'assassin': 'F/2-1/assasin_.png', 'assasin': 'F/2-1/assasin_.png'
+    'novice': 'novice_idle.png',
+    'swordman': 'warrior_idle.png',
+    'mage': 'mage_idle.png',
+    'ranger': 'ranger_idle.png',
+    'archer': 'ranger_idle.png',
+    'acolyte': 'priest_idle.png',
+    'knight': 'knight_idle.png',
+    'wizard': 'wizard_idle.png',
+    'priest': 'priest_idle.png'
   };
 
-  private static ARCHETYPE_SPRITE_MAP: Record<AssetArchetype, string[]> = {
-    melee: ['F/1/swordman_.png', 'F/2-1/knight_.png'],
-    magic: ['F/1/mage_.png', 'F/2-1/wizard_.png'],
-    ranged: ['F/1/archer_.png', 'F/1/thief_.png', 'F/2-1/assasin_.png'],
-    support: ['F/1/acolyte_.png', 'F/2-1/priest_.png'],
-    neutral: ['novice_f.png']
+  private static ARCHETYPE_SPRITE_MAP: Record<AssetArchetype, string> = {
+    melee: 'warrior_idle.png',
+    magic: 'mage_idle.png',
+    ranged: 'ranger_idle.png',
+    support: 'priest_idle.png',
+    neutral: 'novice_idle.png'
   };
 
   private static JOB_ICON_MAP: Record<string, string> = {
-    'novice': 'novice_1.jpeg',
-    'swordman': 'swordman_1.jpeg',
-    'knight': 'knight_1.jpeg',
-    'wizard': 'wizard_1.jpeg',
-    'priest': 'priest_1.jpeg',
-    'hunter': 'hunter_1.jpeg',
-    'assassin': 'assassin_1.jpeg',
-    'blacksmith': 'blacksmith_1.jpeg',
-    'alchemist': 'alchemist_1.jpeg',
-    'sage': 'sage_1.jpeg',
-    'monk': 'monk_1.jpeg',
-    'rogue': 'rogue_1.jpeg',
-    'bard': 'bard_1.jpeg',
-    'dancer': 'dancer_1.jpeg',
-    'crusader': 'crusader_1.jpeg',
-    'mage': 'wizard_1.jpeg',
-    'archer': 'hunter_1.jpeg',
-    'acolyte': 'priest_1.jpeg',
-    'merchant': 'blacksmith_1.jpeg',
-    'thief': 'assassin_1.jpeg'
+    'novice': 'icon_novice.png',
+    'swordman': 'icon_warrior.png',
+    'mage': 'icon_mage.png',
+    'ranger': 'icon_ranger.png',
+    'archer': 'icon_ranger.png',
+    'acolyte': 'icon_priest.png',
+    'knight': 'icon_knight.png',
+    'wizard': 'icon_wizard.png',
+    'priest': 'icon_priest.png'
+  };
+
+  private static UI_ICON_MAP: Record<string, string> = {
+    'currency_gold': 'currency_gold_icon.png',
+    'currency_gem': 'currency_gem_icon.png',
+    'tab_party': 'tab_icon_party.png',
+    'tab_guild': 'tab_icon_guild.png',
+    'world': 'world_button_base.png'
   };
 
   static getRandomSpriteId(archetype: AssetArchetype): string {
-    const sprites = this.ARCHETYPE_SPRITE_MAP[archetype] || this.ARCHETYPE_SPRITE_MAP.neutral;
-    return sprites[Math.floor(Math.random() * sprites.length)];
+    return this.ARCHETYPE_SPRITE_MAP[archetype] || this.ARCHETYPE_SPRITE_MAP.neutral;
   }
 
   static getJobSpriteId(jobId: string): string {
-    return this.JOB_SPRITE_MAP[jobId.toLowerCase()] || 'novice_f.png';
+    const spriteName = this.JOB_SPRITE_MAP[jobId.toLowerCase()];
+    if (spriteName) return spriteName;
+    return this.getRandomSpriteId('neutral');
   }
 
   static getSpriteUrl(spriteId: string): string {
-    if (!spriteId) return `${this.SPRITE_BASE_URL}novice_f.png`;
-    if (spriteId.startsWith('http')) return spriteId;
-    return `${this.SPRITE_BASE_URL}${spriteId}`;
+    if (!spriteId) {
+      return `${this.SPRITE_PATH}/novice_idle.png`;
+    }
+    if (spriteId.startsWith('http') || spriteId.startsWith('/')) {
+      return spriteId;
+    }
+    return `${this.SPRITE_PATH}/${spriteId}`;
   }
 
   static getJobIconId(jobId: string): string {
-    return this.JOB_ICON_MAP[jobId.toLowerCase()] || 'novice_1.jpeg';
+    const iconName = this.JOB_ICON_MAP[jobId.toLowerCase()];
+    if (iconName) return iconName;
+    return 'icon_novice.png';
   }
 
   static getIconUrl(iconId: string): string {
-    if (!iconId) return `${this.ICON_BASE_URL}novice_1.jpeg`;
-    if (iconId.startsWith('http')) return iconId;
-    return `${this.ICON_BASE_URL}${iconId}`;
+    if (!iconId) {
+      return `${this.UI_PATH}/icon_novice.png`;
+    }
+    if (iconId.startsWith('http') || iconId.startsWith('/')) {
+      return iconId;
+    }
+    return `${this.UI_PATH}/${iconId}`;
+  }
+
+  static getUIUrl(uiKey: string): string {
+    const fileName = this.UI_ICON_MAP[uiKey];
+    if (fileName) return `${this.UI_PATH}/${fileName}`;
+    return '';
+  }
+
+  static getBgUrl(bgKey: string): string {
+    return `${this.BG_PATH}/${bgKey}`;
   }
 
   static getAffinityArchetype(affinity: string): AssetArchetype {
