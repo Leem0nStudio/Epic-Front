@@ -88,6 +88,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
   const primaryUnit = activePartyUnits[0];
   const leftUnit = activePartyUnits[1];
   const rightUnit = activePartyUnits[2];
+  const prefersReduced = useReducedMotion();
 
   const mockObjective = {
     chapter: "Capítulo 18",
@@ -141,14 +142,14 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] aspect-square bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
 
         <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-28">
-          <div className="w-[30%] h-full pb-4 flex items-end">
-            <CharacterSlot unit={leftUnit} scale={0.85} zIndex={10} />
+          <div className="w-[30%] h-full pb-4">
+            <motion.div style={{ x: useTransform(mouseX, [ -20, 20 ], [ -5, 5 ]), y: useTransform(mouseY, [ -20, 20 ], [ -2, 2 ]) }} className="w-full h-full flex items-end"><CharacterSlot unit={leftUnit} scale={0.75} zIndex={10} opacity={0.7} /></motion.div>
           </div>
-          <div className="w-[40%] h-full flex items-end">
-            <CharacterSlot unit={primaryUnit} scale={1.1} zIndex={20} emphasized />
+          <div className="w-[40%] h-full">
+            <motion.div style={{ x: mouseX, y: useTransform(mouseY, [ -20, 20 ], [ -10, 10 ]) }} className="w-full h-full flex items-end"><CharacterSlot unit={primaryUnit} scale={1.1} zIndex={20} emphasized /></motion.div>
           </div>
-          <div className="w-[30%] h-full pb-4 flex items-end">
-            <CharacterSlot unit={rightUnit} scale={0.85} zIndex={10} />
+          <div className="w-[30%] h-full pb-4">
+            <motion.div style={{ x: useTransform(mouseX, [ -20, 20 ], [ -5, 5 ]), y: useTransform(mouseY, [ -20, 20 ], [ -2, 2 ]) }} className="w-full h-full flex items-end"><CharacterSlot unit={rightUnit} scale={0.75} zIndex={10} opacity={0.7} /></motion.div>
           </div>
         </div>
 
@@ -165,7 +166,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
               whileTap={{ scale: 0.9 }}
               className="w-12 h-12 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl flex flex-col items-center justify-center shadow-2xl"
             >
-              <btn.icon size={20} className={btn.color} />
+              <btn.icon size={22} className={btn.color} />
               <span className="text-[7px] font-black mt-0.5 tracking-tighter opacity-60 text-white">{btn.label}</span>
             </motion.button>
           ))}
@@ -215,6 +216,11 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
             onClick={() => onNavigate('battle')}
             className="w-20 h-20 bg-gradient-to-br from-[#F5C76B] to-[#b88c3a] rounded-full shadow-[0_0_30px_rgba(245,199,107,0.4)] flex flex-col items-center justify-center group relative overflow-hidden"
           >
+            <motion.div
+              animate={prefersReduced ? { opacity: 0.4 } : { scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute inset-0 bg-white/20 rounded-full"
+            />
             <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
             <Sword size={32} className="text-black transform -rotate-45" />
             <span className="text-[10px] font-black text-black mt-0.5">BATTLE</span>
