@@ -15,15 +15,19 @@ export class ConfigService {
             .from('game_configs')
             .select('*')
             .eq('is_active', true)
-            .single();
+            .order('created_at', { ascending: false })
+            .limit(1);
 
         if (error) {
             console.error('Error syncing config:', error);
             return;
         }
 
-        this.activeVersion = data.version;
-        this.cache = data.config_data || {};
+        const latestConfig = data?.[0];
+        if (!latestConfig) return;
+
+        this.activeVersion = latestConfig.version;
+        this.cache = latestConfig.config_data || {};
         console.log(`Game Config Synced: v${this.activeVersion}`);
     }
 

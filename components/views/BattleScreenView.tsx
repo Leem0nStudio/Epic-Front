@@ -145,13 +145,11 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
 
   const handleBattleOver = async (winnerSide: 'player' | 'enemy', deaths: number) => {
     setIsBattleOver(true);
-    setWinner(winner);
+    setWinner(winnerSide);
 
-    if (winner === 'player' && stageId) {
+    if (winnerSide === 'player' && stageId) {
       setIsRecordingResult(true);
       try {
-        // Stats for star calculation: total turns taken by player/enemy
-        // simplified: we use the 'round' count for turn limits in stars
         const result = await CampaignService.completeStage(stageId, {
           turns: round,
           deaths: deaths
@@ -187,140 +185,149 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
 
   const order = BattleManager.getTurnOrder(units);
   const currentActor = order[turn];
+  const playerUnits = units.filter(u => u.side === 'player');
+  const enemyUnits = units.filter(u => u.side === 'enemy' && !u.isDead);
 
   return (
-    <div className="flex flex-col h-full bg-[#020508] overflow-hidden relative">
-      <div className="p-4 flex items-center justify-between border-b border-white/5 bg-[#0B1A2A] z-10 shadow-2xl shrink-0">
-        <button onClick={onBack} className="text-white/40 hover:text-white flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors"><ChevronLeft size={16} /> Retirada</button>
+    <div className="flex flex-col h-full bg-[#020508] overflow-hidden relative font-sans">
+      {/* Top Header */}
+      <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between z-50 pointer-events-none">
+        <button onClick={onBack} className="pointer-events-auto text-white/40 hover:text-white flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors">
+          <ChevronLeft size={16} /> RETIRADA
+        </button>
         <div className="flex flex-col items-center">
-          <span className="text-[10px] text-[#F5C76B] font-black uppercase tracking-[0.4em] italic">Round {round}</span>
-          <span className="text-[8px] text-white/20 font-mono tracking-widest mt-0.5 uppercase">Activo: {currentActor?.name}</span>
+          <span className="text-[12px] text-[#F5C76B] font-black uppercase tracking-[0.4em] italic drop-shadow-lg">ROUND {round}</span>
+          <span className="text-[8px] text-white/40 font-mono tracking-widest mt-0.5 uppercase">ACTIVO: {currentActor?.name}</span>
         </div>
         <div className="w-20"></div>
       </div>
 
-      <div className="flex-1 relative overflow-hidden flex flex-col py-4 px-4 gap-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,100,255,0.05),transparent)] pointer-events-none" />
+      {/* Scenic Background & Enemy Area */}
+      <div className="relative h-[45%] w-full overflow-hidden shrink-0">
+        <div className="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] ease-linear animate-slow-zoom"
+          style={{ backgroundImage: "url('/assets/backgrounds/battle_scenic.png')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#020508] via-[#020508]/40 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#020508] to-transparent z-10 opacity-80" />
+        
+        {/* Enemies Floating in Scenic Area */}
+        <div className="absolute inset-0 flex items-center justify-center gap-12 pt-12">
+          {enemyUnits.map((enemy, idx) => (
+            <motion.div
+              key={enemy.id}
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ 
+                opacity: 1, 
+                scale: targetId === enemy.id ? 1.1 : 1, 
+                y: 0,
+                filter: targetId === enemy.id ? 'brightness(1.5) drop-shadow(0 0 20px rgba(255,0,0,0.4))' : 'brightness(1)'
+              }}
+              onClick={() => currentActor?.side === 'player' && setTargetId(enemy.id)}
+              className="relative cursor-pointer group"
+            >
+              <img
+                src={AssetService.getSpriteUrl(enemy.sprite_id || "abbys_sprite_001")}
+                className="w-32 h-32 object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.8)] scale-x-[-1]"
+                style={{ imageRendering: 'pixelated' }}
+              />
+              
+              {/* Enemy HUD */}
+              <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 w-24">
+                <span className="text-[8px] font-black text-white/80 uppercase tracking-widest whitespace-nowrap drop-shadow-md">{enemy.name}</span>
+                <div className="w-full h-1.5 bg-black/60 rounded-full border border-white/10 overflow-hidden shadow-lg">
+                  <motion.div 
+                    initial={{ width: '100%' }}
+                    animate={{ width: `${(enemy.currentHp / enemy.maxHp) * 100}%` }}
+                    className="h-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
+                  />
+                </div>
+              </div>
 
-        {/* Battlefield Layout: BF Side-view */}
-        <div className="flex flex-1 items-center justify-between relative px-2">
-
-          {/* Player Side (Left) */}
-          <div className="flex flex-col gap-6 relative">
-            <div className="absolute left-[-60px] top-1/2 -translate-y-1/2 flex flex-col gap-8 opacity-60">
-              {units.filter(u => u.side === 'player' && u.row === 'back').map(player => (
-                <UnitSprite key={player.id} unit={player} isActive={activeUnitId === player.id} isTarget={targetId === player.id} />
-              ))}
-            </div>
-            <div className="flex flex-col gap-8">
-              {units.filter(u => u.side === 'player' && u.row === 'front').map(player => (
-                <UnitSprite key={player.id} unit={player} isActive={activeUnitId === player.id} isTarget={targetId === player.id} />
-              ))}
-            </div>
-          </div>
-
-          <div className="h-full w-px bg-white/5 relative">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[8px] font-black text-white/10 uppercase tracking-widest bg-[#020508] px-2 py-4 rounded-full border border-white/5">VS</div>
-          </div>
-
-          {/* Enemy Side (Right) */}
-          <div className="flex flex-col gap-6 relative text-right items-end">
-            <div className="flex flex-col gap-8">
-              {units.filter(u => u.side === 'enemy' && u.row === 'front').map(enemy => (
-                <UnitSprite
-                  key={enemy.id}
-                  unit={enemy}
-                  isActive={activeUnitId === enemy.id}
-                  isTarget={targetId === enemy.id}
-                  onClick={() => !enemy.isDead && currentActor?.side === 'player' && setTargetId(enemy.id)}
+              {targetId === enemy.id && (
+                <motion.div 
+                  animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 180, 270, 360] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                  className="absolute inset-0 border-2 border-red-500/50 rounded-full scale-150"
                 />
-              ))}
-            </div>
-            <div className="absolute right-[-60px] top-1/2 -translate-y-1/2 flex flex-col gap-8 opacity-60">
-              {units.filter(u => u.side === 'enemy' && u.row === 'back').map(enemy => (
-                <UnitSprite
-                  key={enemy.id}
-                  unit={enemy}
-                  isActive={activeUnitId === enemy.id}
-                  isTarget={targetId === enemy.id}
-                  onClick={() => !enemy.isDead && currentActor?.side === 'player' && setTargetId(enemy.id)}
-                />
-              ))}
-            </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Middle: Status Grid (2x3) */}
+      <div className="flex-1 bg-[#020508] px-4 py-2 flex flex-col gap-4 relative z-10 shadow-[0_-20px_50px_rgba(0,0,0,1)]">
+        <div className="grid grid-cols-2 grid-rows-3 gap-2 h-full max-h-[320px]">
+          {Array(6).fill(null).map((_, idx) => {
+            const unit = playerUnits[idx];
+            const isActive = unit?.id === activeUnitId;
+            
+            return (
+              <StatusPane 
+                key={idx} 
+                unit={unit} 
+                isActive={isActive} 
+                orbColor={['#4ade80', '#60a5fa', '#f87171', '#fbbf24', '#c084fc', '#8b5cf6'][idx]}
+              />
+            );
+          })}
+        </div>
+
+        {/* OVERDRIVE Bar */}
+        <div className="relative w-full py-2">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-[11px] font-black text-white italic tracking-[0.6em] z-10 animate-pulse drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] uppercase">OVERDRIVE</span>
+          </div>
+          <div className="h-7 bg-black/80 border-y-2 border-[#F5C76B]/30 relative overflow-hidden rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+            <motion.div 
+              animate={{ 
+                width: `${currentActor?.side === 'player' ? currentActor.burst : 0}%`,
+                backgroundColor: currentActor?.burst === 100 ? '#ef4444' : '#7f1d1d'
+              }}
+              className="h-full shadow-[inset_0_0_15px_rgba(0,0,0,0.6)] relative"
+            >
+               {/* Inner glow for the filled part */}
+               <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.2)_0%,transparent_50%,rgba(0,0,0,0.2)_100%)]" />
+            </motion.div>
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.1)_50%,transparent_100%)] animate-shimmer" />
           </div>
         </div>
       </div>
 
-      {/* Control Interface */}
-      <div className="h-64 bg-[#0B1A2A] border-t border-white/5 p-4 flex flex-col gap-4 shrink-0 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
-        <div className="flex gap-4 h-full">
-          {/* Skill Board */}
-          <div className="flex-1 bg-black/20 rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[8px] font-black text-white/40 uppercase tracking-widest flex items-center gap-2"><Target size={10} /> Habilidades</span>
-              {currentActor?.side === 'player' && (
-                <span className="text-[10px] font-black text-[#F5C76B] uppercase italic">{currentActor.name}</span>
-              )}
-            </div>
+      {/* Bottom: Squad Area (Pedestals) */}
+      <div className="h-[25%] shrink-0 bg-gradient-to-t from-black to-[#020508] relative px-4 pb-8 flex items-end justify-between gap-2 overflow-hidden">
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-[radial-gradient(circle_at_50%_100%,rgba(245,199,107,0.1),transparent_70%)] pointer-events-none" />
+        
+        {playerUnits.map((unit, idx) => (
+          <UnitPedestal 
+            key={unit.id} 
+            unit={unit} 
+            isActive={unit.id === activeUnitId} 
+            onSkillClick={(skill) => runTurn(unit, skill, targetId || undefined)}
+          />
+        ))}
+      </div>
 
-            {currentActor?.side === 'player' ? (
-              <div className="grid grid-cols-2 gap-2">
-                {currentActor.skills.map((skill, idx) => (
-                  <button
-                    key={skill.id}
-                    disabled={!!currentActor.cooldowns[skill.id]}
-                    onClick={() => runTurn(currentActor, skill, targetId || undefined)}
-                    className={`relative overflow-hidden group flex flex-col p-2 rounded-xl border transition-all ${currentActor.cooldowns[skill.id]
-                        ? 'bg-white/5 border-white/5 text-white/10 opacity-50'
-                        : 'bg-white/5 border-white/10 text-white/80 hover:border-[#F5C76B]/40 hover:bg-white/10'
-                      }`}
-                  >
-                    <div className="flex items-center justify-between w-full mb-1">
-                      <span className="text-[9px] font-black uppercase tracking-wider text-left truncate">{skill.name}</span>
-                      {currentActor.cooldowns[skill.id] ? (
-                        <span className="text-[8px] font-mono text-[#F5C76B]">{currentActor.cooldowns[skill.id]}T</span>
-                      ) : (
-                        <Zap size={10} className="text-[#F5C76B] group-hover:animate-pulse" />
-                      )}
-                    </div>
-                    <div className="flex gap-0.5">
-                      {Array(5).fill(0).map((_, i) => (
-                        <div key={i} className={`w-1 h-0.5 rounded-full ${i < (skill.cooldown || 0) ? 'bg-[#F5C76B]/30' : 'bg-white/5'}`} />
-                      ))}
-                    </div>
-                  </button>
-                ))}
-                {currentActor.burst >= 100 && (
-                  <button
-                    onClick={() => runTurn(currentActor, currentActor.skills.find(s => s.type === 'burst') || currentActor.skills[0])}
-                    className="col-span-2 p-3 bg-red-600 border border-red-500 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] text-white shadow-[0_0_20px_rgba(239,68,68,0.4)] animate-pulse"
-                  >
-                    ¡BURST OVERDRIVE!
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center gap-2 opacity-20">
-                <Activity size={24} className="animate-pulse" />
-                <span className="text-[8px] font-black uppercase tracking-widest">Esperando respuesta táctica...</span>
-              </div>
-            )}
-          </div>
-
-          {/* Battle Log */}
-          <div className="w-32 bg-black/40 rounded-2xl p-3 flex flex-col gap-2 overflow-y-auto border border-white/5">
-            <div className="text-[7px] font-black text-white/20 uppercase tracking-widest border-b border-white/5 pb-1">Sucesos</div>
-            {battleLog.length === 0 && <div className="text-[7px] text-white/10 uppercase italic mt-2 text-center">Sin registros</div>}
-            {battleLog.map((log, i) => (
-              <div key={i} className="text-[7px] text-white/40 leading-tight uppercase font-medium">{log}</div>
-            ))}
-          </div>
+      {/* Battle Log Overlay (Floating) */}
+      <div className="absolute left-4 bottom-32 z-50 w-56 max-h-24 overflow-hidden pointer-events-none">
+        <div className="flex flex-col gap-1.5">
+          {battleLog.slice(-4).map((log, i) => (
+            <motion.div 
+              key={i} 
+              initial={{ opacity: 0, x: -20 }} 
+              animate={{ opacity: 1 - (3-i)*0.25, x: 0 }}
+              className="text-[8px] text-white/60 uppercase font-black tracking-widest bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg border-l-[3px] border-[#F5C76B] shadow-lg flex items-center gap-2"
+            >
+              <Terminal size={10} className="text-[#F5C76B] shrink-0" />
+              <span className="truncate">{log}</span>
+            </motion.div>
+          ))}
         </div>
       </div>
 
       <AnimatePresence>
         {isBattleOver && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-50 bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-8 text-center overflow-y-auto">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-8 text-center">
             <motion.div initial={{ scale: 0.5, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring' }}>
               <Award size={80} className={winner === 'player' ? 'text-[#F5C76B] drop-shadow-[0_0_30px_rgba(245,199,107,0.4)]' : 'text-red-500'} />
             </motion.div>
@@ -330,7 +337,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 flex flex-col items-center gap-6">
                 <div className="flex gap-4">
                   {[1, 2, 3].map(s => (
-                    <Star
+                    <StarIcon
                       key={s}
                       size={32}
                       className={`${s <= (completionData.stars || 0) ? 'text-[#F5C76B] fill-current shadow-[0_0_20px_rgba(245,199,107,0.5)]' : 'text-white/10'}`}
@@ -353,12 +360,6 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
                         <span className="text-xs font-black text-[#F5C76B]">+{completionData.rewards.premium_currency}</span>
                       </div>
                     )}
-                    {completionData.rewards.materials.map((mat: any, i: number) => (
-                      <div key={i} className="px-4 py-2 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center gap-1">
-                        <span className="text-[8px] font-black text-white/40 uppercase">{mat.itemId}</span>
-                        <span className="text-xs font-black text-cyan-400">x{mat.amount}</span>
-                      </div>
-                    ))}
                   </div>
                 </div>
               </motion.div>
@@ -377,83 +378,129 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   );
 }
 
-function UnitSprite({ unit, isActive, isTarget, onClick }: { unit: CombatUnit, isActive?: boolean, isTarget?: boolean, onClick?: () => void }) {
-  const isEnemy = unit.side === 'enemy';
+function StatusPane({ unit, isActive, orbColor }: { unit?: CombatUnit, isActive?: boolean, orbColor: string }) {
+  if (!unit) return <div className="bg-black/20 rounded-lg border border-white/5 opacity-20" />;
 
   return (
-    <motion.div
-      initial={{ x: isEnemy ? 20 : -20, opacity: 0 }}
-      animate={{
-        x: 0,
-        opacity: unit.isDead ? 0.2 : 1,
-        scale: isActive ? 1.1 : 1,
-        filter: isTarget ? 'brightness(1.5) drop-shadow(0 0 10px rgba(255,0,0,0.5))' : 'brightness(1)'
+    <motion.div 
+      animate={{ 
+        borderColor: isActive ? '#F5C76B' : 'rgba(255,255,255,0.1)',
+        backgroundColor: isActive ? 'rgba(245,199,107,0.1)' : 'rgba(11,26,42,0.6)',
+        scale: isActive ? 1.02 : 1
       }}
-      onClick={onClick}
-      className={`relative flex flex-col ${isEnemy ? 'items-end' : 'items-start'} ${onClick ? 'cursor-pointer' : ''}`}
+      className="relative flex flex-col p-2 rounded-lg border-[1.5px] backdrop-blur-md transition-all overflow-hidden shadow-2xl"
     >
-      <div className={`flex items-center gap-1.5 mb-1 ${isEnemy ? 'flex-row-reverse' : ''}`}>
-        <span className={`text-[7px] font-black uppercase tracking-widest ${isEnemy ? 'text-red-400' : 'text-cyan-400'}`}>{unit.name}</span>
-        {unit.isTaunting && <Shield size={8} className="text-[#F5C76B]" />}
+      {/* Metallic Shine Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent pointer-events-none" />
+      
+      <div className="flex items-center justify-between mb-1.5 relative z-10">
+        <span className="text-[10px] font-black text-white uppercase tracking-wider drop-shadow-md truncate max-w-[80%]">{unit.name}</span>
+        <div className="flex flex-col items-end">
+           <span className="text-[7px] font-mono text-white/40">HP</span>
+           <span className="text-[8px] font-bold text-white/80 leading-none">{unit.currentHp}/{unit.maxHp}</span>
+        </div>
       </div>
 
-      <div className="relative group">
-        <div className={`w-14 h-14 bg-black/40 rounded-full border ${isActive ? 'border-[#F5C76B]/40' : 'border-white/5'} flex items-center justify-center relative overflow-visible`}>
-          <img
-            src={AssetService.getSpriteUrl(unit.sprite_id || "abbys_sprite_001")}
-            className={`w-[240%] max-w-none transform translate-y-3 ${isEnemy ? 'scale-x-[-1] brightness-50' : 'brightness-110'}`}
-            style={{ imageRendering: 'pixelated' }}
+      <div className="space-y-1 relative z-10">
+        <div className="w-full h-2 bg-black/60 rounded-sm border border-white/5 overflow-hidden">
+          <motion.div 
+            animate={{ width: `${(unit.currentHp / unit.maxHp) * 100}%` }}
+            className={`h-full ${unit.currentHp < unit.maxHp * 0.3 ? 'bg-red-500' : 'bg-gradient-to-r from-green-600 to-green-400'}`}
           />
-
-          {isActive && (
-            <motion.div
-              animate={{ opacity: [0, 1, 0], scale: [0.8, 1.2, 1.5] }}
-              transition={{ repeat: Infinity, duration: 1.5 }}
-              className="absolute inset-0 border border-[#F5C76B] rounded-full"
-            />
-          )}
-
-          {isTarget && (
-            <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity }} className="absolute -top-6 left-1/2 -translate-x-1/2">
-              <Target size={16} className="text-red-500" />
-            </motion.div>
-          )}
         </div>
-
-        <div className={`absolute ${isEnemy ? 'right-full mr-2' : 'left-full ml-2'} top-0 flex flex-col gap-1 w-12`}>
-          <div className="h-1 bg-black/60 rounded-full overflow-hidden border border-white/5">
-            <motion.div animate={{ width: `${(unit.currentHp / unit.maxHp) * 100}%` }} className={`h-full ${isEnemy ? 'bg-red-500' : 'bg-cyan-500'}`} />
-          </div>
-          {!isEnemy && (
-            <div className="h-1 bg-black/60 rounded-full overflow-hidden border border-white/5">
-              <motion.div animate={{ width: `${unit.burst}%` }} className="h-full bg-yellow-500" />
-            </div>
-          )}
-          <div className="flex gap-0.5 mt-0.5 justify-end">
-            {unit.statusEffects.map(s => (
-              <div key={s.id} className={`w-1.5 h-1.5 rounded-sm ${s.type === 'buff' ? 'bg-green-400' : 'bg-red-400'} animate-pulse`} title={s.name} />
-            ))}
-          </div>
+        <div className="w-full h-1 bg-black/60 rounded-full overflow-hidden">
+          <motion.div 
+            animate={{ width: `${unit.burst}%` }}
+            className="h-full bg-gradient-to-r from-cyan-600 to-cyan-400"
+          />
         </div>
       </div>
+
+      {/* Elemental Orb - Positioned like the vision image */}
+      <div 
+        className="absolute bottom-1 left-1 w-3 h-3 rounded-full shadow-[0_0_10px_currentColor] border border-white/20 z-20" 
+        style={{ color: orbColor, backgroundColor: orbColor }} 
+      />
+
+      {/* Decorative Metallic Corner Details */}
+      <div className="absolute top-0 right-0 w-4 h-4 border-t-[2px] border-r-[2px] border-[#F5C76B]/20 rounded-tr-lg" />
+      <div className="absolute bottom-0 left-0 w-10 h-10 border-b-[2px] border-l-[2px] border-[#F5C76B]/20 rounded-bl-lg opacity-40" />
     </motion.div>
   );
 }
 
-function Star({ size, className }: { size: number, className: string }) {
+function UnitPedestal({ unit, isActive, onSkillClick }: { unit: CombatUnit, isActive: boolean, onSkillClick: (skill: SkillDefinition) => void }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
+    <div className="relative flex flex-col items-center flex-1">
+      {/* Sprite with Pedestal */}
+      <div className="relative mb-6 w-full flex justify-center">
+        {/* The Pedestal - Improved with multiple layers for depth */}
+        <div className="relative w-20 h-6">
+           <div className={`absolute inset-0 bg-gradient-to-b from-gray-400 to-gray-800 rounded-[100%] border-[2px] border-gray-600/50 shadow-[0_10px_20px_rgba(0,0,0,0.8)] ${isActive ? 'ring-2 ring-[#F5C76B] shadow-[0_0_25px_rgba(245,199,107,0.4)]' : ''}`}>
+              <div className="absolute inset-1 border border-white/10 rounded-[100%]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.2),transparent_70%)] rounded-[100%]" />
+           </div>
+           
+           {isActive && (
+              <motion.div 
+                animate={{ opacity: [0.1, 0.3, 0.1], scale: [1, 1.3, 1] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="absolute -inset-4 bg-[#F5C76B]/20 rounded-[100%] blur-xl"
+              />
+           )}
+        </div>
+        
+        <motion.div 
+          animate={{ 
+            y: isActive ? [0, -8, 0] : 0,
+            scale: isActive ? 1.2 : 1,
+            filter: unit.isDead ? 'grayscale(1) brightness(0.5)' : 'grayscale(0) brightness(1)'
+          }}
+          transition={{ repeat: Infinity, duration: 3 }}
+          className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 w-40 h-40 flex items-end justify-center pointer-events-none"
+        >
+          <img 
+            src={AssetService.getSpriteUrl(unit.sprite_id)} 
+            className="w-full h-auto object-contain transform origin-bottom drop-shadow-[0_15px_20px_rgba(0,0,0,0.9)]"
+            style={{ imageRendering: 'pixelated' }}
+          />
+        </motion.div>
+      </div>
+
+      {/* Skills Pop-up for Active Unit */}
+      <AnimatePresence>
+        {isActive && !unit.isDead && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.8 }}
+            className="absolute bottom-24 z-[60] flex flex-col gap-2 w-full max-w-[120px]"
+          >
+            {unit.skills.map((skill) => (
+              <motion.button
+                key={skill.id}
+                whileHover={{ scale: 1.05, x: 5, backgroundColor: 'rgba(255,255,255,0.1)' }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onSkillClick(skill)}
+                disabled={!!unit.cooldowns[skill.id]}
+                className={`relative overflow-hidden px-3 py-2.5 rounded-xl border-2 text-[9px] font-black uppercase tracking-widest transition-all shadow-2xl ${
+                  unit.cooldowns[skill.id] 
+                    ? 'bg-black/80 border-white/5 text-white/20' 
+                    : 'bg-[#0B1A2A]/90 border-[#F5C76B] text-white'
+                }`}
+              >
+                <div className="relative z-10 flex items-center justify-between">
+                   {skill.name}
+                   {unit.cooldowns[skill.id] && <span className="text-[#F5C76B]">{unit.cooldowns[skill.id]}T</span>}
+                </div>
+                {!unit.cooldowns[skill.id] && (
+                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
+                )}
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
