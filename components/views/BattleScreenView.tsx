@@ -1,3 +1,4 @@
+import { AssetService } from '@/lib/services/asset-service';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -399,7 +400,7 @@ function UnitSprite({ unit, isActive, isTarget, onClick }: { unit: CombatUnit, i
       <div className="relative group">
         <div className={`w-14 h-14 bg-black/40 rounded-full border ${isActive ? 'border-[#F5C76B]/40' : 'border-white/5'} flex items-center justify-center relative overflow-visible`}>
           <img
-            src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png"
+            src={AssetService.getSpriteUrl(unit.sprite_id || "abbys_sprite_001")}
             className={`w-[240%] max-w-none transform translate-y-3 ${isEnemy ? 'scale-x-[-1] brightness-50' : 'brightness-110'}`}
             style={{imageRendering: 'pixelated'}}
           />

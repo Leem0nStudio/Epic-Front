@@ -1,3 +1,4 @@
+import { AssetService } from '@/lib/services/asset-service';
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -118,7 +119,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
            <motion.img
              initial={{ y: 20, opacity: 0 }}
              animate={{ y: 0, opacity: 1 }}
-             src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png"
+             src={AssetService.getSpriteUrl(unit.sprite_id)}
              className="w-[120%] transform translate-y-8 brightness-110"
              style={{ imageRendering: 'pixelated' }}
            />
@@ -218,7 +219,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                   >
                     {skill ? (
                       <>
-                        <Box size={24} className="text-cyan-400" />
+                        <img src={AssetService.getIconUrl(unit.icon_id)} className="w-8 h-8 object-contain opacity-80" />
                         <button onClick={(e) => { e.stopPropagation(); handleUnequip(skill.id, 'skill'); }} className="absolute -top-1.5 -right-1.5 bg-red-500 rounded-full p-1 border border-white/20 shadow-lg text-white">
                           <X size={8} />
                         </button>

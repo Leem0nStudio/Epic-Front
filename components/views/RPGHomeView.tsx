@@ -1,3 +1,4 @@
+import { AssetService } from '@/lib/services/asset-service';
 'use client';
 
 import React from 'react';
@@ -48,7 +49,7 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any)
         >
           {unit ? (
             <img
-              src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png"
+              src={AssetService.getSpriteUrl(unit.sprite_id)}
               className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200%] h-auto object-contain transform origin-bottom"
               style={{ imageRendering: 'pixelated' }}
               alt={unit.name}
@@ -74,7 +75,10 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any)
     {unit && (
       <div className="text-center">
         <p className="text-white text-sm font-black tracking-widest uppercase drop-shadow-md truncate w-full max-w-[100px]">{unit.name}</p>
-        <p className="text-[#F5C76B] text-[10px] font-bold tracking-tighter opacity-80 uppercase truncate w-full max-w-[100px]">{unit.current_job_id || 'Novice'}</p>
+        <div className="flex items-center justify-center gap-1">
+          <img src={AssetService.getIconUrl(unit.icon_id)} className="w-3 h-3 object-contain" />
+          <p className="text-[#F5C76B] text-[10px] font-bold tracking-tighter opacity-80 uppercase truncate max-w-[80px]">{unit.current_job_id || 'Novice'}</p>
+        </div>
       </div>
     )}
   </motion.div>
@@ -103,7 +107,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
       <div className="w-full h-16 shrink-0 flex items-center justify-between px-4 z-30 pt-2">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 border border-white/10 flex items-center justify-center overflow-hidden">
-            <img src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png" className="w-[150%] transform translate-y-1" style={{imageRendering: 'pixelated'}} alt="Profile" />
+            <img src={AssetService.getSpriteUrl(primaryUnit?.sprite_id)} className="w-[150%] transform translate-y-1" style={{imageRendering: 'pixelated'}} alt="Profile" />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">

@@ -1,3 +1,4 @@
+import { AssetService } from '@/lib/services/asset-service';
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -72,7 +73,10 @@ export function InventoryView({ targetSlot, onBack, onEquip }: InventoryViewProp
                   className="bg-black/40 border border-white/5 p-4 rounded-2xl flex items-center gap-4 hover:border-white/10 transition-all cursor-pointer group"
                 >
                     <div className="w-14 h-14 bg-black/60 border border-white/10 rounded-xl flex items-center justify-center shrink-0 relative overflow-hidden">
-                        {item.item_type === 'weapon' ? <Sword size={24} className="text-[#F5C76B]" /> : item.item_type === 'card' ? <Sparkles size={24} className="text-purple-400" /> : <Box size={24} className="text-cyan-400" />}
+                        {item.item_type === 'weapon' ? <Sword size={24} className="text-[#F5C76B]" /> :
+                       item.item_type === 'card' ? <Sparkles size={24} className="text-purple-400" /> :
+                       item.item_type === 'job_core' ? <img src={AssetService.getIconUrl(AssetService.getJobIconId(item.item_id.replace('core_', '')))} className="w-8 h-8 object-contain" /> :
+                       <Box size={24} className="text-cyan-400" />}
                         <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     <div className="flex-1 min-w-0">

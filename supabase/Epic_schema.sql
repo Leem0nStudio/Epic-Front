@@ -97,6 +97,8 @@ CREATE TABLE units (
     equipped_weapon_instance_id UUID,
     equipped_card_instance_ids UUID[] DEFAULT ARRAY[]::UUID[],
     equipped_skill_instance_ids UUID[] DEFAULT ARRAY[]::UUID[],
+    sprite_id TEXT,
+    icon_id TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -158,8 +160,8 @@ BEGIN
     DELETE FROM units WHERE player_id = v_user_id;
 
     FOREACH v_novice IN ARRAY p_novices LOOP
-        INSERT INTO units (player_id, name, base_stats, growth_rates, affinity, trait, current_job_id)
-        VALUES (v_user_id, v_novice->>'name', (v_novice->'baseStats'), (v_novice->'growthRates'), v_novice->>'affinity', v_novice->>'trait', 'novice')
+        INSERT INTO units (player_id, name, base_stats, growth_rates, affinity, trait, current_job_id, sprite_id, icon_id)
+        VALUES (v_user_id, v_novice->>'name', (v_novice->'baseStats'), (v_novice->'growthRates'), v_novice->>'affinity', v_novice->>'trait', 'novice', v_novice->>'spriteId', v_novice->>'iconId')
         RETURNING id INTO v_unit_id;
 
         INSERT INTO party (player_id, slot_index, unit_id)

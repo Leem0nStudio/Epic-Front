@@ -1,3 +1,4 @@
+import { AssetService } from '@/lib/services/asset-service';
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -73,14 +74,17 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
 
               <div className="flex gap-6">
                 <div className="w-24 h-24 bg-black/60 rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-                  <img src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png" className="w-[180%] transform translate-y-3" style={{imageRendering: 'pixelated'}} alt="Unit Sprite" />
+                  <img src={AssetService.getSpriteUrl(unit.spriteId)} className="w-[180%] transform translate-y-3" style={{imageRendering: 'pixelated'}} alt="Unit Sprite" />
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
                         <h3 className="font-black text-white text-lg tracking-wider uppercase">{unit.name}</h3>
-                        <span className="text-[10px] font-black text-[#F5C76B] bg-[#F5C76B]/10 px-1.5 rounded border border-[#F5C76B]/20 italic">NOVICE</span>
+                        <div className="flex items-center gap-1 bg-[#F5C76B]/10 px-1.5 py-0.5 rounded border border-[#F5C76B]/20">
+                          <img src={AssetService.getIconUrl(unit.iconId)} className="w-3 h-3 object-contain" />
+                          <span className="text-[10px] font-black text-[#F5C76B] italic">NOVICE</span>
+                        </div>
                     </div>
                     {isReady && (
                         <button onClick={() => handleDiscard(slot.id)} className="text-white/20 hover:text-red-400 transition-colors">

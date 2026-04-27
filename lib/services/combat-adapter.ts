@@ -92,7 +92,9 @@ export class CombatAdapter {
       statusEffects: [],
       isDead: false,
       isStunned: false,
-      isTaunting: false
+      isTaunting: false,
+      sprite_id: details.unit.sprite_id,
+      icon_id: details.unit.icon_id
     };
   }
 

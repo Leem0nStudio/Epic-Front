@@ -1,7 +1,8 @@
+import { AssetService } from '@/lib/services/asset-service';
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronLeft, Sparkles, Diamond, Coins, Star } from 'lucide-react';
+import { ChevronLeft, Sparkles, Diamond, Coins, Star, Sword, Box, ScrollText } from 'lucide-react';
 import { GachaService } from '@/lib/services/gacha-service';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -82,7 +83,11 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
                 >
                   <div className={`w-full aspect-square rounded-xl bg-gradient-to-br ${rarityColor(item.item_rarity)} p-0.5 shadow-lg`}>
                     <div className="w-full h-full bg-black/40 rounded-[10px] flex items-center justify-center relative overflow-hidden">
-                      <Sparkles size={16} className="text-white/60" />
+                      {item.item_type === 'weapon' ? <Sword size={24} className="text-white/80" /> :
+                     item.item_type === 'card' ? <Sparkles size={24} className="text-white/80" /> :
+                     item.item_type === 'skill' ? <ScrollText size={24} className="text-white/80" /> :
+                     item.item_type === 'job_core' ? <img src={AssetService.getIconUrl(AssetService.getJobIconId(item.item_id.replace('core_', '')))} className="w-8 h-8 object-contain" /> :
+                     <Box size={24} className="text-white/80" />}
                       <div className="absolute inset-0 bg-white/5 animate-pulse" />
                     </div>
                   </div>

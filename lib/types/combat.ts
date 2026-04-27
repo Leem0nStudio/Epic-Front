@@ -60,6 +60,8 @@ export interface CombatUnit {
   isDead: boolean;
   isStunned: boolean;
   isTaunting: boolean;
+  sprite_id?: string;
+  icon_id?: string;
 }
 
 export interface CombatState {

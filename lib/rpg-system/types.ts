@@ -58,6 +58,8 @@ export interface UnitData {
   equipped_weapon_instance_id?: string;
   equipped_card_instance_ids: string[]; // Max 3? (Usually cards are tied to weapons/gear but let's stick to unit for now)
   equipped_skill_instance_ids: string[]; // Max 2 from Gacha
+  sprite_id?: string;
+  icon_id?: string;
 }
 
 export type RPGUnit = UnitData;

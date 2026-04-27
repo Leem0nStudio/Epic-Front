@@ -1,3 +1,4 @@
+import { AssetService } from '@/lib/services/asset-service';
 'use client';
 
 import React, { useState } from 'react';
@@ -70,7 +71,7 @@ export function PartyManagementView({
                   ) : unit ? (
                     <>
                       <img
-                        src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png"
+                        src={AssetService.getSpriteUrl(unit.sprite_id)}
                         className="w-[180%] transform translate-y-3"
                         style={{imageRendering: 'pixelated'}}
                       />
@@ -125,7 +126,7 @@ export function PartyManagementView({
                   className="bg-black/40 border border-white/5 p-3 rounded-2xl flex items-center gap-4 hover:border-white/20 cursor-pointer transition-all"
                  >
                     <div className="w-12 h-12 bg-black/60 border border-white/10 rounded-xl flex items-center justify-center overflow-hidden">
-                      <img src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png" className="w-[180%] transform translate-y-2" style={{imageRendering: 'pixelated'}} />
+                      <img src={AssetService.getSpriteUrl(unit.sprite_id)} className="w-[180%] transform translate-y-2" style={{imageRendering: 'pixelated'}} />
                     </div>
                     <div className="flex-1 flex flex-col">
                       <span className="font-black text-white uppercase text-sm tracking-wider truncate max-w-[120px]">{unit.name}</span>
@@ -135,7 +136,10 @@ export function PartyManagementView({
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-[8px] font-black text-white/40 uppercase mb-1 truncate max-w-[60px]">{unit.current_job_id}</p>
+                      <div className="flex flex-col items-end gap-0.5 mb-1">
+                        <img src={AssetService.getIconUrl(unit.icon_id)} className="w-4 h-4 object-contain opacity-60" />
+                        <p className="text-[8px] font-black text-white/40 uppercase truncate max-w-[60px]">{unit.current_job_id}</p>
+                      </div>
                       <Plus size={16} className="text-[#F5C76B]" />
                     </div>
                  </motion.div>
@@ -159,7 +163,7 @@ export function PartyManagementView({
                       className="bg-black/40 border border-white/5 p-3 rounded-2xl flex items-center gap-4 hover:border-white/10 cursor-pointer group"
                     >
                         <div className="w-14 h-14 bg-black/60 border border-white/10 rounded-xl flex items-center justify-center overflow-hidden">
-                          <img src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png" className="w-[180%] transform translate-y-2" style={{imageRendering: 'pixelated'}} />
+                          <img src={AssetService.getSpriteUrl(unit.sprite_id)} className="w-[180%] transform translate-y-2" style={{imageRendering: 'pixelated'}} />
                         </div>
                         <div className="flex-1 flex flex-col min-w-0">
                           <div className="flex items-center gap-2">
