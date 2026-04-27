@@ -1,5 +1,5 @@
-import { AssetService } from '@/lib/services/asset-service';
 'use client';
+import { AssetService } from '@/lib/services/asset-service';
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, UserPlus, Clock, Star, Sword, Heart, Zap, Trash2 } from 'lucide-react';
