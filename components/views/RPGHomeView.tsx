@@ -300,6 +300,11 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
     maxStars: 3
   };
 
+  const playerLevel = saveData.profile.level || 1;
+  const playerExp = saveData.profile.exp || 0;
+  const nextLevelExp = playerLevel * 100;
+  const expProgress = (playerExp / nextLevelExp) * 100;
+
   return (
     <div
       className="w-full h-full flex flex-col relative bg-[#0B1A2A] bg-cover bg-center bg-no-repeat overflow-hidden"

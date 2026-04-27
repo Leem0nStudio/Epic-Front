@@ -1,21 +1,17 @@
-import { AssetService } from './asset-service';
 import { supabase } from '../supabase';
 import { UnitService } from './unit-service';
 import { CombatUnit, SkillDefinition, StatKey } from '../types/combat';
 import { MAX_GACHA_SKILLS, MAX_JOB_SKILLS } from '../rpg-system/types';
+import { ENEMY_SKILL_DEFINITIONS } from '../rpg-system/enemy-skills';
+import { AssetService } from './asset-service';
 
 export class CombatAdapter {
-  /**
-   * Fetches full data for a unit and converts it to a CombatUnit.
-   * Merges Job skills (fixed) and Gacha skills (equippable).
-   */
   static async dbUnitToCombatUnit(
     unitId: string,
     side: 'player' | 'enemy',
     position: number
   ): Promise<CombatUnit> {
     const details = await UnitService.getUnitDetails(unitId);
-
     const stats = {
       hp: details.finalStats.hp,
       atk: details.finalStats.atk,
@@ -24,8 +20,6 @@ export class CombatAdapter {
       mdef: details.finalStats.mdef,
       agi: details.finalStats.agi,
     };
-
-    // 1. Get Job Skills (up to MAX_JOB_SKILLS)
     const jobSkills: SkillDefinition[] = (details.job.skills_unlocked || [])
       .slice(0, MAX_JOB_SKILLS)
       .map((s: any) => ({
@@ -41,8 +35,6 @@ export class CombatAdapter {
         }],
         description: s.description
       }));
-
-    // 2. Get Equipped Gacha Skills (up to MAX_GACHA_SKILLS)
     const gachaSkills: SkillDefinition[] = (details.skills || [])
       .slice(0, MAX_GACHA_SKILLS)
       .map((s: any) => ({
@@ -58,25 +50,16 @@ export class CombatAdapter {
         }],
         description: s.description
       }));
-
     const skills = [...jobSkills, ...gachaSkills];
-
-    // Add a basic attack if no skills exist (shouldn't happen with Job skills)
     if (skills.length === 0) {
       skills.push({
         id: 'basic_attack',
         name: 'Ataque Básico',
         type: 'active',
         cooldown: 0,
-        effects: [{
-          type: 'damage',
-          scaling: 'atk',
-          power: 1.0,
-          target: 'enemy'
-        }]
+        effects: [{ type: 'damage', scaling: 'atk', power: 1.0, target: 'enemy' }]
       });
     }
-
     return {
       id: unitId,
       instanceId: unitId,
@@ -91,6 +74,9 @@ export class CombatAdapter {
       skills,
       cooldowns: {},
       statusEffects: [],
+      spriteId: details.unit.sprite_id,
+      iconId: details.unit.icon_id,
+      jobId: details.unit.current_job_id,
       isDead: false,
       isStunned: false,
       isTaunting: false,
@@ -99,15 +85,39 @@ export class CombatAdapter {
     };
   }
 
-  /**
-   * Creates a sample enemy CombatUnit with balanced early-game scaling.
-   */
-  static createEnemy(
-    id: string,
-    name: string,
-    level: number,
-    position: number
-  ): CombatUnit {
+  static createFromUnit(unit: any, position: number): CombatUnit {
+    const stats = {
+      hp: unit.base_stats?.hp || unit.baseStats?.hp || 100,
+      atk: unit.base_stats?.atk || unit.baseStats?.atk || 10,
+      def: unit.base_stats?.def || unit.baseStats?.def || 10,
+      matk: unit.base_stats?.matk || unit.baseStats?.matk || 10,
+      mdef: unit.base_stats?.mdef || unit.baseStats?.mdef || 10,
+      agi: unit.base_stats?.agi || unit.baseStats?.agi || 10,
+    };
+    return {
+      id: unit.id || `u-${position}`,
+      instanceId: unit.id || `u-${position}`,
+      name: unit.name || 'Héroe',
+      side: 'player',
+      position,
+      row: position < 3 ? 'front' : 'back',
+      stats,
+      currentHp: stats.hp,
+      maxHp: stats.hp,
+      burst: 0,
+      skills: unit.skills || [{ id: 'basic_attack', name: 'Ataque Básico', type: 'active', cooldown: 0, effects: [{ type: 'damage', scaling: 'atk', power: 1.0, target: 'enemy' }] }],
+      cooldowns: {},
+      statusEffects: [],
+      spriteId: unit.sprite_id || unit.spriteId,
+      iconId: unit.icon_id || unit.iconId,
+      jobId: unit.current_job_id || unit.currentJobId,
+      isDead: false,
+      isStunned: false,
+      isTaunting: false
+    };
+  }
+
+  static createEnemy(id: string, name: string, level: number, position: number, skillIds: string[] = []): CombatUnit {
     const base_stats = {
       hp: Math.floor(60 + (level * 12)),
       atk: Math.floor(6 + (level * 1.5)),
@@ -116,6 +126,11 @@ export class CombatAdapter {
       mdef: Math.floor(4 + (level * 1.2)),
       agi: Math.floor(4 + (level * 0.8))
     };
+
+    const skills: SkillDefinition[] = (skillIds || []).map(sid => ENEMY_SKILL_DEFINITIONS[sid]).filter(Boolean);
+    if (skills.length === 0) {
+      skills.push(ENEMY_SKILL_DEFINITIONS['basic_attack']);
+    }
 
     return {
       id,
@@ -128,18 +143,7 @@ export class CombatAdapter {
       currentHp: base_stats.hp,
       maxHp: base_stats.hp,
       burst: 0,
-      skills: [{
-        id: 'enemy_strike',
-        name: 'Golpe Brutal',
-        type: 'active',
-        cooldown: 0,
-        effects: [{
-          type: 'damage',
-          scaling: 'atk',
-          power: 1.1,
-          target: 'enemy'
-        }]
-      }],
+      skills,
       cooldowns: {},
       statusEffects: [],
       isDead: false,

@@ -19,7 +19,8 @@ export interface EnemyTemplate {
     id: string;
     name: string;
     level: number;
-    position: number; // 0-4 (BF grid)
+    position: number;
+    skillIds?: string[];
 }
 
 export interface Stage {
@@ -31,6 +32,7 @@ export interface Stage {
     energy_cost: number;
     enemies: EnemyTemplate[];
     rewards: StageReward;
+    first_clear_rewards?: StageReward;
     star_conditions: StarCondition[];
     unlock_requirements?: {
         stage_id?: string;
