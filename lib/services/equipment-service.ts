@@ -21,6 +21,7 @@ export class EquipmentService {
         } else if (slot === 'card') {
             const currentCards = unit.equipped_card_instance_ids || [];
 
+            // Standardizing on 3 cards for now (flexible)
             if (currentCards.length >= 3) throw new Error("Máximo 3 cartas equipadas");
 
             const newCards = [...currentCards, itemInstanceId];
@@ -32,6 +33,7 @@ export class EquipmentService {
         } else if (slot === 'skill') {
             const currentSkills = unit.equipped_skill_instance_ids || [];
 
+            // 3 Job Skills are automatic, 2 Equippable are from Gacha
             if (currentSkills.length >= MAX_GACHA_SKILLS) {
                 throw new Error("Límite de habilidades adicionales alcanzado (Máximo 2)");
             }

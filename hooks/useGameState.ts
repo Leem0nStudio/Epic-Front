@@ -30,6 +30,7 @@ export function useGameState() {
   const refreshState = async () => {
     if (!supabase) return;
     try {
+        await supabase.rpc('rpc_regen_energy');
         const { data: authData } = await supabase.auth.getUser();
         const user = authData?.user;
         if (!user) return;
@@ -78,6 +79,7 @@ export function useGameState() {
         if (!user) return;
 
         await ConfigService.syncConfig();
+        await supabase.rpc('rpc_regen_energy');
 
         const { data: prof, error: profError } = await supabase.from('players').select('*').eq('id', user.id).single();
 

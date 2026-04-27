@@ -57,13 +57,22 @@ export class CampaignService {
         });
 
         // Calculate Rewards (simple random for materials)
-        const grantedMaterials = (stage.rewards.materials || [])
+        const progress = await this.getPlayerProgress();
+        const isFirstClear = !progress.some(p => p.stage_id === stageId);
+
+        const baseRewards = (isFirstClear && stage.first_clear_rewards)
+            ? stage.first_clear_rewards
+            : stage.rewards;
+
+        const grantedMaterials = (baseRewards.materials || [])
             .filter(m => Math.random() < m.chance)
             .map(m => ({ itemId: m.itemId, amount: m.amount }));
 
         const finalRewards = {
-            currency: stage.rewards.currency,
-            premium_currency: stage.rewards.premium_currency || 0,
+            isFirstClear,
+            currency: baseRewards.currency,
+            premium_currency: baseRewards.premium_currency || 0,
+            exp: baseRewards.exp,
             materials: grantedMaterials
         };
 
@@ -84,23 +93,11 @@ export class CampaignService {
 
     static async deductEnergy(amount: number) {
         if (!supabase) return true;
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return false;
-
-        const { data: player } = await supabase
-            .from('players')
-            .select('energy')
-            .eq('id', user.id)
-            .single();
-
-        // DESIGN: If energy is not found or is less than amount, return false
-        if (!player || player.energy === undefined || player.energy < amount) return false;
-
-        const { error } = await supabase
-            .from('players')
-            .update({ energy: player.energy - amount })
-            .eq('id', user.id);
-
-        return !error;
+        const { data, error } = await supabase.rpc('rpc_deduct_energy', { p_amount: amount });
+        if (error) {
+            console.error("Energy deduction error:", error);
+            return false;
+        }
+        return data as boolean;
     }
 }

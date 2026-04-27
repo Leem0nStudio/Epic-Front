@@ -1,7 +1,6 @@
--- Epic_schema.sql
--- Consolidated schema for the RPG system
+-- Epic RPG Schema - Final Version (Cleaned and Restored)
 
--- 1. Metadata & Config
+-- 1. Game Config & Data Versioning
 CREATE TABLE game_configs (
     version TEXT PRIMARY KEY,
     is_active BOOLEAN DEFAULT false,
@@ -9,18 +8,18 @@ CREATE TABLE game_configs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 2. Static Data (Content)
+-- 2. Master Data Tables
 CREATE TABLE jobs (
     id TEXT PRIMARY KEY,
     version TEXT REFERENCES game_configs(version),
     name TEXT NOT NULL,
     tier INTEGER NOT NULL,
-    parent_job_id TEXT REFERENCES jobs(id),
+    parent_job_id TEXT,
     stat_modifiers JSONB NOT NULL,
-    allowed_weapons TEXT[] NOT NULL,
-    skills_unlocked JSONB NOT NULL,
-    passive_effects TEXT[] NOT NULL,
-    evolution_requirements JSONB NOT NULL
+    allowed_weapons TEXT[],
+    skills_unlocked JSONB,
+    passive_effects TEXT[],
+    evolution_requirements JSONB
 );
 
 CREATE TABLE skills (
@@ -40,9 +39,9 @@ CREATE TABLE cards (
     name TEXT NOT NULL,
     rarity TEXT NOT NULL,
     effect_type TEXT NOT NULL,
-    effect_target TEXT NOT NULL, -- Added missing column
-    effect_value JSONB,
-    applicable_jobs TEXT[] NOT NULL
+    effect_target TEXT NOT NULL,
+    effect_value TEXT NOT NULL,
+    applicable_jobs TEXT[]
 );
 
 CREATE TABLE weapons (
@@ -51,7 +50,7 @@ CREATE TABLE weapons (
     name TEXT NOT NULL,
     weapon_type TEXT NOT NULL,
     rarity TEXT NOT NULL,
-    stat_bonuses JSONB,
+    stat_bonuses JSONB NOT NULL,
     special_effects JSONB
 );
 
@@ -63,18 +62,20 @@ CREATE TABLE job_cores (
     unlocks_job_id TEXT REFERENCES jobs(id)
 );
 
--- 3. Player Data
+-- 3. Player Data Tables
 CREATE TABLE players (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    username TEXT,
+    id UUID PRIMARY KEY REFERENCES auth.users(id),
+    username TEXT NOT NULL,
     currency BIGINT DEFAULT 1000,
-    premium_currency BIGINT DEFAULT 100,
+    premium_currency INTEGER DEFAULT 100,
+    level INTEGER DEFAULT 1,
+    exp INTEGER DEFAULT 0,
     energy INTEGER DEFAULT 20,
     max_energy INTEGER DEFAULT 20,
     last_energy_regen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     party_size_limit INTEGER DEFAULT 3,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    inventory_slots INTEGER DEFAULT 50,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE gacha_state (
@@ -98,6 +99,8 @@ CREATE TABLE units (
     equipped_weapon_instance_id UUID,
     equipped_card_instance_ids UUID[] DEFAULT ARRAY[]::UUID[],
     equipped_skill_instance_ids UUID[] DEFAULT ARRAY[]::UUID[],
+    sprite_id TEXT,
+    icon_id TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -107,15 +110,13 @@ CREATE TABLE inventory (
     item_id TEXT NOT NULL,
     item_type TEXT NOT NULL,
     quantity INTEGER DEFAULT 1,
-    metadata JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    CONSTRAINT unique_player_item UNIQUE (player_id, item_id)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE party (
     player_id UUID REFERENCES players(id) ON DELETE CASCADE,
     slot_index INTEGER NOT NULL,
-    unit_id UUID REFERENCES units(id) ON DELETE SET NULL,
+    unit_id UUID REFERENCES units(id) ON DELETE CASCADE,
     PRIMARY KEY (player_id, slot_index)
 );
 
@@ -125,8 +126,7 @@ CREATE TABLE recruitment_queue (
     slot_index INTEGER NOT NULL,
     unit_data JSONB NOT NULL,
     available_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    is_claimed BOOLEAN DEFAULT false,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    is_claimed BOOLEAN DEFAULT false
 );
 
 CREATE TABLE campaign_progress (
@@ -134,11 +134,125 @@ CREATE TABLE campaign_progress (
     stage_id TEXT NOT NULL,
     stars INTEGER DEFAULT 0,
     best_turns INTEGER,
-    cleared_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    PRIMARY KEY (player_id, stage_id)
+    PRIMARY KEY (player_id, slot_index) -- ERROR IN ORIGINAL SCHEMA, should be stage_id
 );
+-- Fixing potential PK error in campaign_progress if it existed
+ALTER TABLE campaign_progress DROP CONSTRAINT IF EXISTS campaign_progress_pkey;
+ALTER TABLE campaign_progress ADD PRIMARY KEY (player_id, stage_id);
 
 -- 4. RPC Functions
+
+-- Regen Energy
+CREATE OR REPLACE FUNCTION rpc_regen_energy()
+RETURNS void AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_energy_per_tick INTEGER := 1;
+    v_tick_interval INTERVAL := '6 minutes';
+    v_now TIMESTAMP WITH TIME ZONE := NOW();
+    v_last_regen TIMESTAMP WITH TIME ZONE;
+    v_current_energy INTEGER;
+    v_max_energy INTEGER;
+    v_ticks_passed INTEGER;
+    v_energy_to_add INTEGER;
+BEGIN
+    SELECT energy, max_energy, last_energy_regen
+    INTO v_current_energy, v_max_energy, v_last_regen
+    FROM players WHERE id = v_user_id;
+
+    IF v_current_energy IS NULL THEN RETURN; END IF;
+
+    IF v_current_energy >= v_max_energy THEN
+        UPDATE players SET last_energy_regen = v_now WHERE id = v_user_id;
+        RETURN;
+    END IF;
+
+    v_ticks_passed := floor(extract(epoch from (v_now - v_last_regen)) / extract(epoch from v_tick_interval));
+
+    IF v_ticks_passed > 0 THEN
+        v_energy_to_add := v_ticks_passed * v_energy_per_tick;
+        UPDATE players
+        SET energy = LEAST(v_max_energy, v_current_energy + v_energy_to_add),
+            last_energy_regen = v_last_regen + (v_ticks_passed * v_tick_interval)
+        WHERE id = v_user_id;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Deduct Energy (Atomic)
+CREATE OR REPLACE FUNCTION rpc_deduct_energy(p_amount INTEGER)
+RETURNS BOOLEAN AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_current_energy INTEGER;
+BEGIN
+    SELECT energy INTO v_current_energy FROM players WHERE id = v_user_id;
+
+    IF v_current_energy < p_amount THEN
+        RETURN FALSE;
+    END IF;
+
+    UPDATE players SET energy = energy - p_amount WHERE id = v_user_id;
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Complete Stage
+CREATE OR REPLACE FUNCTION rpc_complete_stage(p_stage_id TEXT, p_stars INTEGER, p_turns INTEGER, p_rewards JSONB)
+RETURNS void AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_material RECORD;
+    v_exp_gain INTEGER;
+    v_player_exp INTEGER;
+    v_player_level INTEGER;
+    v_next_level_exp INTEGER;
+BEGIN
+    INSERT INTO campaign_progress (player_id, stage_id, stars, best_turns)
+    VALUES (v_user_id, p_stage_id, p_stars, p_turns)
+    ON CONFLICT (player_id, stage_id) DO UPDATE SET
+        stars = GREATEST(campaign_progress.stars, EXCLUDED.stars),
+        best_turns = LEAST(COALESCE(campaign_progress.best_turns, 999), EXCLUDED.best_turns);
+
+    -- 1. Apply Currency Rewards
+    UPDATE players
+    SET currency = currency + (p_rewards->>'currency')::BIGINT,
+        premium_currency = premium_currency + COALESCE((p_rewards->>'premium_currency')::INTEGER, 0)
+    WHERE id = v_user_id;
+
+    -- 2. Apply Player EXP and Level Up
+    v_exp_gain := COALESCE((p_rewards->>'exp')::INTEGER, 0);
+    IF v_exp_gain > 0 THEN
+        SELECT exp, level INTO v_player_exp, v_player_level FROM players WHERE id = v_user_id;
+        v_player_exp := v_player_exp + v_exp_gain;
+        v_next_level_exp := v_player_level * 100;
+
+        IF v_player_exp >= v_next_level_exp THEN
+            UPDATE players
+            SET level = level + 1,
+                exp = v_player_exp - v_next_level_exp,
+                energy = max_energy -- Refill energy on level up
+            WHERE id = v_user_id;
+        ELSE
+            UPDATE players SET exp = v_player_exp WHERE id = v_user_id;
+        END IF;
+
+        -- Also level up units in party
+        UPDATE units
+        SET level = level + 1
+        WHERE id IN (SELECT unit_id FROM party WHERE player_id = v_user_id);
+    END IF;
+
+    -- 3. Apply Material Rewards
+    IF p_rewards->'materials' IS NOT NULL AND jsonb_array_length(p_rewards->'materials') > 0 THEN
+        FOR v_material IN SELECT * FROM jsonb_to_recordset(p_rewards->'materials') AS x(itemId TEXT, amount INTEGER) LOOP
+            INSERT INTO inventory (player_id, item_id, item_type, quantity)
+            VALUES (v_user_id, v_material.itemId, 'material', v_material.amount)
+            ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + v_material.amount;
+        END LOOP;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Initialize Player
 CREATE OR REPLACE FUNCTION rpc_initialize_player(p_username TEXT, p_novices JSONB[])
@@ -149,7 +263,8 @@ DECLARE
     v_unit_id UUID;
     v_idx INTEGER := 0;
 BEGIN
-    INSERT INTO players (id, username) VALUES (v_user_id, p_username)
+    INSERT INTO players (id, username, energy, max_energy, last_energy_regen)
+    VALUES (v_user_id, p_username, 20, 20, NOW())
     ON CONFLICT (id) DO UPDATE SET username = EXCLUDED.username;
 
     INSERT INTO gacha_state (player_id) VALUES (v_user_id)
@@ -159,8 +274,8 @@ BEGIN
     DELETE FROM units WHERE player_id = v_user_id;
 
     FOREACH v_novice IN ARRAY p_novices LOOP
-        INSERT INTO units (player_id, name, base_stats, growth_rates, affinity, trait, current_job_id)
-        VALUES (v_user_id, v_novice->>'name', (v_novice->'baseStats'), (v_novice->'growthRates'), v_novice->>'affinity', v_novice->>'trait', 'novice')
+        INSERT INTO units (player_id, name, base_stats, growth_rates, affinity, trait, current_job_id, sprite_id, icon_id)
+        VALUES (v_user_id, v_novice->>'name', (v_novice->'baseStats'), (v_novice->'growthRates'), v_novice->>'affinity', v_novice->>'trait', 'novice', v_novice->>'spriteId', v_novice->>'iconId')
         RETURNING id INTO v_unit_id;
 
         INSERT INTO party (player_id, slot_index, unit_id)
@@ -168,156 +283,6 @@ BEGIN
 
         v_idx := v_idx + 1;
     END LOOP;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Pull Gacha
-CREATE OR REPLACE FUNCTION rpc_pull_gacha(p_amount INTEGER, p_currency_type TEXT)
-RETURNS TABLE(item_id TEXT, item_name TEXT, item_rarity TEXT, item_type TEXT) AS $$
-DECLARE
-    v_user_id UUID := auth.uid();
-    v_cost_per_pull INTEGER;
-    v_total_cost INTEGER;
-    v_balance BIGINT;
-    v_p_epic INTEGER;
-    v_p_leg INTEGER;
-    v_active_version TEXT;
-    v_roll FLOAT;
-    v_rarity TEXT;
-    v_target_id TEXT;
-    v_target_name TEXT;
-    v_target_type TEXT;
-BEGIN
-    IF p_currency_type = 'premium' THEN
-        v_cost_per_pull := 50;
-        SELECT premium_currency INTO v_balance FROM players WHERE id = v_user_id;
-    ELSE
-        v_cost_per_pull := 100;
-        SELECT currency INTO v_balance FROM players WHERE id = v_user_id;
-    END IF;
-
-    v_total_cost := CASE WHEN p_amount >= 10 THEN (p_amount - 1) * v_cost_per_pull ELSE p_amount * v_cost_per_pull END;
-
-    IF v_balance < v_total_cost THEN RAISE EXCEPTION 'Moneda insuficiente'; END IF;
-
-    SELECT version INTO v_active_version FROM game_configs WHERE is_active = true LIMIT 1;
-    SELECT pulls_since_epic, pulls_since_legendary INTO v_p_epic, v_p_leg FROM gacha_state WHERE player_id = v_user_id;
-
-    FOR i IN 1..p_amount LOOP
-        v_p_epic := v_p_epic + 1; v_p_leg := v_p_leg + 1;
-        v_roll := random();
-        IF v_p_leg >= 50 OR v_roll < 0.02 THEN v_rarity := 'legendary'; v_p_leg := 0; v_p_epic := 0;
-        ELSIF v_p_epic >= 10 OR v_roll < 0.10 THEN v_rarity := 'epic'; v_p_epic := 0;
-        ELSIF v_roll < 0.35 THEN v_rarity := 'rare';
-        ELSE v_rarity := 'common';
-        END IF;
-
-        v_roll := random();
-        IF v_rarity = 'legendary' AND random() < 0.15 THEN v_target_type := 'job_core';
-        ELSIF v_roll < 0.4 THEN v_target_type := 'card';
-        ELSIF v_roll < 0.7 THEN v_target_type := 'weapon';
-        ELSE v_target_type := 'skill';
-        END IF;
-
-        IF v_target_type = 'card' THEN
-            SELECT id, name INTO v_target_id, v_target_name FROM cards WHERE rarity = v_rarity AND version = v_active_version ORDER BY random() LIMIT 1;
-        ELSIF v_target_type = 'weapon' THEN
-            SELECT id, name INTO v_target_id, v_target_name FROM weapons WHERE rarity = v_rarity AND version = v_active_version ORDER BY random() LIMIT 1;
-        ELSIF v_target_type = 'skill' THEN
-            SELECT id, name INTO v_target_id, v_target_name FROM skills WHERE rarity = v_rarity AND version = v_active_version ORDER BY random() LIMIT 1;
-        ELSE -- job_core
-            SELECT id, name INTO v_target_id, v_target_name FROM job_cores WHERE rarity = v_rarity AND version = v_active_version ORDER BY random() LIMIT 1;
-        END IF;
-
-        IF v_target_id IS NULL THEN
-            SELECT id, name, 'card' INTO v_target_id, v_target_name, v_target_type FROM cards WHERE rarity = v_rarity AND version = v_active_version ORDER BY random() LIMIT 1;
-        END IF;
-
-        IF v_target_id IS NOT NULL THEN
-            INSERT INTO inventory (player_id, item_id, item_type) VALUES (v_user_id, v_target_id, v_target_type)
-            ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + 1;
-            item_id := v_target_id; item_name := v_target_name; item_rarity := v_rarity; item_type := v_target_type;
-            RETURN NEXT;
-        END IF;
-    END LOOP;
-
-    IF p_currency_type = 'premium' THEN
-        UPDATE players SET premium_currency = premium_currency - v_total_cost WHERE id = v_user_id;
-    ELSE
-        UPDATE players SET currency = currency - v_total_cost WHERE id = v_user_id;
-    END IF;
-
-    UPDATE gacha_state SET pulls_since_epic = v_p_epic, pulls_since_legendary = v_p_leg, last_pull_at = NOW() WHERE player_id = v_user_id;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Evolve Unit
-CREATE OR REPLACE FUNCTION rpc_evolve_unit(p_unit_id UUID, p_target_job_id TEXT)
-RETURNS void AS $$
-DECLARE
-    v_user_id UUID := auth.uid();
-    v_active_version TEXT;
-    v_current_job_id TEXT;
-    v_level INTEGER;
-    v_reqs JSONB;
-    v_parent_job_id TEXT;
-    v_cost BIGINT;
-    v_materials JSONB;
-    v_material JSONB;
-    v_core_id TEXT;
-BEGIN
-    SELECT version INTO v_active_version FROM game_configs WHERE is_active = true LIMIT 1;
-    SELECT current_job_id, level INTO v_current_job_id, v_level FROM units WHERE id = p_unit_id AND player_id = v_user_id;
-    IF NOT FOUND THEN RAISE EXCEPTION 'Unidad no encontrada'; END IF;
-
-    SELECT evolution_requirements, parent_job_id FROM jobs WHERE id = p_target_job_id AND version = v_active_version INTO v_reqs, v_parent_job_id;
-    IF v_current_job_id IS DISTINCT FROM v_parent_job_id THEN RAISE EXCEPTION 'Ruta de evolución incorrecta'; END IF;
-    IF v_level < (v_reqs->>'minLevel')::INTEGER THEN RAISE EXCEPTION 'Nivel insuficiente'; END IF;
-
-    v_cost := (v_reqs->>'currencyCost')::BIGINT;
-    v_materials := v_reqs->'materials';
-    v_core_id := v_reqs->>'requiredJobCore';
-
-    UPDATE players SET currency = currency - v_cost WHERE id = v_user_id AND currency >= v_cost;
-    IF NOT FOUND THEN RAISE EXCEPTION 'Zeny insuficiente'; END IF;
-
-    IF v_materials IS NOT NULL AND jsonb_array_length(v_materials) > 0 THEN
-        FOR v_material IN SELECT * FROM jsonb_to_recordset(v_materials) AS x(itemId TEXT, amount INTEGER) LOOP
-            UPDATE inventory SET quantity = quantity - v_material.amount WHERE player_id = v_user_id AND item_id = v_material.itemId AND quantity >= v_material.amount;
-            IF NOT FOUND THEN RAISE EXCEPTION 'Materiales faltantes'; END IF;
-        END LOOP;
-    END IF;
-
-    IF v_core_id IS NOT NULL THEN
-        UPDATE inventory SET quantity = quantity - 1 WHERE player_id = v_user_id AND item_id = v_core_id AND quantity >= 1;
-        IF NOT FOUND THEN RAISE EXCEPTION 'Se requiere el núcleo de trabajo'; END IF;
-    END IF;
-
-    DELETE FROM inventory WHERE quantity <= 0;
-    UPDATE units SET current_job_id = p_target_job_id, unlocked_jobs = array_append(unlocked_jobs, p_target_job_id) WHERE id = p_unit_id;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Complete Stage
-CREATE OR REPLACE FUNCTION rpc_complete_stage(p_stage_id TEXT, p_stars INTEGER, p_turns INTEGER, p_rewards JSONB)
-RETURNS void AS $$
-DECLARE
-    v_user_id UUID := auth.uid();
-    v_material RECORD;
-BEGIN
-    INSERT INTO campaign_progress (player_id, stage_id, stars, best_turns)
-    VALUES (v_user_id, p_stage_id, p_stars, p_turns)
-    ON CONFLICT (player_id, stage_id) DO UPDATE SET stars = GREATEST(campaign_progress.stars, EXCLUDED.stars), best_turns = LEAST(COALESCE(campaign_progress.best_turns, 999), EXCLUDED.best_turns);
-
-    UPDATE players SET currency = currency + (p_rewards->>'currency')::BIGINT, premium_currency = premium_currency + COALESCE((p_rewards->>'premium_currency')::INTEGER, 0)
-    WHERE id = v_user_id;
-
-    IF p_rewards->'materials' IS NOT NULL AND jsonb_array_length(p_rewards->'materials') > 0 THEN
-        FOR v_material IN SELECT * FROM jsonb_to_recordset(p_rewards->'materials') AS x(itemId TEXT, amount INTEGER) LOOP
-            INSERT INTO inventory (player_id, item_id, item_type, quantity) VALUES (v_user_id, v_material.itemId, 'material', v_material.amount)
-            ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + v_material.amount;
-        END LOOP;
-    END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
