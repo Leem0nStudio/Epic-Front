@@ -27,10 +27,10 @@ interface BattleScreenViewProps {
   squad: any[];
   onBack: () => void;
   onRefresh: () => void;
-  stageId?: string; // New: optional stage context
+  stageId?: string;
 }
 
-export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleScreenViewProps) {
+export function BattleScreenView({ squad, onBack, onRefresh, stageId: currentStageId }: BattleScreenViewProps) {
   const [units, setUnits] = useState<CombatUnit[]>([]);
   const [turn, setTurn] = useState(0);
   const [round, setRound] = useState(1);
@@ -66,8 +66,8 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
 
         let enemies: CombatUnit[] = [];
 
-        if (stageId) {
-            const stage = CampaignService.getStageById(stageId);
+        if (currentStageId) {
+            const stage = CampaignService.getStageById(currentStageId);
             if (stage) {
                 enemies = stage.enemies.map(e => CombatAdapter.createEnemy(e.id, e.name, e.level, e.position));
             }
@@ -90,7 +90,7 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
       }
     }
     initBattle();
-  }, [squad, stageId]);
+  }, [squad, currentStageId]);
 
   const runTurn = (actor: CombatUnit, skill: SkillDefinition, manualTargetId?: string) => {
     if (isBattleOver) return;
@@ -146,12 +146,12 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
     setIsBattleOver(true);
     setWinner(winner);
 
-    if (winner === 'player' && stageId) {
+    if (winner === 'player' && currentStageId) {
         setIsRecordingResult(true);
         try {
             // Stats for star calculation: total turns taken by player/enemy
             // simplified: we use the 'round' count for turn limits in stars
-            const result = await CampaignService.completeStage(stageId, {
+            const result = await CampaignService.completeStage(currentStageId, {
                 turns: round,
                 deaths: deaths
             });
