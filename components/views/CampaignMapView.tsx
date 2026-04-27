@@ -105,7 +105,7 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
                     <span className="text-[9px] font-black text-[#F5C76B] uppercase tracking-widest">Recompensas Principales</span>
                     <div className="flex gap-2">
                         {stage.rewards.materials.map((m, i) => (
-                            <img key={i} src={AssetHelper.getItemIcon(m.itemId, 'material')} className="w-6 h-6 rounded-md bg-black/40 border border-white/5" />
+                            <img alt="Material Icon" key={i} src={AssetHelper.getItemIcon(m.itemId, 'material')} className="w-6 h-6 rounded-md bg-black/40 border border-white/5" />
                         ))}
                     </div>
                 </div>

@@ -57,13 +57,22 @@ export class CampaignService {
         });
 
         // Calculate Rewards (simple random for materials)
-        const grantedMaterials = (stage.rewards.materials || [])
+        const progress = await this.getPlayerProgress();
+        const isFirstClear = !progress.some(p => p.stage_id === stageId);
+
+        const baseRewards = (isFirstClear && stage.first_clear_rewards)
+            ? stage.first_clear_rewards
+            : stage.rewards;
+
+        const grantedMaterials = (baseRewards.materials || [])
             .filter(m => Math.random() < m.chance)
             .map(m => ({ itemId: m.itemId, amount: m.amount }));
 
         const finalRewards = {
-            currency: stage.rewards.currency,
-            premium_currency: stage.rewards.premium_currency || 0,
+            isFirstClear,
+            currency: baseRewards.currency,
+            premium_currency: baseRewards.premium_currency || 0,
+            exp: baseRewards.exp,
             materials: grantedMaterials
         };
 
