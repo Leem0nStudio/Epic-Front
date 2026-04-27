@@ -1,14 +1,61 @@
 import { supabase } from '@/lib/supabase';
-import { CAMPAIGN_CHAPTERS } from '../rpg-system/campaign-data';
-import { Stage, PlayerStageProgress, StageReward } from '../rpg-system/campaign-types';
+import { Stage, PlayerStageProgress, StageReward, Chapter } from '../rpg-system/campaign-types';
 
 export class CampaignService {
-    static getChapters() {
-        return CAMPAIGN_CHAPTERS;
+    private static chaptersCache: Chapter[] | null = null;
+
+    static async getChapters(): Promise<Chapter[]> {
+        if (this.chaptersCache) return this.chaptersCache;
+        
+        if (!supabase) {
+            const { CAMPAIGN_CHAPTERS } = await import('../rpg-system/campaign-data');
+            return CAMPAIGN_CHAPTERS;
+        }
+
+        try {
+            const { data: chapters, error } = await supabase
+                .from('chapters')
+                .select('*, stages(*)')
+                .order('index_num');
+
+            if (error || !chapters || chapters.length === 0) {
+                console.warn("No chapters in DB, using fallback data");
+                const { CAMPAIGN_CHAPTERS } = await import('../rpg-system/campaign-data');
+                return CAMPAIGN_CHAPTERS;
+            }
+
+            this.chaptersCache = chapters.map(ch => ({
+                id: ch.id,
+                index: ch.index_num,
+                name: ch.name,
+                description: ch.description || '',
+                unlock_requirements: ch.unlock_requirements || null,
+                stages: (ch.stages || []).map((s: any) => ({
+                    id: s.id,
+                    chapter_id: s.chapter_id,
+                    index: s.index_num,
+                    name: s.name,
+                    description: s.description || '',
+                    energy_cost: s.energy_cost,
+                    enemies: s.enemies || [],
+                    rewards: s.rewards || { currency: 0, exp: 0, materials: [] },
+                    first_clear_rewards: s.first_clear_rewards,
+                    star_conditions: s.star_conditions || [],
+                    unlock_requirements: s.unlock_requirements || null
+                }))
+            }));
+
+            return this.chaptersCache;
+        } catch (e) {
+            console.error("Error loading chapters from DB:", e);
+            const { CAMPAIGN_CHAPTERS } = await import('../rpg-system/campaign-data');
+            return CAMPAIGN_CHAPTERS;
+        }
     }
 
-    static getStageById(stageId: string): Stage | null {
-        for (const chapter of CAMPAIGN_CHAPTERS) {
+    static async getStageById(stageId: string): Promise<Stage | null> {
+        const chapters = await this.getChapters();
+        for (const chapter of chapters) {
             const stage = chapter.stages.find(s => s.id === stageId);
             if (stage) return stage;
         }
@@ -40,12 +87,11 @@ export class CampaignService {
 
     static async completeStage(stageId: string, stats: { turns: number, deaths: number }) {
         if (!supabase) return;
-        const stage = this.getStageById(stageId);
+        const stage = await this.getStageById(stageId);
         if (!stage) throw new Error("Stage not found");
 
-        // Calculate Stars
         let stars = 0;
-        stage.star_conditions.forEach(condition => {
+        stage.star_conditions?.forEach(condition => {
             let met = false;
             switch (condition.type) {
                 case 'win': met = true; break;
@@ -56,7 +102,6 @@ export class CampaignService {
             if (met) stars++;
         });
 
-        // Calculate Rewards (simple random for materials)
         const progress = await this.getPlayerProgress();
         const isFirstClear = !progress.some(p => p.stage_id === stageId);
 
@@ -65,8 +110,8 @@ export class CampaignService {
             : stage.rewards;
 
         const grantedMaterials = (baseRewards.materials || [])
-            .filter(m => Math.random() < m.chance)
-            .map(m => ({ itemId: m.itemId, amount: m.amount }));
+            .filter((m: any) => Math.random() < m.chance)
+            .map((m: any) => ({ itemId: m.itemId, amount: m.amount }));
 
         const finalRewards = {
             isFirstClear,
@@ -102,8 +147,7 @@ export class CampaignService {
             .eq('id', user.id)
             .single();
 
-        // DESIGN: If energy is not found or is less than amount, return false
-        if (!player || player.energy === undefined || player.energy < amount) return false;
+        if (!player || player.energy < amount) return false;
 
         const { error } = await supabase
             .from('players')
@@ -111,5 +155,9 @@ export class CampaignService {
             .eq('id', user.id);
 
         return !error;
+    }
+
+    static invalidateCache() {
+        this.chaptersCache = null;
     }
 }

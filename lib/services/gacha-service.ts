@@ -20,12 +20,12 @@ export class GachaService {
             throw error;
         }
 
-        return data as {
-            item_id: string;
-            item_name: string;
-            item_rarity: string;
-            item_type: string;
-        }[];
+        return (data || []).map((item: any) => ({
+            item_id: item.res_item_id,
+            item_name: item.res_item_name,
+            item_rarity: item.res_item_rarity,
+            item_type: item.res_item_type,
+        }));
     }
 
     /**
