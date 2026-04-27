@@ -1,7 +1,20 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import React, { useState, useEffect, useRef } from 'react';
+
+function useReducedMotion() {
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mediaQuery.matches);
+    const listener = (e: any) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', listener);
+    return () => mediaQuery.removeEventListener('change', listener);
+  }, []);
+  return reducedMotion;
+}
+import { useMotionValue, useTransform } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Users,
   Coins,
@@ -36,32 +49,40 @@ const rarityGlow = (rarity: string) => {
   }
 };
 
-const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any) => {
-  const sprite = unit ? AssetService.getSpriteUrl(unit.sprite_id) : undefined;
+const CharacterSlot = ({ unit, zIndex = 1, emphasized = false, opacity = 1 }: any) => {
+  const sprite = unit ? AssetHelper.getUnitSprite(unit.current_job_id) : undefined;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="relative flex flex-col items-center justify-end h-full w-full"
-      style={{ zIndex, scale }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative flex flex-col items-center justify-end h-full w-full"
+        style={{ zIndex, opacity }}
     >
-      <div className={`relative w-full h-[70%] flex items-center justify-center ${emphasized ? 'mb-4' : 'mb-2'}`}>
-        <div className={`w-full aspect-[2/3] max-h-full rounded-2xl bg-gradient-to-t from-blue-900/40 to-transparent border border-white/5 relative overflow-hidden ${emphasized ? rarityGlow('ur') : ''}`}>
-          <motion.div
-            animate={{ y: [0, -10, 0] }}
+        {/* Floor Pedestal Effect - Subtle Blue/White Glow */}
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-32 h-10 bg-blue-500/10 blur-xl rounded-[100%] pointer-events-none" />
+        <div className="absolute bottom-18 left-1/2 -translate-x-1/2 w-20 h-4 bg-white/5 blur-sm rounded-[100%] pointer-events-none" />
+
+        <div className="relative w-full h-[70%] flex items-center justify-center mb-4">
+        <div className={`w-full aspect-[2/3] max-h-full rounded-2xl bg-gradient-to-t from-blue-900/20 to-transparent border border-white/10 relative overflow-hidden ${emphasized ? rarityGlow('ur') : ''}`}>
+            <motion.div
+            animate={{ y: [0, -8, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="w-full h-full relative"
-          >
+            className="w-full h-full relative" style={{ transformStyle: "preserve-3d" }}
+            >
             {unit ? (
-              <img
-                src={sprite}
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200%] h-auto object-contain transform origin-bottom"
-                style={{ imageRendering: 'pixelated' }}
-                alt={unit.name}
-              />
+              <>
+                {/* Individual Unit Shadow */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-20 h-4 bg-black/40 blur-md rounded-[100%] pointer-events-none" style={{ transform: "translateX(-50%) translateZ(-1px)" }} />
+                <img
+                  src={sprite}
+                  className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[220%] h-auto object-contain transform origin-bottom"
+                  style={{ imageRendering: 'pixelated' }}
+                  alt={unit.name}
+                />
+              </>
             ) : (
-              <div className="w-full h-full flex items-center justify-center opacity-20">
+                <div className="w-full h-full flex items-center justify-center opacity-10">
                 <Users size={48} className="text-white" />
               </div>
             )}
@@ -69,7 +90,7 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any)
         </div>
 
         {unit && (
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-black/80 border border-white/20 flex items-center gap-1 shadow-xl whitespace-nowrap">
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/90 border border-white/20 flex items-center gap-1 shadow-2xl whitespace-nowrap z-10">
             <span className="text-[10px] font-black italic text-[#F5C76B]">UR</span>
             <div className="flex gap-0.5">
               {[1,2,3,4,5].map(i => <Star key={i} size={8} fill="#F5C76B" className="text-[#F5C76B]" />)}
@@ -78,13 +99,10 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any)
         )}
       </div>
 
-      {unit && (
-        <div className="text-center flex flex-col items-center">
-          <div className="flex items-center gap-1 mb-1">
-            <img src={AssetService.getIconUrl(unit.icon_id)} className="w-3 h-3 object-contain" alt="Job Icon" />
-            <p className="text-white text-sm font-black tracking-widest uppercase drop-shadow-md truncate max-w-[100px]">{unit.name}</p>
-          </div>
-          <p className="text-[#F5C76B] text-[10px] font-bold tracking-tighter opacity-80 uppercase truncate w-full max-w-[100px]">{unit.current_job_id}</p>
+        {unit && (
+        <div className="text-center">
+            <p className="text-white text-lg font-black tracking-[0.15em] uppercase drop-shadow-lg truncate w-full max-w-[120px] leading-none">{unit.name}</p>
+            <p className="text-[#F5C76B]/70 text-[9px] font-medium tracking-widest uppercase truncate w-full max-w-[120px] mt-1.5">{unit.current_job_id}</p>
         </div>
       )}
     </motion.div>
@@ -95,9 +113,22 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
   const primaryUnit = activePartyUnits[0];
   const leftUnit = activePartyUnits[1];
   const rightUnit = activePartyUnits[2];
+  const prefersReduced = useReducedMotion();
 
   const [displayCurrency, setDisplayCurrency] = useState<number>(saveData.profile.currency);
   const [displayGems, setDisplayGems] = useState<number>(saveData.profile.premium_currency);
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX.set((e.clientX / window.innerWidth - 0.5) * 20);
+      mouseY.set((e.clientY / window.innerHeight - 0.5) * 20);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [mouseX, mouseY]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -127,54 +158,53 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
           </div>
           <div className="flex flex-col text-left">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black bg-[#F5C76B] text-black px-1.5 rounded-sm italic uppercase">Lvl. {playerLevel}</span>
-              <span className="text-white text-xs font-bold tracking-wider uppercase">{saveData.profile.username}</span>
+              <span className="text-xs font-black bg-[#F5C76B] text-black px-2 py-0.5 rounded italic uppercase shadow-sm">Lvl. 1</span>
+              <span className="text-white text-sm font-black tracking-[0.3em] uppercase drop-shadow-sm">{saveData.profile.username}</span>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="w-24 h-1 bg-white/10 rounded-full overflow-hidden">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${expProgress}%` }} className="h-full bg-[#F5C76B]" />
-              </div>
-              <div className="flex items-center gap-1 text-[#F5C76B]">
-                <Zap size={8} className="fill-current" />
-                <span className="text-[7px] font-black uppercase">{saveData.profile.energy}/{saveData.profile.max_energy}</span>
-              </div>
+            <div className="flex items-center gap-3 mt-1.5">
+                <div className="w-28 h-3 bg-white/5 rounded-full overflow-hidden border border-white/10 p-[1px]">
+                    <motion.div initial={{ width: 0 }} animate={{ width: '20%' }} className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+                </div>
+                <div className="flex items-center gap-1.5 text-[#F5C76B]">
+                    <Zap size={10} className="fill-current drop-shadow-[0_0_3px_rgba(245,199,107,0.5)]" />
+                    <span className="text-[8px] font-black uppercase tracking-tighter">{saveData.profile.energy}/{saveData.profile.max_energy}</span>
+                </div>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/5">
-            <Coins size={14} className="text-[#F5C76B]" />
-            <span className="text-xs font-bold text-white">{displayCurrency}</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-white/5 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-inner">
+            <Coins size={18} className="text-[#F5C76B] drop-shadow-sm" />
+            <span className="text-sm font-black text-white tabular-nums tracking-tight">{displayCurrency}</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/5">
-            <Diamond size={14} className="text-cyan-400" />
-            <span className="text-xs font-bold text-white">{displayGems}</span>
+          <div className="flex items-center gap-2 bg-white/5 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-inner">
+            <Diamond size={18} className="text-cyan-400 drop-shadow-sm" />
+            <span className="text-sm font-black text-white tabular-nums tracking-tight">{displayGems}</span>
           </div>
-          <button onClick={() => supabase?.auth.signOut()} className="text-white/60 hover:text-white transition-colors">
-            <Settings size={18} />
+          <button onClick={() => supabase?.auth.signOut()} className="w-10 h-10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+            <Settings size={20} />
           </button>
         </div>
       </div>
 
       {/* Main Display Area */}
       <div className="flex-1 relative flex items-center justify-center px-4 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] aspect-square bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
+        <motion.div style={{ x: useTransform(mouseX, [ -20, 20 ], [ 5, -5 ]), y: useTransform(mouseY, [ -20, 20 ], [ 5, -5 ]) }} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] aspect-square bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
 
-        <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-28">
-          <div className="w-[30%] h-full pb-4 flex items-end">
-            <CharacterSlot unit={leftUnit} scale={0.85} zIndex={10} />
+        <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-32">
+          <div className="w-1/3 h-full">
+            <motion.div style={{ x: useTransform(mouseX, [ -20, 20 ], [ -8, 8 ]), y: useTransform(mouseY, [ -20, 20 ], [ -3, 3 ]) }} className="w-full h-full flex items-end"><CharacterSlot unit={leftUnit} zIndex={10} opacity={0.8} /></motion.div>
           </div>
-          <div className="w-[40%] h-full flex items-end">
-            <CharacterSlot unit={primaryUnit} scale={1.1} zIndex={20} emphasized />
+          <div className="w-1/3 h-full z-20">
+            <motion.div style={{ x: mouseX, y: useTransform(mouseY, [ -20, 20 ], [ -12, 12 ]) }} className="w-full h-full flex items-end"><CharacterSlot unit={primaryUnit} zIndex={20} emphasized /></motion.div>
           </div>
-          <div className="w-[30%] h-full pb-4 flex items-end">
-            <CharacterSlot unit={rightUnit} scale={0.85} zIndex={10} />
+          <div className="w-1/3 h-full">
+            <motion.div style={{ x: useTransform(mouseX, [ -20, 20 ], [ -8, 8 ]), y: useTransform(mouseY, [ -20, 20 ], [ -3, 3 ]) }} className="w-full h-full flex items-end"><CharacterSlot unit={rightUnit} zIndex={10} opacity={0.8} /></motion.div>
           </div>
         </div>
 
-        {/* Right Floating Sidebar */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-30">
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30 bg-black/20 backdrop-blur-lg border-l border-y border-white/10 rounded-l-3xl p-2 shadow-2xl">
           {[
             { icon: Calendar, label: 'EVENT', color: 'text-[#F5C76B]' },
             { icon: Bell, label: 'NOTIF', color: 'text-white' },
@@ -184,9 +214,9 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
               key={i}
               whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.1)' }}
               whileTap={{ scale: 0.9 }}
-              className="w-12 h-12 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl flex flex-col items-center justify-center shadow-2xl transition-colors"
+              className="w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl flex flex-col items-center justify-center shadow-2xl transition-colors"
             >
-              <btn.icon size={20} className={btn.color} />
+              <btn.icon size={22} className={btn.color} />
               <span className="text-[7px] font-black mt-0.5 tracking-tighter opacity-60 text-white">{btn.label}</span>
             </motion.button>
           ))}
@@ -195,14 +225,14 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
         {/* Campaign Objective */}
         <motion.button
           onClick={() => onNavigate('campaign')}
-          whileHover={{ x: 5, backgroundColor: 'rgba(255,255,255,0.05)' }}
-          className="absolute left-4 top-1/4 z-30 text-left"
+          whileHover={{ x: 8, backgroundColor: 'rgba(255,255,255,0.05)' }}
+          className="absolute left-6 top-[38%] z-30 text-left group"
         >
-          <div className="bg-black/40 backdrop-blur-md border-l-4 border-l-[#F5C76B] border border-white/5 p-3 rounded-r-xl shadow-2xl transition-colors">
-            <p className="text-[#F5C76B] text-[10px] font-black uppercase tracking-widest">Misión Actual</p>
-            <h3 className="text-white text-sm font-bold tracking-wide mt-0.5 flex items-center gap-2">
-              Tierras del Destino
-              <ChevronRight size={14} className="opacity-40" />
+          <div className="bg-black/60 backdrop-blur-xl border-l-4 border-l-[#F5C76B] border border-white/10 p-4 rounded-r-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all group-hover:border-white/20">
+            <p className="text-[#F5C76B] text-[10px] font-black uppercase tracking-[0.2em]">Misión Actual</p>
+            <h3 className="text-white text-base font-black tracking-wider mt-1 flex items-center gap-3">
+                Tierras del Destino
+              <ChevronRight size={18} className="opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
             </h3>
           </div>
         </motion.button>
@@ -230,14 +260,19 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
 
         <div className="w-24 h-24 relative flex items-center justify-center">
           <motion.button
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(245,199,107,0.6)" }}
             whileTap={{ scale: 0.9 }}
             onClick={() => onNavigate('campaign')}
-            className="w-20 h-20 bg-gradient-to-br from-[#F5C76B] to-[#b88c3a] rounded-full shadow-[0_0_30px_rgba(245,199,107,0.4)] flex flex-col items-center justify-center group relative overflow-hidden border border-white/10"
+            className="w-[72px] h-[72px] bg-gradient-to-br from-[#F5C76B] to-[#b88c3a] rounded-full shadow-[0_0_20px_rgba(245,199,107,0.3)] flex flex-col items-center justify-center group relative overflow-hidden border-2 border-white/20"
           >
-            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <MapIcon size={28} className="text-black" />
-            <span className="text-[9px] font-black text-black mt-0.5 uppercase">MUNDO</span>
+            <motion.div
+              animate={prefersReduced ? { opacity: 0.2 } : { scale: [1, 1.15, 1], opacity: [0.2, 0.4, 0.2] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute inset-0 bg-white/30 rounded-full"
+            />
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <MapIcon size={24} className="text-black z-10 drop-shadow-sm" />
+            <span className="text-[10px] font-black text-black uppercase z-10 tracking-tighter">MUNDO</span>
           </motion.button>
         </div>
       </div>
