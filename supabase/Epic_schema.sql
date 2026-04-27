@@ -40,6 +40,7 @@ CREATE TABLE cards (
     name TEXT NOT NULL,
     rarity TEXT NOT NULL,
     effect_type TEXT NOT NULL,
+    effect_target TEXT NOT NULL, -- Added missing column
     effect_value JSONB,
     applicable_jobs TEXT[] NOT NULL
 );
@@ -271,7 +272,7 @@ BEGIN
     SELECT current_job_id, level INTO v_current_job_id, v_level FROM units WHERE id = p_unit_id AND player_id = v_user_id;
     IF NOT FOUND THEN RAISE EXCEPTION 'Unidad no encontrada'; END IF;
 
-    SELECT evolution_requirements, parent_job_id INTO v_reqs, v_parent_job_id FROM jobs WHERE id = p_target_job_id AND version = v_active_version;
+    SELECT evolution_requirements, parent_job_id FROM jobs WHERE id = p_target_job_id AND version = v_active_version INTO v_reqs, v_parent_job_id;
     IF v_current_job_id IS DISTINCT FROM v_parent_job_id THEN RAISE EXCEPTION 'Ruta de evolución incorrecta'; END IF;
     IF v_level < (v_reqs->>'minLevel')::INTEGER THEN RAISE EXCEPTION 'Nivel insuficiente'; END IF;
 

@@ -13,10 +13,8 @@ export interface DBUnit {
 }
 
 /**
- * Advanced stat calculation logic that integrates Job modifiers,
- * equipment (Weapons), and Card effects.
- *
- * DESIGN DECISION: Stats are DYNAMIC and calculated from level + latest job mods.
+ * Advanced stat calculation logic.
+ * Corrected to handle DB field names (snake_case) and logic consistency.
  */
 export function calculateFinalStats(
     unit: DBUnit,
@@ -35,30 +33,32 @@ export function calculateFinalStats(
         const growthVal = Number(growth[field]) || 0;
         const jobMod = Number(jobMods[field]) || 1.0;
 
-        // 1. Level-based Growth: Base + (Growth * (Level - 1))
+        // 1. Level-based Growth
         const levelBonus = growthVal * (Math.max(1, unit.level) - 1);
         const growthedBase = baseVal + levelBonus;
 
-        // 2. Job Multiplier (Applied to level-scaled base)
+        // 2. Job Multiplier
         let total = growthedBase * jobMod;
 
-        // 3. Equipment Flat Bonuses (Weapon)
+        // 3. Equipment Bonuses
         if (equippedWeapon) {
             const weaponStats = equippedWeapon.stat_bonuses || equippedWeapon.stats || {};
             total += Number(weaponStats[field]) || 0;
         }
 
-        // 4. Card Bonuses (Flat and Multiplier)
+        // 4. Card Bonuses
         let cardMultiplier = 1.0;
         let cardFlat = 0;
 
         if (Array.isArray(equippedCards)) {
             equippedCards.forEach(card => {
-                // If effectTarget matches this field (e.g. effectTarget: 'atk')
-                if (card.effect_target === field || card.effectTarget === field) {
-                    const value = Number(card.effect_value || card.effectValue || 0);
-                    if (card.effect_type === 'statBoost' || card.effectType === 'statBoost') {
-                        // effectValue is percentage (e.g. 0.20 = 20%)
+                // Handle both CamelCase and snake_case for DB compatibility
+                const target = card.effect_target || card.effectTarget;
+                const value = Number(card.effect_value || card.effectValue || 0);
+                const type = card.effect_type || card.effectType;
+
+                if (target === field) {
+                    if (type === 'statBoost') {
                         cardMultiplier += value;
                     } else {
                         cardFlat += value;

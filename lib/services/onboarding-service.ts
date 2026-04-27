@@ -20,7 +20,10 @@ export class OnboardingService {
             p_novices: novices
         });
 
-        if (error) throw error;
+        if (error) {
+            console.error("Onboarding RPC Error:", error);
+            throw error;
+        }
 
         // Create initial recruitment slots for the tavern
         const { RecruitmentService } = await import('./recruitment-service');
