@@ -3,6 +3,7 @@ import { UnitService } from './unit-service';
 import { CombatUnit, SkillDefinition, StatKey } from '../types/combat';
 import { MAX_GACHA_SKILLS, MAX_JOB_SKILLS } from '../rpg-system/types';
 import { ENEMY_SKILL_DEFINITIONS } from '../rpg-system/enemy-skills';
+import { AssetService } from './asset-service';
 
 export class CombatAdapter {
   static async dbUnitToCombatUnit(
@@ -84,12 +85,12 @@ export class CombatAdapter {
 
   static createFromUnit(unit: any, position: number): CombatUnit {
     const stats = {
-      hp: unit.base_stats?.hp || 100,
-      atk: unit.base_stats?.atk || 10,
-      def: unit.base_stats?.def || 10,
-      matk: unit.base_stats?.matk || 10,
-      mdef: unit.base_stats?.mdef || 10,
-      agi: unit.base_stats?.agi || 10,
+      hp: unit.base_stats?.hp || unit.baseStats?.hp || 100,
+      atk: unit.base_stats?.atk || unit.baseStats?.atk || 10,
+      def: unit.base_stats?.def || unit.baseStats?.def || 10,
+      matk: unit.base_stats?.matk || unit.baseStats?.matk || 10,
+      mdef: unit.base_stats?.mdef || unit.baseStats?.mdef || 10,
+      agi: unit.base_stats?.agi || unit.baseStats?.agi || 10,
     };
     return {
       id: unit.id || `u-${position}`,
@@ -105,9 +106,9 @@ export class CombatAdapter {
       skills: unit.skills || [{ id: 'basic_attack', name: 'Ataque Básico', type: 'active', cooldown: 0, effects: [{ type: 'damage', scaling: 'atk', power: 1.0, target: 'enemy' }] }],
       cooldowns: {},
       statusEffects: [],
-      spriteId: unit.sprite_id,
-      iconId: unit.icon_id,
-      jobId: unit.current_job_id,
+      spriteId: unit.sprite_id || unit.spriteId,
+      iconId: unit.icon_id || unit.iconId,
+      jobId: unit.current_job_id || unit.currentJobId,
       isDead: false,
       isStunned: false,
       isTaunting: false

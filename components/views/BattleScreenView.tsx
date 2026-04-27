@@ -108,7 +108,9 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     if (alivePlayers.length === 0) { handleBattleOver('enemy', units.filter(u => u.side === 'player' && u.isDead).length); return; }
 
     const turnOrder = BattleManager.getTurnOrder(units);
-    const currentActor = turnOrder[turn % turnOrder.length];
+    const actorIdx = turn % turnOrder.length;
+    const currentActor = turnOrder[actorIdx];
+
     if (!currentActor) { setTurn(t => t + 1); return; }
 
     setActiveUnitId(currentActor.id);

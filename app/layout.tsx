@@ -1,20 +1,15 @@
 import type {Metadata} from 'next';
-import './globals.css';
-import { NotificationProvider } from '@/components/ui/NotificationOverlay';
+import './globals.css'; // Global styles
 
 export const metadata: Metadata = {
-  title: 'Project: Etherea',
-  description: 'A High-Fidelity RPG Experience',
+  title: 'My Google AI Studio App',
+  description: 'My Google AI Studio App',
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning>
-        <NotificationProvider>
-          {children}
-        </NotificationProvider>
-      </body>
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }

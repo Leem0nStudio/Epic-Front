@@ -29,7 +29,6 @@ export function useGameState() {
 
   const refreshState = async () => {
     if (!supabase) return;
-    supabase.rpc('rpc_regen_energy').then(() => refreshState());
     try {
         const { data: authData } = await supabase.auth.getUser();
         const user = authData?.user;
@@ -53,7 +52,6 @@ export function useGameState() {
 
   useEffect(() => {
     if (!supabase) return;
-    supabase.rpc('rpc_regen_energy').then(() => refreshState());
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
@@ -80,7 +78,6 @@ export function useGameState() {
         if (!user) return;
 
         await ConfigService.syncConfig();
-        supabase.rpc('rpc_regen_energy').then(() => refreshState());
 
         const { data: prof, error: profError } = await supabase.from('players').select('*').eq('id', user.id).single();
 

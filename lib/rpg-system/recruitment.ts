@@ -1,3 +1,4 @@
+import { AssetService } from '../services/asset-service';
 import { Affinity, UnitStats } from './types';
 import { TRAITS_DATABASE, TRAIT_ID_LIST } from './traits';
 
@@ -58,29 +59,16 @@ export function generateNovice(forcedAffinity?: Affinity) {
         }
     }
 
-
-    // Asset Assignment Logic
-    // Character Sprites (abbys_sprite_XXX)
-    // pools based on archetype/affinity
-    const spritePools: Record<string, string[]> = {
-        'physical': ['001', '002', '003'],
-        'magic': ['004', '005'],
-        'ranged': ['006', '007'],
-        'support': ['008']
-    };
-
-    const pool = spritePools[affinity] || ['001'];
-    const spriteId = `abbys_sprite_${pool[Math.floor(Math.random() * pool.length)]}`;
-
-    // Icon (Job-matched, for Novice it's just novice_icon)
-    const iconId = 'novice_icon';
-
     const NAMES = ["Arthur", "Lina", "Garran", "Elara", "Finn", "Seris", "Braum", "Kael", "Lyra", "Zane"];
+
+    const archetype = AssetService.getAffinityArchetype(affinity);
+    const spriteId = AssetService.getRandomSpriteId(archetype);
+    const iconId = AssetService.getJobIconId('novice');
 
     return {
         name: NAMES[Math.floor(Math.random() * NAMES.length)],
-        base_stats,
-        growth_rates: {
+        baseStats: base_stats,
+        growthRates: {
             hp: Number(growth_rates.hp.toFixed(2)), atk: Number(growth_rates.atk.toFixed(2)), def: Number(growth_rates.def.toFixed(2)),
             matk: Number(growth_rates.matk.toFixed(2)), mdef: Number(growth_rates.mdef.toFixed(2)), agi: Number(growth_rates.agi.toFixed(2))
         },
