@@ -18,8 +18,17 @@ Create `.env.local` with:
 ## Architecture
 - Next.js 15 App Router (`app/`).
 - Views in `components/views/*.tsx` - each file is a self-contained game screen.
-- Supabase for auth + database (no tests configured).
+- Supabase for auth + database.
 - RPC functions handle game logic in `supabase/Epic_schema.sql`.
 
+## Database Setup
+Execute `supabase/setup_complete.sql` in Supabase SQL Editor to:
+1. Disable RLS on all tables
+2. Add missing columns (exp, level) to players
+3. Create chapters/stages tables for campaign
+4. Insert seed data (jobs, skills, weapons, cards)
+5. Insert campaign progress (3 stages)
+6. Create/update RPC functions
+
 ## Known Issues
-- Onboarding fails if Supabase RPC `rpc_initialize_player` is not deployed.
+- Onboarding fails if Supabase RPC `rpc_initialize_player` is not deployed (run setup_complete.sql)
