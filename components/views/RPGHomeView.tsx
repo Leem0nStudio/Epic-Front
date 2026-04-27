@@ -1,7 +1,20 @@
 'use client';
 import { AssetService } from '@/lib/services/asset-service';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+
+function useReducedMotion() {
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mediaQuery.matches);
+    const listener = (e: any) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', listener);
+    return () => mediaQuery.removeEventListener('change', listener);
+  }, []);
+  return reducedMotion;
+}
+import { useMotionValue, useTransform } from 'motion/react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Users,
@@ -40,7 +53,7 @@ const rarityGlow = (rarity: string) => {
   }
 };
 
-const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any) => {
+const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, opacity = 1 }: any) => {
   const sprite = unit ? AssetHelper.getUnitSprite(unit.current_job_id) : undefined;
 
   return (
@@ -48,22 +61,26 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any)
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative flex flex-col items-center justify-end h-full w-full"
-        style={{ zIndex, scale }}
+        style={{ zIndex, scale, opacity }}
     >
         <div className={`relative w-full h-[70%] flex items-center justify-center ${emphasized ? 'mb-4' : 'mb-2'}`}>
         <div className={`w-full aspect-[2/3] max-h-full rounded-2xl bg-gradient-to-t from-blue-900/40 to-transparent border border-white/5 relative overflow-hidden ${emphasized ? rarityGlow('ur') : ''}`}>
             <motion.div
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="w-full h-full relative"
+            className="w-full h-full relative" style={{ transformStyle: "preserve-3d" }}
             >
             {unit ? (
+              <>
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-black/60 blur-md rounded-[100%] pointer-events-none" style={{ transform: "translateX(-50%) translateZ(-1px)" }} />
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-3 bg-blue-400/30 blur-sm rounded-[100%] pointer-events-none" style={{ transform: "translateX(-50%) translateZ(-1px)" }} />
                 <img
-                src={sprite}
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200%] h-auto object-contain transform origin-bottom"
-                style={{ imageRendering: 'pixelated' }}
-                alt={unit.name}
+                  src={sprite}
+                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200%] h-auto object-contain transform origin-bottom"
+                  style={{ imageRendering: 'pixelated' }}
+                  alt={unit.name}
                 />
+              </>
             ) : (
                 <div className="w-full h-full flex items-center justify-center opacity-20">
                 <Users size={48} className="text-white" />
@@ -84,8 +101,8 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any)
 
         {unit && (
         <div className="text-center">
-            <p className="text-white text-sm font-black tracking-widest uppercase drop-shadow-md truncate w-full max-w-[100px]">{unit.name}</p>
-            <p className="text-[#F5C76B] text-[10px] font-bold tracking-tighter opacity-80 uppercase truncate w-full max-w-[100px]">{unit.current_job_id}</p>
+            <p className="text-white text-base font-black tracking-widest uppercase drop-shadow-md truncate w-full max-w-[100px]">{unit.name}</p>
+            <p className="text-[#F5C76B] text-[10px] font-bold tracking-tight opacity-80 uppercase truncate w-full max-w-[100px]">{unit.current_job_id}</p>
         </div>
         )}
     </motion.div>
@@ -96,9 +113,24 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
   const primaryUnit = activePartyUnits[0];
   const leftUnit = activePartyUnits[1];
   const rightUnit = activePartyUnits[2];
+  const prefersReduced = useReducedMotion();
 
   const [displayCurrency, setDisplayCurrency] = useState<number>(saveData.profile.currency);
   const [displayGems, setDisplayGems] = useState<number>(saveData.profile.premium_currency);
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX.set((e.clientX / window.innerWidth - 0.5) * 20);
+      mouseY.set((e.clientY / window.innerHeight - 0.5) * 20);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [mouseX, mouseY]);
+
+
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -119,12 +151,12 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
           </div>
           <div className="flex flex-col text-left">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black bg-[#F5C76B] text-black px-1.5 rounded-sm italic uppercase">Lvl. 1</span>
-              <span className="text-white text-xs font-bold tracking-wider uppercase">{saveData.profile.username}</span>
+              <span className="text-xs font-black bg-[#F5C76B] text-black px-1.5 rounded-sm italic uppercase">Lvl. 1</span>
+              <span className="text-white text-sm font-bold tracking-[0.2em] uppercase">{saveData.profile.username}</span>
             </div>
             <div className="flex items-center gap-2 mt-1">
-                <div className="w-24 h-1 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: '20%' }} className="h-full bg-[#F5C76B]" />
+                <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div initial={{ width: 0 }} animate={{ width: '20%' }} className="h-full bg-cyan-400" />
                 </div>
                 <div className="flex items-center gap-1 text-[#F5C76B]">
                     <Zap size={8} className="fill-current" />
@@ -135,13 +167,13 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/5">
-            <Coins size={14} className="text-[#F5C76B]" />
-            <span className="text-xs font-bold text-white">{displayCurrency}</span>
+          <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
+            <Coins size={16} className="text-[#F5C76B]" />
+            <span className="text-sm font-bold text-white">{displayCurrency}</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/5">
-            <Diamond size={14} className="text-cyan-400" />
-            <span className="text-xs font-bold text-white">{displayGems}</span>
+          <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
+            <Diamond size={16} className="text-cyan-400" />
+            <span className="text-sm font-bold text-white">{displayGems}</span>
           </div>
           <button onClick={() => supabase?.auth.signOut()} className="text-white/60 hover:text-white transition-colors">
             <Settings size={18} />
@@ -150,21 +182,21 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
       </div>
 
       <div className="flex-1 relative flex items-center justify-center px-4 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] aspect-square bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
+        <motion.div style={{ x: useTransform(mouseX, [ -20, 20 ], [ 5, -5 ]), y: useTransform(mouseY, [ -20, 20 ], [ 5, -5 ]) }} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] aspect-square bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
 
         <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-28">
-          <div className="w-[30%] h-full pb-4 flex items-end">
-            <CharacterSlot unit={leftUnit} scale={0.85} zIndex={10} />
+          <div className="w-[30%] h-full pb-4">
+            <motion.div style={{ x: useTransform(mouseX, [ -20, 20 ], [ -5, 5 ]), y: useTransform(mouseY, [ -20, 20 ], [ -2, 2 ]) }} className="w-full h-full flex items-end"><CharacterSlot unit={leftUnit} scale={0.75} zIndex={10} opacity={0.7} /></motion.div>
           </div>
-          <div className="w-[40%] h-full flex items-end">
-            <CharacterSlot unit={primaryUnit} scale={1.1} zIndex={20} emphasized />
+          <div className="w-[40%] h-full">
+            <motion.div style={{ x: mouseX, y: useTransform(mouseY, [ -20, 20 ], [ -10, 10 ]) }} className="w-full h-full flex items-end"><CharacterSlot unit={primaryUnit} scale={1.1} zIndex={20} emphasized /></motion.div>
           </div>
-          <div className="w-[30%] h-full pb-4 flex items-end">
-            <CharacterSlot unit={rightUnit} scale={0.85} zIndex={10} />
+          <div className="w-[30%] h-full pb-4">
+            <motion.div style={{ x: useTransform(mouseX, [ -20, 20 ], [ -5, 5 ]), y: useTransform(mouseY, [ -20, 20 ], [ -2, 2 ]) }} className="w-full h-full flex items-end"><CharacterSlot unit={rightUnit} scale={0.75} zIndex={10} opacity={0.7} /></motion.div>
           </div>
         </div>
 
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-30">
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30 bg-black/20 backdrop-blur-lg border-l border-y border-white/10 rounded-l-3xl p-2 shadow-2xl">
           {[
             { icon: Calendar, label: 'EVENT', color: 'text-[#F5C76B]' },
             { icon: Bell, label: 'NOTIF', color: 'text-white' },
@@ -174,9 +206,9 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
               key={i}
               whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.1)' }}
               whileTap={{ scale: 0.9 }}
-              className="w-12 h-12 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl flex flex-col items-center justify-center shadow-2xl transition-colors"
+              className="w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl flex flex-col items-center justify-center shadow-2xl transition-colors"
             >
-              <btn.icon size={20} className={btn.color} />
+              <btn.icon size={22} className={btn.color} />
               <span className="text-[7px] font-black mt-0.5 tracking-tighter opacity-60 text-white">{btn.label}</span>
             </motion.button>
           ))}
@@ -185,7 +217,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
         <motion.button
           onClick={() => onNavigate('campaign')}
           whileHover={{ x: 5, backgroundColor: 'rgba(255,255,255,0.05)' }}
-          className="absolute left-4 top-1/4 z-30 text-left"
+          className="absolute left-4 top-[32%] z-30 text-left"
         >
           <div className="bg-black/40 backdrop-blur-md border-l-4 border-l-[#F5C76B] border border-white/5 p-3 rounded-r-xl shadow-2xl transition-colors">
             <p className="text-[#F5C76B] text-[10px] font-black uppercase tracking-widest">Misión Actual</p>
@@ -223,9 +255,14 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
             onClick={() => onNavigate('campaign')}
             className="w-20 h-20 bg-gradient-to-br from-[#F5C76B] to-[#b88c3a] rounded-full shadow-[0_0_30px_rgba(245,199,107,0.4)] flex flex-col items-center justify-center group relative overflow-hidden border border-white/10"
           >
+            <motion.div
+              animate={prefersReduced ? { opacity: 0.4 } : { scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute inset-0 bg-white/20 rounded-full"
+            />
             <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <MapIcon size={28} className="text-black" />
-            <span className="text-[9px] font-black text-black mt-0.5 uppercase">MUNDO</span>
+            <MapIcon size={28} className="text-black z-10" />
+            <span className="text-[9px] font-black text-black uppercase z-10">MUNDO</span>
           </motion.button>
         </div>
       </div>
