@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Shield, Sword, Heart, Zap, ArrowRight, UserMinus, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { AssetHelper } from '@/lib/utils/asset-helper';
 
 interface PartyManagementViewProps {
   saveData: any;
@@ -70,9 +71,10 @@ export function PartyManagementView({
                   ) : unit ? (
                     <>
                       <img
-                        src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png"
+                        src={AssetHelper.getUnitSprite(unit.sprite_id, unit.current_job_id)}
                         className="w-[180%] transform translate-y-3"
                         style={{imageRendering: 'pixelated'}}
+                        alt={unit.name}
                       />
                       <div className="absolute bottom-0 inset-x-0 bg-black/80 py-0.5 border-t border-white/10">
                         <span className="text-[7px] font-black text-center block text-white/60">LV.{unit.level}</span>
@@ -125,7 +127,7 @@ export function PartyManagementView({
                   className="bg-black/40 border border-white/5 p-3 rounded-2xl flex items-center gap-4 hover:border-white/20 cursor-pointer transition-all"
                  >
                     <div className="w-12 h-12 bg-black/60 border border-white/10 rounded-xl flex items-center justify-center overflow-hidden">
-                      <img src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png" className="w-[180%] transform translate-y-2" style={{imageRendering: 'pixelated'}} />
+                      <img src={AssetHelper.getUnitSprite(unit.sprite_id, unit.current_job_id)} className="w-[180%] transform translate-y-2" style={{imageRendering: 'pixelated'}} alt={unit.name} />
                     </div>
                     <div className="flex-1 flex flex-col">
                       <span className="font-black text-white uppercase text-sm tracking-wider truncate max-w-[120px]">{unit.name}</span>
@@ -159,7 +161,7 @@ export function PartyManagementView({
                       className="bg-black/40 border border-white/5 p-3 rounded-2xl flex items-center gap-4 hover:border-white/10 cursor-pointer group"
                     >
                         <div className="w-14 h-14 bg-black/60 border border-white/10 rounded-xl flex items-center justify-center overflow-hidden">
-                          <img src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png" className="w-[180%] transform translate-y-2" style={{imageRendering: 'pixelated'}} />
+                          <img src={AssetHelper.getUnitSprite(unit.sprite_id, unit.current_job_id)} className="w-[180%] transform translate-y-2" style={{imageRendering: 'pixelated'}} alt={unit.name} />
                         </div>
                         <div className="flex-1 flex flex-col min-w-0">
                           <div className="flex items-center gap-2">

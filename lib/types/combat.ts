@@ -56,6 +56,9 @@ export interface CombatUnit {
   cooldowns: Record<string, number>; // skillId -> remaining turns
 
   statusEffects: StatusEffect[];
+  spriteId?: string;
+  iconId?: string;
+  jobId?: string;
 
   isDead: boolean;
   isStunned: boolean;

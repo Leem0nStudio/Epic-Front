@@ -28,18 +28,38 @@ export const ASSETS = {
 
 export class AssetHelper {
     /**
-     * Resolves a sprite URL for a specific job or unit.
+     * Resolves a sprite URL for a unit using its persistent spriteId.
+     * Fallback to jobId-based mapping if spriteId is missing.
      */
-    static getUnitSprite(jobId: string, _affinity?: string): string {
-        // Mapping common jobs to known placeholder sprites
+    static getUnitSprite(spriteId?: string, jobId?: string): string {
+        if (spriteId) {
+            return `${ASSET_BASE_PATH}/${spriteId}.png`;
+        }
+
+        // Legacy/Fallback mapping
         const mapping: Record<string, string> = {
             'novice': `${ASSET_BASE_PATH}/abbys_sprite_001.png`,
             'swordman': `${ASSET_BASE_PATH}/abbys_sprite_001.png`,
             'knight': `${ASSET_BASE_PATH}/abbys_sprite_001.png`,
-            'mage': `${ASSET_BASE_PATH}/abbys_sprite_001.png`,
+            'mage': `${ASSET_BASE_PATH}/abbys_sprite_004.png`,
         };
 
-        return mapping[jobId.toLowerCase()] || `${ASSET_BASE_PATH}/abbys_sprite_001.png`;
+        return mapping[jobId?.toLowerCase() || 'novice'] || `${ASSET_BASE_PATH}/abbys_sprite_001.png`;
+    }
+
+    /**
+     * Resolves an icon URL for a specific job.
+     */
+    static getJobIcon(jobId: string, iconId?: string): string {
+        // Mapping jobId to known icons
+        const mapping: Record<string, string> = {
+            'novice': '/assets/icons/jobs/novice.png',
+            'swordman': '/assets/icons/jobs/swordman.png',
+            'knight': '/assets/icons/jobs/knight.png',
+            'mage': '/assets/icons/jobs/mage.png',
+        };
+
+        return mapping[jobId.toLowerCase()] || '/assets/icons/jobs/fallback.png';
     }
 
     /**

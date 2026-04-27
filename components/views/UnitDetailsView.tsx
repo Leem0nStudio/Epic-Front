@@ -58,7 +58,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
   if (loading || !data) return <div className="flex-1 bg-[#020508]" />;
 
   const { unit, job, weapon, cards, skills, finalStats } = data;
-  const sprite = AssetHelper.getUnitSprite(job.id);
+  const sprite = AssetHelper.getUnitSprite(unit.sprite_id, job.id);
 
   return (
     <div className="flex flex-col h-full bg-[#020508] overflow-hidden relative font-sans">
@@ -81,7 +81,10 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex flex-col text-left">
                         <span className="text-2xl font-black text-white uppercase tracking-widest italic">{unit.name}</span>
-                        <span className="text-[10px] font-black text-[#F5C76B] uppercase tracking-[0.2em]">{job.name} Tier {job.tier}</span>
+                        <div className="flex items-center gap-1.5">
+                            <img src={AssetHelper.getJobIcon(job.id, unit.icon_id)} className="w-4 h-4 object-contain" alt="Job Icon" />
+                            <span className="text-[10px] font-black text-[#F5C76B] uppercase tracking-[0.2em]">{job.name} Tier {job.tier}</span>
+                        </div>
                     </div>
                     <div className="w-14 h-14 rounded-2xl bg-[#F5C76B] flex flex-col items-center justify-center text-black">
                         <span className="text-[8px] font-black uppercase leading-none">Nivel</span>
@@ -95,6 +98,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                           src={sprite}
                           className="w-48 transform translate-y-4"
                           style={{imageRendering: 'pixelated'}}
+                          alt={unit.name}
                         />
                     </motion.div>
                 </div>

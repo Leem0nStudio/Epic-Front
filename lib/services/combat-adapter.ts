@@ -72,6 +72,9 @@ export class CombatAdapter {
       skills,
       cooldowns: {},
       statusEffects: [],
+      spriteId: details.unit.sprite_id,
+      iconId: details.unit.icon_id,
+      jobId: details.unit.current_job_id,
       isDead: false,
       isStunned: false,
       isTaunting: false
@@ -101,6 +104,9 @@ export class CombatAdapter {
       skills: unit.skills || [{ id: 'basic_attack', name: 'Ataque Básico', type: 'active', cooldown: 0, effects: [{ type: 'damage', scaling: 'atk', power: 1.0, target: 'enemy' }] }],
       cooldowns: {},
       statusEffects: [],
+      spriteId: unit.sprite_id,
+      iconId: unit.icon_id,
+      jobId: unit.current_job_id,
       isDead: false,
       isStunned: false,
       isTaunting: false

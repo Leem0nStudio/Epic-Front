@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { AssetHelper } from '@/lib/utils/asset-helper';
 import {
   ChevronLeft,
   UserPlus,
@@ -23,11 +24,14 @@ interface TavernViewProps {
 export function TavernView({ saveData, onNavigate, onClaim, onDiscard }: TavernViewProps) {
   const slots = saveData.tavernSlots || [];
 
+  const [now, setNow] = useState(now);
+  useEffect(() => { const t = setInterval(() => setNow(now), 1000); return () => clearInterval(t); }, []);
+
   const getStatus = (availableAt: string) => {
     const isAvailable = new Date(availableAt) <= new Date();
     if (isAvailable) return 'READY';
 
-    const diff = new Date(availableAt).getTime() - Date.now();
+    const diff = new Date(availableAt).getTime() - now;
     const mins = Math.ceil(diff / 60000);
     return `${mins}m`;
   };
@@ -71,9 +75,10 @@ export function TavernView({ saveData, onNavigate, onClaim, onDiscard }: TavernV
                       <div className={`w-14 h-14 rounded-2xl border ${isReady ? 'border-[#F5C76B]/20 bg-[#F5C76B]/5' : 'border-white/5 bg-white/5'} flex items-center justify-center overflow-hidden`}>
                          {isReady ? (
                            <img
-                             src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png"
+                             src={AssetHelper.getUnitSprite(unit.spriteId, 'novice')}
                              className="w-[180%] transform translate-y-2"
                              style={{imageRendering: 'pixelated'}}
+                             alt={unit.name}
                            />
                          ) : (
                            <UserPlus size={20} className="text-white/10" />

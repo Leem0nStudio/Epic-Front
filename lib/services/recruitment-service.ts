@@ -68,6 +68,8 @@ export class RecruitmentService {
                 growth_rates: unitData.growth_rates,
                 affinity: unitData.affinity,
                 trait: unitData.trait,
+                sprite_id: unitData.spriteId,
+                icon_id: unitData.iconId,
                 current_job_id: 'novice',
                 unlocked_jobs: ['novice']
             })

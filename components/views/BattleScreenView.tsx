@@ -17,6 +17,7 @@ import { CombatUnit, SkillDefinition, EffectType } from '@/lib/types/combat';
 import { BattleManager } from '@/lib/services/battle-manager';
 import { CombatAdapter } from '@/lib/services/combat-adapter';
 import { CampaignService } from '@/lib/services/campaign-service';
+import { AssetHelper } from '@/lib/utils/asset-helper';
 
 export interface BattleFX {
   id: string;
@@ -280,8 +281,8 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
              {winner === "player" && (
                 <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center">
                     <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: [0, 2, 4], opacity: [0, 0.4, 0] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-64 h-64 bg-yellow-500/20 rounded-full blur-[120px]" />
-                    {Array(25).fill(0).map((_, i) => (
-                        <motion.div key={i} initial={{ x: 0, y: 0, scale: 0 }} animate={{ x: (Math.random() - 0.5) * 800, y: (Math.random() - 0.5) * 800, scale: [0, 1.2, 0], rotate: [0, 360] }} transition={{ duration: 2 + Math.random(), repeat: Infinity, delay: i * 0.1 }} className="absolute w-1.5 h-1.5 bg-[#F5C76B] rounded-full shadow-[0_0_15px_#F5C76B]" />
+                    {particles.map((p, i) => (
+                        <motion.div key={i} initial={{ x: 0, y: 0, scale: 0 }} animate={{ x: p.x, y: p.y, scale: [0, 1.2, 0], rotate: [0, 360] }} transition={{ duration: p.duration, repeat: Infinity, delay: p.delay }} className="absolute w-1.5 h-1.5 bg-[#F5C76B] rounded-full shadow-[0_0_15px_#F5C76B]" />
                     ))}
                 </div>
              )}
@@ -294,6 +295,7 @@ export function BattleScreenView({ squad, onBack, onRefresh, stageId }: BattleSc
                         <div className="flex items-center gap-2 mb-4 text-[#F5C76B]"><Gift size={14} /><span className="text-[10px] font-black uppercase tracking-widest">Recompensas Obtenidas</span></div>
                         <div className="flex flex-wrap justify-center gap-3">
                             <div className="px-4 py-2 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center gap-1"><span className="text-[8px] font-black text-white/40 uppercase">Zeny</span><span className="text-xs font-black text-white">+{completionData.rewards.currency}</span></div>
+                            <div className="px-4 py-2 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center gap-1"><span className="text-[8px] font-black text-white/40 uppercase">EXP</span><span className="text-xs font-black text-green-400">+{completionData.rewards.exp}</span></div>
                             {completionData.rewards.premium_currency > 0 && ( <div className="px-4 py-2 bg-black/40 rounded-2xl border border-[#F5C76B]/20 flex flex-col items-center gap-1"><span className="text-[8px] font-black text-[#F5C76B] uppercase">Gemas</span><span className="text-xs font-black text-[#F5C76B]">+{completionData.rewards.premium_currency}</span></div> )}
                             {completionData.rewards.materials.map((mat: any, i: number) => ( <div key={i} className="px-4 py-2 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center gap-1"><span className="text-[8px] font-black text-white/40 uppercase">{mat.itemId}</span><span className="text-xs font-black text-cyan-400">x{mat.amount}</span></div> ))}
                         </div>
@@ -344,7 +346,12 @@ function UnitSprite({ unit, isActive, isTarget, onClick, activeFX = [], onFXComp
       <div className={`flex items-center gap-1.5 mb-1 ${isEnemy ? 'flex-row-reverse' : ''}`}><span className={`text-[7px] font-black uppercase tracking-widest ${isEnemy ? 'text-red-400' : 'text-cyan-400'}`}>{unit.name}</span>{unit.isTaunting && <Shield size={8} className="text-[#F5C76B]" />}</div>
       <div className="relative group">
         <div className={`w-14 h-14 bg-black/40 rounded-full border ${isActive ? 'border-[#F5C76B]/40' : 'border-white/5'} ${hasBurn ? "shadow-[0_0_15px_rgba(239,68,68,0.4)]" : hasPoison ? "shadow-[0_0_15px_rgba(34,197,94,0.4)]" : hasBuff ? "shadow-[0_0_15px_rgba(59,130,246,0.4)]" : ""} flex items-center justify-center relative overflow-visible`}>
-          <img src="https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png" className={`w-[240%] max-w-none transform translate-y-3 ${isEnemy ? 'scale-x-[-1] brightness-50' : 'brightness-110'}`} style={{imageRendering: 'pixelated'}} />
+          <img
+            src={AssetHelper.getUnitSprite(unit.spriteId, unit.jobId)}
+            className={`w-[240%] max-w-none transform translate-y-3 ${isEnemy ? 'scale-x-[-1] brightness-50' : 'brightness-110'}`}
+            style={{imageRendering: 'pixelated'}}
+            alt={unit.name}
+          />
           {isActive && isBurstActive && <motion.div initial={{ scale: 1, opacity: 0 }} animate={{ scale: [1, 2.2, 2.8], opacity: [0, 0.9, 0] }} transition={{ duration: 0.5 }} className="absolute inset-0 bg-indigo-400 rounded-full z-20 blur-md shadow-[0_0_30px_#818cf8]" />}
           {isActive && <motion.div animate={{ opacity: [0, 1, 0], scale: [0.8, 1.2, 1.5] }} transition={{ repeat: Infinity, duration: 1.5 }} className={`absolute inset-0 border border-[#F5C76B] rounded-full ${isBurstActive ? "shadow-[0_0_25px_#F5C76B]" : ""}`} />}
           {hasBurn && ( <div className="absolute inset-0 pointer-events-none"><motion.div animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 0.8 }} className="absolute inset-0 bg-red-600/20 rounded-full blur-md" /><motion.div animate={{ y: [0, -10], opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.5 }} className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-2 bg-orange-500 rounded-full" /></div> )}
