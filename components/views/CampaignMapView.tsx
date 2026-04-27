@@ -22,18 +22,22 @@ interface CampaignMapViewProps {
 }
 
 export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: CampaignMapViewProps) {
-  const [chapters] = useState<Chapter[]>(CampaignService.getChapters());
+  const [chapters, setChapters] = useState<Chapter[]>([]);
   const [activeChapterIdx, setActiveChapterIdx] = useState(0);
   const [progress, setProgress] = useState<PlayerStageProgress[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadProgress() {
-      const data = await CampaignService.getPlayerProgress();
-      setProgress(data);
+    async function loadData() {
+      const [chaptersData, progressData] = await Promise.all([
+        CampaignService.getChapters(),
+        CampaignService.getPlayerProgress()
+      ]);
+      setChapters(chaptersData);
+      setProgress(progressData);
       setLoading(false);
     }
-    loadProgress();
+    loadData();
   }, []);
 
   const currentChapter = chapters[activeChapterIdx];

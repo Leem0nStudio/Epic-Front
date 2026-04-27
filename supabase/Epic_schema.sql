@@ -174,7 +174,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Pull Gacha
 CREATE OR REPLACE FUNCTION rpc_pull_gacha(p_amount INTEGER, p_currency_type TEXT)
-RETURNS TABLE(item_id TEXT, item_name TEXT, item_rarity TEXT, item_type TEXT) AS $$
+RETURNS TABLE(res_item_id TEXT, res_item_name TEXT, res_item_rarity TEXT, res_item_type TEXT) AS $$
 DECLARE
     v_user_id UUID := auth.uid();
     v_cost_per_pull INTEGER;
@@ -230,14 +230,14 @@ BEGIN
             SELECT id, name INTO v_target_id, v_target_name FROM job_cores WHERE rarity = v_rarity AND version = v_active_version ORDER BY random() LIMIT 1;
         END IF;
 
-        IF v_target_id IS NULL THEN
-            SELECT id, name, 'card' INTO v_target_id, v_target_name, v_target_type FROM cards WHERE rarity = v_rarity AND version = v_active_version ORDER BY random() LIMIT 1;
-        END IF;
-
         IF v_target_id IS NOT NULL THEN
             INSERT INTO inventory (player_id, item_id, item_type) VALUES (v_user_id, v_target_id, v_target_type)
             ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + 1;
-            item_id := v_target_id; item_name := v_target_name; item_rarity := v_rarity; item_type := v_target_type;
+            
+            res_item_id := v_target_id;
+            res_item_name := v_target_name;
+            res_item_rarity := v_rarity;
+            res_item_type := v_target_type;
             RETURN NEXT;
         END IF;
     END LOOP;
@@ -283,8 +283,8 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'Zeny insuficiente'; END IF;
 
     IF v_materials IS NOT NULL AND jsonb_array_length(v_materials) > 0 THEN
-        FOR v_material IN SELECT * FROM jsonb_to_recordset(v_materials) AS x(itemId TEXT, amount INTEGER) LOOP
-            UPDATE inventory SET quantity = quantity - v_material.amount WHERE player_id = v_user_id AND item_id = v_material.itemId AND quantity >= v_material.amount;
+        FOR v_material IN SELECT * FROM jsonb_to_recordset(v_materials) AS x("itemId" TEXT, amount INTEGER) LOOP
+            UPDATE inventory SET quantity = quantity - v_material.amount WHERE player_id = v_user_id AND item_id = v_material."itemId" AND quantity >= v_material.amount;
             IF NOT FOUND THEN RAISE EXCEPTION 'Materiales faltantes'; END IF;
         END LOOP;
     END IF;
@@ -301,7 +301,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Complete Stage
 CREATE OR REPLACE FUNCTION rpc_complete_stage(p_stage_id TEXT, p_stars INTEGER, p_turns INTEGER, p_rewards JSONB)
-RETURNS void AS 8823
+RETURNS void AS $$
 DECLARE
     v_user_id UUID := auth.uid();
     v_material RECORD;
@@ -347,11 +347,11 @@ BEGIN
 
     -- 3. Apply Material Rewards
     IF p_rewards->'materials' IS NOT NULL AND jsonb_array_length(p_rewards->'materials') > 0 THEN
-        FOR v_material IN SELECT * FROM jsonb_to_recordset(p_rewards->'materials') AS x(itemId TEXT, amount INTEGER) LOOP
+        FOR v_material IN SELECT * FROM jsonb_to_recordset(p_rewards->'materials') AS x("itemId" TEXT, amount INTEGER) LOOP
             INSERT INTO inventory (player_id, item_id, item_type, quantity)
-            VALUES (v_user_id, v_material.itemId, 'material', v_material.amount)
+            VALUES (v_user_id, v_material."itemId", 'material', v_material.amount)
             ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + v_material.amount;
         END LOOP;
     END IF;
 END;
-8823 LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

@@ -1,0 +1,39 @@
+diff --git a/components/views/RPGHomeView.tsx b/components/views/RPGHomeView.tsx
+index 3389f71..d4dd779 100644
+--- a/components/views/RPGHomeView.tsx
++++ b/components/views/RPGHomeView.tsx
+@@ -120,11 +120,11 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
+           <div className="flex flex-col text-left">
+             <div className="flex items-center gap-2">
+               <span className="text-[10px] font-black bg-[#F5C76B] text-black px-1.5 rounded-sm italic uppercase">Lvl. 1</span>
+-              <span className="text-white text-xs font-bold tracking-wider uppercase">{saveData.profile.username}</span>
++              <span className="text-white text-xs font-bold tracking-[0.2em] uppercase">{saveData.profile.username}</span>
+             </div>
+             <div className="flex items-center gap-2 mt-1">
+-                <div className="w-24 h-1 bg-white/10 rounded-full overflow-hidden">
+-                    <motion.div initial={{ width: 0 }} animate={{ width: '20%' }} className="h-full bg-[#F5C76B]" />
++                <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
++                    <motion.div initial={{ width: 0 }} animate={{ width: '20%' }} className="h-full bg-cyan-400" />
+                 </div>
+                 <div className="flex items-center gap-1 text-[#F5C76B]">
+                     <Zap size={8} className="fill-current" />
+@@ -135,13 +135,13 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
+         </div>
+ 
+         <div className="flex items-center gap-4">
+-          <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/5">
+-            <Coins size={14} className="text-[#F5C76B]" />
+-            <span className="text-xs font-bold text-white">{displayCurrency}</span>
++          <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
++            <Coins size={16} className="text-[#F5C76B]" />
++            <span className="text-sm font-bold text-white">{displayCurrency}</span>
+           </div>
+-          <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/5">
+-            <Diamond size={14} className="text-cyan-400" />
+-            <span className="text-xs font-bold text-white">{displayGems}</span>
++          <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
++            <Diamond size={16} className="text-cyan-400" />
++            <span className="text-sm font-bold text-white">{displayGems}</span>
+           </div>
+           <button onClick={() => supabase?.auth.signOut()} className="text-white/60 hover:text-white transition-colors">
+             <Settings size={18} />

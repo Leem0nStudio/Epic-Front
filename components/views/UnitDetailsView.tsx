@@ -98,7 +98,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
   const { unit, job, weapon, cards, skills, finalStats } = data;
 
   return (
-    <div className="flex flex-col h-full bg-[#0B1A2A] overflow-hidden relative" style={{ backgroundImage: "url('/assets/backgrounds/partybg.png')" }}>
+    <div className="flex flex-col h-full bg-[#0B1A2A] bg-cover bg-center bg-no-repeat overflow-hidden relative" style={{ backgroundImage: "url('/assets/backgrounds/partybg.png')" }}>
       <div className="absolute inset-0 bg-gradient-to-b from-blue-900/10 via-transparent to-transparent pointer-events-none" />
 
       {/* Top Navigation */}
