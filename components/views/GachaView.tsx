@@ -1,4 +1,5 @@
 'use client';
+import { AssetService } from '@/lib/services/asset-service';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';

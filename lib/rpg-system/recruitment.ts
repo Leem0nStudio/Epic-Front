@@ -1,3 +1,4 @@
+import { AssetService } from '../services/asset-service';
 import { Affinity, UnitStats } from './types';
 import { TRAITS_DATABASE, TRAIT_ID_LIST } from './traits';
 
@@ -60,14 +61,20 @@ export function generateNovice(forcedAffinity?: Affinity) {
 
     const NAMES = ["Arthur", "Lina", "Garran", "Elara", "Finn", "Seris", "Braum", "Kael", "Lyra", "Zane"];
 
+    const archetype = AssetService.getAffinityArchetype(affinity);
+    const spriteId = AssetService.getRandomSpriteId(archetype);
+    const iconId = AssetService.getJobIconId('novice');
+
     return {
         name: NAMES[Math.floor(Math.random() * NAMES.length)],
-        base_stats,
-        growth_rates: {
+        baseStats: base_stats,
+        growthRates: {
             hp: Number(growth_rates.hp.toFixed(2)), atk: Number(growth_rates.atk.toFixed(2)), def: Number(growth_rates.def.toFixed(2)),
             matk: Number(growth_rates.matk.toFixed(2)), mdef: Number(growth_rates.mdef.toFixed(2)), agi: Number(growth_rates.agi.toFixed(2))
         },
         affinity,
-        trait: traitId
+        trait: traitId,
+        spriteId,
+        iconId
     };
 }
