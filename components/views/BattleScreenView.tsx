@@ -74,7 +74,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
 
         let enemies: CombatUnit[] = [];
         if (stageId) {
-          const stage = CampaignService.getStageById(stageId);
+          const stage = await CampaignService.getStageById(stageId);
           if (stage) {
             enemies = stage.enemies.map(e => CombatAdapter.createEnemy(e.id, e.name, e.level, e.position));
           }
