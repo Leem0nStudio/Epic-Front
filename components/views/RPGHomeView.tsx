@@ -7,7 +7,7 @@ import {
   ChevronRight, Calendar, Bell, Mail, Star
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 
 interface RPGHomeViewProps {
   saveData: any;
@@ -97,6 +97,11 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
     maxStars: 3
   };
 
+  const playerLevel = saveData.profile.level || 1;
+  const playerExp = saveData.profile.exp || 0;
+  const nextLevelExp = playerLevel * 100;
+  const expProgress = (playerExp / nextLevelExp) * 100;
+
   return (
     <div
       className="w-full h-full flex flex-col relative bg-[#0B1A2A] bg-cover bg-center bg-no-repeat overflow-hidden"
@@ -112,13 +117,13 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black bg-[#F5C76B] text-black px-1.5 rounded-sm italic uppercase">Lvl. 1</span>
+              <span className="text-[10px] font-black bg-[#F5C76B] text-black px-1.5 rounded-sm italic uppercase">. 1</span>
               <span className="text-white text-xs font-bold tracking-[0.2em] uppercase">{saveData.profile.username}</span>
             </div>
             <div className="flex items-center gap-2 mt-1">
               <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div initial={{ width: 0 }} animate={{ width: '20%' }} className="h-full bg-cyan-400" />
-              </div>
+              </div>Lvl
               <div className="flex items-center gap-1 text-[#F5C76B]">
                 <Zap size={8} className="fill-current" />
                 <span className="text-[7px] font-black uppercase">{saveData.profile.energy}/{saveData.profile.max_energy}</span>

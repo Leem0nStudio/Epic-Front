@@ -150,7 +150,7 @@ DECLARE
     v_unit_id UUID;
     v_idx INTEGER := 0;
 BEGIN
-    INSERT INTO players (id, username) VALUES (v_user_id, p_username)
+    INSERT INTO players (id, username, energy, max_energy) VALUES (v_user_id, p_username, 20, 20)
     ON CONFLICT (id) DO UPDATE SET username = EXCLUDED.username;
 
     INSERT INTO gacha_state (player_id) VALUES (v_user_id)
@@ -301,63 +301,57 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Complete Stage
 CREATE OR REPLACE FUNCTION rpc_complete_stage(p_stage_id TEXT, p_stars INTEGER, p_turns INTEGER, p_rewards JSONB)
-RETURNS void AS $$
+RETURNS void AS 8823
 DECLARE
     v_user_id UUID := auth.uid();
     v_material RECORD;
+    v_exp_gain INTEGER;
+    v_player_exp INTEGER;
+    v_player_level INTEGER;
+    v_next_level_exp INTEGER;
 BEGIN
     INSERT INTO campaign_progress (player_id, stage_id, stars, best_turns)
     VALUES (v_user_id, p_stage_id, p_stars, p_turns)
-    ON CONFLICT (player_id, stage_id) DO UPDATE SET stars = GREATEST(campaign_progress.stars, EXCLUDED.stars), best_turns = LEAST(COALESCE(campaign_progress.best_turns, 999), EXCLUDED.best_turns);
+    ON CONFLICT (player_id, stage_id) DO UPDATE SET
+        stars = GREATEST(campaign_progress.stars, EXCLUDED.stars),
+        best_turns = LEAST(COALESCE(campaign_progress.best_turns, 999), EXCLUDED.best_turns);
 
-    UPDATE players SET currency = currency + (p_rewards->>'currency')::BIGINT, premium_currency = premium_currency + COALESCE((p_rewards->>'premium_currency')::INTEGER, 0)
+    -- 1. Apply Currency Rewards
+    UPDATE players
+    SET currency = currency + (p_rewards->>'currency')::BIGINT,
+        premium_currency = premium_currency + COALESCE((p_rewards->>'premium_currency')::INTEGER, 0)
     WHERE id = v_user_id;
 
+    -- 2. Apply Player EXP and Level Up
+    v_exp_gain := COALESCE((p_rewards->>'exp')::INTEGER, 0);
+    IF v_exp_gain > 0 THEN
+        SELECT exp, level INTO v_player_exp, v_player_level FROM players WHERE id = v_user_id;
+        v_player_exp := v_player_exp + v_exp_gain;
+        v_next_level_exp := v_player_level * 100;
+
+        IF v_player_exp >= v_next_level_exp THEN
+            UPDATE players
+            SET level = level + 1,
+                exp = v_player_exp - v_next_level_exp,
+                energy = max_energy -- Refill energy on level up
+            WHERE id = v_user_id;
+        ELSE
+            UPDATE players SET exp = v_player_exp WHERE id = v_user_id;
+        END IF;
+
+        -- Also level up units in party
+        UPDATE units
+        SET level = level + 1
+        WHERE id IN (SELECT unit_id FROM party WHERE player_id = v_user_id);
+    END IF;
+
+    -- 3. Apply Material Rewards
     IF p_rewards->'materials' IS NOT NULL AND jsonb_array_length(p_rewards->'materials') > 0 THEN
         FOR v_material IN SELECT * FROM jsonb_to_recordset(p_rewards->'materials') AS x(itemId TEXT, amount INTEGER) LOOP
-            INSERT INTO inventory (player_id, item_id, item_type, quantity) VALUES (v_user_id, v_material.itemId, 'material', v_material.amount)
+            INSERT INTO inventory (player_id, item_id, item_type, quantity)
+            VALUES (v_user_id, v_material.itemId, 'material', v_material.amount)
             ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + v_material.amount;
         END LOOP;
     END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 5. RLS
-ALTER TABLE players ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Players own" ON players FOR ALL USING (auth.uid() = id);
-
-ALTER TABLE gacha_state ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Gacha own" ON gacha_state FOR ALL USING (auth.uid() = player_id);
-
-ALTER TABLE units ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Units own" ON units FOR ALL USING (auth.uid() = player_id);
-
-ALTER TABLE inventory ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Inventory own" ON inventory FOR ALL USING (auth.uid() = player_id);
-
-ALTER TABLE party ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Party own" ON party FOR ALL USING (auth.uid() = player_id);
-
-ALTER TABLE recruitment_queue ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Recruitment own" ON recruitment_queue FOR ALL USING (auth.uid() = player_id);
-
-ALTER TABLE campaign_progress ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Campaign own" ON campaign_progress FOR ALL USING (auth.uid() = player_id);
-
-ALTER TABLE game_configs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Config public" ON game_configs FOR SELECT USING (true);
-
-ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Jobs public" ON jobs FOR SELECT USING (true);
-
-ALTER TABLE skills ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Skills public" ON skills FOR SELECT USING (true);
-
-ALTER TABLE cards ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Cards public" ON cards FOR SELECT USING (true);
-
-ALTER TABLE weapons ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Weapons public" ON weapons FOR SELECT USING (true);
-
-ALTER TABLE job_cores ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Cores public" ON job_cores FOR SELECT USING (true);
+8823 LANGUAGE plpgsql SECURITY DEFINER;
