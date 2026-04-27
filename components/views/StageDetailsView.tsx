@@ -84,8 +84,8 @@ export function StageDetailsView({ stage, playerEnergy, onBack, onStartBattle }:
             <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">Recompensas Posibles</span>
           </div>
           <div className="flex flex-wrap gap-2">
-             <RewardTag label="Zeny" value={stage.rewards.currency} />
-             <RewardTag label="Exp" value={stage.rewards.exp} />
+             <RewardTag label="Gold" value={stage.rewards.currency} icon="zeny" />
+             <RewardTag label="Exp" value={stage.rewards.exp} icon="exp" />
              {stage.rewards.materials.map((mat, i) => (
                <div key={i} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-full flex items-center gap-2">
                  <div className="w-4 h-4 bg-purple-500/20 rounded-sm" />
@@ -116,7 +116,7 @@ export function StageDetailsView({ stage, playerEnergy, onBack, onStartBattle }:
   );
 }
 
-function RewardTag({ label, value }: { label: string, value: number }) {
+function RewardTag({ label, value, icon }: { label: string, value: number, icon: string }) {
   return (
     <div className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-full flex items-center gap-2">
        <span className="text-[9px] font-black text-[#F5C76B] uppercase">{label}</span>

@@ -1,15 +1,32 @@
+'use client';
+
 export type AssetArchetype = 'melee' | 'magic' | 'ranged' | 'support' | 'neutral';
 
 export class AssetService {
-  private static SPRITE_BASE_URL = 'https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/';
+  private static SPRITE_BASE_URL = 'https://cdn.jsdelivr.net/gh/Leemonztuff/gameassets@main/Characters/';
   private static ICON_BASE_URL = 'https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/icons/';
 
-    private static ARCHETYPE_MAP: Record<AssetArchetype, number[]> = {
-    melee: [3, 4, 5, 6],
-    magic: [9, 10, 11, 12],
-    ranged: [15, 16, 17, 18],
-    support: [13, 14],
-    neutral: [1, 2]
+  private static JOB_SPRITE_MAP: Record<string, string> = {
+    'novice': 'novice_f.png',
+    'swordman': 'F/1/swordman_.png',
+    'mage': 'F/1/mage_.png',
+    'archer': 'F/1/archer_.png',
+    'acolyte': 'F/1/acolyte_.png',
+    'merchant': 'F/1/merchant_.png',
+    'thief': 'F/1/thief_.png',
+    'knight': 'F/2-1/knight_.png',
+    'wizard': 'F/2-1/wizard_.png',
+    'priest': 'F/2-1/priest_.png',
+    'blacksmith': 'F/2-1/blacksmith_.png',
+    'assassin': 'F/2-1/assasin_.png', 'assasin': 'F/2-1/assasin_.png'
+  };
+
+  private static ARCHETYPE_SPRITE_MAP: Record<AssetArchetype, string[]> = {
+    melee: ['F/1/swordman_.png', 'F/2-1/knight_.png'],
+    magic: ['F/1/mage_.png', 'F/2-1/wizard_.png'],
+    ranged: ['F/1/archer_.png', 'F/1/thief_.png', 'F/2-1/assasin_.png'],
+    support: ['F/1/acolyte_.png', 'F/2-1/priest_.png'],
+    neutral: ['novice_f.png']
   };
 
   private static JOB_ICON_MAP: Record<string, string> = {
@@ -27,18 +44,27 @@ export class AssetService {
     'rogue': 'rogue_1.jpeg',
     'bard': 'bard_1.jpeg',
     'dancer': 'dancer_1.jpeg',
-    'crusader': 'crusader_1.jpeg'
+    'crusader': 'crusader_1.jpeg',
+    'mage': 'wizard_1.jpeg',
+    'archer': 'hunter_1.jpeg',
+    'acolyte': 'priest_1.jpeg',
+    'merchant': 'blacksmith_1.jpeg',
+    'thief': 'assassin_1.jpeg'
   };
 
   static getRandomSpriteId(archetype: AssetArchetype): string {
-    const ids = this.ARCHETYPE_MAP[archetype] || this.ARCHETYPE_MAP.neutral;
-    const randomId = ids[Math.floor(Math.random() * ids.length)];
-    return `abbys_sprite_${randomId.toString().padStart(3, '0')}`;
+    const sprites = this.ARCHETYPE_SPRITE_MAP[archetype] || this.ARCHETYPE_SPRITE_MAP.neutral;
+    return sprites[Math.floor(Math.random() * sprites.length)];
+  }
+
+  static getJobSpriteId(jobId: string): string {
+    return this.JOB_SPRITE_MAP[jobId.toLowerCase()] || 'novice_f.png';
   }
 
   static getSpriteUrl(spriteId: string): string {
-    if (!spriteId) return `${this.SPRITE_BASE_URL}abbys_sprite_001.png`;
-    return `${this.SPRITE_BASE_URL}${spriteId}.png`;
+    if (!spriteId) return `${this.SPRITE_BASE_URL}novice_f.png`;
+    if (spriteId.startsWith('http')) return spriteId;
+    return `${this.SPRITE_BASE_URL}${spriteId}`;
   }
 
   static getJobIconId(jobId: string): string {
@@ -47,7 +73,7 @@ export class AssetService {
 
   static getIconUrl(iconId: string): string {
     if (!iconId) return `${this.ICON_BASE_URL}novice_1.jpeg`;
-    // Handle both jpeg and png just in case, though repo seems to have jpeg for icons
+    if (iconId.startsWith('http')) return iconId;
     return `${this.ICON_BASE_URL}${iconId}`;
   }
 
