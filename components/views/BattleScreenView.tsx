@@ -29,7 +29,6 @@ interface BattleScreenViewProps {
   stageId?: string;
   onBack: () => void;
   onRefresh: () => void;
-  stageId?: string; // New: optional stage context
 }
 
 export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleScreenViewProps) {
