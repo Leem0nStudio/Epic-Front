@@ -115,7 +115,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
   return (
     <div
       className="w-full h-full flex flex-col relative bg-[#0B1A2A] bg-cover bg-center bg-no-repeat overflow-hidden font-sans"
-      style={{ backgroundImage: "url('/assets/backgrounds/homebg.png')" }}
+      style={{ backgroundImage: `url('${AssetService.getBgUrl('home')}')` }}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2A]/40 via-transparent to-[#020508]/80 pointer-events-none" />
 

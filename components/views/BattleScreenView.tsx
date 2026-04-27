@@ -194,7 +194,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     >
       {/* Background Layer */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center animate-slow-zoom opacity-30 blur-[2px] scale-110" style={{ backgroundImage: "url('/assets/backgrounds/battle_scenic.png')" }} />
+        <div className="absolute inset-0 bg-cover bg-center animate-slow-zoom opacity-30 blur-[2px] scale-110" style={{ backgroundImage: `url('${AssetService.getBgUrl('battle')}')` }} />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_20%,#050A0F_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#050A0F] via-transparent to-[#050A0F]" />
       </div>

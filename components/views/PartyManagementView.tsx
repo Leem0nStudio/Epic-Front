@@ -38,7 +38,7 @@ export function PartyManagementView({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0B1A2A] bg-cover bg-center bg-no-repeat p-4 overflow-hidden relative" style={{ backgroundImage: "url('/assets/backgrounds/partybg.png')" }}>
+    <div className="flex flex-col h-full bg-[#0B1A2A] bg-cover bg-center bg-no-repeat p-4 overflow-hidden relative" style={{ backgroundImage: `url('${AssetService.getBgUrl('party')}')` }}>
       <div className="absolute inset-0 bg-gradient-to-b from-blue-900/5 to-transparent pointer-events-none" />
 
       <div className="flex items-center gap-4 mb-6 z-10 shrink-0">
