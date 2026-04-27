@@ -2,6 +2,7 @@ import { supabase } from '../supabase';
 import { UnitService } from './unit-service';
 import { CombatUnit, SkillDefinition, StatKey } from '../types/combat';
 import { MAX_GACHA_SKILLS, MAX_JOB_SKILLS } from '../rpg-system/types';
+import { ENEMY_SKILL_DEFINITIONS } from '../rpg-system/enemy-skills';
 
 export class CombatAdapter {
   static async dbUnitToCombatUnit(
@@ -113,7 +114,7 @@ export class CombatAdapter {
     };
   }
 
-  static createEnemy(id: string, name: string, level: number, position: number): CombatUnit {
+  static createEnemy(id: string, name: string, level: number, position: number, skillIds: string[] = []): CombatUnit {
     const base_stats = {
       hp: Math.floor(60 + (level * 12)),
       atk: Math.floor(6 + (level * 1.5)),
@@ -122,6 +123,12 @@ export class CombatAdapter {
       mdef: Math.floor(4 + (level * 1.2)),
       agi: Math.floor(4 + (level * 0.8))
     };
+
+    const skills: SkillDefinition[] = (skillIds || []).map(sid => ENEMY_SKILL_DEFINITIONS[sid]).filter(Boolean);
+    if (skills.length === 0) {
+      skills.push(ENEMY_SKILL_DEFINITIONS['basic_attack']);
+    }
+
     return {
       id,
       instanceId: id,
@@ -133,7 +140,7 @@ export class CombatAdapter {
       currentHp: base_stats.hp,
       maxHp: base_stats.hp,
       burst: 0,
-      skills: [{ id: 'enemy_strike', name: 'Golpe Brutal', type: 'active', cooldown: 0, effects: [{ type: 'damage', scaling: 'atk', power: 1.1, target: 'enemy' }] }],
+      skills,
       cooldowns: {},
       statusEffects: [],
       isDead: false,
