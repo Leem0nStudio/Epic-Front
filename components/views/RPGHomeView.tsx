@@ -124,80 +124,85 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
       <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2A]/40 via-transparent to-[#020508]/80 pointer-events-none" />
 
       {/* Top Bar */}
-      <div className="w-full h-16 shrink-0 flex items-center justify-between px-4 z-30 pt-2">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 border border-white/10 flex items-center justify-center overflow-hidden">
+      <div className="w-full h-16 shrink-0 flex items-center justify-between px-6 z-30 pt-3">
+        <div className="flex items-center gap-4">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 border border-white/10 flex items-center justify-center overflow-hidden shadow-lg">
             <img alt="Player Profile" src={AssetService.getSpriteUrl(primaryUnit?.sprite_id || AssetService.getJobSpriteId('novice'))} className="w-[150%] transform translate-y-1" style={{imageRendering: 'pixelated'}} />
           </div>
           <div className="flex flex-col text-left">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black bg-[#F5C76B] text-black px-1.5 rounded-sm italic uppercase">Lvl. {playerLevel}</span>
-              <span className="text-white text-xs font-bold tracking-wider uppercase">{saveData.profile.username}</span>
+              <span className="text-[10px] font-black bg-[#F5C76B] text-black px-2 py-0.5 rounded-md italic uppercase shadow-[0_0_10px_rgba(245,199,107,0.3)]">Lvl. {playerLevel}</span>
+              <span className="text-white text-sm font-bold tracking-wider uppercase drop-shadow-md">{saveData.profile.username}</span>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="w-24 h-1 bg-white/10 rounded-full overflow-hidden">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${expProgress}%` }} className="h-full bg-[#F5C76B]" />
+            <div className="flex items-center gap-3 mt-1.5">
+              <div className="w-28 h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                <motion.div 
+                  initial={{ width: 0 }} 
+                  animate={{ width: `${expProgress}%` }} 
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className="h-full bg-gradient-to-r from-[#F5C76B] to-[#FFD88F] shadow-[0_0_8px_rgba(245,199,107,0.6)]" 
+                />
               </div>
-              <div className="flex items-center gap-1 text-[#F5C76B]">
-                <Zap size={8} className="fill-current" />
-                <span className="text-[7px] font-black uppercase">{saveData.profile.energy}/{saveData.profile.max_energy}</span>
+              <div className="flex items-center gap-1 text-[#F5C76B] bg-black/30 px-2 py-0.5 rounded-full border border-[#F5C76B]/10">
+                <Zap size={10} className="fill-current" />
+                <span className="text-[8px] font-black uppercase tracking-wider">{saveData.profile.energy}/{saveData.profile.max_energy}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/5">
-            <Coins size={14} className="text-[#F5C76B]" />
-            <span className="text-xs font-bold text-white">{displayCurrency}</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/5 shadow-lg">
+            <Coins size={16} className="text-[#F5C76B] drop-shadow-[0_0_5px_rgba(245,199,107,0.5)]" />
+            <span className="text-sm font-bold text-white tracking-wide">{displayCurrency}</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/5">
-            <Diamond size={14} className="text-cyan-400" />
-            <span className="text-xs font-bold text-white">{displayGems}</span>
+          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/5 shadow-lg">
+            <Diamond size={16} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
+            <span className="text-sm font-bold text-white tracking-wide">{displayGems}</span>
           </div>
           <PanelButton
             variant="default"
             onClick={() => supabase?.auth.signOut()}
-            className="w-10 h-10 rounded-xl"
+            className="w-11 h-11 rounded-xl"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            <Settings size={18} className="text-white/60 group-hover:text-white transition-colors" />
+            <Settings size={18} className="text-white/60 hover:text-white transition-colors" />
           </PanelButton>
         </div>
       </div>
 
       {/* Main Display Area */}
-      <div className="flex-1 relative flex items-center justify-center px-4 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] aspect-square bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="flex-1 relative flex items-center justify-center px-6 overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] aspect-square bg-[#F5C76B]/5 blur-[120px] rounded-full pointer-events-none" />
 
-        <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-28">
-          <div className="w-[30%] h-full pb-4 flex items-end">
+        <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-32">
+          <div className="w-[30%] h-full pb-6 flex items-end">
             <CharacterSlot unit={leftUnit} scale={0.85} zIndex={10} />
           </div>
           <div className="w-[40%] h-full flex items-end">
             <CharacterSlot unit={primaryUnit} scale={1.1} zIndex={20} emphasized />
           </div>
-          <div className="w-[30%] h-full pb-4 flex items-end">
+          <div className="w-[30%] h-full pb-6 flex items-end">
             <CharacterSlot unit={rightUnit} scale={0.85} zIndex={10} />
           </div>
         </div>
 
         {/* Right Floating Sidebar */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-30">
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30">
           {[
-            { icon: Calendar, label: 'EVENT', color: 'text-[#F5C76B]' },
-            { icon: Bell, label: 'NOTIF', color: 'text-white' },
-            { icon: Mail, label: 'MAIL', color: 'text-white' }
+            { icon: Calendar, label: 'EVENT', color: 'text-[#F5C76B]', glow: 'shadow-[#F5C76B]/20' },
+            { icon: Bell, label: 'NOTIF', color: 'text-white', glow: 'shadow-white/10' },
+            { icon: Mail, label: 'MAIL', color: 'text-white', glow: 'shadow-white/10' }
           ].map((btn, i) => (
             <motion.button
               key={i}
-              whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.1)' }}
+              whileHover={{ scale: 1.1, x: -4 }}
               whileTap={{ scale: 0.9 }}
-              className="w-12 h-12 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl flex flex-col items-center justify-center shadow-2xl transition-colors"
+              className={`w-12 h-12 bg-black/50 backdrop-blur-xl border border-white/10 rounded-2xl flex flex-col items-center justify-center shadow-xl transition-all duration-200 hover:border-white/20 hover:bg-black/60`}
             >
-              <btn.icon size={20} className={btn.color} />
-              <span className="text-[7px] font-black mt-0.5 tracking-tighter opacity-60 text-white">{btn.label}</span>
+              <btn.icon size={18} className={btn.color} />
+              <span className="text-[7px] font-black mt-0.5 tracking-tighter opacity-50">{btn.label}</span>
             </motion.button>
           ))}
         </div>
@@ -205,20 +210,25 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
         {/* Campaign Objective */}
         <motion.button
           onClick={() => onNavigate('campaign')}
-          whileHover={{ x: 5 }}
-          className="absolute left-4 top-1/4 z-30 text-left"
+          whileHover={{ x: 8 }}
+          whileTap={{ scale: 0.98 }}
+          className="absolute left-6 top-1/4 z-30 text-left"
         >
           <NineSlicePanel
             type="border"
             variant="default"
-            className="p-3 pr-4"
+            className="p-4 pr-5 backdrop-blur-xl"
             glassmorphism={true}
+            style={{ 
+              background: 'linear-gradient(to right, rgba(245,199,107,0.05), transparent)',
+              borderLeft: '3px solid #F5C76B' 
+            }}
           >
-            <div className="border-l-4 border-l-[#F5C76B] pl-3">
-              <p className="text-[#F5C76B] text-[10px] font-black uppercase tracking-widest">Misión Actual</p>
-              <h3 className="text-white text-sm font-bold tracking-wide mt-0.5 flex items-center gap-2">
+            <div>
+              <p className="text-[#F5C76B] text-[9px] font-black uppercase tracking-[0.3em] mb-1">Misión Actual</p>
+              <h3 className="text-white text-sm font-bold tracking-wide flex items-center gap-2">
                 Tierras del Destino
-                <ChevronRight size={14} className="opacity-40" />
+                <ChevronRight size={14} className="opacity-40 text-[#F5C76B]" />
               </h3>
             </div>
           </NineSlicePanel>
@@ -226,8 +236,8 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
       </div>
 
       {/* Bottom Dock */}
-      <div className="w-full h-24 shrink-0 bg-gradient-to-t from-black to-transparent z-40 px-4 flex items-center justify-between pb-6">
-        <div className="flex gap-3 h-16 flex-1 items-end">
+      <div className="w-full h-28 shrink-0 bg-gradient-to-t from-[#020508]/95 via-[#0B1A2A]/80 to-transparent z-40 px-6 flex items-center justify-between pb-8">
+        <div className="flex gap-4 h-18 flex-1 items-end">
           {[
             { id: 'party', icon: Users, label: 'EQUIPO' },
             { id: 'inventory', icon: Box, label: 'INVENT', action: 'inventory' },
@@ -238,25 +248,28 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
               key={btn.id}
               variant="default"
               onClick={() => btn.action === 'inventory' ? onOpenFullInventory() : onNavigate(btn.id as any)}
-              className="flex-1 h-14 flex flex-col items-center justify-center gap-1"
+              className="flex-1 h-16 flex flex-col items-center justify-center gap-1.5 rounded-2xl"
+              whileHover={{ y: -4 }}
               whileTap={{ scale: 0.95 }}
             >
-              <btn.icon size={18} className="text-white/80" />
-              <span className="text-[8px] font-black tracking-widest text-white/60 uppercase">{btn.label}</span>
+              <btn.icon size={20} className="text-white/70 group-hover:text-white transition-colors" />
+              <span className="text-[8px] font-black tracking-[0.15em] text-white/50 uppercase">{btn.label}</span>
             </PanelButton>
           ))}
         </div>
 
-        <div className="w-24 h-24 relative flex items-center justify-center">
+        <div className="w-28 h-28 relative flex items-center justify-center mx-4">
+          <div className="absolute inset-0 bg-[#F5C76B]/10 blur-[30px] rounded-full scale-75" />
           <PanelButton
             variant="gold"
             onClick={() => onNavigate('campaign')}
-            className="w-20 h-20 rounded-full shadow-[0_0_30px_rgba(245,199,107,0.4)] flex flex-col items-center justify-center group relative overflow-hidden"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.9 }}
+            className="w-22 h-22 rounded-full shadow-[0_0_40px_rgba(245,199,107,0.3)] flex flex-col items-center justify-center relative overflow-hidden group"
+            whileHover={{ scale: 1.05, boxShadow: '0 0 60px rgba(245,199,107,0.5)' }}
+            whileTap={{ scale: 0.92 }}
           >
-            <MapIcon size={28} className="text-black" />
-            <span className="text-[9px] font-black text-black mt-0.5 uppercase">MUNDO</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <MapIcon size={32} className="text-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]" />
+            <span className="text-[9px] font-black text-black mt-0.5 uppercase tracking-widest">MUNDO</span>
           </PanelButton>
         </div>
       </div>

@@ -20,11 +20,11 @@ export interface NineSlicePanelProps {
   as?: any;
 
   // Tinting props
-  /** CSS color string to tint the border/panel using overlay with mix-blend-mode */
+  /** CSS color string to tint the border/panel using CSS filter */
   tintColor?: string;
   /** Rarity level for automatic border coloring (C/R/E/L/M). Overrides tintColor if both provided. */
   rarity?: RarityCode | string;
-  /** Tint intensity (0-1). Controls overlay opacity. @default 0.3 */
+  /** Tint intensity (0-1). Controls color visibility. @default 0.5 */
   tintIntensity?: number;
 
   // Glassmorphism prop
@@ -47,7 +47,7 @@ export function NineSlicePanel({
   // Tinting props
   tintColor,
   rarity,
-  tintIntensity = 0.3,
+  tintIntensity = 0.5,
   // Glassmorphism prop
   glassmorphism = false,
   ...rest
@@ -81,11 +81,23 @@ export function NineSlicePanel({
 
   // Merge with custom styles
   const mergedStyle: React.CSSProperties = {
-    position: 'relative', // Ensure positioning for tint overlay
+    position: 'relative',
     ...nineSliceStyle,
     ...glassmorphismStyle,
     ...style,
   };
+
+  // Apply tinting using CSS filter for hue rotation + saturation
+  // This works directly on the border-image
+  if (resolvedTintColor && type === 'border') {
+    // Calculate hue-rotate from the color
+    // For simplicity, apply a semi-transparent background color that shows through
+    const alpha = Math.round(tintIntensity * 255).toString(16).padStart(2, '0');
+    
+    // Use a pseudo-element approach: add a colored background div inside
+    // The border-image will render on top, and the color will show through transparent areas
+    mergedStyle.backgroundColor = `${resolvedTintColor}${alpha}`;
+  }
 
   // Build props
   const props: any = {
@@ -98,25 +110,24 @@ export function NineSlicePanel({
     props.onClick = onClick;
   }
 
-  // Render with or without tint overlay
-  if (resolvedTintColor) {
+  // If we have a tint color and it's a border type, we need to add an overlay
+  if (resolvedTintColor && type === 'border') {
     return React.createElement(
       Component,
       props,
       <>
-        {/* Tint overlay with mix-blend-mode for border-image compatibility */}
-        <div
+        <div 
           style={{
             position: 'absolute',
-            inset: 0,
-            backgroundColor: resolvedTintColor,
-            mixBlendMode: 'multiply',
-            opacity: tintIntensity,
+            inset: '32px', // Same as border width
+            backgroundColor: `${resolvedTintColor}${Math.round(tintIntensity * 128).toString(16).padStart(2, '0')}`,
             pointerEvents: 'none',
-            borderRadius: 'inherit',
+            zIndex: 0,
           }}
         />
-        {children}
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {children}
+        </div>
       </>
     );
   }

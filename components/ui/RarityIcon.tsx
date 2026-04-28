@@ -42,6 +42,7 @@ export function RarityIcon({
 }: RarityIconProps) {
   const rarityCode = getRarityCode(rarity);
   const borderColor = RARITY_COLORS[rarityCode];
+  const glowColor = `${borderColor}44`; // 27% opacity for glow
 
   const containerSize = sizeMap[size];
 
@@ -49,14 +50,22 @@ export function RarityIcon({
     return (
       <div 
         onClick={onClick}
-        className={`${containerSize} shrink-0 relative flex items-center justify-center rounded-xl border-2 backdrop-blur-md transition-all ${onClick ? 'cursor-pointer hover:scale-105 active:scale-95' : ''} ${className}`}
+        className={`${containerSize} shrink-0 relative flex items-center justify-center rounded-xl border-2 backdrop-blur-md transition-all ${
+          onClick ? 'cursor-pointer hover:scale-105 active:scale-95' : ''
+        } ${className}`}
         style={{ 
-          borderColor: `${borderColor}66`, // 40% opacity
-          backgroundColor: `${borderColor}11`, // 7% opacity
-          boxShadow: `0 0 15px ${borderColor}22` // subtle glow
+          borderColor: `${borderColor}aa`, // 67% opacity
+          backgroundColor: `${borderColor}16`, // 9% opacity
+          boxShadow: `0 0 15px ${glowColor}, inset 0 0 20px ${borderColor}11`, // 7% opacity
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
+        {/* Gradient overlay for depth */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50 rounded-xl pointer-events-none" />
+        {/* Subtle inner glow */}
+        <div 
+          className="absolute inset-0 rounded-xl pointer-events-none" 
+          style={{ boxShadow: `inset 0 0 10px ${borderColor}22` }} 
+        />
         <div className="relative z-10 flex items-center justify-center">
           {children}
         </div>
@@ -68,19 +77,26 @@ export function RarityIcon({
     <NineSlicePanel
       type="border"
       variant={thickBorder ? 'thick' : 'default'}
-      className={`${containerSize} shrink-0 relative overflow-hidden ${onClick ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''} ${className}`}
+      className={`${containerSize} shrink-0 relative overflow-hidden ${
+        onClick ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
+      } ${className}`}
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
       tintColor={borderColor}
       tintIntensity={0.4}
       onClick={onClick}
     >
-      <div className={`absolute inset-0 flex items-center justify-center ${containerSize}`}>
+      <div className="absolute inset-0 flex items-center justify-center z-10">
         {typeof children === 'string' ? (
           <span className={`${iconSizeMap[size]}`}>{children}</span>
         ) : (
           children
         )}
       </div>
+      {/* Glow effect */}
+      <div 
+        className="absolute inset-0 pointer-events-none" 
+        style={{ boxShadow: `inset 0 0 30px ${glowColor}` }} 
+      />
     </NineSlicePanel>
   );
 }
