@@ -15,6 +15,8 @@ export interface RarityIconProps {
   onClick?: () => void;
   /** Use a thicker border variant for emphasis */
   thickBorder?: boolean;
+  /** Use glassmorphism style instead of 9-slice borders */
+  glass?: boolean;
 }
 
 const sizeMap = {
@@ -36,12 +38,31 @@ export function RarityIcon({
   className = '',
   onClick,
   thickBorder = false,
+  glass = false,
 }: RarityIconProps) {
   const rarityCode = getRarityCode(rarity);
   const borderColor = RARITY_COLORS[rarityCode];
 
   const containerSize = sizeMap[size];
-  const iconContainerSize = sizeMap[size];
+
+  if (glass) {
+    return (
+      <div 
+        onClick={onClick}
+        className={`${containerSize} shrink-0 relative flex items-center justify-center rounded-xl border-2 backdrop-blur-md transition-all ${onClick ? 'cursor-pointer hover:scale-105 active:scale-95' : ''} ${className}`}
+        style={{ 
+          borderColor: `${borderColor}66`, // 40% opacity
+          backgroundColor: `${borderColor}11`, // 7% opacity
+          boxShadow: `0 0 15px ${borderColor}22` // subtle glow
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
+        <div className="relative z-10 flex items-center justify-center">
+          {children}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <NineSlicePanel
@@ -53,7 +74,7 @@ export function RarityIcon({
       tintIntensity={0.4}
       onClick={onClick}
     >
-      <div className={`absolute inset-0 flex items-center justify-center ${iconContainerSize}`}>
+      <div className={`absolute inset-0 flex items-center justify-center ${containerSize}`}>
         {typeof children === 'string' ? (
           <span className={`${iconSizeMap[size]}`}>{children}</span>
         ) : (

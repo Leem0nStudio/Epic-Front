@@ -7,7 +7,7 @@ import { EquipmentService } from '@/lib/services/equipment-service';
 import { PanelButton } from '@/components/ui/PanelButton';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { RarityIcon } from '@/components/ui/RarityIcon';
-import { getRarityCode } from '@/lib/config/assets-config';
+import { RARITY_COLORS, getRarityCode } from '@/lib/config/assets-config';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, Shield, Sword, Zap, Heart, Star, Briefcase, Sparkles, Box, Plus, X, ArrowUpCircle, ShieldAlert } from 'lucide-react';
 
@@ -254,14 +254,18 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                 onClick={() => !weapon && onOpenInventory('weapon')}
                 className={`aspect-square flex items-center justify-center relative rounded-2xl border backdrop-blur-xl transition-all cursor-pointer group shadow-xl ${
                   weapon 
-                    ? 'border-[#F5C76B]/40 bg-[#F5C76B]/10 shadow-[#F5C76B]/5' 
+                    ? '' 
                     : 'border-white/5 bg-white/5 hover:border-white/10 hover:bg-white/10'
                 }`}
+                style={weapon ? {
+                  borderColor: `${RARITY_COLORS[getRarityCode(weapon.rarity)]}66`,
+                  backgroundColor: `${RARITY_COLORS[getRarityCode(weapon.rarity)]}11`
+                } : {}}
               >
                 {weapon ? (
                   <>
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,199,107,0.2),transparent_70%)]" />
-                    <RarityIcon rarity={getRarityCode(weapon.rarity)} size="sm">
+                    <RarityIcon rarity={getRarityCode(weapon.rarity)} size="sm" glass={true}>
                       <Sword size={24} className="text-[#F5C76B] drop-shadow-[0_0_10px_rgba(245,199,107,0.4)]" />
                     </RarityIcon>
                     <button 
@@ -286,14 +290,18 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                     onClick={() => !card && onOpenInventory('card')}
                     className={`aspect-square flex items-center justify-center relative rounded-2xl border backdrop-blur-xl transition-all cursor-pointer group shadow-xl ${
                       card 
-                        ? 'border-purple-500/40 bg-purple-500/10 shadow-purple-500/5' 
+                        ? '' 
                         : 'border-white/5 bg-white/5 hover:border-white/10 hover:bg-white/10'
                     }`}
+                    style={card ? {
+                      borderColor: `${RARITY_COLORS[getRarityCode(card.rarity)]}66`,
+                      backgroundColor: `${RARITY_COLORS[getRarityCode(card.rarity)]}11`
+                    } : {}}
                   >
                     {card ? (
                       <>
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.2),transparent_70%)]" />
-                        <RarityIcon rarity={getRarityCode(card.rarity)} size="sm">
+                        <RarityIcon rarity={getRarityCode(card.rarity)} size="sm" glass={true}>
                           <Sparkles size={24} className="text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]" />
                         </RarityIcon>
                         <button 
@@ -339,16 +347,20 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                     }}
                     className={`aspect-square flex items-center justify-center relative rounded-2xl border backdrop-blur-xl transition-all cursor-pointer group shadow-xl ${
                       skill 
-                        ? 'border-cyan-500/40 bg-cyan-500/10 shadow-cyan-500/5' 
+                        ? '' 
                         : isLocked 
                           ? 'border-white/5 bg-black/40 opacity-40 cursor-not-allowed'
                           : 'border-white/5 bg-white/5 hover:border-white/10 hover:bg-white/10'
                     }`}
+                    style={skill ? {
+                      borderColor: `${RARITY_COLORS[getRarityCode(skill.rarity)]}66`,
+                      backgroundColor: `${RARITY_COLORS[getRarityCode(skill.rarity)]}11`
+                    } : {}}
                   >
                     {skill ? (
                       <>
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(34,211,238,0.2),transparent_70%)]" />
-                        <RarityIcon rarity={getRarityCode(skill.rarity)} size="sm">
+                        <RarityIcon rarity={getRarityCode(skill.rarity)} size="sm" glass={true}>
                           <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10">
                             <img src={AssetService.getIconUrl(unit.icon_id)} className="w-full h-full object-contain brightness-125" />
                           </div>
@@ -403,6 +415,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                   <RarityIcon
                     rarity={getRarityCode(selectedSkill.def?.rarity)}
                     size="lg"
+                    glass={true}
                   >
                     <Zap size={60} className="text-cyan-400 drop-shadow-[0_0_30px_rgba(34,211,238,0.6)]" />
                   </RarityIcon>
