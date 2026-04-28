@@ -61,8 +61,7 @@ export function generateNovice(forcedAffinity?: Affinity) {
 
     const NAMES = ["Arthur", "Lina", "Garran", "Elara", "Finn", "Seris", "Braum", "Kael", "Lyra", "Zane"];
 
-    const archetype = AssetService.getAffinityArchetype(affinity);
-    const spriteId = AssetService.getRandomSpriteId(archetype);
+    const spriteId = AssetService.getJobSpriteId('novice');
     const iconId = AssetService.getJobIconId('novice');
 
     return {

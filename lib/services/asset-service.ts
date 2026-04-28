@@ -103,10 +103,18 @@ export class AssetService {
     if (!spriteId) {
       return `${this.SPRITE_PATH}/novice_idle.png`;
     }
+
+    const normalized = spriteId.toLowerCase();
+    if (normalized === 'novice' || normalized === 'novice_idle') {
+      return `${this.SPRITE_PATH}/novice_idle.png`;
+    }
+
     if (spriteId.startsWith('http') || spriteId.startsWith('/')) {
       return spriteId;
     }
-    return `${this.SPRITE_PATH}/${spriteId}`;
+
+    const fileName = spriteId.endsWith('.png') ? spriteId : `${spriteId}.png`;
+    return `${this.SPRITE_PATH}/${fileName}`;
   }
 
   static getSpriteWithState(jobId: string, state: 'idle' | 'attack' | 'hit' | 'dead' | 'walk' = 'idle'): string {

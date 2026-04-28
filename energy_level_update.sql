@@ -1,4 +1,8 @@
--- 1. Add level, exp, last_energy_regen to players table if they don't exist
+-- =============================================
+-- ENERGY & LEVEL SYSTEM UPDATE
+-- =============================================
+
+-- 1. Add missing columns to players table
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'players' AND column_name = 'level') THEN
@@ -12,7 +16,7 @@ BEGIN
     END IF;
 END $$;
 
--- 2. Add sprite_id and icon_id to units table
+-- 2. Add sprite columns to units table
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'units' AND column_name = 'sprite_id') THEN
@@ -23,9 +27,9 @@ BEGIN
     END IF;
 END $$;
 
--- 3. Regen Energy RPC
+-- 3. Energy regeneration RPC (1 energy every 6 minutes)
 CREATE OR REPLACE FUNCTION rpc_regen_energy()
-RETURNS void AS $rpc$
+RETURNS void AS $$
 DECLARE
     v_user_id UUID := auth.uid();
     v_energy_per_tick INTEGER := 1;
@@ -35,7 +39,6 @@ DECLARE
     v_current_energy INTEGER;
     v_max_energy INTEGER;
     v_ticks_passed INTEGER;
-    v_energy_to_add INTEGER;
 BEGIN
     SELECT energy, max_energy, last_energy_regen
     INTO v_current_energy, v_max_energy, v_last_regen
@@ -49,17 +52,17 @@ BEGIN
     v_ticks_passed := floor(extract(epoch from (v_now - v_last_regen)) / extract(epoch from v_tick_interval));
 
     IF v_ticks_passed > 0 THEN
-        v_energy_to_add := v_ticks_passed * v_energy_per_tick;
         UPDATE players
-        SET energy = LEAST(v_max_energy, v_current_energy + v_energy_to_add),
+        SET energy = LEAST(v_max_energy, v_current_energy + (v_ticks_passed * v_energy_per_tick)),
             last_energy_regen = v_last_regen + (v_ticks_passed * v_tick_interval)
         WHERE id = v_user_id;
     END IF;
 END;
-$rpc$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- 4. Atomic energy deduction RPC
 CREATE OR REPLACE FUNCTION rpc_deduct_energy(p_cost INTEGER)
-RETURNS BOOLEAN AS $rpc$
+RETURNS BOOLEAN AS $$
 DECLARE
     v_user_id UUID := auth.uid();
 BEGIN
@@ -69,11 +72,11 @@ BEGIN
     WHERE id = v_user_id AND energy >= p_cost;
     RETURN FOUND;
 END;
-$rpc$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 4. Complete Stage RPC (Updated for Player EXP and Level Up)
+-- 5. Updated complete stage RPC with player leveling
 CREATE OR REPLACE FUNCTION rpc_complete_stage(p_stage_id TEXT, p_stars INTEGER, p_turns INTEGER, p_rewards JSONB)
-RETURNS void AS $rpc$
+RETURNS void AS $$
 DECLARE
     v_user_id UUID := auth.uid();
     v_material RECORD;
@@ -119,11 +122,12 @@ BEGIN
 
     -- 3. Apply Material Rewards
     IF p_rewards->'materials' IS NOT NULL AND jsonb_array_length(p_rewards->'materials') > 0 THEN
-        FOR v_material IN SELECT * FROM jsonb_to_recordset(p_rewards->'materials') AS x(itemId TEXT, amount INTEGER) LOOP
+        FOR v_material IN SELECT * FROM jsonb_to_recordset(p_rewards->'materials') AS x("itemId" TEXT, amount INTEGER) LOOP
             INSERT INTO inventory (player_id, item_id, item_type, quantity)
-            VALUES (v_user_id, v_material.itemId, 'material', v_material.amount)
+            VALUES (v_user_id, v_material."itemId", 'material', v_material.amount)
             ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + v_material.amount;
         END LOOP;
     END IF;
 END;
-$rpc$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;</content>
+<parameter name="filePath">/workspaces/Epic-Front/energy_level_update.sql

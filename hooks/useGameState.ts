@@ -27,12 +27,23 @@ export function useGameState() {
 
   const navigateTo = (newView: ViewType) => setView(newView);
 
+  const regenEnergy = async () => {
+    if (!supabase) return;
+    try {
+      await supabase.rpc('rpc_regen_energy');
+    } catch (e) {
+      console.warn('Unable to refresh energy from server:', e);
+    }
+  };
+
   const refreshState = async () => {
     if (!supabase) return;
     try {
         const { data: authData } = await supabase.auth.getUser();
         const user = authData?.user;
         if (!user) return;
+
+        await regenEnergy();
 
         const [profRes, unitsRes, partyRes, recruitsRes] = await Promise.all([
             supabase.from('players').select('*').eq('id', user.id).single(),
@@ -78,6 +89,7 @@ export function useGameState() {
         if (!user) return;
 
         await ConfigService.syncConfig();
+        await regenEnergy();
 
         const { data: prof, error: profError } = await supabase.from('players').select('*').eq('id', user.id).single();
 
@@ -109,6 +121,15 @@ export function useGameState() {
     }
 
     loadGame();
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!supabase || !isAuthenticated) return;
+    const interval = setInterval(async () => {
+      await regenEnergy();
+      await refreshState();
+    }, 30000);
+    return () => clearInterval(interval);
   }, [isAuthenticated]);
 
   const handleSelectUnit = (id: string) => {
@@ -161,6 +182,7 @@ export function useGameState() {
         alert("No tienes suficiente energía para esta incursión.");
         return;
     }
+    await refreshState();
     setView('battle');
   };
 

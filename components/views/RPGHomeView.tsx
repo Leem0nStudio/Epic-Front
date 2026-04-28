@@ -123,7 +123,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
       <div className="w-full h-16 shrink-0 flex items-center justify-between px-4 z-30 pt-2">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 border border-white/10 flex items-center justify-center overflow-hidden">
-            <img alt="Player Profile" src={AssetService.getSpriteUrl(primaryUnit?.sprite_id || 'novice')} className="w-[150%] transform translate-y-1" style={{imageRendering: 'pixelated'}} />
+            <img alt="Player Profile" src={AssetService.getSpriteUrl(primaryUnit?.sprite_id || AssetService.getJobSpriteId('novice'))} className="w-[150%] transform translate-y-1" style={{imageRendering: 'pixelated'}} />
           </div>
           <div className="flex flex-col text-left">
             <div className="flex items-center gap-2">

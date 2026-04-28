@@ -12,6 +12,10 @@ export type Player = {
   currency: number;
   premium_currency: number;
   party_size_limit: number;
+  energy?: number;
+  max_energy?: number;
+  level?: number;
+  exp?: number;
 };
 
 // Use the consolidated types from the RPG system

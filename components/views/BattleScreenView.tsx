@@ -416,7 +416,7 @@ function PlayerSprite({ unit, isActive }: { unit: CombatUnit, isActive: boolean 
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-5 bg-black/60 rounded-[100%] blur-md z-0" />
       
       <img 
-        src={AssetService.getSpriteUrl(unit.sprite_id || "novice_f.png")}
+        src={AssetService.getSpriteUrl(unit.sprite_id || AssetService.getJobSpriteId('novice'))}
         className={`w-28 h-28 object-contain transform origin-bottom drop-shadow-[0_15px_30px_rgba(0,0,0,0.8)] z-10 transition-all ${isActive ? 'brightness-125' : 'brightness-100'}`}
         style={{ imageRendering: 'pixelated' }}
       />

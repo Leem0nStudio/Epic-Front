@@ -137,24 +137,20 @@ export class CampaignService {
     }
 
     static async deductEnergy(amount: number) {
-        if (!supabase) return true;
+        if (!supabase) return false;
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return false;
 
-        const { data: player } = await supabase
-            .from('players')
-            .select('energy')
-            .eq('id', user.id)
-            .single();
+        const { data, error } = await supabase.rpc('rpc_deduct_energy', {
+            p_cost: amount
+        });
 
-        if (!player || player.energy < amount) return false;
+        if (error) {
+            console.error('Energy deduction failed:', error);
+            return false;
+        }
 
-        const { error } = await supabase
-            .from('players')
-            .update({ energy: player.energy - amount })
-            .eq('id', user.id);
-
-        return !error;
+        return Boolean(data);
     }
 
     static invalidateCache() {

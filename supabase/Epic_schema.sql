@@ -299,6 +299,53 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Regen Energy
+CREATE OR REPLACE FUNCTION rpc_regen_energy()
+RETURNS void AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_energy_per_tick INTEGER := 1;
+    v_tick_interval INTERVAL := '6 minutes';
+    v_now TIMESTAMP WITH TIME ZONE := NOW();
+    v_last_regen TIMESTAMP WITH TIME ZONE;
+    v_current_energy INTEGER;
+    v_max_energy INTEGER;
+    v_ticks_passed INTEGER;
+BEGIN
+    SELECT energy, max_energy, last_energy_regen
+    INTO v_current_energy, v_max_energy, v_last_regen
+    FROM players WHERE id = v_user_id;
+
+    IF v_current_energy >= v_max_energy THEN
+        UPDATE players SET last_energy_regen = v_now WHERE id = v_user_id;
+        RETURN;
+    END IF;
+
+    v_ticks_passed := floor(extract(epoch from (v_now - v_last_regen)) / extract(epoch from v_tick_interval));
+
+    IF v_ticks_passed > 0 THEN
+        UPDATE players
+        SET energy = LEAST(v_max_energy, v_current_energy + (v_ticks_passed * v_energy_per_tick)),
+            last_energy_regen = v_last_regen + (v_ticks_passed * v_tick_interval)
+        WHERE id = v_user_id;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Deduct Energy
+CREATE OR REPLACE FUNCTION rpc_deduct_energy(p_cost INTEGER)
+RETURNS BOOLEAN AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+BEGIN
+    PERFORM rpc_regen_energy();
+    UPDATE players
+    SET energy = energy - p_cost
+    WHERE id = v_user_id AND energy >= p_cost;
+    RETURN FOUND;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Complete Stage
 CREATE OR REPLACE FUNCTION rpc_complete_stage(p_stage_id TEXT, p_stars INTEGER, p_turns INTEGER, p_rewards JSONB)
 RETURNS void AS $$
