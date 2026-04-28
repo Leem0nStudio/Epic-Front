@@ -1,12 +1,12 @@
 'use client';
-import { AssetService } from '@/lib/services/asset-service';
-
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Shield, Sword, Zap, Heart, Star, Briefcase, Sparkles, Box, Plus, X, ArrowUpCircle, ShieldAlert } from 'lucide-react';
+import { AssetService } from '@/lib/services/asset-service';
 import { supabase } from '@/lib/supabase';
 import { UnitService } from '@/lib/services/unit-service';
 import { EquipmentService } from '@/lib/services/equipment-service';
+import { PanelButton } from '@/components/ui/PanelButton';
 import { motion, AnimatePresence } from 'motion/react';
+import { ChevronLeft, Shield, Sword, Zap, Heart, Star, Briefcase, Sparkles, Box, Plus, X, ArrowUpCircle, ShieldAlert } from 'lucide-react';
 
 interface UnitDetailsViewProps {
   unitId: string;
@@ -423,19 +423,20 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
               {nextJobs.length > 0 ? (
                 <div className={`grid gap-3 ${nextJobs.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                    {nextJobs.map((nextJob) => (
-                     <motion.button
+                     <PanelButton
                       key={nextJob.id}
+                      variant="default"
+                      onClick={() => handleEvolve(nextJob.id, nextJob.name)}
+                      className="p-4 text-center flex flex-col items-center gap-2"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => handleEvolve(nextJob.id, nextJob.name)}
-                      className="bg-black/40 border border-white/5 p-4 rounded-2xl text-center flex flex-col items-center gap-2 group hover:border-[#F5C76B]/40 transition-all shadow-xl"
                      >
                         <ArrowUpCircle size={24} className="text-white/20 group-hover:text-[#F5C76B]" />
                         <span className="text-[10px] font-black text-white tracking-widest uppercase">{nextJob.name}</span>
                         <div className="flex items-center gap-1.5">
                            <span className="text-[8px] font-black text-[#F5C76B]/40 uppercase tracking-tighter italic">Nivel {nextJob.evolution_requirements?.minLevel}+</span>
                         </div>
-                     </motion.button>
+                     </PanelButton>
                    ))}
                 </div>
               ) : (

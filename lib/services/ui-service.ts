@@ -1,0 +1,39 @@
+import { AssetService } from './asset-service';
+
+export class UIService {
+  /**
+   * Get panel sprite URL for 9-slice rendering
+   * Available panels: panel-000, panel-007, panel-008, panel-009, panel-021
+   */
+  static getPanelUrl(panelId: string = 'panel-000'): string {
+    return `/assets/ui/${panelId}.png`;
+  }
+
+  /**
+   * Get border sprite URL for 9-slice rendering
+   * Available borders: panel-border-000, panel-border-001, panel-border-002, panel-border-010, panel-border-029, panel-transparent-border-001
+   */
+  static getBorderUrl(borderId: string = 'panel-border-000'): string {
+    return `/assets/ui/${borderId}.png`;
+  }
+
+  /**
+   * Panel types for different UI elements
+   */
+  static PANELS = {
+    default: 'panel-000',
+    blue: 'panel-007',
+    red: 'panel-008',
+    green: 'panel-009',
+    gold: 'panel-021',
+  };
+
+  static BORDERS = {
+    default: 'panel-border-000',
+    blue: 'panel-border-001',
+    red: 'panel-border-002',
+    thick: 'panel-border-010',
+    fancy: 'panel-border-029',
+    transparent: 'panel-transparent-border-001',
+  };
+}

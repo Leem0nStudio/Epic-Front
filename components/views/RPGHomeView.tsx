@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { AssetService } from '@/lib/services/asset-service';
+import { PanelButton } from '@/components/ui/PanelButton';
 
 interface RPGHomeViewProps {
   saveData: any;
@@ -153,9 +154,15 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
             <Diamond size={14} className="text-cyan-400" />
             <span className="text-xs font-bold text-white">{displayGems}</span>
           </div>
-          <button onClick={() => supabase?.auth.signOut()} className="text-white/60 hover:text-white transition-colors">
-            <Settings size={18} />
-          </button>
+          <PanelButton
+            variant="default"
+            onClick={() => supabase?.auth.signOut()}
+            className="w-10 h-10 rounded-xl"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <Settings size={18} className="text-white/60 group-hover:text-white transition-colors" />
+          </PanelButton>
         </div>
       </div>
 
@@ -219,29 +226,30 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
             { id: 'tavern', icon: UserPlus, label: 'GREMIO' },
             { id: 'gacha', icon: Sparkles, label: 'NEXO' }
           ].map(btn => (
-            <motion.button
+            <PanelButton
               key={btn.id}
-              whileTap={{ scale: 0.95 }}
+              variant="default"
               onClick={() => btn.action === 'inventory' ? onOpenFullInventory() : onNavigate(btn.id as any)}
-              className="flex-1 h-14 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-white/5 transition-colors"
+              className="flex-1 h-14 flex flex-col items-center justify-center gap-1"
+              whileTap={{ scale: 0.95 }}
             >
               <btn.icon size={18} className="text-white/80" />
               <span className="text-[8px] font-black tracking-widest text-white/60 uppercase">{btn.label}</span>
-            </motion.button>
+            </PanelButton>
           ))}
         </div>
 
         <div className="w-24 h-24 relative flex items-center justify-center">
-          <motion.button
+          <PanelButton
+            variant="gold"
+            onClick={() => onNavigate('campaign')}
+            className="w-20 h-20 rounded-full shadow-[0_0_30px_rgba(245,199,107,0.4)] flex flex-col items-center justify-center group relative overflow-hidden"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => onNavigate('campaign')}
-            className="w-20 h-20 bg-gradient-to-br from-[#F5C76B] to-[#b88c3a] rounded-full shadow-[0_0_30px_rgba(245,199,107,0.4)] flex flex-col items-center justify-center group relative overflow-hidden border border-white/10"
           >
-            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
             <MapIcon size={28} className="text-black" />
             <span className="text-[9px] font-black text-black mt-0.5 uppercase">MUNDO</span>
-          </motion.button>
+          </PanelButton>
         </div>
       </div>
     </div>
