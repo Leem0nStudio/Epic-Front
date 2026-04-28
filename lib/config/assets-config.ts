@@ -161,6 +161,78 @@ export const ITEM_ASSETS = {
 } as const;
 
 /**
+ * 9-Slice Configuration for Kenny Fantasy UI Assets
+ * All panel/border assets are 96x96px → slice = 96/3 = 32px
+ */
+export const NINE_SLICE_CONFIG = {
+  /** Default slice value for all Kenny UI assets */
+  defaultSlice: 32,
+  /** Filled panel assets (use `fill` keyword in border-image-slice) */
+  panels: {
+    'panel-000': { slice: 32, hasFill: true },
+    'panel-007': { slice: 32, hasFill: true },
+    'panel-008': { slice: 32, hasFill: true },
+    'panel-009': { slice: 32, hasFill: true },
+    'panel-021': { slice: 32, hasFill: true },
+  },
+  /** Border-only assets (transparent center, no `fill` keyword) */
+  borders: {
+    'panel-border-000': { slice: 32, hasFill: false },
+    'panel-border-001': { slice: 32, hasFill: false },
+    'panel-border-002': { slice: 32, hasFill: false },
+    'panel-border-010': { slice: 32, hasFill: false },
+    'panel-border-029': { slice: 32, hasFill: false },
+    'panel-transparent-border-001': { slice: 32, hasFill: false },
+  },
+} as const;
+
+/**
+ * Rarity Configuration
+ * Standard C/R/E/L/M rarity system for items, skills, and cards
+ */
+export const RARITY_COLORS = {
+  C: '#9d9d9d', // Common - Gray
+  R: '#0070dd', // Rare - Blue
+  E: '#a335ee', // Epic - Purple
+  L: '#ff8000', // Legendary - Gold
+  M: '#ff0000', // Mythic - Red
+} as const;
+
+export type RarityCode = keyof typeof RARITY_COLORS;
+
+/**
+ * Maps human-readable rarity text to standard rarity codes
+ * Handles legacy values like 'UR', 'SR', etc.
+ */
+export const RARITY_TEXT_TO_CODE: Record<string, RarityCode> = {
+  // Standard text
+  'common': 'C',
+  'rare': 'R',
+  'epic': 'E',
+  'legendary': 'L',
+  'mythic': 'M',
+  // Legacy short codes
+  'c': 'C',
+  'r': 'R',
+  'e': 'E',
+  'l': 'L',
+  'm': 'M',
+  // Legacy long codes
+  'ur': 'L', // Ultra Rare → Legendary
+  'sr': 'E', // Super Rare → Epic
+  'ssr': 'M', // Super Super Rare → Mythic
+};
+
+/**
+ * Normalize any rarity input to a standard RarityCode
+ */
+export function getRarityCode(rarity: string | undefined | null): RarityCode {
+  if (!rarity) return 'C';
+  const normalized = rarity.toLowerCase().trim();
+  return RARITY_TEXT_TO_CODE[normalized] || 'C';
+}
+
+/**
  * Asset Usage Examples
  * 
  * Sprites:

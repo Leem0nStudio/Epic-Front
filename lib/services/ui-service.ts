@@ -1,4 +1,5 @@
 import { AssetService } from './asset-service';
+import { NINE_SLICE_CONFIG } from '@/lib/config/assets-config';
 
 export class UIService {
   /**
@@ -36,4 +37,58 @@ export class UIService {
     fancy: 'panel-border-029',
     transparent: 'panel-transparent-border-001',
   };
+
+  /**
+   * Get 9-slice CSS properties for filled panels (panel-*.png)
+   * Uses `fill` keyword to render center segment as background
+   */
+  static getPanelNineSliceStyle(panelId: string = 'panel-000'): React.CSSProperties {
+    const panelConfig = NINE_SLICE_CONFIG.panels[panelId as keyof typeof NINE_SLICE_CONFIG.panels];
+    const slice = panelConfig?.slice ?? NINE_SLICE_CONFIG.defaultSlice;
+    const hasFill = panelConfig?.hasFill ?? true;
+
+    return {
+      borderImageSource: `url('${this.getPanelUrl(panelId)}')`,
+      borderImageSlice: hasFill ? `${slice} fill` : `${slice}`,
+      borderImageRepeat: 'round',
+      borderWidth: `${slice}px`,
+      borderStyle: 'solid',
+      borderColor: 'transparent',
+    };
+  }
+
+  /**
+   * Get 9-slice CSS properties for border-only assets (panel-border-*.png)
+   * No `fill` keyword → transparent center
+   */
+  static getBorderNineSliceStyle(borderId: string = 'panel-border-000'): React.CSSProperties {
+    const borderConfig = NINE_SLICE_CONFIG.borders[borderId as keyof typeof NINE_SLICE_CONFIG.borders];
+    const slice = borderConfig?.slice ?? NINE_SLICE_CONFIG.defaultSlice;
+    const hasFill = borderConfig?.hasFill ?? false;
+
+    return {
+      borderImageSource: `url('${this.getBorderUrl(borderId)}')`,
+      borderImageSlice: hasFill ? `${slice} fill` : `${slice}`,
+      borderImageRepeat: 'round',
+      borderWidth: `${slice}px`,
+      borderStyle: 'solid',
+      borderColor: 'transparent',
+    };
+  }
+
+  /**
+   * Get 9-slice style by panel variant (key of UIService.PANELS)
+   */
+  static getPanelStyleByVariant(variant: keyof typeof UIService.PANELS = 'default'): React.CSSProperties {
+    const panelId = UIService.PANELS[variant];
+    return this.getPanelNineSliceStyle(panelId);
+  }
+
+  /**
+   * Get 9-slice style by border variant (key of UIService.BORDERS)
+   */
+  static getBorderStyleByVariant(variant: keyof typeof UIService.BORDERS = 'default'): React.CSSProperties {
+    const borderId = UIService.BORDERS[variant];
+    return this.getBorderNineSliceStyle(borderId);
+  }
 }

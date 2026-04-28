@@ -22,6 +22,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { AssetService } from '@/lib/services/asset-service';
 import { PanelButton } from '@/components/ui/PanelButton';
+import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 
 interface RPGHomeViewProps {
   saveData: any;
@@ -204,16 +205,23 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
         {/* Campaign Objective */}
         <motion.button
           onClick={() => onNavigate('campaign')}
-          whileHover={{ x: 5, backgroundColor: 'rgba(255,255,255,0.05)' }}
+          whileHover={{ x: 5 }}
           className="absolute left-4 top-1/4 z-30 text-left"
         >
-          <div className="bg-black/40 backdrop-blur-md border-l-4 border-l-[#F5C76B] border border-white/5 p-3 rounded-r-xl shadow-2xl transition-colors">
-            <p className="text-[#F5C76B] text-[10px] font-black uppercase tracking-widest">Misión Actual</p>
-            <h3 className="text-white text-sm font-bold tracking-wide mt-0.5 flex items-center gap-2">
-              Tierras del Destino
-              <ChevronRight size={14} className="opacity-40" />
-            </h3>
-          </div>
+          <NineSlicePanel
+            type="border"
+            variant="default"
+            className="p-3 pr-4"
+            glassmorphism={true}
+          >
+            <div className="border-l-4 border-l-[#F5C76B] pl-3">
+              <p className="text-[#F5C76B] text-[10px] font-black uppercase tracking-widest">Misión Actual</p>
+              <h3 className="text-white text-sm font-bold tracking-wide mt-0.5 flex items-center gap-2">
+                Tierras del Destino
+                <ChevronRight size={14} className="opacity-40" />
+              </h3>
+            </div>
+          </NineSlicePanel>
         </motion.button>
       </div>
 

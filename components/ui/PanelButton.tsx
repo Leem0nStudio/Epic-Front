@@ -20,7 +20,7 @@ export function PanelButton({
   whileHover,
   whileTap
 }: PanelButtonProps) {
-  const panelUrl = UIService.getPanelUrl(UIService.PANELS[variant]);
+  const nineSliceStyle = UIService.getPanelStyleByVariant(variant);
 
   return (
     <motion.button
@@ -31,16 +31,7 @@ export function PanelButton({
       className={`relative flex items-center justify-center transition-all ${
         disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:brightness-110'
       } ${className}`}
-      style={{
-        backgroundImage: `url('${panelUrl}')`,
-        backgroundSize: '100% 100%',
-        backgroundRepeat: 'no-repeat',
-        // 9-slice effect using border-image
-        borderImageSource: `url('${panelUrl}')`,
-        borderImageSlice: '48 48 48 48 fill',
-        borderWidth: '16px',
-        borderStyle: 'solid',
-      } as React.CSSProperties}
+      style={nineSliceStyle}
     >
       <div className="relative z-10 px-4 py-2">
         {children}

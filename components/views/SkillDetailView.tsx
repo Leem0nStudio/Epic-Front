@@ -4,6 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Zap, Clock, Shield, Sword, Heart, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { AssetService } from '@/lib/services/asset-service';
+import { UIService } from '@/lib/services/ui-service';
+import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
+import { RarityIcon } from '@/components/ui/RarityIcon';
+import { getRarityCode } from '@/lib/config/assets-config';
 import { SkillDefinition } from '@/lib/types/combat';
 
 interface SkillDetailViewProps {
@@ -86,104 +90,132 @@ export function SkillDetailView({ skillId, itemId, onBack, onEquip, onDiscard }:
       </div>
 
       <div className="flex-1 overflow-y-auto z-10 space-y-6">
-        {/* Skill Icon & Name */}
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-24 h-24 bg-black/60 border border-white/10 rounded-3xl flex items-center justify-center">
-            <Zap size={40} className="text-[#F5C76B]" />
-          </div>
-          
-          <div className="text-center">
-            <h2 className="text-2xl font-black text-white uppercase tracking-wider">{skill?.name || 'Unknown'}</h2>
-            <span className={`text-[10px] font-black px-3 py-1 rounded-md border mt-2 inline-block ${getRarityColor(skill?.rarity)}`}>
-              {skill?.rarity?.toUpperCase() || 'COMMON'}
-            </span>
-          </div>
-        </div>
+         {/* Skill Icon & Name */}
+         <div className="flex flex-col items-center gap-4">
+            <RarityIcon
+              rarity={getRarityCode(skill?.rarity)}
+              size="lg"
+            >
+              <Zap size={40} className="text-[#F5C76B]" />
+            </RarityIcon>
+           
+           <div className="text-center">
+             <h2 className="text-2xl font-black text-white uppercase tracking-wider">{skill?.name || 'Unknown'}</h2>
+             <span className={`text-[10px] font-black px-3 py-1 rounded-md border mt-2 inline-block ${getRarityColor(skill?.rarity)}`}>
+               {skill?.rarity?.toUpperCase() || 'COMMON'}
+             </span>
+           </div>
+         </div>
 
-        {/* Description */}
-        {skill?.description && (
-          <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
-            <p className="text-white/80 text-sm text-center leading-relaxed">{skill.description}</p>
-          </div>
-        )}
+          {/* Description */}
+          {skill?.description && (
+            <NineSlicePanel
+              type="border"
+              variant="default"
+              className="p-4"
+              glassmorphism={true}
+            >
+              <p className="text-white/80 text-sm text-center leading-relaxed">{skill.description}</p>
+            </NineSlicePanel>
+          )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock size={14} className="text-white/40" />
-              <span className="text-[10px] font-black text-white/40 uppercase tracking-wider">Cooldown</span>
-            </div>
-            <p className="text-xl font-black text-white">{skill?.cooldown || 0}</p>
-          </div>
-
-          <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap size={14} className="text-[#F5C76B]" />
-              <span className="text-[10px] font-black text-white/40 uppercase tracking-wider">Power</span>
-            </div>
-            <p className="text-xl font-black text-white">{scaling?.mult || effect?.power || 1.0}x</p>
-          </div>
-        </div>
-
-        {/* Effect Details */}
-        {effect && Object.keys(effect).length > 0 && (
-          <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
-            <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-3">Efectos</h3>
-            <div className="space-y-2">
-              {effect.type && (
-                <div className="flex items-center gap-3">
-                  {getEffectIcon(effect.type)}
-                  <span className="text-white text-sm font-bold uppercase">{effect.type}</span>
-                </div>
-              )}
-              {effect.scaling && (
-                <div className="flex items-center gap-2 text-[12px] text-white/60">
-                  <span className="font-black">Scaling:</span>
-                  <span className="uppercase">{effect.scaling}</span>
-                </div>
-              )}
-              {effect.target && (
-                <div className="flex items-center gap-2 text-[12px] text-white/60">
-                  <span className="font-black">Target:</span>
-                  <span className="uppercase">{effect.target.replace('_', ' ')}</span>
-                </div>
-              )}
-              {effect.status && (
-                <div className="flex items-center gap-2 text-[12px] text-white/60">
-                  <span className="font-black">Status:</span>
-                  <span className="uppercase">{effect.status}</span>
-                </div>
-              )}
-              {effect.chance && (
-                <div className="flex items-center gap-2 text-[12px] text-white/60">
-                  <span className="font-black">Chance:</span>
-                  <span>{Math.floor(effect.chance * 100)}%</span>
-                </div>
-              )}
-              {effect.duration && (
-                <div className="flex items-center gap-2 text-[12px] text-white/60">
-                  <span className="font-black">Duration:</span>
-                  <span>{effect.duration} turns</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Scaling Info */}
-        {scaling && scaling.stat && (
-          <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
-            <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-3">Scaling</h3>
-            <div className="flex items-center gap-3">
-              <Zap size={16} className="text-[#F5C76B]" />
-              <div>
-                <p className="text-white text-sm font-bold uppercase">{scaling.stat}</p>
-                <p className="text-[10px] text-white/40">Multiplier: {scaling.mult}x</p>
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <NineSlicePanel
+              type="border"
+              variant="default"
+              className="p-4"
+              glassmorphism={true}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Clock size={14} className="text-white/40" />
+                <span className="text-[10px] font-black text-white/40 uppercase tracking-wider">Cooldown</span>
               </div>
-            </div>
+              <p className="text-xl font-black text-white">{skill?.cooldown || 0}</p>
+            </NineSlicePanel>
+
+            <NineSlicePanel
+              type="border"
+              variant="default"
+              className="p-4"
+              glassmorphism={true}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Zap size={14} className="text-[#F5C76B]" />
+                <span className="text-[10px] font-black text-white/40 uppercase tracking-wider">Power</span>
+              </div>
+              <p className="text-xl font-black text-white">{scaling?.mult || effect?.power || 1.0}x</p>
+            </NineSlicePanel>
           </div>
-        )}
+
+          {/* Effect Details */}
+          {effect && Object.keys(effect).length > 0 && (
+            <NineSlicePanel
+              type="border"
+              variant="default"
+              className="p-4"
+              glassmorphism={true}
+            >
+              <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-3">Efectos</h3>
+              <div className="space-y-2">
+                {effect.type && (
+                  <div className="flex items-center gap-3">
+                    {getEffectIcon(effect.type)}
+                    <span className="text-white text-sm font-bold uppercase">{effect.type}</span>
+                  </div>
+                )}
+                {effect.scaling && (
+                  <div className="flex items-center gap-2 text-[12px] text-white/60">
+                    <span className="font-black">Scaling:</span>
+                    <span className="uppercase">{effect.scaling}</span>
+                  </div>
+                )}
+                {effect.target && (
+                  <div className="flex items-center gap-2 text-[12px] text-white/60">
+                    <span className="font-black">Target:</span>
+                    <span className="uppercase">{effect.target.replace('_', ' ')}</span>
+                  </div>
+                )}
+                {effect.status && (
+                  <div className="flex items-center gap-2 text-[12px] text-white/60">
+                    <span className="font-black">Status:</span>
+                    <span className="uppercase">{effect.status}</span>
+                  </div>
+                )}
+                {effect.chance && (
+                  <div className="flex items-center gap-2 text-[12px] text-white/60">
+                    <span className="font-black">Chance:</span>
+                    <span>{Math.floor(effect.chance * 100)}%</span>
+                  </div>
+                )}
+                {effect.duration && (
+                  <div className="flex items-center gap-2 text-[12px] text-white/60">
+                    <span className="font-black">Duration:</span>
+                    <span>{effect.duration} turns</span>
+                  </div>
+                )}
+              </div>
+            </NineSlicePanel>
+          )}
+
+          {/* Scaling Info */}
+          {scaling && scaling.stat && (
+            <NineSlicePanel
+              type="border"
+              variant="default"
+              className="p-4"
+              glassmorphism={true}
+            >
+              <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-3">Scaling</h3>
+              <div className="flex items-center gap-3">
+                <Zap size={16} className="text-[#F5C76B]" />
+                <div>
+                  <p className="text-white text-sm font-bold uppercase">{scaling.stat}</p>
+                  <p className="text-[10px] text-white/40">Multiplier: {scaling.mult}x</p>
+                </div>
+              </div>
+            </NineSlicePanel>
+          )}
       </div>
 
       {/* Actions */}

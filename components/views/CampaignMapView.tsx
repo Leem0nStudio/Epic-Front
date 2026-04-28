@@ -1,4 +1,4 @@
-'use client';
+'use client'; 
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -12,6 +12,7 @@ import {
   Sword
 } from 'lucide-react';
 import { CampaignService } from '@/lib/services/campaign-service';
+import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { Chapter, Stage, PlayerStageProgress } from '@/lib/rpg-system/campaign-types';
 import { ViewType } from '@/hooks/useGameState';
 
@@ -59,10 +60,14 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
     );
   }
 
-  return (
+   return (
     <div className="flex flex-col h-full bg-[#020508] overflow-hidden relative">
       {/* Header */}
-      <div className="p-6 flex items-center justify-between border-b border-white/5 bg-[#0B1A2A] z-10">
+      <NineSlicePanel
+        type="panel"
+        variant="default"
+        className="p-6 flex items-center justify-between border-b border-white/5 z-10"
+      >
         <button
           onClick={() => onNavigate('home')}
           className="text-white/40 hover:text-white flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors"
@@ -73,11 +78,11 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
           <span className="text-[10px] text-[#F5C76B] font-black uppercase tracking-[0.4em] italic">Campaña</span>
           <span className="text-[9px] text-white/20 font-mono tracking-widest mt-0.5 uppercase">Etherea Chronicles</span>
         </div>
-        <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+        <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full border border-white/10">
           <Zap size={12} className="text-[#F5C76B] fill-current" />
           <span className="text-[10px] font-black text-white">{playerEnergy}</span>
         </div>
-      </div>
+      </NineSlicePanel>
 
       {/* Map Content */}
       <div className="flex-1 overflow-y-auto p-6 relative">
@@ -104,18 +109,22 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
             const stars = getStageStars(stage.id);
 
             return (
-              <motion.button
+              <NineSlicePanel
                 key={stage.id}
+                type="border"
+                variant="default"
+                className={`group relative flex items-center gap-4 p-4 rounded-3xl transition-all ${
+                  unlocked
+                  ? 'hover:border-[#F5C76B]/40 cursor-pointer active:scale-[0.98]'
+                  : 'opacity-40 grayscale cursor-not-allowed'
+                }`}
+                style={{ backgroundColor: unlocked ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.4)' }}
+                onClick={() => unlocked && onSelectStage(stage)}
+                as={motion.button}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.1 }}
                 disabled={!unlocked}
-                onClick={() => onSelectStage(stage)}
-                className={`group relative flex items-center gap-4 p-4 rounded-3xl border transition-all ${
-                  unlocked
-                  ? 'bg-white/5 border-white/10 hover:border-[#F5C76B]/40 hover:bg-white/10 active:scale-[0.98]'
-                  : 'bg-black/40 border-white/5 opacity-40 grayscale'
-                }`}
               >
                 {/* Index / Status */}
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border ${
@@ -157,7 +166,7 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
                 {unlocked && (
                   <div className="absolute inset-0 bg-gradient-to-r from-[#F5C76B]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-3xl" />
                 )}
-              </motion.button>
+              </NineSlicePanel>
             );
           })}
         </div>

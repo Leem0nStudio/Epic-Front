@@ -1,5 +1,8 @@
 'use client';
 import { AssetService } from '@/lib/services/asset-service';
+import { UIService } from '@/lib/services/ui-service';
+import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
+import { RarityIcon } from '@/components/ui/RarityIcon';
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Box, Sparkles, Sword, Search, Filter } from 'lucide-react';
@@ -93,9 +96,12 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
               if (search && !i.def?.name?.toLowerCase().includes(search.toLowerCase()) && !i.item_id?.toLowerCase().includes(search.toLowerCase())) return false;
               return true;
             }).map((item) => (
-                <motion.div
+                <NineSlicePanel
                   key={item.id}
-                  whileHover={{ x: 4 }}
+                  type="border"
+                  variant="default"
+                  className="p-4 flex items-center gap-4 hover:opacity-90 transition-all cursor-pointer group relative"
+                  style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
                   onClick={() => {
                     if (targetSlot) {
                       onEquip(item);
@@ -105,24 +111,28 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
                       setSelectedItem(item);
                     }
                   }}
-                  className="bg-black/40 border border-white/5 p-4 rounded-2xl flex items-center gap-4 hover:border-white/10 transition-all cursor-pointer group"
+                  as={motion.div}
+                  whileHover={{ x: 4 }}
                 >
-                    <div className="w-14 h-14 bg-black/60 border border-white/10 rounded-xl flex items-center justify-center shrink-0 relative overflow-hidden">
-                        {item.item_type === 'weapon' ? <Sword size={24} className="text-[#F5C76B]" /> :
+                    <RarityIcon
+                      rarity={item.def?.rarity || 'C'}
+                      size="md"
+                      className="shrink-0"
+                    >
+                      {item.item_type === 'weapon' ? <Sword size={24} className="text-[#F5C76B]" /> :
                        item.item_type === 'card' ? <Sparkles size={24} className="text-purple-400" /> :
                        item.item_type === 'job_core' ? <img src={AssetService.getIconUrl(AssetService.getJobIconId(item.item_id.replace('core_', '')))} className="w-8 h-8 object-contain" /> :
                        <Box size={24} className="text-cyan-400" />}
-                        <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
+                    </RarityIcon>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-0.5">
                           <span className="font-black text-white uppercase tracking-wider text-sm truncate">{item.def?.name || item.item_id}</span>
-                          <span className="text-[8px] font-black text-[#F5C76B] bg-[#F5C76B]/10 px-1.5 rounded-sm border border-[#F5C76B]/20">{item.def?.rarity || 'UR'}</span>
+                          <span className="text-[8px] font-black text-[#F5C76B] bg-[#F5C76B]/10 px-1.5 rounded-sm border border-[#F5C76B]/20">{item.def?.rarity || 'C'}</span>
                         </div>
                         <p className="text-[10px] text-white/40 leading-tight uppercase font-bold tracking-tight line-clamp-2">{item.def?.description || item.item_type}</p>
                         {item.quantity > 1 && <span className="text-[10px] text-white/40 mt-1">x{item.quantity}</span>}
                     </div>
-                </motion.div>
+                </NineSlicePanel>
             ))}
 
             {items.filter(i => {
@@ -138,57 +148,65 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
          </div>
        )}
 
-       {selectedItem && !targetSlot && (
-         <motion.div
-           initial={{ opacity: 0 }}
-           animate={{ opacity: 1 }}
-           className="absolute inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col p-6 overflow-y-auto"
-         >
-           <div className="flex items-center justify-between mb-6">
-             <button onClick={() => setSelectedItem(null)} className="p-2 bg-black/40 border border-white/10 rounded-xl text-white/60 hover:text-white transition-colors">
-               <ChevronLeft size={20} />
-             </button>
-             <h2 className="text-lg font-black text-white tracking-widest uppercase">Detalles</h2>
-             <div className="w-8" />
-           </div>
+        {selectedItem && !targetSlot && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col p-6 overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <button onClick={() => setSelectedItem(null)} className="p-2 bg-black/40 border border-white/10 rounded-xl text-white/60 hover:text-white transition-colors">
+                <ChevronLeft size={20} />
+              </button>
+              <h2 className="text-lg font-black text-white tracking-widest uppercase">Detalles</h2>
+              <div className="w-8" />
+            </div>
 
-           <div className="flex-1 flex flex-col items-center justify-center gap-6">
-             <div className="w-24 h-24 bg-black/60 border border-white/10 rounded-2xl flex items-center justify-center">
-               {selectedItem.item_type === 'weapon' ? <Sword size={40} className="text-[#F5C76B]" /> :
-                selectedItem.item_type === 'card' ? <Sparkles size={40} className="text-purple-400" /> :
-                selectedItem.item_type === 'skill_scroll' ? <Sparkles size={40} className="text-cyan-400" /> :
-                <Box size={40} className="text-white/40" />}
-             </div>
+            <div className="flex-1 flex flex-col items-center justify-center gap-6">
+              <RarityIcon
+                rarity={selectedItem.def?.rarity || 'C'}
+                size="lg"
+              >
+                {selectedItem.item_type === 'weapon' ? <Sword size={40} className="text-[#F5C76B]" /> :
+                 selectedItem.item_type === 'card' ? <Sparkles size={40} className="text-purple-400" /> :
+                 selectedItem.item_type === 'skill_scroll' ? <Sparkles size={40} className="text-cyan-400" /> :
+                 <Box size={40} className="text-white/40" />}
+              </RarityIcon>
 
-             <div className="text-center">
-               <h3 className="text-xl font-black text-white uppercase">{selectedItem.def?.name || selectedItem.item_id}</h3>
-               <span className="text-[10px] font-black text-[#F5C76B] bg-[#F5C76B]/10 px-2 py-0.5 rounded-sm border border-[#F5C76B]/20 mt-2 inline-block">
-                 {selectedItem.def?.rarity || 'UR'}
-               </span>
-             </div>
+              <div className="text-center">
+                <h3 className="text-xl font-black text-white uppercase">{selectedItem.def?.name || selectedItem.item_id}</h3>
+                <span className="text-[10px] font-black text-[#F5C76B] bg-[#F5C76B]/10 px-2 py-0.5 rounded-sm border border-[#F5C76B]/20 mt-2 inline-block">
+                  {selectedItem.def?.rarity || 'C'}
+                </span>
+              </div>
 
-             <p className="text-[12px] text-white/60 text-center leading-relaxed max-w-xs">
-               {selectedItem.def?.description || 'Sin descripción'}
-             </p>
+              <p className="text-[12px] text-white/60 text-center leading-relaxed max-w-xs">
+                {selectedItem.def?.description || 'Sin descripción'}
+              </p>
 
-             {selectedItem.quantity > 1 && (
-               <p className="text-[12px] text-white/40">Cantidad: x{selectedItem.quantity}</p>
-             )}
+              {selectedItem.quantity > 1 && (
+                <p className="text-[12px] text-white/40">Cantidad: x{selectedItem.quantity}</p>
+              )}
 
-             <div className="w-full bg-black/40 rounded-2xl p-4 border border-white/5">
-               <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Tipo</p>
-               <p className="text-white text-sm">{selectedItem.item_type}</p>
-             </div>
-           </div>
+              <NineSlicePanel
+                type="border"
+                variant="default"
+                className="w-full p-4"
+                style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
+              >
+                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Tipo</p>
+                <p className="text-white text-sm">{selectedItem.item_type}</p>
+              </NineSlicePanel>
+            </div>
 
-           <button
-             onClick={() => setSelectedItem(null)}
-             className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors mt-4"
-           >
-             Cerrar
-           </button>
-         </motion.div>
-       )}
+            <button
+              onClick={() => setSelectedItem(null)}
+              className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors mt-4"
+            >
+              Cerrar
+            </button>
+          </motion.div>
+        )}
 
        {selectedSkill && (
          <SkillDetailView

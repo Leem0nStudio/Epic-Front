@@ -1,5 +1,6 @@
 'use client';
 import { AssetService } from '@/lib/services/asset-service';
+import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, UserPlus, Clock, Star, Sword, Heart, Zap, Trash2 } from 'lucide-react';
@@ -45,86 +46,94 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
         <h1 className="text-xl font-black text-white tracking-widest uppercase italic">Gremio de Reclutamiento</h1>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar z-10">
-        {saveData.tavernSlots.map((slot: any) => {
-          const unit = slot.unit_data;
-          const availableAt = new Date(slot.available_at).getTime();
-          const isReady = currentTime >= availableAt;
-          const timeLeft = Math.max(0, Math.floor((availableAt - currentTime) / 1000));
+       <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar z-10">
+         {saveData.tavernSlots.map((slot: any) => {
+           const unit = slot.unit_data;
+           const availableAt = new Date(slot.available_at).getTime();
+           const isReady = currentTime >= availableAt;
+           const timeLeft = Math.max(0, Math.floor((availableAt - currentTime) / 1000));
 
-          const hours = Math.floor(timeLeft / 3600);
-          const mins = Math.floor((timeLeft % 3600) / 60);
-          const secs = timeLeft % 60;
+           const hours = Math.floor(timeLeft / 3600);
+           const mins = Math.floor((timeLeft % 3600) / 60);
+           const secs = timeLeft % 60;
 
-          return (
-            <motion.div
-              key={slot.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className={`bg-black/40 border border-white/5 p-5 rounded-3xl relative overflow-hidden transition-all ${isReady ? 'border-[#F5C76B]/40 shadow-[0_0_20px_rgba(245,199,107,0.1)]' : 'opacity-60'}`}
-            >
-              {!isReady && (
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2 z-20">
-                  <Clock size={32} className="text-white/40" />
-                  <p className="text-sm font-black text-white/60 tracking-widest font-mono">
-                    {hours.toString().padStart(2, '0')}:{mins.toString().padStart(2, '0')}:{secs.toString().padStart(2, '0')}
-                  </p>
-                </div>
-              )}
+           return (
+             <NineSlicePanel
+               key={slot.id}
+               type="border"
+               variant="default"
+               className={`p-5 relative overflow-hidden transition-all ${isReady ? 'hover:border-[#F5C76B]/40' : 'opacity-60'}`}
+               glassmorphism={true}
+               as={motion.div}
+               initial={{ opacity: 0, x: -20 }}
+               animate={{ opacity: 1, x: 0 }}
+             >
+               {!isReady && (
+                 <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2 z-20">
+                   <Clock size={32} className="text-white/40" />
+                   <p className="text-sm font-black text-white/60 tracking-widest font-mono">
+                     {hours.toString().padStart(2, '0')}:{mins.toString().padStart(2, '0')}:{secs.toString().padStart(2, '0')}
+                   </p>
+                 </div>
+               )}
 
-              <div className="flex gap-6">
-                <div className="w-24 h-24 bg-black/60 rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-                  <img src={AssetService.getSpriteUrl(unit.spriteId)} className="w-[180%] transform translate-y-3" style={{imageRendering: 'pixelated'}} alt="Unit Sprite" />
-                </div>
+               <div className="flex gap-6">
+                 <div className="w-24 h-24 bg-black/60 rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                   <img src={AssetService.getSpriteUrl(unit.spriteId)} className="w-[180%] transform translate-y-3" style={{imageRendering: 'pixelated'}} alt="Unit Sprite" />
+                 </div>
 
-                <div className="flex-1 flex flex-col justify-center">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                        <h3 className="font-black text-white text-lg tracking-wider uppercase">{unit.name}</h3>
-                        <div className="flex items-center gap-1 bg-[#F5C76B]/10 px-1.5 py-0.5 rounded border border-[#F5C76B]/20">
-                          <img src={AssetService.getIconUrl(unit.iconId)} className="w-3 h-3 object-contain" />
-                          <span className="text-[10px] font-black text-[#F5C76B] italic">NOVICE</span>
-                        </div>
-                    </div>
-                    {isReady && (
-                        <button onClick={() => handleDiscard(slot.id)} className="text-white/20 hover:text-red-400 transition-colors">
-                            <Trash2 size={16} />
-                        </button>
-                    )}
-                  </div>
+                 <div className="flex-1 flex flex-col justify-center">
+                   <div className="flex items-center justify-between mb-1">
+                     <div className="flex items-center gap-2">
+                         <h3 className="font-black text-white text-lg tracking-wider uppercase">{unit.name}</h3>
+                         <div className="flex items-center gap-1 bg-[#F5C76B]/10 px-1.5 py-0.5 rounded border border-[#F5C76B]/20">
+                           <img src={AssetService.getIconUrl(unit.iconId)} className="w-3 h-3 object-contain" />
+                           <span className="text-[10px] font-black text-[#F5C76B] italic">NOVICE</span>
+                         </div>
+                     </div>
+                     {isReady && (
+                         <button onClick={() => handleDiscard(slot.id)} className="text-white/20 hover:text-red-400 transition-colors">
+                             <Trash2 size={16} />
+                         </button>
+                     )}
+                   </div>
 
-                  <div className="flex gap-4 mt-2">
-                    <div className="flex flex-col">
-                      <span className="text-[8px] font-black text-white/40 uppercase tracking-tighter">Afinidad</span>
-                      <span className="text-[10px] font-bold text-white uppercase">{unit.affinity}</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[8px] font-black text-white/40 uppercase tracking-tighter">Rasgo</span>
-                      <span className="text-[10px] font-bold text-[#F5C76B] uppercase">{unit.trait || 'Ninguno'}</span>
-                    </div>
-                  </div>
+                   <div className="flex gap-4 mt-2">
+                     <div className="flex flex-col">
+                       <span className="text-[8px] font-black text-white/40 uppercase tracking-tighter">Afinidad</span>
+                       <span className="text-[10px] font-bold text-white uppercase">{unit.affinity}</span>
+                     </div>
+                     <div className="flex flex-col">
+                       <span className="text-[8px] font-black text-white/40 uppercase tracking-tighter">Ataque</span>
+                       <span className="text-[10px] font-bold text-[#F5C76B]"><Sword size={10} className="inline mr-1" />{unit.baseStats.atk}</span>
+                     </div>
+                     <div className="flex flex-col">
+                       <span className="text-[8px] font-black text-white/40 uppercase tracking-tighter">HP</span>
+                       <span className="text-[10px] font-bold text-red-400"><Heart size={10} className="inline mr-1" />{unit.baseStats.hp}</span>
+                     </div>
+                     <div className="flex flex-col">
+                       <span className="text-[8px] font-black text-white/40 uppercase tracking-tighter">Velocidad</span>
+                       <span className="text-[10px] font-bold text-cyan-400"><Zap size={10} className="inline mr-1" />{unit.baseStats.spd}</span>
+                     </div>
+                   </div>
+                 </div>
 
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3">
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-white/60"><Sword size={10} className="text-[#F5C76B]" /> {unit.base_stats?.atk || unit.baseStats?.atk}</div>
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-white/60"><Heart size={10} className="text-red-400" /> {unit.base_stats?.hp || unit.baseStats?.hp}</div>
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-white/60"><Zap size={10} className="text-cyan-400" /> {unit.base_stats?.agi || unit.baseStats?.agi}</div>
-                  </div>
-                </div>
-              </div>
-
-              {isReady && (
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => onClaim(slot.id)}
-                  className="w-full mt-5 bg-gradient-to-r from-[#F5C76B] to-[#b88c3a] text-black font-black py-3 rounded-xl uppercase tracking-[0.2em] text-xs shadow-xl flex items-center justify-center gap-2"
-                >
-                  <UserPlus size={16} /> Reclutar Unidad
-                </motion.button>
-              )}
-            </motion.div>
-          );
-        })}
+                 {isReady && (
+                   <div className="flex items-center">
+                     <motion.button
+                       whileHover={{ scale: 1.05 }}
+                       whileTap={{ scale: 0.9 }}
+                       onClick={() => onClaim(slot.id)}
+                       className="px-6 py-3 bg-gradient-to-r from-[#F5C76B] to-[#b88c3a] rounded-2xl text-black text-[10px] font-black uppercase tracking-widest hover:shadow-[0_0_20px_rgba(245,199,107,0.4)] transition-all"
+                     >
+                       Reclutar
+                     </motion.button>
+                   </div>
+                 )}
+               </div>
+             </NineSlicePanel>
+           );
+         })}
 
         {saveData.tavernSlots.length === 0 && (
           <div className="flex-1 flex flex-col items-center justify-center py-20 text-center gap-4 opacity-40">

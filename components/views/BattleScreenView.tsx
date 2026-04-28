@@ -1,5 +1,6 @@
 'use client';
 import { AssetService } from '@/lib/services/asset-service';
+import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -326,59 +327,69 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
        </div>
       </div>
 
-      {/* BOTTOM: Unit Cards & Skill Bar */}
-      <div className="relative z-30 pb-8 px-4 flex flex-col gap-6">
-        {/* Unit Cards Grid - Improved with more detail */}
-        <div className="grid grid-cols-4 gap-3">
-          {playerUnits.map((unit) => (
-            <UnitCard key={unit.id} unit={unit} isActive={unit.id === activeUnitId} />
-          ))}
-        </div>
+       {/* BOTTOM: Unit Cards & Skill Bar */}
+       <div className="relative z-30 pb-8 px-4 flex flex-col gap-6">
+         {/* Unit Cards Grid - Improved with more detail */}
+         <div className="grid grid-cols-4 gap-3">
+           {playerUnits.map((unit) => (
+             <UnitCard key={unit.id} unit={unit} isActive={unit.id === activeUnitId} />
+           ))}
+         </div>
 
-        {/* Skill Selection Bar - More Premium */}
-        <div className="flex items-center gap-4 bg-[#0B1A2A]/80 backdrop-blur-2xl p-4 rounded-[2.5rem] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,1)] relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#F5C76B]/5 via-transparent to-transparent" />
-          
-          <div className="flex-1 flex gap-3">
-            {currentActor?.side === 'player' && currentActor.skills.map(skill => (
-              <SkillButton 
-                key={skill.id} 
-                skill={skill} 
-                onUse={() => runTurn(currentActor, skill, targetId || undefined)} 
-                cooldown={currentActor.cooldowns[skill.id]}
-              />
-            ))}
-          </div>
+         {/* Skill Selection Bar - More Premium */}
+         <NineSlicePanel
+           type="border"
+           variant="default"
+           className="p-4 flex items-center gap-4 relative overflow-hidden"
+           glassmorphism={true}
+         >
+           <div className="absolute inset-0 bg-gradient-to-r from-[#F5C76B]/5 via-transparent to-transparent pointer-events-none" />
+           
+           <div className="flex-1 flex gap-3">
+             {currentActor?.side === 'player' && currentActor.skills.map(skill => (
+               <SkillButton 
+                 key={skill.id} 
+                 skill={skill} 
+                 onUse={() => runTurn(currentActor, skill, targetId || undefined)} 
+                 cooldown={currentActor.cooldowns[skill.id]}
+               />
+             ))}
+           </div>
 
-          <motion.button 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.9 }}
-            className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#991b1b] via-[#ef4444] to-[#f87171] p-1 shadow-[0_0_30px_rgba(239,68,68,0.4)] group relative overflow-hidden"
-          >
-             <div className="w-full h-full bg-[#0B1A2A]/90 rounded-full flex flex-col items-center justify-center border-2 border-white/20">
-                <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5 }} className="absolute inset-0 bg-white/10 rounded-full" />
-                <span className="text-[7px] font-black text-white/60 uppercase tracking-widest leading-none mb-0.5">Burst</span>
-                <span className="text-[11px] font-black text-white uppercase leading-none italic drop-shadow-lg">ULTRA</span>
-             </div>
-          </motion.button>
-        </div>
-      </div>
+           <motion.button 
+             whileHover={{ scale: 1.05 }}
+             whileTap={{ scale: 0.9 }}
+             className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#991b1b] via-[#ef4444] to-[#f87171] p-1 shadow-[0_0_30px_rgba(239,68,68,0.4)] group relative overflow-hidden"
+           >
+              <div className="w-full h-full bg-[#0B1A2A]/90 rounded-full flex flex-col items-center justify-center border-2 border-white/20">
+                 <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5 }} className="absolute inset-0 bg-white/10 rounded-full" />
+                 <span className="text-[7px] font-black text-white/60 uppercase tracking-widest leading-none mb-0.5">Burst</span>
+                 <span className="text-[11px] font-black text-white uppercase leading-none italic drop-shadow-lg">ULTRA</span>
+              </div>
+           </motion.button>
+         </NineSlicePanel>
+       </div>
 
-      {/* Battle Log Terminal Overlay */}
-      <div className="absolute top-40 left-4 pointer-events-none z-20">
-        <div className="max-h-[120px] overflow-hidden flex flex-col gap-1">
-          {battleLog.slice(-5).map((log, i) => (
-            <motion.div 
-              key={i}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-black/30 backdrop-blur-sm border-l-2 border-[#F5C76B]/40 px-3 py-1 rounded-r-lg"
-            >
-              <span className="text-[7px] font-mono text-white/70 uppercase tracking-widest">{log}</span>
-            </motion.div>
-          ))}
-        </div>
-      </div>
+       {/* Battle Log Terminal Overlay */}
+       <div className="absolute top-40 left-4 pointer-events-none z-20">
+         <NineSlicePanel
+           type="border"
+           variant="transparent"
+           className="max-h-[120px] overflow-hidden flex flex-col gap-1 p-2"
+           style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+         >
+           {battleLog.slice(-5).map((log, i) => (
+             <motion.div 
+               key={i}
+               initial={{ opacity: 0, x: -20 }}
+               animate={{ opacity: 1, x: 0 }}
+               className="border-l-2 border-[#F5C76B]/40 pl-2 py-0.5"
+             >
+               <span className="text-[7px] font-mono text-white/70 uppercase tracking-widest">{log}</span>
+             </motion.div>
+           ))}
+         </NineSlicePanel>
+       </div>
 
       {/* Victory/Defeat Overlay */}
       <AnimatePresence>
@@ -462,14 +473,14 @@ function PlayerSprite({ unit, isActive }: { unit: CombatUnit, isActive: boolean 
 
 function UnitCard({ unit, isActive }: { unit: CombatUnit, isActive: boolean }) {
   return (
-    <motion.div 
-      animate={{ 
-        borderColor: isActive ? '#F5C76B' : 'rgba(255,255,255,0.1)',
-        backgroundColor: isActive ? 'rgba(245,199,107,0.15)' : 'rgba(11,26,42,0.4)',
-        y: isActive ? -8 : 0,
-        boxShadow: isActive ? '0 10px 30px rgba(245,199,107,0.2)' : '0 4px 10px rgba(0,0,0,0.3)'
+    <NineSlicePanel
+      type="border"
+      variant={isActive ? 'fancy' : 'default'}
+      className="relative flex flex-col p-2.5 overflow-hidden aspect-[3.5/5]"
+      style={{
+        backgroundColor: isActive ? 'rgba(245,199,107,0.15)' : 'rgba(11,26,42,0.6)',
       }}
-      className="relative flex flex-col p-2.5 rounded-2xl border-[1.5px] backdrop-blur-xl overflow-hidden aspect-[3.5/5] transition-shadow group"
+      glassmorphism={true}
     >
       {/* Glossy Overlay */}
       <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent pointer-events-none" />
@@ -515,7 +526,7 @@ function UnitCard({ unit, isActive }: { unit: CombatUnit, isActive: boolean }) {
       <div className="absolute bottom-[-10%] right-[-10%] opacity-5 rotate-12 pointer-events-none">
          <Activity size={60} />
       </div>
-    </motion.div>
+    </NineSlicePanel>
   );
 }
 
@@ -617,59 +628,63 @@ function BattleResult({ winner, completionData, isRecording, onConfirm }: any) {
         className="h-1 bg-gradient-to-r from-transparent via-[#F5C76B] to-transparent mt-4 mb-8"
       />
 
-      {winner === 'player' && completionData && (
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ delay: 0.8 }}
-          className="flex flex-col items-center gap-8 w-full max-w-sm"
-        >
-          <div className="flex gap-6">
-            {[1, 2, 3].map(s => (
-              <motion.div
-                key={s}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 1 + (s * 0.2), type: 'spring' }}
-              >
-                <StarIcon size={48} className={s <= (completionData.stars || 0) ? 'text-[#F5C76B] fill-current drop-shadow-[0_0_15px_rgba(245,199,107,0.5)]' : 'text-white/5'} />
-              </motion.div>
-            ))}
-          </div>
+       {winner === 'player' && completionData && (
+         <motion.div
+           initial={{ opacity: 0, y: 30 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ delay: 0.8 }}
+           className="flex flex-col items-center gap-8 w-full max-w-sm"
+         >
+           <div className="flex gap-6">
+             {[1, 2, 3].map(s => (
+               <motion.div
+                 key={s}
+                 initial={{ scale: 0 }}
+                 animate={{ scale: 1 }}
+                 transition={{ delay: 1 + (s * 0.2), type: 'spring' }}
+               >
+                 <StarIcon size={48} className={s <= (completionData.stars || 0) ? 'text-[#F5C76B] fill-current drop-shadow-[0_0_15px_rgba(245,199,107,0.5)]' : 'text-white/5'} />
+               </motion.div>
+             ))}
+           </div>
 
-          <div className="w-full bg-white/5 border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-md relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
-            <div className="flex items-center justify-center gap-3 mb-6 text-[#F5C76B]">
-               <div className="h-px w-8 bg-[#F5C76B]/40" />
-               <Gift size={18} />
-               <span className="text-[10px] font-black uppercase tracking-[0.4em]">Rewards</span>
-               <div className="h-px w-8 bg-[#F5C76B]/40" />
-            </div>
-            
-            <div className="flex justify-center gap-6">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-16 h-16 rounded-3xl bg-black/40 border border-white/10 flex items-center justify-center shadow-2xl group-hover:border-[#F5C76B]/40 transition-colors">
-                   <div className="w-8 h-8 rounded-full bg-yellow-500/20 border border-yellow-500/50 flex items-center justify-center">
-                      <span className="text-yellow-500 font-bold text-xs">Z</span>
+           <NineSlicePanel
+             type="border"
+             variant="default"
+             className="w-full p-8"
+             glassmorphism={true}
+           >
+             <div className="flex items-center justify-center gap-3 mb-6 text-[#F5C76B]">
+                <div className="h-px w-8 bg-[#F5C76B]/40" />
+                <Gift size={18} />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em]">Rewards</span>
+                <div className="h-px w-8 bg-[#F5C76B]/40" />
+             </div>
+
+             <div className="flex justify-center gap-6">
+               <div className="flex flex-col items-center gap-2">
+                 <div className="w-16 h-16 rounded-3xl bg-black/40 border border-white/10 flex items-center justify-center shadow-2xl hover:border-[#F5C76B]/40 transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-yellow-500/20 border border-yellow-500/50 flex items-center justify-center">
+                       <span className="text-yellow-500 font-bold text-xs">Z</span>
+                    </div>
+                 </div>
+                 <span className="text-sm font-black text-white">+{completionData.rewards.currency}</span>
+                 <span className="text-[7px] font-black text-white/30 uppercase tracking-widest">Zeny</span>
+               </div>
+
+               {completionData.rewards.premium_currency > 0 && (
+                 <div className="flex flex-col items-center gap-2">
+                   <div className="w-16 h-16 rounded-3xl bg-black/40 border border-[#F5C76B]/20 flex items-center justify-center shadow-2xl hover:border-[#F5C76B]/60 transition-colors">
+                      <StarIcon size={24} className="text-[#F5C76B] fill-current" />
                    </div>
-                </div>
-                <span className="text-sm font-black text-white">+{completionData.rewards.currency}</span>
-                <span className="text-[7px] font-black text-white/30 uppercase tracking-widest">Zeny</span>
-              </div>
-
-              {completionData.rewards.premium_currency > 0 && (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-16 h-16 rounded-3xl bg-black/40 border border-[#F5C76B]/20 flex items-center justify-center shadow-2xl group-hover:border-[#F5C76B]/60 transition-colors">
-                     <StarIcon size={24} className="text-[#F5C76B] fill-current" />
-                  </div>
-                  <span className="text-sm font-black text-[#F5C76B]">+{completionData.rewards.premium_currency}</span>
-                  <span className="text-[7px] font-black text-[#F5C76B]/40 uppercase tracking-widest">Gems</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      )}
+                   <span className="text-sm font-black text-[#F5C76B]">+{completionData.rewards.premium_currency}</span>
+                   <span className="text-[7px] font-black text-[#F5C76B]/40 uppercase tracking-widest">Gems</span>
+                 </div>
+               )}
+             </div>
+           </NineSlicePanel>
+         </motion.div>
+       )}
 
       <div className="absolute bottom-12 flex flex-col items-center gap-6">
         {isRecording && (

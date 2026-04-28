@@ -1,10 +1,14 @@
 'use client';
 import { AssetService } from '@/lib/services/asset-service';
+import { UIService } from '@/lib/services/ui-service';
+import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
+import { RarityIcon } from '@/components/ui/RarityIcon';
 
 import React, { useState } from 'react';
 import { ChevronLeft, Sparkles, Diamond, Coins, Star, Sword, Box, ScrollText } from 'lucide-react';
 import { GachaService } from '@/lib/services/gacha-service';
 import { motion, AnimatePresence } from 'motion/react';
+import { getRarityCode } from '@/lib/config/assets-config';
 
 interface GachaViewProps {
   profile: any;
@@ -36,6 +40,15 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
     }
   };
 
+  // Get appropriate icon for item type
+  const getItemIcon = (item: any) => {
+    if (item.item_type === 'weapon') return <Sword size={24} className="text-white/80" />;
+    if (item.item_type === 'card') return <Sparkles size={24} className="text-white/80" />;
+    if (item.item_type === 'skill') return <ScrollText size={24} className="text-white/80" />;
+    if (item.item_type === 'job_core') return <img src={AssetService.getIconUrl(AssetService.getJobIconId(item.item_id.replace('core_', '')))} className="w-8 h-8 object-contain" />;
+    return <Box size={24} className="text-white/80" />;
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#0B1A2A] bg-cover bg-center bg-no-repeat p-4 overflow-hidden relative" style={{ backgroundImage: `url('${AssetService.getBgUrl('gacha')}')` }}>
       <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 via-transparent to-transparent pointer-events-none" />
@@ -62,39 +75,39 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
       <div className="flex-1 flex flex-col items-center justify-center relative z-10">
         <AnimatePresence mode="wait">
           {results.length > 0 ? (
-            <motion.div
-              key="results"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.1 }}
-              className="grid grid-cols-5 gap-3 w-full max-w-md bg-black/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-2xl"
-            >
+               <NineSlicePanel
+                 key="results"
+                 type="border"
+                 variant="default"
+                 className="grid grid-cols-5 gap-3 w-full max-w-md p-6 rounded-3xl shadow-2xl"
+                 style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(24px)' }}
+                 as={motion.div}
+                 initial={{ opacity: 0, scale: 0.8 }}
+                 animate={{ opacity: 1, scale: 1 }}
+                 exit={{ opacity: 0, scale: 1.1 }}
+               >
               <div className="col-span-5 flex items-center justify-between mb-2">
                 <h2 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Resultados de Invocación</h2>
                 <button onClick={() => setResults([])} className="text-[10px] font-black text-[#F5C76B] uppercase">Cerrar</button>
               </div>
-              {results.map((item, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="flex flex-col items-center gap-2"
-                >
-                  <div className={`w-full aspect-square rounded-xl bg-gradient-to-br ${rarityColor(item.item_rarity)} p-0.5 shadow-lg`}>
-                    <div className="w-full h-full bg-black/40 rounded-[10px] flex items-center justify-center relative overflow-hidden">
-                      {item.item_type === 'weapon' ? <Sword size={24} className="text-white/80" /> :
-                     item.item_type === 'card' ? <Sparkles size={24} className="text-white/80" /> :
-                     item.item_type === 'skill' ? <ScrollText size={24} className="text-white/80" /> :
-                     item.item_type === 'job_core' ? <img src={AssetService.getIconUrl(AssetService.getJobIconId(item.item_id.replace('core_', '')))} className="w-8 h-8 object-contain" /> :
-                     <Box size={24} className="text-white/80" />}
-                      <div className="absolute inset-0 bg-white/5 animate-pulse" />
-                    </div>
-                  </div>
-                  <span className="text-[7px] font-black text-white/60 uppercase truncate w-full text-center tracking-tighter">{item.item_name}</span>
-                </motion.div>
-              ))}
-            </motion.div>
+               {results.map((item, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    <RarityIcon
+                      rarity={getRarityCode(item.item_rarity)}
+                      size="md"
+                    >
+                      {getItemIcon(item)}
+                    </RarityIcon>
+                    <span className="text-[7px] font-black text-white/60 uppercase truncate w-full text-center tracking-tighter">{item.item_name}</span>
+                  </motion.div>
+                ))}
+             </NineSlicePanel>
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center">
               <motion.div
@@ -109,46 +122,54 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
                 <Sparkles size={120} className="text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]" />
               </motion.div>
 
-              <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  disabled={isPulling}
-                  onClick={() => handlePull(1, 'soft')}
-                  className="bg-black/40 backdrop-blur-md border border-white/5 p-6 rounded-3xl flex flex-col items-center gap-3 hover:bg-white/5 transition-colors relative overflow-hidden group"
-                >
-                  <div className="absolute top-0 inset-x-0 h-1 bg-[#F5C76B]/20" />
-                  <Coins size={24} className="text-[#F5C76B]" />
-                  <div className="text-center">
-                    <p className="text-[10px] font-black text-white/40 tracking-widest mb-1">NORMAL</p>
-                    <p className="text-lg font-black text-white">x1</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-2 opacity-60">
-                    <Coins size={12} className="text-[#F5C76B]" />
-                    <span className="text-xs font-bold text-white">100</span>
-                  </div>
-                </motion.button>
+               <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
+                 <NineSlicePanel
+                   type="border"
+                   variant="default"
+                   className="p-6 flex flex-col items-center gap-3 hover:opacity-90 transition-colors relative overflow-hidden cursor-pointer"
+                   style={{ backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(12px)' }}
+                   onClick={() => handlePull(1, 'soft')}
+                   as={motion.button}
+                   whileHover={{ scale: 1.02 }}
+                   whileTap={{ scale: 0.98 }}
+                   disabled={isPulling}
+                 >
+                   <div className="absolute top-0 inset-x-0 h-1 bg-[#F5C76B]/20" />
+                   <Coins size={24} className="text-[#F5C76B]" />
+                   <div className="text-center">
+                     <p className="text-[10px] font-black text-white/40 tracking-widest mb-1">NORMAL</p>
+                     <p className="text-lg font-black text-white">x1</p>
+                   </div>
+                   <div className="flex items-center gap-1.5 mt-2 opacity-60">
+                     <Coins size={12} className="text-[#F5C76B]" />
+                     <span className="text-xs font-bold text-white">100</span>
+                   </div>
+                 </NineSlicePanel>
 
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  disabled={isPulling}
-                  onClick={() => handlePull(10, 'premium')}
-                  className="bg-gradient-to-br from-[#1a1c2e] to-[#0B1A2A] border border-cyan-500/20 p-6 rounded-3xl flex flex-col items-center gap-3 hover:border-cyan-500/40 transition-all relative overflow-hidden group shadow-xl"
-                >
-                  <div className="absolute top-0 inset-x-0 h-1 bg-cyan-500/40" />
-                  <Diamond size={24} className="text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)]" />
-                  <div className="text-center">
-                    <p className="text-[10px] font-black text-cyan-400/60 tracking-widest mb-1">PREMIUM</p>
-                    <p className="text-lg font-black text-white">x10</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <Diamond size={12} className="text-cyan-400" />
-                    <span className="text-xs font-bold text-white">450</span>
-                    <span className="text-[8px] font-black text-cyan-400 bg-cyan-500/10 px-1 rounded-sm ml-1">-10%</span>
-                  </div>
-                </motion.button>
-              </div>
+                  <NineSlicePanel
+                    type="border"
+                    variant="blue"
+                    className="p-6 flex flex-col items-center gap-3 hover:opacity-90 transition-all relative overflow-hidden cursor-pointer"
+                    style={{ backgroundColor: 'rgba(26,28,46,0.6)' }}
+                    onClick={() => handlePull(10, 'premium')}
+                    as={motion.button}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    disabled={isPulling}
+                  >
+                    <div className="absolute top-0 inset-x-0 h-1 bg-cyan-500/40" />
+                    <Diamond size={24} className="text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)]" />
+                    <div className="text-center">
+                      <p className="text-[10px] font-black text-cyan-400/60 tracking-widest mb-1">PREMIUM</p>
+                      <p className="text-lg font-black text-white">x10</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <Diamond size={12} className="text-cyan-400" />
+                      <span className="text-xs font-bold text-white">450</span>
+                      <span className="text-[8px] font-black text-cyan-400 bg-cyan-500/10 px-1 rounded-sm ml-1">-10%</span>
+                    </div>
+                  </NineSlicePanel>
+               </div>
 
               <div className="mt-12 flex flex-col items-center gap-2">
                 <div className="flex items-center gap-3 text-white/40">
