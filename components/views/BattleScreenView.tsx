@@ -1,6 +1,7 @@
 'use client';
 import { AssetService } from '@/lib/services/asset-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
+import { ActionButton } from '@/components/ui/ActionButton';
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -223,7 +224,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
         <div className="relative h-7 bg-black/80 rounded-sm border-x-4 border-[#F5C76B] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
           <motion.div 
             initial={{ width: '100%' }}
-            animate={{ width: `${(totalEnemyHp / maxEnemyHp) * 100}%` }}
+            animate={{ width: `${Math.min((totalEnemyHp / maxEnemyHp) * 100, 100)}%` }}
             className="h-full bg-[linear-gradient(90deg,#991b1b_0%,#ef4444_50%,#f87171_100%)] relative"
           >
              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.3)_0%,transparent_50%,rgba(0,0,0,0.3)_100%)]" />
@@ -356,40 +357,43 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
              ))}
            </div>
 
-           <motion.button 
-             whileHover={{ scale: 1.05 }}
-             whileTap={{ scale: 0.9 }}
-             className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#991b1b] via-[#ef4444] to-[#f87171] p-1 shadow-[0_0_30px_rgba(239,68,68,0.4)] group relative overflow-hidden"
-           >
-              <div className="w-full h-full bg-[#0B1A2A]/90 rounded-full flex flex-col items-center justify-center border-2 border-white/20">
-                 <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5 }} className="absolute inset-0 bg-white/10 rounded-full" />
-                 <span className="text-[7px] font-black text-white/60 uppercase tracking-widest leading-none mb-0.5">Burst</span>
-                 <span className="text-[11px] font-black text-white uppercase leading-none italic drop-shadow-lg">ULTRA</span>
-              </div>
-           </motion.button>
+            <ActionButton 
+              onClick={() => {}} 
+              variant="burst"
+              className="w-16 h-16 rounded-full p-1 shadow-[0_0_30px_rgba(239,68,68,0.4)] group relative"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.9 }}
+            >
+               <div className="w-full h-full bg-[#0B1A2A]/90 rounded-full flex flex-col items-center justify-center border-2 border-white/20">
+                  <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5 }} className="absolute inset-0 bg-white/10 rounded-full" />
+                  <span className="text-[7px] font-black text-white/60 uppercase tracking-widest leading-none mb-0.5">Burst</span>
+                  <span className="text-[11px] font-black text-white uppercase leading-none italic drop-shadow-lg">ULTRA</span>
+               </div>
+            </ActionButton>
          </NineSlicePanel>
        </div>
 
-       {/* Battle Log Terminal Overlay */}
-       <div className="absolute top-40 left-4 pointer-events-none z-20">
-         <NineSlicePanel
-           type="border"
-           variant="transparent"
-           className="max-h-[120px] overflow-hidden flex flex-col gap-1 p-2"
-           style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
-         >
-           {battleLog.slice(-5).map((log, i) => (
-             <motion.div 
-               key={i}
-               initial={{ opacity: 0, x: -20 }}
-               animate={{ opacity: 1, x: 0 }}
-               className="border-l-2 border-[#F5C76B]/40 pl-2 py-0.5"
-             >
-               <span className="text-[7px] font-mono text-white/70 uppercase tracking-widest">{log}</span>
-             </motion.div>
-           ))}
-         </NineSlicePanel>
-       </div>
+        {/* Battle Log Terminal Overlay - Fixed position below boss HP bar */}
+        <div className="absolute top-40 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pointer-events-none z-20">
+          <NineSlicePanel
+            type="border"
+            variant="transparent"
+            className="max-h-[100px] overflow-y-auto flex flex-col gap-1 p-3"
+            style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+          >
+            {battleLog.slice(-5).map((log, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="border-l-2 border-[#F5C76B]/40 pl-2 py-1"
+                style={{ lineHeight: '1.4' }}
+              >
+                <span className="text-[7px] font-mono text-white/90 uppercase tracking-widest">{log}</span>
+              </motion.div>
+            ))}
+          </NineSlicePanel>
+        </div>
 
       {/* Victory/Defeat Overlay */}
       <AnimatePresence>
@@ -400,6 +404,8 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
 }
 
 function EnemySprite({ enemy, isTargeted, onTarget }: { enemy: CombatUnit, isTargeted: boolean, onTarget: () => void }) {
+  const [imgError, setImgError] = useState(false);
+  
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -431,11 +437,21 @@ function EnemySprite({ enemy, isTargeted, onTarget }: { enemy: CombatUnit, isTar
         />
       )}
 
-      <img 
-        src={AssetService.getSpriteUrl(enemy.sprite_id || "abbys_sprite_001")}
-        className={`w-40 h-40 object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,1)] scale-x-[-1] transition-all duration-300 ${isTargeted ? 'brightness-125 saturate-150' : 'brightness-90 saturate-50'}`}
-        style={{ imageRendering: 'pixelated' }}
-      />
+      {imgError ? (
+        <div className="w-40 h-40 flex items-center justify-center bg-red-900/20 border-2 border-red-500/30 rounded-full">
+          <div className="text-center">
+            <div className="text-4xl mb-2">?</div>
+            <span className="text-[8px] font-black text-red-400 uppercase">{enemy.name}</span>
+          </div>
+        </div>
+      ) : (
+        <img 
+          src={AssetService.getSpriteUrl(enemy.sprite_id || "abbys_sprite_001")}
+          onError={() => setImgError(true)}
+          className={`w-40 h-40 object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,1)] scale-x-[-1] transition-all duration-300 ${isTargeted ? 'brightness-125 saturate-150' : 'brightness-90 saturate-50'}`}
+          style={{ imageRendering: 'pixelated' }}
+        />
+      )}
     </motion.div>
   );
 }
@@ -492,7 +508,7 @@ function UnitCard({ unit, isActive }: { unit: CombatUnit, isActive: boolean }) {
            <span className="text-[7px] font-black text-[#F5C76B]">LV.1</span>
         </div>
         <div className="flex flex-col items-end">
-           <div className="flex gap-0.5">
+           <div className="flex gap-0.5 justify-center w-full">
               {[1, 2, 3, 4].map(i => <StarIcon key={i} size={6} className="text-yellow-400 fill-current" />)}
            </div>
         </div>
@@ -510,8 +526,8 @@ function UnitCard({ unit, isActive }: { unit: CombatUnit, isActive: boolean }) {
         </div>
         <div className="w-full h-2 bg-black/60 rounded-full overflow-hidden border border-white/5 shadow-inner">
           <motion.div 
-            animate={{ width: `${(unit.currentHp / unit.maxHp) * 100}%` }}
-            className={`h-full ${unit.currentHp < unit.maxHp * 0.3 ? 'bg-red-500' : 'bg-gradient-to-r from-emerald-600 to-green-400'}`}
+            animate={{ width: `${Math.min((unit.currentHp / unit.maxHp) * 100, 100)}%` }}
+            className="h-full bg-gradient-to-r from-emerald-600 to-green-400"
           />
         </div>
         <div className="w-full h-1 bg-black/40 rounded-full overflow-hidden">
@@ -540,16 +556,13 @@ function SkillButton({ skill, onUse, cooldown }: { skill: SkillDefinition, onUse
   };
 
   return (
-    <motion.button 
-      whileHover={!cooldown ? { scale: 1.1, y: -5 } : {}}
-      whileTap={!cooldown ? { scale: 0.9 } : {}}
+    <ActionButton 
       onClick={onUse}
       disabled={!!cooldown}
-      className={`relative w-14 h-14 rounded-2xl border-2 transition-all flex items-center justify-center overflow-hidden shadow-xl ${
-        cooldown 
-          ? 'bg-black/60 border-white/5 opacity-50 grayscale' 
-          : 'bg-[#152336] border-white/10 hover:border-[#F5C76B] hover:shadow-[0_0_20px_rgba(245,199,107,0.3)]'
-      }`}
+      variant="skill"
+      className="w-14 h-14"
+      whileHover={!cooldown ? { scale: 1.1, y: -5 } : {}}
+      whileTap={!cooldown ? { scale: 0.9 } : {}}
     >
       {getIcon()}
       
@@ -568,7 +581,7 @@ function SkillButton({ skill, onUse, cooldown }: { skill: SkillDefinition, onUse
       {!cooldown && (
         <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_0%,rgba(255,255,255,0.05)_50%,transparent_100%)] animate-shimmer" />
       )}
-    </motion.button>
+    </ActionButton>
   );
 }
 

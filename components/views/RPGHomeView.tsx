@@ -41,7 +41,11 @@ const rarityGlow = (rarity: string) => {
 };
 
 const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any) => {
-  const sprite = unit ? AssetService.getSpriteUrl(unit.sprite_id) : undefined;
+  const sprite = unit ? AssetService.getSpriteUrl(unit.sprite_id || 
+    (unit.name?.toLowerCase().includes('kael') ? AssetService.getJobSpriteId('archer') :
+     unit.name?.toLowerCase().includes('garran') ? AssetService.getJobSpriteId('swordsman') :
+     unit.sprite_id || 'novice')
+  ) : undefined;
 
   return (
     <motion.div
@@ -72,14 +76,19 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any)
           </motion.div>
         </div>
 
-        {unit && (
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-black/80 border border-white/20 flex items-center gap-1 shadow-xl whitespace-nowrap">
-            <span className="text-[10px] font-black italic text-[#F5C76B]">UR</span>
-            <div className="flex gap-0.5">
-              {[1,2,3,4,5].map(i => <Star key={i} size={8} fill="#F5C76B" className="text-[#F5C76B]" />)}
+          {unit && (
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 whitespace-nowrap">
+              <div className="flex items-center gap-1">
+                <span className="text-[7px] font-black text-[#F5C76B]">LV.{unit.level}</span>
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4].map(i => <Star key={i} size={6} className="text-yellow-400 fill-current" />)}
+                </div>
+              </div>
+              <div className="px-3 py-0.5 rounded-full bg-black/80 border border-white/20 shadow-lg">
+                <p className="text-[8px] font-black text-white drop-shadow-lg truncate uppercase tracking-tighter">{unit.name}</p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
 
       {unit && (
@@ -129,10 +138,10 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
           <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 border border-white/10 flex items-center justify-center overflow-hidden shadow-lg">
             <img alt="Player Profile" src={AssetService.getSpriteUrl(primaryUnit?.sprite_id || AssetService.getJobSpriteId('novice'))} className="w-[150%] transform translate-y-1" style={{imageRendering: 'pixelated'}} />
           </div>
-          <div className="flex flex-col text-left">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col text-left gap-1.5">
+            <div className="flex items-center gap-3">
               <span className="text-[10px] font-black bg-[#F5C76B] text-black px-2 py-0.5 rounded-md italic uppercase shadow-[0_0_10px_rgba(245,199,107,0.3)]">Lvl. {playerLevel}</span>
-              <span className="text-white text-sm font-bold tracking-wider uppercase drop-shadow-md">{saveData.profile.username}</span>
+              <span className="text-white text-sm font-bold tracking-wider drop-shadow-md truncate">{saveData.profile.username}</span>
             </div>
             <div className="flex items-center gap-3 mt-1.5">
               <div className="w-28 h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
@@ -167,7 +176,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            <Settings size={18} className="text-white/60 hover:text-white transition-colors" />
+            <img src="/assets/ui/Icon_novice.png" width="18" height="18" style={{ imageRendering: 'pixelated' }} alt="Settings" className="opacity-60 hover:opacity-100 transition-opacity" />
           </PanelButton>
         </div>
       </div>
@@ -189,7 +198,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
         </div>
 
         {/* Right Floating Sidebar */}
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30">
+        <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-50">
           {[
             { icon: Calendar, label: 'EVENT', color: 'text-[#F5C76B]', glow: 'shadow-[#F5C76B]/20' },
             { icon: Bell, label: 'NOTIF', color: 'text-white', glow: 'shadow-white/10' },
@@ -207,12 +216,12 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
           ))}
         </div>
 
-        {/* Campaign Objective */}
-        <motion.button
+      {/* Campaign Objective */}
+        <motion.div
           onClick={() => onNavigate('campaign')}
           whileHover={{ x: 8 }}
           whileTap={{ scale: 0.98 }}
-          className="absolute left-6 top-1/4 z-30 text-left"
+          className="absolute left-6 top-1/4 z-30 text-left cursor-pointer"
         >
           <NineSlicePanel
             type="border"
@@ -220,19 +229,19 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
             className="p-4 pr-5 backdrop-blur-xl"
             glassmorphism={true}
             style={{ 
-              background: 'linear-gradient(to right, rgba(245,199,107,0.05), transparent)',
+              background: 'linear-gradient(to right, rgba(245,199,107,0.15), rgba(0,0,0,0.3))',
               borderLeft: '3px solid #F5C76B' 
             }}
           >
             <div>
-              <p className="text-[#F5C76B] text-[9px] font-black uppercase tracking-[0.3em] mb-1">Misión Actual</p>
+              <p className="text-[#F5C76B] text-[9px] font-black uppercase tracking-[0.3em] mb-1">MISIÓN ACTUAL</p>
               <h3 className="text-white text-sm font-bold tracking-wide flex items-center gap-2">
                 Tierras del Destino
                 <ChevronRight size={14} className="opacity-40 text-[#F5C76B]" />
               </h3>
             </div>
           </NineSlicePanel>
-        </motion.button>
+        </motion.div>
       </div>
 
       {/* Bottom Dock */}
