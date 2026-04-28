@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Box, Sparkles, Sword, Search, Filter } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { motion } from 'motion/react';
+import { SkillDetailView } from './SkillDetailView';
 
 interface InventoryViewProps {
   targetSlot: 'weapon' | 'card' | 'skill' | null;
@@ -19,6 +20,7 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'weapon' | 'card' | 'skill'>('all');
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadInventory() {
@@ -94,7 +96,15 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
                 <motion.div
                   key={item.id}
                   whileHover={{ x: 4 }}
-                  onClick={() => targetSlot ? onEquip(item) : setSelectedItem(item)}
+                  onClick={() => {
+                    if (targetSlot) {
+                      onEquip(item);
+                    } else if (item.item_type === 'skill_scroll') {
+                      setSelectedSkill(item.item_id);
+                    } else {
+                      setSelectedItem(item);
+                    }
+                  }}
                   className="bg-black/40 border border-white/5 p-4 rounded-2xl flex items-center gap-4 hover:border-white/10 transition-all cursor-pointer group"
                 >
                     <div className="w-14 h-14 bg-black/60 border border-white/10 rounded-xl flex items-center justify-center shrink-0 relative overflow-hidden">
@@ -178,6 +188,27 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
              Cerrar
            </button>
          </motion.div>
+       )}
+
+       {selectedSkill && (
+         <SkillDetailView
+           skillId={selectedSkill}
+           itemId={items.find(i => i.item_id === selectedSkill)?.id || ''}
+           onBack={() => setSelectedSkill(null)}
+           onEquip={(item) => { onEquip(item); setSelectedSkill(null); }}
+           onDiscard={async (itemId) => {
+             if (!confirm('¿Descartar este objeto?')) return;
+             if (!supabase) return;
+             await supabase.from('inventory').delete().eq('id', itemId);
+             setSelectedSkill(null);
+             // Reload inventory
+             const { data: { user } } = await supabase.auth.getUser();
+             if (user) {
+               const { data } = await supabase.from('inventory').select('*').eq('player_id', user.id);
+               if (data) setItems(data);
+             }
+           }}
+         />
        )}
     </div>
   );

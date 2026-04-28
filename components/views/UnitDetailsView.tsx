@@ -3,6 +3,7 @@ import { AssetService } from '@/lib/services/asset-service';
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Shield, Sword, Zap, Heart, Star, Briefcase, Sparkles, Box, Plus, X, ArrowUpCircle, ShieldAlert } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { UnitService } from '@/lib/services/unit-service';
 import { EquipmentService } from '@/lib/services/equipment-service';
 import { motion, AnimatePresence } from 'motion/react';
@@ -20,6 +21,10 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
   const [error, setError] = useState<string | null>(null);
   const [nextJobs, setNextJobs] = useState<any[]>([]);
   const [evolvedJobName, setEvolvedJobName] = useState<string | null>(null);
+  const [selectedSkill, setSelectedSkill] = useState<any>(null);
+  const [showLearnSkill, setShowLearnSkill] = useState(false);
+  const [availableSkills, setAvailableSkills] = useState<any[]>([]);
+  const [loadingSkills, setLoadingSkills] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -33,6 +38,24 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
       setError(e.message || "Falla de Enlace ID de unidad no válido");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAvailableSkills = async () => {
+    if (!supabase) return;
+    setLoadingSkills(true);
+    try {
+      const { data, error } = await supabase
+        .from('skills')
+        .select('*')
+        .order('rarity', { ascending: true });
+      if (!error && data) {
+        setAvailableSkills(data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingSkills(false);
     }
   };
 
@@ -203,8 +226,8 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
         {/* Techniques */}
         <div className="space-y-4">
            <h3 className="text-[10px] font-black text-white/40 tracking-[0.3em] uppercase flex items-center gap-2">
-            <Zap size={12} className="text-[#F5C76B]" /> Técnicas Especiales
-           </h3>
+             <Zap size={12} className="text-[#F5C76B]" /> Técnicas Especiales
+            </h3>
            <div className="grid grid-cols-5 gap-3">
               {[0, 1, 2, 3, 4].map(idx => {
                 const skill = skills[idx];
@@ -214,7 +237,13 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                   <motion.div
                     key={idx}
                     whileTap={{ scale: isLocked ? 1 : 0.9 }}
-                    onClick={() => !isLocked && !skill && onOpenInventory('skill')}
+                    onClick={() => {
+                      if (skill) {
+                        setSelectedSkill(skill);
+                      } else if (!isLocked) {
+                        onOpenInventory('skill');
+                      }
+                    }}
                     className={`aspect-square rounded-2xl border border-white/10 flex items-center justify-center relative group transition-all ${isLocked ? 'bg-black/80 opacity-20' : skill ? 'bg-cyan-500/10 border-cyan-500/30 shadow-[0_0_15px_rgba(34,211,238,0.1)]' : 'bg-black/40 hover:border-white/20'}`}
                   >
                     {skill ? (
@@ -227,11 +256,165 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                     ) : isLocked ? <ShieldAlert size={16} className="text-white/20" /> : <Plus size={18} className="text-white/10 group-hover:text-white/20" />}
                   </motion.div>
                 );
-              })}
-           </div>
-        </div>
+               })}
+            </div>
+          </div>
 
-        {/* Dynamic Evolution */}
+          {/* Learn Skill Button */}
+          {data && (
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={() => { setShowLearnSkill(true); loadAvailableSkills(); }}
+                className="px-6 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-xl text-cyan-400 text-[10px] font-black uppercase tracking-widest hover:bg-cyan-500/20 transition-colors"
+              >
+                Aprender Habilidad
+              </button>
+            </div>
+          )}
+
+         {/* Skill Detail Modal */}
+         {selectedSkill && (
+           <motion.div
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             className="absolute inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col p-6 overflow-y-auto"
+           >
+             <div className="flex items-center justify-between mb-6">
+               <button onClick={() => setSelectedSkill(null)} className="p-2 bg-black/40 border border-white/10 rounded-xl text-white/60 hover:text-white transition-colors">
+                 <ChevronLeft size={20} />
+               </button>
+               <h2 className="text-lg font-black text-white tracking-widest uppercase">Detalles</h2>
+               <div className="w-8" />
+             </div>
+
+             <div className="flex-1 flex flex-col items-center justify-center gap-6">
+               <div className="w-24 h-24 bg-black/60 border border-white/10 rounded-3xl flex items-center justify-center">
+                 <Zap size={40} className="text-cyan-400" />
+               </div>
+
+               <div className="text-center">
+                 <h3 className="text-xl font-black text-white uppercase">{selectedSkill.def?.name || selectedSkill.item_id}</h3>
+                 <span className="text-[10px] font-black text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-sm border border-cyan-400/20 mt-2 inline-block">
+                   {selectedSkill.def?.rarity || 'COMMON'}
+                 </span>
+               </div>
+
+               {selectedSkill.def?.description && (
+                 <p className="text-[12px] text-white/60 text-center leading-relaxed max-w-xs">
+                   {selectedSkill.def.description}
+                 </p>
+               )}
+
+               <div className="w-full grid grid-cols-2 gap-3">
+                 <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
+                   <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Cooldown</p>
+                   <p className="text-white text-lg font-black">{selectedSkill.def?.cooldown || 0}</p>
+                 </div>
+                 <div className="bg-black/40 rounded-2xl p-4 border border-white/5">
+                   <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Power</p>
+                   <p className="text-white text-lg font-black">{selectedSkill.def?.scaling ? JSON.parse(selectedSkill.def.scaling).mult + 'x' : '1.0x'}</p>
+                 </div>
+               </div>
+
+               {selectedSkill.def?.effect && (
+                 <div className="w-full bg-black/40 rounded-2xl p-4 border border-white/5">
+                   <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Efecto</p>
+                   <p className="text-white/80 text-sm">{selectedSkill.def.effect}</p>
+                 </div>
+               )}
+             </div>
+
+              <button
+                onClick={() => setSelectedSkill(null)}
+                className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors mt-4"
+              >
+                Cerrar
+              </button>
+            </motion.div>
+          )}
+
+         {/* Learn Skill Modal */}
+         {showLearnSkill && (
+           <motion.div
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             className="absolute inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col p-6 overflow-y-auto"
+           >
+             <div className="flex items-center justify-between mb-6">
+               <button onClick={() => setShowLearnSkill(false)} className="p-2 bg-black/40 border border-white/10 rounded-xl text-white/60 hover:text-white transition-colors">
+                 <ChevronLeft size={20} />
+               </button>
+               <h2 className="text-lg font-black text-white tracking-widest uppercase">Aprender Habilidad</h2>
+               <div className="w-8" />
+             </div>
+
+             {loadingSkills ? (
+               <div className="flex-1 flex items-center justify-center">
+                 <div className="w-8 h-8 border-2 border-t-[#F5C76B] border-white/5 rounded-full animate-spin"></div>
+               </div>
+             ) : (
+               <div className="flex-1 overflow-y-auto space-y-3">
+                 {availableSkills.map((skill) => {
+                   const isLearned = data?.job?.skills_unlocked?.some((s: any) => s.id === skill.id);
+                   return (
+                     <motion.div
+                       key={skill.id}
+                       whileHover={{ x: 4 }}
+                       className={`bg-black/40 border p-4 rounded-2xl ${isLearned ? 'border-green-500/20 opacity-50' : 'border-white/5 hover:border-white/10 cursor-pointer'}`}
+                       onClick={async () => {
+                         if (isLearned) return;
+                         if (!confirm(`¿Aprender ${skill.name} por 500 Zeny?`)) return;
+                         try {
+                           await supabase.rpc('rpc_learn_skill', {
+                             p_unit_id: unitId,
+                             p_skill_id: skill.id,
+                             p_skill_data: JSON.stringify({
+                               id: skill.id,
+                               name: skill.name,
+                               type: 'active',
+                               powerMod: skill.scaling ? JSON.parse(skill.scaling).mult : 1.0,
+                               cooldown: skill.cooldown || 2,
+                               description: skill.description || ''
+                             })
+                           });
+                           alert('Habilidad aprendida!');
+                           setShowLearnSkill(false);
+                           loadData();
+                         } catch (e: any) {
+                           alert(e.message || 'Error al aprender habilidad');
+                         }
+                       }}
+                     >
+                       <div className="flex items-center justify-between mb-2">
+                         <span className="font-black text-white uppercase">{skill.name}</span>
+                         <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-sm border ${
+                           skill.rarity === 'epic' ? 'text-purple-400 bg-purple-400/10 border-purple-400/20' :
+                           skill.rarity === 'rare' ? 'text-blue-400 bg-blue-400/10 border-blue-400/20' :
+                           'text-white/60 bg-white/5 border-white/10'
+                         }`}>
+                           {skill.rarity?.toUpperCase()}
+                         </span>
+                       </div>
+                       <p className="text-[10px] text-white/40">{skill.description}</p>
+                       {isLearned && (
+                         <p className="text-[10px] text-green-400 mt-2">✓ Ya aprendida</p>
+                       )}
+                     </motion.div>
+                   );
+                 })}
+               </div>
+             )}
+
+             <button
+               onClick={() => setShowLearnSkill(false)}
+               className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors mt-4"
+             >
+               Cerrar
+             </button>
+           </motion.div>
+         )}
+
+         {/* Dynamic Evolution */}
         <div className="space-y-4 pb-12">
            <h3 className="text-[10px] font-black text-white/40 tracking-[0.3em] uppercase flex items-center gap-2">
             <ArrowUpCircle size={12} className="text-[#F5C76B]" /> Senda de Evolución

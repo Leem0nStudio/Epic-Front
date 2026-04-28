@@ -269,25 +269,61 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
           ))}
         </div>
 
-        {/* Damage Numbers Container */}
-        <div className="absolute inset-0 pointer-events-none z-[100]">
-          <AnimatePresence>
-            {damageNumbers.map(d => (
-              <motion.div
-                key={d.id}
-                initial={{ opacity: 0, y: 0, scale: 0.5, rotate: -10 }}
-                animate={{ opacity: 1, y: d.y, scale: d.isCrit ? 2.5 : 1.8, rotate: Math.random() * 20 - 10 }}
-                exit={{ opacity: 0, scale: 0.2 }}
-                transition={{ type: 'spring', damping: 10 }}
-                className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-black text-3xl italic drop-shadow-[0_4px_8px_rgba(0,0,0,1)] flex flex-col items-center z-[110] ${d.color}`}
-                style={{ marginLeft: d.x }}
-              >
-                {d.isCrit && <span className="text-[10px] uppercase tracking-[0.3em] mb-[-4px] text-yellow-300 drop-shadow-none">CRITICAL</span>}
-                {d.value}
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+       {/* Damage Numbers Container */}
+       <div className="absolute inset-0 pointer-events-none z-[100]">
+         <AnimatePresence>
+           {damageNumbers.map(d => (
+             <motion.div
+               key={d.id}
+               initial={{ opacity: 0, y: 0, scale: 0.5, rotate: -10 }}
+               animate={{ opacity: 1, y: d.y, scale: d.isCrit ? 2.5 : 1.8, rotate: Math.random() * 20 - 10 }}
+               exit={{ opacity: 0, scale: 0.2 }}
+               transition={{ type: 'spring', damping: 10 }}
+               className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-black text-3xl italic drop-shadow-[0_4px_8px_rgba(0,0,0,1)] flex flex-col items-center z-[110] ${d.color}`}
+               style={{ marginLeft: d.x }}
+             >
+               {d.isCrit && <span className="text-[10px] uppercase tracking-[0.3em] mb-[-4px] text-yellow-300 drop-shadow-none">CRITICAL</span>}
+               {d.value}
+             </motion.div>
+           ))}
+         </AnimatePresence>
+       </div>
+
+       {/* Status Effects Visualization */}
+       <div className="absolute inset-0 pointer-events-none z-40">
+         <AnimatePresence>
+           {units.filter(u => u.statusEffects.length > 0).map(unit => (
+             <div
+               key={`status-${unit.id}`}
+               className="absolute"
+               style={{
+                 top: unit.side === 'player' ? '60%' : '25%',
+                 left: unit.position < 3 ? `${20 + unit.position * 25}%` : `${30 + (unit.position - 3) * 25}%`,
+               }}
+             >
+               <div className="flex gap-1">
+                 {unit.statusEffects.map((effect, idx) => (
+                   <motion.div
+                     key={`${effect.id}-${idx}`}
+                     initial={{ scale: 0 }}
+                     animate={{ scale: 1 }}
+                     exit={{ scale: 0 }}
+                     className={`w-6 h-6 rounded-lg border flex items-center justify-center text-[8px] font-black ${
+                       effect.type === 'buff' ? 'bg-blue-500/30 border-blue-500/40 text-blue-400' :
+                       effect.type === 'debuff' ? 'bg-red-500/30 border-red-500/40 text-red-400' :
+                       effect.type === 'dot' ? 'bg-purple-500/30 border-purple-500/40 text-purple-400' :
+                       'bg-white/10 border-white/20 text-white'
+                     }`}
+                     title={`${effect.name} (${effect.remainingTurns} turns)`}
+                   >
+                     {effect.type === 'buff' ? '↑' : effect.type === 'debuff' ? '↓' : '●'}
+                   </motion.div>
+                 ))}
+               </div>
+             </div>
+           ))}
+         </AnimatePresence>
+       </div>
       </div>
 
       {/* BOTTOM: Unit Cards & Skill Bar */}

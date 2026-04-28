@@ -399,6 +399,45 @@ BEGIN
             VALUES (v_user_id, v_material."itemId", 'material', v_material.amount)
             ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + v_material.amount;
         END LOOP;
+     END IF;
+ END;
+ $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Learn Skill (add skill to job's unlocked skills)
+CREATE OR REPLACE FUNCTION rpc_learn_skill(p_unit_id UUID, p_skill_id TEXT, p_skill_data JSONB)
+RETURNS void AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_job_id TEXT;
+    v_current_skills JSONB;
+    v_skill_cost INTEGER := 500; -- Base cost to learn a skill
+BEGIN
+    -- Get unit's current job
+    SELECT current_job_id, jobs.skills_unlocked
+    INTO v_job_id, v_current_skills
+    FROM units
+    LEFT JOIN jobs ON jobs.id = units.current_job_id AND jobs.version = (SELECT version FROM game_configs WHERE is_active = true LIMIT 1)
+    WHERE units.id = p_unit_id AND units.player_id = v_user_id;
+
+    IF v_job_id IS NULL THEN
+        RAISE EXCEPTION 'Unit not found';
     END IF;
+
+    -- Check if skill already learned
+    IF EXISTS (SELECT 1 FROM jsonb_array_elements(v_current_skills) WHERE value->>'id' = p_skill_id) THEN
+        RAISE EXCEPTION 'Skill already learned';
+    END IF;
+
+    -- Deduct cost
+    UPDATE players SET currency = currency - v_skill_cost WHERE id = v_user_id AND currency >= v_skill_cost;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Insufficient funds';
+    END IF;
+
+    -- Add skill to job's unlocked skills
+    UPDATE jobs
+    SET skills_unlocked = skills_unlocked || jsonb_build_array(p_skill_data)
+    WHERE id = v_job_id
+    AND version = (SELECT version FROM game_configs WHERE is_active = true LIMIT 1);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
