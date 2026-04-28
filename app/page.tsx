@@ -62,10 +62,11 @@ export default function Applet() {
   const renderView = () => {
     switch (state.view) {
       case 'home':
-        return <RPGHomeView 
+        return <RPGHomeView
                  saveData={state as any}
-                 activePartyUnits={state.activePartyUnits} 
-                 onNavigate={actions.navigateTo} 
+                 activePartyUnits={state.activePartyUnits}
+                 onNavigate={actions.navigateTo}
+                 onOpenFullInventory={actions.openFullInventory}
                />;
       case 'tavern':
         return <TavernView 
@@ -98,7 +99,8 @@ export default function Applet() {
       case 'inventory':
         return <InventoryView
                  targetSlot={state.targetSlot}
-                 onBack={() => actions.navigateTo('unit_details')}
+                 fromUnitDetails={!!state.selectedUnitId}
+                 onBack={() => actions.navigateTo(state.selectedUnitId ? 'unit_details' : 'home')}
                  onEquip={actions.handleEquipItem}
                />;
       case 'campaign':

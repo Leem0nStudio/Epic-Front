@@ -142,8 +142,17 @@ export function useGameState() {
     setView('inventory');
   };
 
+  const openFullInventory = () => {
+    setTargetSlot(null);
+    setView('inventory');
+  };
+
   const handleEquipItem = async (item: any) => {
-    if (!selectedUnitId || !targetSlot) return;
+    if (!targetSlot) return;
+    if (!selectedUnitId) {
+      alert('Selecciona una unidad para equipar objetos');
+      return;
+    }
     try {
         await EquipmentService.equipItem(selectedUnitId, item.id, targetSlot);
         await refreshState();
@@ -211,6 +220,7 @@ export function useGameState() {
       handleClaimRecruit,
       handleAssignPartySlot,
       handleOpenInventory,
+      openFullInventory,
       handleEquipItem,
       handleSelectStage,
       handleStartBattle,

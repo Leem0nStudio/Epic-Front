@@ -17,6 +17,7 @@ import {
   UserPlus,
   Sword,
   Star,
+  Box,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { AssetService } from '@/lib/services/asset-service';
@@ -25,6 +26,7 @@ interface RPGHomeViewProps {
   saveData: any;
   activePartyUnits: any[];
   onNavigate: (view: any) => void;
+  onOpenFullInventory: () => void;
 }
 
 const rarityGlow = (rarity: string) => {
@@ -91,7 +93,7 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any)
   );
 };
 
-export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeViewProps) {
+export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFullInventory }: RPGHomeViewProps) {
   const primaryUnit = activePartyUnits[0];
   const leftUnit = activePartyUnits[1];
   const rightUnit = activePartyUnits[2];
@@ -213,13 +215,14 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate }: RPGHomeV
         <div className="flex gap-3 h-16 flex-1 items-end">
           {[
             { id: 'party', icon: Users, label: 'EQUIPO' },
+            { id: 'inventory', icon: Box, label: 'INVENT', action: 'inventory' },
             { id: 'tavern', icon: UserPlus, label: 'GREMIO' },
             { id: 'gacha', icon: Sparkles, label: 'NEXO' }
           ].map(btn => (
             <motion.button
               key={btn.id}
               whileTap={{ scale: 0.95 }}
-              onClick={() => onNavigate(btn.id as any)}
+              onClick={() => btn.action === 'inventory' ? onOpenFullInventory() : onNavigate(btn.id as any)}
               className="flex-1 h-14 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-white/5 transition-colors"
             >
               <btn.icon size={18} className="text-white/80" />
