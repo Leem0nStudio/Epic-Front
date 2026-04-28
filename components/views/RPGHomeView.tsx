@@ -173,17 +173,17 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
       </div>
 
       {/* Main Display Area */}
-      <div className="flex-1 relative flex items-center justify-center px-6 overflow-hidden">
+      <div className="flex-1 relative flex items-center justify-center px-6">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] aspect-square bg-[#F5C76B]/5 blur-[120px] rounded-full pointer-events-none" />
-
-        <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-32">
-          <div className="w-[30%] h-full pb-6 flex items-end">
+        
+        <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-8">
+          <div className="w-[30%] h-full pb-4 flex items-end">
             <CharacterSlot unit={leftUnit} scale={0.85} zIndex={10} />
           </div>
-          <div className="w-[40%] h-full flex items-end">
+          <div className="w-[40%] h-full flex items-end pb-2">
             <CharacterSlot unit={primaryUnit} scale={1.1} zIndex={20} emphasized />
           </div>
-          <div className="w-[30%] h-full pb-6 flex items-end">
+          <div className="w-[30%] h-full pb-4 flex items-end">
             <CharacterSlot unit={rightUnit} scale={0.85} zIndex={10} />
           </div>
         </div>
@@ -236,8 +236,8 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
       </div>
 
       {/* Bottom Dock */}
-      <div className="w-full h-28 shrink-0 bg-gradient-to-t from-[#020508]/95 via-[#0B1A2A]/80 to-transparent z-40 px-6 flex items-center justify-between pb-8">
-        <div className="flex gap-4 h-18 flex-1 items-end">
+      <div className="w-full shrink-0 bg-gradient-to-t from-[#020508]/95 via-[#0B1A2A]/80 to-transparent z-40 px-6 flex items-center justify-between pb-4 pt-2">
+        <div className="flex gap-4 h-16 flex-1 items-end">
           {[
             { id: 'party', icon: Users, label: 'EQUIPO' },
             { id: 'inventory', icon: Box, label: 'INVENT', action: 'inventory' },
@@ -248,17 +248,16 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
               key={btn.id}
               variant="default"
               onClick={() => btn.action === 'inventory' ? onOpenFullInventory() : onNavigate(btn.id as any)}
-              className="flex-1 h-16 flex flex-col items-center justify-center gap-1.5 rounded-2xl"
-              whileHover={{ y: -4 }}
+              className="flex-1 h-14 flex flex-col items-center justify-center gap-1"
               whileTap={{ scale: 0.95 }}
             >
-              <btn.icon size={20} className="text-white/70 group-hover:text-white transition-colors" />
-              <span className="text-[8px] font-black tracking-[0.15em] text-white/50 uppercase">{btn.label}</span>
+              <btn.icon size={18} className="text-white/80" />
+              <span className="text-[8px] font-black tracking-widest text-white/60 uppercase">{btn.label}</span>
             </PanelButton>
           ))}
         </div>
 
-        <div className="w-28 h-28 relative flex items-center justify-center mx-4">
+        <div className="w-24 h-24 relative flex items-center justify-center mx-4">
           <div className="absolute inset-0 bg-[#F5C76B]/10 blur-[30px] rounded-full scale-75" />
           <PanelButton
             variant="gold"
