@@ -75,10 +75,9 @@ export function NineSlicePanel({
     : tintColor;
 
   // Build glassmorphism style
-  const glassmorphismStyle: React.CSSProperties = glassmorphism ? {
-    backdropFilter: 'blur(6px)',
-    background: 'rgba(10, 20, 40, 0.6)',
-  } : {};
+  const glassmorphismStyle: React.CSSProperties = glassmorphism 
+    ? UIService.getGlassStyle() 
+    : {};
 
   // Merge with custom styles
   const mergedStyle: React.CSSProperties = {

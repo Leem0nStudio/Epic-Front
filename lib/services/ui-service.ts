@@ -91,4 +91,16 @@ export class UIService {
     const borderId = UIService.BORDERS[variant];
     return this.getBorderNineSliceStyle(borderId);
   }
+
+  /**
+   * Get glassmorphism CSS properties
+   */
+  static getGlassStyle(opacity: number = 0.6, blur: number = 8): React.CSSProperties {
+    return {
+      backdropFilter: `blur(${blur}px)`,
+      background: `rgba(10, 20, 40, ${opacity})`,
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+    };
+  }
 }
