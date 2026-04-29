@@ -99,17 +99,17 @@ export function StageDetailsView({ stage, playerEnergy, onBack, onStartBattle }:
 
       {/* Start Button */}
       <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-[#020508] via-[#020508] to-transparent">
-        <Button
+        <motion.button 
           onClick={() => onStartBattle(stage)}
           disabled={!canAfford}
-          variant={canAfford ? 'primary' : 'secondary'}
-          size="lg"
-          className="w-full flex items-center justify-center gap-4"
+          whileHover={canAfford ? { scale: 1.05 } : undefined}
+          whileTap={canAfford ? { scale: 0.95 } : undefined}
+          className={`btn-premium-blue px-14 py-3.5 text-xl font-black font-display tracking-widest uppercase z-10 flex items-center justify-center gap-2 w-full ${!canAfford ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         >
           <Sword size={20} />
-          <span className="uppercase">Comenzar Incursión</span>
-          {!canAfford && <span className="text-[10px] opacity-40 ml-2">(Energía Insuficiente)</span>}
-        </Button>
+          <span>COMENZAR INCURSIÓN</span>
+          {!canAfford && <span className="text-[10px] opacity-60 ml-2">(ENERGÍA INSUFICIENTE)</span>}
+        </motion.button>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 import { AssetService } from '@/lib/services/asset-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
+import { Button } from '@/components/ui/Button';
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, UserPlus, Clock, Star, Sword, Heart, Zap, Trash2 } from 'lucide-react';
@@ -128,17 +129,16 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
                  </div>
 
                  {isReady && (
-                   <div className="flex items-center">
-                     <motion.button
-                       whileHover={{ scale: 1.05 }}
-                       whileTap={{ scale: 0.9 }}
-                       onClick={() => onClaim(slot.id)}
-                       className="px-6 py-3 bg-gradient-to-r from-[#F5C76B] to-[#b88c3a] rounded-2xl text-black text-[10px] font-black uppercase tracking-widest hover:shadow-[0_0_20px_rgba(245,199,107,0.4)] transition-all"
-                     >
-                       Reclutar
-                     </motion.button>
-                   </div>
-                 )}
+                    <div className="flex items-center">
+                      <Button
+                        onClick={() => onClaim(slot.id)}
+                        variant="action"
+                        size="game"
+                      >
+                        Reclutar
+                      </Button>
+                    </div>
+                  )}
                </div>
              </NineSlicePanel>
            );
