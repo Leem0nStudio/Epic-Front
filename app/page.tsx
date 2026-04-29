@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useGameState } from '@/hooks/useGameState';
 import { RPGHomeView } from '@/components/views/RPGHomeView';
 import { TavernView } from '@/components/views/TavernView';

@@ -3,6 +3,7 @@ import { AssetService } from '@/lib/services/asset-service';
 import { UIService } from '@/lib/services/ui-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { RarityIcon } from '@/components/ui/RarityIcon';
+import { Button } from '@/components/ui/Button';
 
 import React, { useState } from 'react';
 import { ChevronLeft, Sparkles, Diamond, Coins, Star, Sword, Box, ScrollText } from 'lucide-react';
@@ -55,14 +56,16 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
     <div className="flex flex-col h-full bg-[#0B1A2A] bg-cover bg-center bg-no-repeat p-6 overflow-hidden relative" style={{ backgroundImage: `url('${AssetService.getBgUrl('gacha')}')` }}>
       <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 via-transparent to-transparent pointer-events-none" />
 
-      <div className="flex items-center justify-between mb-10 z-10">
+       <div className="flex items-center justify-between mb-10 z-10">
         <div className="flex items-center gap-4">
-          <button 
+          <Button 
             onClick={() => onNavigate('home')} 
-            className="p-2.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-xl text-white/60 hover:text-white hover:border-white/20 transition-all active:scale-95 shadow-lg"
+            variant="secondary"
+            size="sm"
+            className="!rounded-xl"
           >
             <ChevronLeft size={20} />
-          </button>
+          </Button>
           <h1 className="text-xl font-black text-white tracking-widest uppercase italic drop-shadow-md">Invocación</h1>
         </div>
         <div className="flex gap-3">
@@ -93,12 +96,13 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
                 >
               <div className="col-span-5 flex items-center justify-between mb-4">
                 <h2 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Resultados de Invocación</h2>
-                <button 
+                <Button 
                     onClick={() => setResults([])} 
-                    className="text-[10px] font-black text-[#F5C76B] uppercase hover:text-[#F5C76B]/70 transition-colors px-3 py-1 rounded-lg hover:bg-[#F5C76B]/10"
+                    variant="secondary"
+                    size="sm"
                 >
                     Cerrar
-                </button>
+                </Button>
               </div>
                {results.map((item, i) => (
                    <motion.div

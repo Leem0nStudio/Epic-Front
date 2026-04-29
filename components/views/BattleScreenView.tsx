@@ -4,6 +4,7 @@ import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { ErrorDisplay } from '@/components/ui/ErrorDisplay';
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';

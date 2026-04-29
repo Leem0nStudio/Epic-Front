@@ -3,6 +3,7 @@ import { AssetService } from '@/lib/services/asset-service';
 import { UIService } from '@/lib/services/ui-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { RarityIcon } from '@/components/ui/RarityIcon';
+import { Button } from '@/components/ui/Button';
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Box, Sparkles, Sword, Search, Filter } from 'lucide-react';
@@ -52,14 +53,16 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
     <div className="flex flex-col h-full bg-[#0B1A2A] p-6 overflow-hidden relative">
       <div className="absolute inset-0 bg-gradient-to-b from-blue-900/10 via-transparent to-transparent pointer-events-none" />
 
-       <div className="flex items-center justify-between mb-6 z-10">
+        <div className="flex items-center justify-between mb-6 z-10">
         <div className="flex items-center gap-4">
-          <button 
+          <Button 
             onClick={onBack} 
-            className="p-2.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-xl text-white/60 hover:text-white hover:bg-black/60 hover:border-white/20 transition-all active:scale-95 shadow-lg"
+            variant="secondary"
+            size="sm"
+            className="!rounded-xl"
           >
             <ChevronLeft size={20} />
-          </button>
+          </Button>
           <div className="flex flex-col">
             <h1 className="text-xl font-black text-white tracking-widest uppercase italic drop-shadow-md">
               {targetSlot ? `Seleccionar ${targetSlot}` : 'Inventario'}
@@ -71,12 +74,14 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
         </div>
         {!targetSlot && (
           <div className="flex gap-2">
-             <button 
+             <Button 
                 onClick={() => setFilter(f => f === 'all' ? 'weapon' : f === 'weapon' ? 'card' : f === 'card' ? 'skill' : 'all')} 
-                className="p-2.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-xl text-white/60 hover:text-white hover:bg-black/60 hover:border-white/20 transition-all shadow-lg"
+                variant="secondary"
+                size="sm"
+                className="!rounded-xl"
              >
                {filter === 'all' ? <Box size={18} /> : filter === 'weapon' ? <Sword size={18} /> : filter === 'card' ? <Sparkles size={18} /> : <Box size={18} />}
-             </button>
+             </Button>
           </div>
         )}
       </div>
@@ -173,12 +178,14 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
             className="absolute inset-0 z-50 bg-[#0B1A2A]/95 backdrop-blur-2xl flex flex-col p-8 overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-8">
-              <button 
+              <Button 
                 onClick={() => setSelectedItem(null)} 
-                className="p-2.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-xl text-white/60 hover:text-white hover:border-white/20 transition-all active:scale-95 shadow-lg"
+                variant="secondary"
+                size="sm"
+                className="!rounded-xl"
               >
                 <ChevronLeft size={20} />
-              </button>
+              </Button>
               <h2 className="text-lg font-black text-white tracking-widest uppercase italic">Detalles del Objeto</h2>
               <div className="w-10" />
             </div>
@@ -223,12 +230,14 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
               </NineSlicePanel>
             </div>
 
-            <button
-              onClick={() => setSelectedItem(null)}
-              className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-white text-[10px] font-black uppercase tracking-[0.4em] hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 mt-6 shadow-xl"
-            >
-              Cerrar
-            </button>
+             <Button
+               onClick={() => setSelectedItem(null)}
+               variant="secondary"
+               size="lg"
+               className="w-full mt-8"
+             >
+               Cerrar
+             </Button>
           </motion.div>
         )}
 
