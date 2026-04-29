@@ -40,7 +40,7 @@ export class AssetService {
 
   // UI Icon mappings
   private   static JOB_ICON_MAP: Record<string, string> = {
-    'novice': 'Icon_novice.png',
+    'novice': 'icon_novice.png',
     'swordman': 'icon_swordsman.png',
     'mage': 'icon_mage.png',
     'ranger': 'icon_ranger.png',
@@ -62,12 +62,12 @@ export class AssetService {
   // Background mappings
   private static BACKGROUND_MAP: Record<BackgroundKey, string> = {
     'home': 'home_bg.png',
-    'party': 'battle_bg_party.png',
-    'gacha': 'battle_bg_gacha.png',
+    'party': 'partybg.png',
+    'gacha': 'home_bg.png',
     'battle': 'battle_scenic.png',
-    'campaign': 'battle_bg_campaign.png',
-    'tavern': 'battle_bg_tavern.png',
-    'inventory': 'battle_bg_inventory.png'
+    'campaign': 'home_bg.png',
+    'tavern': 'home_bg.png',
+    'inventory': 'home_bg.png'
   };
 
   // Weapon icons
@@ -132,12 +132,12 @@ export class AssetService {
   static getJobIconId(jobId: string): string {
     const iconName = this.JOB_ICON_MAP[jobId.toLowerCase()];
     if (iconName) return iconName;
-    return 'Icon_novice.png';
+    return 'icon_novice.png';
   }
 
   static getIconUrl(iconId: string): string {
     if (!iconId) {
-      return `${this.UI_PATH}/Icon_novice.png`;
+      return `${this.UI_PATH}/icon_novice.png`;
     }
     if (iconId.startsWith('http') || iconId.startsWith('/')) {
       return iconId;

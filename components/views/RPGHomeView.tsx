@@ -46,9 +46,9 @@ const rarityGlow = (rarity: string) => {
 
 const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any) => {
   const sprite = unit ? AssetService.getSpriteUrl(unit.sprite_id || 
-    (unit.name?.toLowerCase().includes('kael') ? AssetService.getJobSpriteId('archer') :
-     unit.name?.toLowerCase().includes('garran') ? AssetService.getJobSpriteId('swordsman') :
-     unit.sprite_id || 'novice')
+    (unit.name && unit.name.toLowerCase().includes('kael') ? AssetService.getJobSpriteId('archer') :
+     unit.name && unit.name.toLowerCase().includes('garran') ? AssetService.getJobSpriteId('swordman') :
+     'novice')
   ) : undefined;
 
   return (
@@ -179,7 +179,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
             size="sm"
             className="rounded-xl"
           >
-            <img src="/assets/ui/Icon_novice.png" width="18" height="18" style={{ imageRendering: 'pixelated' }} alt="Settings" className="opacity-60 hover:opacity-100 transition-opacity" />
+            <SpriteAtlasIcon index={SPRITE_INDEX.icon_novice} size={18} alt="Novice" />
           </Button>
         </div>
       </div>

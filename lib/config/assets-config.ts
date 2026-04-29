@@ -113,12 +113,12 @@ export const UI_ASSETS = {
 export const BG_ASSETS = {
   SCREENS: {
     HOME: 'home_bg.png',
-    PARTY: 'battle_bg_party.png',
-    GACHA: 'battle_bg_gacha.png',
+    PARTY: 'partybg.png',
+    GACHA: 'home_bg.png',
     BATTLE: 'battle_scenic.png',
-    CAMPAIGN: 'battle_bg_campaign.png',
-    TAVERN: 'battle_bg_tavern.png',
-    INVENTORY: 'battle_bg_inventory.png',
+    CAMPAIGN: 'home_bg.png',
+    TAVERN: 'home_bg.png',
+    INVENTORY: 'home_bg.png',
   },
   PARALLAX: {
     LAYER_1: 'parallax_layer_1.png', // Distant layer
