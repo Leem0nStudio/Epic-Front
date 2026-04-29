@@ -444,7 +444,13 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                   </div>
                   <div className="p-5 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-xl flex flex-col items-center">
                     <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] mb-1">Potencia</p>
-                    <p className="text-white text-2xl font-black italic">{selectedSkill.def?.scaling ? JSON.parse(selectedSkill.def.scaling).mult + 'x' : '1.0x'}</p>
+                     <p className="text-white text-2xl font-black italic">
+                       {selectedSkill.def?.scaling 
+                         ? (typeof selectedSkill.def.scaling === 'string' 
+                           ? JSON.parse(selectedSkill.def.scaling).mult + 'x' 
+                           : selectedSkill.def.scaling.mult + 'x')
+                         : '1.0x'}
+                     </p>
                   </div>
                 </div>
 
@@ -499,6 +505,21 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                           if (isLearned) return;
                           if (!confirm(`¿Aprender ${skill.name} por 500 Zeny?`)) return;
                           try {
+                            // Handle scaling which might be an object or JSON string
+                            let scalingMult = 1.0;
+                            if (skill.scaling) {
+                              if (typeof skill.scaling === 'string') {
+                                try {
+                                  const parsed = JSON.parse(skill.scaling);
+                                  scalingMult = parsed.mult || 1.0;
+                                } catch {
+                                  scalingMult = 1.0;
+                                }
+                              } else if (typeof skill.scaling === 'object') {
+                                scalingMult = skill.scaling.mult || 1.0;
+                              }
+                            }
+                            
                             await supabase.rpc('rpc_learn_skill', {
                               p_unit_id: unitId,
                               p_skill_id: skill.id,
@@ -506,7 +527,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                                 id: skill.id,
                                 name: skill.name,
                                 type: 'active',
-                                powerMod: skill.scaling ? JSON.parse(skill.scaling).mult : 1.0,
+                                powerMod: scalingMult,
                                 cooldown: skill.cooldown || 2,
                                 description: skill.description || ''
                               })
