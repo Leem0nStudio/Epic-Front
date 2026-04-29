@@ -22,9 +22,9 @@ export class CombatAdapter {
     };
     const jobSkills: SkillDefinition[] = (details.job.skills_unlocked || [])
       .slice(0, MAX_JOB_SKILLS)
-      .map((s: any) => ({
-        id: s.id,
-        name: s.name,
+      .map((s: any, idx: number) => ({
+        id: s.id || s.skill_id || `job_skill_${idx}`,
+        name: s.name || 'Habilidad de Clase',
         type: (s.type === 'ultimate' || s.type === 'burst') ? 'burst' : 'active',
         cooldown: s.cooldown || 0,
         effects: s.effects || [{
@@ -37,9 +37,9 @@ export class CombatAdapter {
       }));
     const gachaSkills: SkillDefinition[] = (details.skills || [])
       .slice(0, MAX_GACHA_SKILLS)
-      .map((s: any) => ({
-        id: s.id,
-        name: s.name,
+      .map((s: any, idx: number) => ({
+        id: s.id || s.item_id || `gacha_skill_${idx}`,
+        name: s.name || 'Habilidad',
         type: s.skillType === 'burst' ? 'burst' : 'active',
         cooldown: s.cooldown || 0,
         effects: s.effects || [{

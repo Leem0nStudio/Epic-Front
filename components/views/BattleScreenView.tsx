@@ -351,12 +351,12 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
            <div className="absolute inset-0 bg-gradient-to-r from-[#F5C76B]/5 via-transparent to-transparent pointer-events-none" />
            
            <div className="flex-1 flex gap-3">
-             {currentActor?.side === 'player' && currentActor.skills.map(skill => (
+             {currentActor?.side === 'player' && currentActor.skills.map((skill, idx) => (
                <SkillButton 
-                 key={skill.id} 
+                 key={skill.id || `skill-${idx}`} 
                  skill={skill} 
                  onUse={() => runTurn(currentActor, skill, targetId || undefined)} 
-                 cooldown={currentActor.cooldowns[skill.id]}
+                 cooldown={currentActor.cooldowns[skill.id || '']}
                />
              ))}
            </div>
@@ -562,7 +562,7 @@ function UnitCard({ unit, isActive }: { unit: CombatUnit, isActive: boolean }) {
 
 function SkillButton({ skill, onUse, cooldown }: { skill: SkillDefinition, onUse: () => void, cooldown?: number }) {
   const getIcon = () => {
-    const id = skill.id.toLowerCase();
+    const id = (skill.id || '').toLowerCase();
     if (id.includes('heal') || id.includes('aid')) return <Heart size={24} className="text-pink-400" />;
     if (id.includes('fire') || id.includes('meteor')) return <Zap size={24} className="text-orange-500" />;
     if (id.includes('bash') || id.includes('strike')) return <Swords size={24} className="text-red-400" />;
