@@ -85,7 +85,7 @@ export class CampaignService {
         }));
     }
 
-    static async completeStage(stageId: string, stats: { turns: number, deaths: number }) {
+    static async completeStage(stageId: string, stats: { turns: number, deaths: number }, participatingUnitIds?: string[]) {
         if (!supabase) return;
         const stage = await this.getStageById(stageId);
         if (!stage) throw new Error("Stage not found");
@@ -121,12 +121,19 @@ export class CampaignService {
             materials: grantedMaterials
         };
 
-        const { error } = await supabase.rpc('rpc_complete_stage', {
+        const rpcParams: any = {
             p_stage_id: stageId,
             p_stars: stars,
             p_turns: stats.turns,
             p_rewards: finalRewards
-        });
+        };
+
+        // Add participating units if provided
+        if (participatingUnitIds && participatingUnitIds.length > 0) {
+            rpcParams.p_participating_units = participatingUnitIds;
+        }
+
+        const { error } = await supabase.rpc('rpc_complete_stage', rpcParams);
 
         if (error) throw error;
 
@@ -153,7 +160,44 @@ export class CampaignService {
         return Boolean(data);
     }
 
-    static invalidateCache() {
-        this.chaptersCache = null;
-    }
+     static invalidateCache() {
+         this.chaptersCache = null;
+     }
+
+     static async refillEnergyWithGems(gemCost: number = 50): Promise<boolean> {
+         if (!supabase) return false;
+         
+         const { data, error } = await supabase.rpc('rpc_refill_energy_with_gems', {
+             p_gem_cost: gemCost
+         });
+
+         if (error) {
+             console.error('Energy refill failed:', error);
+             return false;
+         }
+
+         return Boolean(data);
+     }
+
+     static async getUnitProgress(unitId: string): Promise<{ level: number, exp: number, nextLevelExp: number, expPercentage: number } | null> {
+         if (!supabase) return null;
+
+         const { data, error } = await supabase
+             .from('unit_progress')
+             .select('*')
+             .eq('id', unitId)
+             .single();
+
+         if (error || !data) {
+             console.error('Failed to get unit progress:', error);
+             return null;
+         }
+
+         return {
+             level: data.level,
+             exp: data.exp,
+             nextLevelExp: data.next_level_exp,
+             expPercentage: data.exp_percentage
+         };
+     }
 }

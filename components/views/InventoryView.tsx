@@ -36,16 +36,17 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data, error } = await supabase.from('inventory').select('*').eq('player_id', user.id);
-      if (!error) {
-          const enriched = await Promise.all(data.map(async (inv) => {
-              let table = 'cards';
-              if (inv.item_type === 'weapon') table = 'weapons';
-              if (inv.item_type === 'skill_scroll') table = 'skills';
-              const { data: def } = await supabase.from(table).select('*').eq('id', inv.item_id).single();
-              return { ...inv, def };
-          }));
-          setItems(targetSlot ? enriched.filter(i => (targetSlot === 'weapon' && i.item_type === 'weapon') || (targetSlot === 'card' && i.item_type === 'card') || (targetSlot === 'skill' && (i.item_type === 'skill' || i.item_type === 'skill_scroll'))) : enriched);
-      }
+       if (!error) {
+           const enriched = await Promise.all(data.map(async (inv) => {
+               let table = 'cards';
+               if (inv.item_type === 'weapon') table = 'weapons';
+               // Handle both 'skill' and 'skill_scroll' for backwards compatibility
+               if (inv.item_type === 'skill' || inv.item_type === 'skill_scroll') table = 'skills';
+               const { data: def } = await supabase.from(table).select('*').eq('id', inv.item_id).single();
+               return { ...inv, def };
+           }));
+           setItems(targetSlot ? enriched.filter(i => (targetSlot === 'weapon' && i.item_type === 'weapon') || (targetSlot === 'card' && i.item_type === 'card') || (targetSlot === 'skill' && (i.item_type === 'skill' || i.item_type === 'skill_scroll'))) : enriched);
+       }
       setLoading(false);
     }
     loadInventory();

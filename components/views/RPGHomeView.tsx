@@ -28,6 +28,7 @@ interface RPGHomeViewProps {
   activePartyUnits: any[];
   onNavigate: (view: any) => void;
   onOpenFullInventory: () => void;
+  onRefillEnergy?: () => void;
 }
 
 const rarityGlow = (rarity: string) => {
@@ -124,7 +125,7 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flippe
   );
 };
 
-export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFullInventory }: RPGHomeViewProps) {
+export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFullInventory, onRefillEnergy }: RPGHomeViewProps) {
   const primaryUnit = activePartyUnits[0];
   const leftUnit = activePartyUnits[1];
   const rightUnit = activePartyUnits[2];
@@ -178,19 +179,33 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
         {/* Right: Currencies & Notification */}
         <div className="flex items-center gap-3">
           <div className="flex flex-col gap-2">
-            <div className="pill-dark flex items-center justify-between px-3 py-1.5 min-w-[120px] shadow-lg relative overflow-hidden group cursor-pointer hover:border-[#F5C76B] transition-colors">
-              <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <Coins size={16} className="text-[#F5C76B] drop-shadow-[0_0_5px_rgba(245,199,107,0.5)]" />
-              <span className="text-xs font-bold text-white tracking-wide font-stats">{displayCurrency.toLocaleString()}</span>
-              <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center ml-1"><span className="text-[10px] font-black">+</span></div>
-            </div>
-            <div className="pill-dark flex items-center justify-between px-3 py-1.5 min-w-[120px] shadow-lg relative overflow-hidden group cursor-pointer hover:border-cyan-400 transition-colors">
-              <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <Diamond size={16} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
-              <span className="text-xs font-bold text-white tracking-wide font-stats">{displayGems.toLocaleString()}</span>
-              <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center ml-1"><span className="text-[10px] font-black">+</span></div>
-            </div>
-          </div>
+             <div className="pill-dark flex items-center justify-between px-3 py-1.5 min-w-[120px] shadow-lg relative overflow-hidden group cursor-pointer hover:border-[#F5C76B] transition-colors">
+               <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+               <Coins size={16} className="text-[#F5C76B] drop-shadow-[0_0_5px_rgba(245,199,107,0.5)]" />
+               <span className="text-xs font-bold text-white tracking-wide font-stats">{displayCurrency.toLocaleString()}</span>
+               <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center ml-1"><span className="text-[10px] font-black">+</span></div>
+             </div>
+             <div className="pill-dark flex items-center justify-between px-3 py-1.5 min-w-[120px] shadow-lg relative overflow-hidden group cursor-pointer hover:border-cyan-400 transition-colors">
+               <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+               <Diamond size={16} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
+               <span className="text-xs font-bold text-white tracking-wide font-stats">{displayGems.toLocaleString()}</span>
+               <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center ml-1"><span className="text-[10px] font-black">+</span></div>
+             </div>
+             {/* Energy Refill Button */}
+             {saveData.energy < saveData.max_energy && (
+               <button
+                 onClick={onRefillEnergy}
+                 className="pill-dark flex items-center justify-between px-3 py-1.5 min-w-[120px] shadow-lg relative overflow-hidden group cursor-pointer hover:border-purple-400 transition-colors"
+               >
+                 <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                 <Zap size={16} className="text-purple-400 drop-shadow-[0_0_5px_rgba(168,85,247,0.5)]" />
+                 <span className="text-xs font-bold text-white/90 tracking-wide font-stats">50</span>
+                 <div className="w-4 h-4 rounded-full bg-purple-400/20 flex items-center justify-center ml-1">
+                   <span className="text-[8px] font-black text-purple-400">+</span>
+                 </div>
+               </button>
+             )}
+           </div>
           
           <div className="relative cursor-pointer hover:scale-105 transition-transform">
             <div className="w-12 h-12 rounded-full pill-dark flex items-center justify-center text-white/80 shadow-lg border-white/10">

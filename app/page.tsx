@@ -70,6 +70,7 @@ export default function Applet() {
                  activePartyUnits={state.activePartyUnits}
                  onNavigate={actions.navigateTo}
                  onOpenFullInventory={actions.openFullInventory}
+                 onRefillEnergy={actions.handleRefillEnergy}
                />;
       case 'tavern':
         return <TavernView 

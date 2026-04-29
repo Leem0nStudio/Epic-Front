@@ -54,6 +54,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const [isRecordingResult, setIsRecordingResult] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [damageNumbers, setDamageNumbers] = useState<{ id: number, value: number, x: number, y: number, color: string, isCrit?: boolean }[]>([]);
+  const [participatingUnits, setParticipatingUnits] = useState<Set<string>>(new Set());
 
   // Statistics for Star calculation
   const [stats, setStats] = useState({
@@ -125,6 +126,13 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       }
     });
 
+    // Track participating units
+    setParticipatingUnits(prev => {
+      const newSet = new Set(prev);
+      newSet.add(actor.id);
+      return newSet;
+    });
+
     setBattleLog(prev => [...prev, ...results.map(r => r.log)].slice(-20));
     setUnits(updatedUnits);
     setTurn(prev => prev + 1);
@@ -138,7 +146,11 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     if (winnerSide === 'player' && stageId) {
       setIsRecordingResult(true);
       try {
-        const result = await CampaignService.completeStage(stageId, { turns: round, deaths });
+        const result = await CampaignService.completeStage(
+          stageId, 
+          { turns: round, deaths },
+          Array.from(participatingUnits) // Pass participating unit IDs
+        );
         setCompletionData(result);
       } catch (e) {
         console.error("Failed to record stage completion:", e);

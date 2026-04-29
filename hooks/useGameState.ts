@@ -198,6 +198,20 @@ export function useGameState(toast?: ToastFn) {
     setView('battle');
   };
 
+  const handleRefillEnergy = async (gemCost: number = 50) => {
+    try {
+      const success = await CampaignService.refillEnergyWithGems(gemCost);
+      if (success) {
+        await refreshState();
+        if (toast) toast("¡Energía recargada!", 'success');
+      } else {
+        if (toast) toast("Gems insuficientes para recargar energía.", 'error');
+      }
+    } catch (e: any) {
+      if (toast) toast("Error al recargar energía: " + e.message, 'error');
+    }
+  };
+
   const handleOpenQuest = (stage: Stage) => {
     setSelectedStage(stage);
     setView('stage_details');
@@ -233,6 +247,7 @@ export function useGameState(toast?: ToastFn) {
       handleSelectStage,
       handleOpenQuest,
       handleStartBattle,
+      handleRefillEnergy,
       refreshState
     }
   };
