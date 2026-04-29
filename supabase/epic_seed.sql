@@ -1,4 +1,4 @@
--- Epic_seed.sql
+-- epic_seed.sql
 -- Consolidated seed data for the RPG system
 
 -- 1. Game Config
@@ -13,6 +13,7 @@ VALUES
 ('swordman', '1.0.0', 'Swordman', 1, 'novice', '{"hp": 1.2, "atk": 1.15, "def": 1.1, "matk": 0.8, "mdef": 0.9, "agi": 1.0}', '{"sword", "dagger"}', '[{"id": "bash", "name": "Bash", "type": "active", "powerMod": 1.5, "cooldown": 1}, {"id": "taunt", "name": "Provocar", "type": "active", "powerMod": 0, "cooldown": 3}]', '{"HP Recovery+10%"}', '{"minLevel": 10, "currencyCost": 1000, "materials": []}'),
 ('knight', '1.0.0', 'Knight', 2, 'swordman', '{"hp": 1.5, "atk": 1.3, "def": 1.4, "matk": 0.7, "mdef": 1.0, "agi": 0.9}', '{"sword"}', '[{"id": "bowling_bash", "name": "Bowling Bash", "type": "active", "powerMod": 3.0, "cooldown": 3}, {"id": "shield_bash", "name": "Shield Bash", "type": "active", "powerMod": 2.0, "cooldown": 2}]', '{"Spear Mastery"}', '{"minLevel": 40, "currencyCost": 5000, "materials": [], "requiredJobCore": "core_knight"}'),
 ('mage', '1.0.0', 'Mage', 1, 'novice', '{"hp": 0.8, "atk": 0.7, "def": 0.8, "matk": 1.4, "mdef": 1.3, "agi": 0.9}', '{"staff", "dagger"}', '[{"id": "fire_bolt", "name": "Fire Bolt", "type": "active", "powerMod": 1.8, "cooldown": 1}, {"id": "ice_arrow", "name": "Ice Arrow", "type": "active", "powerMod": 1.5, "cooldown": 2}]', '{}', '{"minLevel": 10, "currencyCost": 1000, "materials": []}');
+('wizard', '1.0.0', 'Wizard', 2, 'mage', '{"hp": 0.7, "atk": 0.6, "def": 0.7, "matk": 1.8, "mdef": 1.5, "agi": 0.8}', '{"staff"}', '[{"id": "meteor", "name": "Meteor", "type": "active", "powerMod": 4.0, "cooldown": 5}]', '{"SP Recovery+10%"}', '{"minLevel": 40, "currencyCost": 5000, "materials": [], "requiredJobCore": "core_wizard"}');
 
 -- 3. Skills (Gacha scrolls)
 INSERT INTO skills (id, version, name, description, cooldown, effect, scaling, rarity)
@@ -31,9 +32,9 @@ VALUES
 -- 4. Cards
 INSERT INTO cards (id, version, name, rarity, effect_type, effect_value, applicable_jobs)
 VALUES
-('card_goblin', '1.0.0', 'Goblin Card', 'common', 'statBoost', '0.10', '{"ALL"}'),
-('card_zombie', '1.0.0', 'Zombie Card', 'common', 'statBoost', '0.15', '{"ALL"}'),
-('card_baphomet', '1.0.0', 'Baphomet Card', 'legendary', 'skillModifier', '1', '{"ALL"}');
+('card_goblin', '1.0.0', 'Goblin Card', 'common', 'statBoost', '{"atk": 0.10}', '{"ALL"}'),
+('card_zombie', '1.0.0', 'Zombie Card', 'common', 'statBoost', '{"hp": 0.15}', '{"ALL"}'),
+('card_baphomet', '1.0.0', 'Baphomet Card', 'legendary', 'skillModifier', '{"all_skill_mult": 1.5}', '{"ALL"}');
 
 -- 5. Weapons
 INSERT INTO weapons (id, version, name, weapon_type, rarity, stat_bonuses, special_effects)
@@ -45,4 +46,5 @@ VALUES
 -- 6. Job Cores
 INSERT INTO job_cores (id, version, name, rarity, unlocks_job_id)
 VALUES
-('core_knight', '1.0.0', 'Knight Core', 'epic', 'knight');
+('core_knight', '1.0.0', 'Knight Core', 'epic', 'knight'),
+('core_wizard', '1.0.0', 'Wizard Core', 'epic', 'wizard');

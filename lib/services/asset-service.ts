@@ -1,5 +1,7 @@
 'use client';
 
+import { ATLAS_CONFIG } from '../config/sprite-atlas-config';
+
 export type AssetArchetype = 'melee' | 'magic' | 'ranged' | 'support' | 'neutral';
 export type ItemType = 'weapon' | 'card' | 'skill' | 'armor' | 'accessory';
 export type BackgroundKey = 'home' | 'party' | 'gacha' | 'battle' | 'campaign' | 'tavern' | 'inventory';
@@ -9,9 +11,9 @@ export class AssetService {
   
   private static SPRITE_PATH = `${this.LOCAL_BASE}/sprites`;
   private static UI_PATH = `${this.LOCAL_BASE}/ui`;
-  static SPRITE_ATLAS_PATH = `${this.UI_PATH}/64x64.png`;
-  static SPRITE_SIZE = 64;
-  static ATLAS_COLS = 16;
+  static SPRITE_ATLAS_PATH = ATLAS_CONFIG.imagePath;
+  static SPRITE_SIZE = ATLAS_CONFIG.spriteSize;
+  static ATLAS_COLS = ATLAS_CONFIG.columns;
   private static BG_PATH = `${this.LOCAL_BASE}/bg`;
   private static ITEMS_PATH = `${this.LOCAL_BASE}/items`;
 
@@ -155,11 +157,7 @@ export class AssetService {
   }
 
   static getSpriteAtlasConfig() {
-    return {
-      spriteSize: this.SPRITE_SIZE,
-      columns: this.ATLAS_COLS,
-      rows: 137,
-    };
+    return ATLAS_CONFIG;
   }
 
   static getSpriteAtlasPosition(index: number): { x: number; y: number } {

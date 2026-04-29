@@ -520,21 +520,32 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                               }
                             }
                             
-                            await supabase.rpc('rpc_learn_skill', {
-                              p_unit_id: unitId,
-                              p_skill_id: skill.id,
-                              p_skill_data: JSON.stringify({
-                                id: skill.id,
-                                name: skill.name,
-                                type: 'active',
-                                powerMod: scalingMult,
-                                cooldown: skill.cooldown || 2,
-                                description: skill.description || ''
-                              })
-                            });
-                            alert('Habilidad aprendida!');
-                            setShowLearnSkill(false);
-                            loadData();
+                             const { data: inventoryId, error } = await supabase.rpc('rpc_learn_skill', {
+                               p_unit_id: unitId,
+                               p_skill_id: skill.id,
+                               p_skill_data: JSON.stringify({
+                                 id: skill.id,
+                                 name: skill.name,
+                                 type: 'active',
+                                 powerMod: scalingMult,
+                                 cooldown: skill.cooldown || 2,
+                                 description: skill.description || ''
+                               })
+                             });
+                             
+                             if (error) throw error;
+                             
+                             // Auto-equip the learned skill
+                             if (inventoryId) {
+                               await supabase.rpc('rpc_equip_skill', {
+                                 p_unit_id: unitId,
+                                 p_inventory_id: inventoryId
+                               });
+                             }
+                             
+                             alert('Habilidad aprendida y equipada!');
+                             setShowLearnSkill(false);
+                             loadData();
                           } catch (e: any) {
                             alert(e.message || 'Error al aprender habilidad');
                           }
