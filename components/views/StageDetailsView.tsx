@@ -118,6 +118,8 @@ export function StageDetailsView({ stage, playerEnergy, onBack, onStartBattle }:
 function RewardTag({ label, value, icon }: { label: string, value: number, icon: string }) {
   return (
     <div className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-full flex items-center gap-2">
+       {icon === 'zeny' && <Gift size={12} className="text-[#F5C76B]" />}
+       {icon === 'exp' && <Zap size={12} className="text-yellow-400" />}
        <span className="text-[9px] font-black text-[#F5C76B] uppercase">{label}</span>
        <span className="text-[10px] font-black text-white">{value}</span>
     </div>

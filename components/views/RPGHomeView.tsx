@@ -68,10 +68,7 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flippe
           >
             {unit ? (
               <div
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[160%] h-auto object-contain origin-bottom"
-                style={{ 
-                  transform: flipped ? 'scaleX(-1) translateX(50%)' : 'translateX(-50%)'
-                }}
+                className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-[160%] h-auto object-contain origin-bottom ${flipped ? 'scale-x-[-1]' : ''}`}
               >
                 <ImageWithFallback
                   src={sprite || ''}
@@ -182,7 +179,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
             <span className="text-sm font-bold text-white tracking-wide">{displayGems}</span>
           </div>
           <Button
-            onClick={() => supabase?.auth.signOut()}
+            onClick={async () => { await supabase?.auth.signOut(); window.location.href = '/'; }}
             variant="secondary"
             size="sm"
             className="rounded-xl"

@@ -104,13 +104,13 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
                 </Button>
               </div>
                {results.map((item, i) => (
-                   <motion.div
-                     key={i}
-                     initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                     transition={{ delay: i * 0.05, type: 'spring', damping: 15 }}
-                     className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-white/5 transition-colors"
-                   >
+                    <motion.div
+                      key={`${item.item_id}_${i}_${Date.now()}`}
+                      initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ delay: i * 0.05, type: 'spring', damping: 15 }}
+                      className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-white/5 transition-colors"
+                    >
                      <RarityIcon
                        rarity={getRarityCode(item.item_rarity)}
                        size="md"

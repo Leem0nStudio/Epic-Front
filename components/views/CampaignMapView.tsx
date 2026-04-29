@@ -47,7 +47,7 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
 
   const isStageUnlocked = (stage: Stage) => {
     if (!stage.unlock_requirements?.stage_id) return true;
-    return progress.some(p => p.stage_id === stage.unlock_requirements?.stage_id);
+    return progress.some(p => p.stage_id === stage.unlock_requirements?.stage_id && (p.stars || 0) > 0);
   };
 
   const getStageStars = (stageId: string) => {

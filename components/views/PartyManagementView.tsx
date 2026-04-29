@@ -153,14 +153,14 @@ export function PartyManagementView({
                        as={motion.div}
                        whileHover={{ x: 6, transition: { duration: 0.2 } }}
                      >
-                        <RarityIcon
-                          rarity={getRarityCode('C')}
-                          size="sm"
-                          className="shrink-0"
-                          glass={true}
-                        >
-                          <img src={AssetService.getSpriteUrl(unit.sprite_id)} className="w-[180%] transform translate-y-2 brightness-110" style={{imageRendering: 'pixelated'}} />
-                        </RarityIcon>
+                         <RarityIcon
+                           rarity={getRarityCode(unit?.rarity || 'C')}
+                           size="sm"
+                           className="shrink-0"
+                           glass={true}
+                         >
+                           <img src={AssetService.getSpriteUrl(unit.sprite_id)} className="w-[180%] transform translate-y-2 brightness-110" style={{imageRendering: 'pixelated'}} />
+                         </RarityIcon>
                         <div className="flex-1 flex flex-col min-w-0">
                           <span className="font-black text-white uppercase text-sm tracking-wider truncate drop-shadow-sm">{unit.name}</span>
                           <div className="flex gap-4 mt-1.5">
@@ -208,14 +208,14 @@ export function PartyManagementView({
                          as={motion.div}
                          whileHover={{ x: 6, transition: { duration: 0.2 } }}
                        >
-                          <RarityIcon
-                            rarity={getRarityCode('C')}
-                            size="md"
-                            className="shrink-0"
-                            glass={true}
-                          >
-                            <img src={AssetService.getSpriteUrl(unit.sprite_id)} className="w-[180%] transform translate-y-2 brightness-110" style={{imageRendering: 'pixelated'}} />
-                          </RarityIcon>
+                         <RarityIcon
+                             rarity={getRarityCode(unit?.rarity || 'C')}
+                             size="md"
+                             className="shrink-0"
+                             glass={true}
+                           >
+                             <img src={AssetService.getSpriteUrl(unit.sprite_id)} className="w-[180%] transform translate-y-2 brightness-110" style={{imageRendering: 'pixelated'}} />
+                           </RarityIcon>
                           <div className="flex-1 flex flex-col min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-black text-white uppercase text-sm tracking-wider truncate flex-1 drop-shadow-sm">{unit.name}</span>

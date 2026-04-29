@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Zap, Clock, Shield, Sword, Heart, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { AssetService } from '@/lib/services/asset-service';
-import { UIService } from '@/lib/services/ui-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { RarityIcon } from '@/components/ui/RarityIcon';
 import { getRarityCode } from '@/lib/config/assets-config';
@@ -70,8 +69,8 @@ export function SkillDetailView({ skillId, itemId, onBack, onEquip, onDiscard }:
     );
   }
 
-  const effect = skill?.effect ? JSON.parse(skill.effect) : {};
-  const scaling = skill?.scaling ? JSON.parse(skill.scaling) : {};
+  const effect = skill?.effect ? (typeof skill.effect === 'string' ? JSON.parse(skill.effect) : skill.effect) : {};
+  const scaling = skill?.scaling ? (typeof skill.scaling === 'string' ? JSON.parse(skill.scaling) : skill.scaling) : {};
 
   return (
     <div className="flex flex-col h-full bg-[#0B1A2A] p-4 overflow-hidden relative">
