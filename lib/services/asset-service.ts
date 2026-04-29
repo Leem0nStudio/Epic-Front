@@ -15,11 +15,11 @@ export class AssetService {
   // Sprite mappings
   private static JOB_SPRITE_MAP: Record<string, string> = {
     'novice': 'novice_idle.png',
-    'swordman': 'warrior_idle.png',
+    'swordman': 'swordsman_idle.png',
     'mage': 'mage_idle.png',
     'ranger': 'ranger_idle.png',
-    'archer': 'ranger_idle.png',
-    'acolyte': 'priest_idle.png',
+    'archer': 'archer_idle.png',
+    'acolyte': 'acolyte_idle.png',
     'knight': 'knight_idle.png',
     'wizard': 'wizard_idle.png',
     'priest': 'priest_idle.png'
@@ -36,11 +36,11 @@ export class AssetService {
   // UI Icon mappings
   private static JOB_ICON_MAP: Record<string, string> = {
     'novice': 'icon_novice.png',
-    'swordman': 'icon_warrior.png',
+    'swordman': 'icon_swordsman.png',
     'mage': 'icon_mage.png',
     'ranger': 'icon_ranger.png',
-    'archer': 'icon_ranger.png',
-    'acolyte': 'icon_priest.png',
+    'archer': 'icon_archer.png',
+    'acolyte': 'icon_acolyte.png',
     'knight': 'icon_knight.png',
     'wizard': 'icon_wizard.png',
     'priest': 'icon_priest.png'

@@ -13,9 +13,14 @@ import { StageDetailsView } from '@/components/views/StageDetailsView';
 import { AuthView } from '@/components/views/AuthView';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { ErrorDisplay } from '@/components/ui/ErrorDisplay';
+import { Button } from '@/components/ui/Button';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 export default function Applet() {
-  const { state, actions } = useGameState();
+  const { showToast } = useToast();
+  const { state, actions } = useGameState(showToast);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -24,9 +29,8 @@ export default function Applet() {
 
   if (!isMounted || state.isAuthLoading) {
     return (
-      <div className="min-h-screen bg-[#0B1A2A] flex flex-col items-center justify-center font-sans gap-4">
-        <div className="w-12 h-12 border-2 border-t-[#F5C76B] border-white/5 rounded-full animate-spin"></div>
-        <p className="text-[10px] font-black text-white/40 tracking-[0.5em] animate-pulse uppercase">Conectando...</p>
+      <div className="min-h-screen bg-[#0B1A2A] flex items-center justify-center">
+        <LoadingSpinner size="lg" text="Conectando..." />
       </div>
     );
   }
@@ -41,20 +45,20 @@ export default function Applet() {
 
   if (state.error) {
     return (
-      <div className="min-h-screen bg-[#0B1A2A] flex flex-col items-center justify-center font-sans p-8 text-center gap-4">
-        <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center text-red-500 text-2xl font-black">!</div>
-        <h1 className="text-xl font-black text-white tracking-widest uppercase italic">Error de Carga</h1>
-        <p className="text-white/40 text-xs max-w-md uppercase tracking-wider">{state.error}</p>
-        <button onClick={() => window.location.reload()} className="mt-4 px-8 py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-white tracking-widest hover:bg-white/10 transition-colors uppercase">Reintentar</button>
+      <div className="min-h-screen bg-[#0B1A2A] flex items-center justify-center p-4">
+        <ErrorDisplay
+          title="Error de Carga"
+          message={state.error}
+          onRetry={() => window.location.reload()}
+        />
       </div>
     );
   }
 
   if (!state.isLoaded) {
     return (
-      <div className="min-h-screen bg-[#0B1A2A] flex flex-col items-center justify-center font-sans gap-4">
-        <div className="w-12 h-12 border-2 border-t-[#F5C76B] border-white/5 rounded-full animate-spin"></div>
-        <p className="text-[10px] font-black text-white/40 tracking-[0.5em] animate-pulse uppercase">Cargando Reino...</p>
+      <div className="min-h-screen bg-[#0B1A2A] flex items-center justify-center">
+        <LoadingSpinner size="lg" text="Cargando Reino..." />
       </div>
     );
   }
@@ -127,7 +131,9 @@ export default function Applet() {
         return (
           <div className="flex flex-col items-center justify-center h-full space-y-4">
             <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Vista [{state.view}] en construcción.</p>
-            <button onClick={() => actions.navigateTo('home')} className="px-6 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-white tracking-widest uppercase">Volver</button>
+            <Button onClick={() => actions.navigateTo('home')} variant="secondary" size="sm">
+              Volver
+            </Button>
           </div>
         );
     }

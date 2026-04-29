@@ -1,11 +1,13 @@
 'use client';
 import { AssetService } from '@/lib/services/asset-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
+import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, UserPlus, Clock, Star, Sword, Heart, Zap, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { RecruitmentService } from '@/lib/services/recruitment-service';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 interface TavernViewProps {
   saveData: any;
@@ -15,6 +17,7 @@ interface TavernViewProps {
 }
 
 export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
+  const { confirm } = useToast();
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
@@ -24,7 +27,8 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
   }, []);
 
   const handleDiscard = async (slotId: string) => {
-    if (!confirm("¿Deseas descartar este recluta? Se generará uno nuevo en el siguiente ciclo.")) return;
+    const confirmed = await confirm("¿Deseas descartar este recluta? Se generará uno nuevo en el siguiente ciclo.");
+    if (!confirmed) return;
     try {
         await RecruitmentService.discardRecruit(slotId);
         window.location.reload();
@@ -77,10 +81,15 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
                  </div>
                )}
 
-               <div className="flex gap-6">
-                 <div className="w-24 h-24 bg-black/60 rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-                   <img src={AssetService.getSpriteUrl(unit.spriteId)} className="w-[180%] transform translate-y-3" style={{imageRendering: 'pixelated'}} alt="Unit Sprite" />
-                 </div>
+                <div className="flex gap-6">
+                  <div className="w-24 h-24 bg-black/60 rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                    <ImageWithFallback
+                      src={AssetService.getSpriteUrl(unit.spriteId)}
+                      alt="Unit Sprite"
+                      className="w-[180%] transform translate-y-3"
+                      fallbackSrc={AssetService.getSpriteUrl('novice_idle.png')}
+                    />
+                  </div>
 
                  <div className="flex-1 flex flex-col justify-center">
                    <div className="flex items-center justify-between mb-1">

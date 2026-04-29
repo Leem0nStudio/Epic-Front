@@ -3,6 +3,7 @@ import { AssetService } from '@/lib/services/asset-service';
 import { UIService } from '@/lib/services/ui-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { RarityIcon } from '@/components/ui/RarityIcon';
+import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
 
 import React, { useState } from 'react';
 import { ChevronLeft, Shield, Sword, Heart, Zap, ArrowRight, UserMinus, Plus } from 'lucide-react';
@@ -87,10 +88,11 @@ export function PartyManagementView({
                       <Shield size={24} className="text-white/20" />
                     ) : unit ? (
                       <>
-                        <img
+                        <ImageWithFallback
                           src={AssetService.getSpriteUrl(unit.sprite_id)}
+                          alt={unit.name}
                           className="w-[180%] transform translate-y-3"
-                          style={{imageRendering: 'pixelated'}}
+                          fallbackSrc={AssetService.getSpriteUrl('novice_idle.png')}
                         />
                         <div className="absolute bottom-0 inset-x-0 bg-black/80 py-1 border-t border-white/10 backdrop-blur-sm">
                           <span className="text-[8px] font-black text-center block text-white/60 tracking-wider">LV.{unit.level}</span>

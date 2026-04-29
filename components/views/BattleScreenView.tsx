@@ -2,6 +2,8 @@
 import { AssetService } from '@/lib/services/asset-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { ActionButton } from '@/components/ui/ActionButton';
+import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -271,19 +273,19 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
           ))}
         </div>
 
-       {/* Damage Numbers Container */}
-       <div className="absolute inset-0 pointer-events-none z-[100]">
-         <AnimatePresence>
-           {damageNumbers.map(d => (
-             <motion.div
-               key={d.id}
-               initial={{ opacity: 0, y: 0, scale: 0.5, rotate: -10 }}
-               animate={{ opacity: 1, y: d.y, scale: d.isCrit ? 2.5 : 1.8, rotate: Math.random() * 20 - 10 }}
-               exit={{ opacity: 0, scale: 0.2 }}
-               transition={{ type: 'spring', damping: 10 }}
-               className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-black text-3xl italic drop-shadow-[0_4px_8px_rgba(0,0,0,1)] flex flex-col items-center z-[110] ${d.color}`}
-               style={{ marginLeft: d.x }}
-             >
+        {/* Damage Numbers Container */}
+        <div className="absolute inset-0 pointer-events-none z-50">
+          <AnimatePresence>
+            {damageNumbers.map(d => (
+              <motion.div
+                key={d.id}
+                initial={{ opacity: 0, y: 0, scale: 0.5, rotate: -10 }}
+                animate={{ opacity: 1, y: d.y, scale: d.isCrit ? 2.5 : 1.8, rotate: Math.random() * 20 - 10 }}
+                exit={{ opacity: 0, scale: 0.2 }}
+                transition={{ type: 'spring', damping: 10 }}
+                className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-black text-3xl italic drop-shadow-[0_4px_8px_rgba(0,0,0,1)] flex flex-col items-center z-60 ${d.color}`}
+                style={{ marginLeft: d.x }}
+              >
                {d.isCrit && <span className="text-[10px] uppercase tracking-[0.3em] mb-[-4px] text-yellow-300 drop-shadow-none">CRITICAL</span>}
                {d.value}
              </motion.div>
@@ -468,15 +470,15 @@ function PlayerSprite({ unit, isActive }: { unit: CombatUnit, isActive: boolean 
       className="relative"
     >
       {/* Magic Pedestal for active unit */}
-      {isActive && (
-        <motion.div 
-          animate={{ rotate: 360, opacity: [0.2, 0.5, 0.2] }}
-          transition={{ repeat: Infinity, duration: 4, ease: 'linear' }}
-          className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 w-24 h-8 border border-cyan-500/30 rounded-[100%] bg-cyan-500/10 blur-[2px] z-0"
-        />
-      )}
-      
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-5 bg-black/60 rounded-[100%] blur-md z-0" />
+       {isActive && (
+         <motion.div 
+           animate={{ rotate: 360, opacity: [0.2, 0.5, 0.2] }}
+           transition={{ repeat: Infinity, duration: 4, ease: 'linear' }}
+           className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 w-24 h-8 border border-cyan-500/30 rounded-full bg-cyan-500/10 blur-[2px] z-0"
+         />
+       )}
+       
+       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-5 bg-black/60 rounded-full blur-md z-0" />
       
       <img 
         src={AssetService.getSpriteUrl(unit.sprite_id || AssetService.getJobSpriteId('novice'))}
@@ -587,20 +589,20 @@ function SkillButton({ skill, onUse, cooldown }: { skill: SkillDefinition, onUse
 
 function LoadingScreen() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-[#020508] gap-4">
-      <Swords size={48} className="text-[#F5C76B] animate-bounce" />
-      <p className="text-[10px] font-black text-white/40 tracking-[0.5em] uppercase">Preparando escenario...</p>
+    <div className="flex-1 flex items-center justify-center bg-[#020508]">
+      <LoadingSpinner text="Preparando escenario..." />
     </div>
   );
 }
 
 function ErrorScreen({ error, onBack }: { error: string, onBack: () => void }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-[#020508] p-8 text-center gap-6">
-      <AlertTriangle size={40} className="text-amber-400" />
-      <h2 className="text-white font-black uppercase tracking-widest text-lg italic">Incompatibilidad de Batallón</h2>
-      <p className="text-white/40 text-[10px] uppercase tracking-wider leading-relaxed">{error}</p>
-      <button onClick={onBack} className="px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest">Regresar</button>
+    <div className="flex-1 flex items-center justify-center bg-[#020508] p-8">
+      <ErrorDisplay
+        title="Incompatibilidad de Batallón"
+        message={error}
+        onRetry={onBack}
+      />
     </div>
   );
 }
@@ -610,7 +612,7 @@ function BattleResult({ winner, completionData, isRecording, onConfirm }: any) {
     <motion.div 
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
-      className="fixed inset-0 z-[100] bg-[#050A0F]/95 backdrop-blur-3xl flex flex-col items-center justify-center p-8 text-center overflow-hidden"
+      className="fixed inset-0 z-50 bg-[#050A0F]/95 backdrop-blur-3xl flex flex-col items-center justify-center p-8 text-center overflow-hidden"
     >
       {/* Background Glow */}
       <div className={`absolute w-[500px] h-[500px] rounded-full blur-[120px] opacity-20 ${winner === 'player' ? 'bg-yellow-500' : 'bg-red-900'}`} />

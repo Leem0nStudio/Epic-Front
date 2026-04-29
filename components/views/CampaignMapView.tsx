@@ -13,8 +13,10 @@ import {
 } from 'lucide-react';
 import { CampaignService } from '@/lib/services/campaign-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Chapter, Stage, PlayerStageProgress } from '@/lib/rpg-system/campaign-types';
 import { ViewType } from '@/hooks/useGameState';
+import { Button } from '@/components/ui/Button';
 
 interface CampaignMapViewProps {
   playerEnergy: number;
@@ -55,7 +57,7 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-[#020508]">
-        <div className="w-8 h-8 border-2 border-t-[#F5C76B] border-white/5 rounded-full animate-spin" />
+        <LoadingSpinner />
       </div>
     );
   }
@@ -174,25 +176,27 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
 
       {/* Chapter Navigation (Footer) */}
       <div className="p-6 bg-[#0B1A2A] border-t border-white/5 flex items-center justify-center gap-8 shrink-0">
-         <button
-           disabled={activeChapterIdx === 0}
+         <Button
            onClick={() => setActiveChapterIdx(prev => prev - 1)}
-           className="p-3 bg-white/5 rounded-2xl border border-white/10 disabled:opacity-20 text-white"
+           disabled={activeChapterIdx === 0}
+           variant="secondary"
+           size="sm"
          >
            <ChevronLeft size={16} />
-         </button>
+         </Button>
          <div className="flex gap-2">
             {chapters.map((_, i) => (
               <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all ${i === activeChapterIdx ? 'bg-[#F5C76B] w-6' : 'bg-white/10'}`} />
             ))}
          </div>
-         <button
-           disabled={activeChapterIdx === chapters.length - 1}
+         <Button
            onClick={() => setActiveChapterIdx(prev => prev + 1)}
-           className="p-3 bg-white/5 rounded-2xl border border-white/10 disabled:opacity-20 text-white"
+           disabled={activeChapterIdx === chapters.length - 1}
+           variant="secondary"
+           size="sm"
          >
            <ChevronRight size={16} />
-         </button>
+         </Button>
       </div>
     </div>
   );

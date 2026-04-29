@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight, Box, Sparkles, Sword, Search, Filter } from 
 import { supabase } from '@/lib/supabase';
 import { motion } from 'motion/react';
 import { SkillDetailView } from './SkillDetailView';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 interface InventoryViewProps {
   targetSlot: 'weapon' | 'card' | 'skill' | null;
@@ -18,6 +19,7 @@ interface InventoryViewProps {
 }
 
 export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: InventoryViewProps) {
+  const { confirm } = useToast();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -231,25 +233,26 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
         )}
 
        {selectedSkill && (
-         <SkillDetailView
-           skillId={selectedSkill}
-           itemId={items.find(i => i.item_id === selectedSkill)?.id || ''}
-           onBack={() => setSelectedSkill(null)}
-           onEquip={(item) => { onEquip(item); setSelectedSkill(null); }}
-           onDiscard={async (itemId) => {
-             if (!confirm('¿Descartar este objeto?')) return;
-             if (!supabase) return;
-             await supabase.from('inventory').delete().eq('id', itemId);
-             setSelectedSkill(null);
-             // Reload inventory
-             const { data: { user } } = await supabase.auth.getUser();
-             if (user) {
-               const { data } = await supabase.from('inventory').select('*').eq('player_id', user.id);
-               if (data) setItems(data);
-             }
-           }}
-         />
-       )}
+          <SkillDetailView
+            skillId={selectedSkill}
+            itemId={items.find(i => i.item_id === selectedSkill)?.id || ''}
+            onBack={() => setSelectedSkill(null)}
+            onEquip={(item) => { onEquip(item); setSelectedSkill(null); }}
+            onDiscard={async (itemId) => {
+              const confirmed = await confirm('¿Descartar este objeto?');
+              if (!confirmed) return;
+              if (!supabase) return;
+              await supabase.from('inventory').delete().eq('id', itemId);
+              setSelectedSkill(null);
+              // Reload inventory
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                const { data } = await supabase.from('inventory').select('*').eq('player_id', user.id);
+                if (data) setItems(data);
+              }
+            }}
+          />
+        )}
     </div>
   );
 }

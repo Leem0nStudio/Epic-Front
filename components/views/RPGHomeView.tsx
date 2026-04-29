@@ -23,6 +23,7 @@ import { supabase } from '@/lib/supabase';
 import { AssetService } from '@/lib/services/asset-service';
 import { PanelButton } from '@/components/ui/PanelButton';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
+import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
 
 interface RPGHomeViewProps {
   saveData: any;
@@ -62,11 +63,11 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any)
             className="w-full h-full relative"
           >
             {unit ? (
-              <img
-                src={sprite}
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200%] h-auto object-contain transform origin-bottom"
-                style={{ imageRendering: 'pixelated' }}
+              <ImageWithFallback
+                src={sprite || ''}
                 alt={unit.name}
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200%] h-auto object-contain transform origin-bottom"
+                fallbackSrc={AssetService.getSpriteUrl('novice_idle.png')}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center opacity-20">
@@ -169,15 +170,14 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
             <Diamond size={16} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
             <span className="text-sm font-bold text-white tracking-wide">{displayGems}</span>
           </div>
-          <PanelButton
-            variant="default"
+          <Button
             onClick={() => supabase?.auth.signOut()}
-            className="w-11 h-11 rounded-xl"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            variant="secondary"
+            size="sm"
+            className="rounded-xl"
           >
             <img src="/assets/ui/Icon_novice.png" width="18" height="18" style={{ imageRendering: 'pixelated' }} alt="Settings" className="opacity-60 hover:opacity-100 transition-opacity" />
-          </PanelButton>
+          </Button>
         </div>
       </div>
 
@@ -204,15 +204,17 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
             { icon: Bell, label: 'NOTIF', color: 'text-white', glow: 'shadow-white/10' },
             { icon: Mail, label: 'MAIL', color: 'text-white', glow: 'shadow-white/10' }
           ].map((btn, i) => (
-            <motion.button
+            <Button
               key={i}
+              variant="secondary"
+              size="sm"
+              className="w-12 h-12 flex flex-col items-center justify-center !rounded-2xl"
               whileHover={{ scale: 1.1, x: -4 }}
               whileTap={{ scale: 0.9 }}
-              className={`w-12 h-12 bg-black/50 backdrop-blur-xl border border-white/10 rounded-2xl flex flex-col items-center justify-center shadow-xl transition-all duration-200 hover:border-white/20 hover:bg-black/60`}
             >
               <btn.icon size={18} className={btn.color} />
               <span className="text-[7px] font-black mt-0.5 tracking-tighter opacity-50">{btn.label}</span>
-            </motion.button>
+            </Button>
           ))}
         </div>
 
@@ -244,27 +246,27 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
         </motion.div>
       </div>
 
-      {/* Bottom Dock */}
-      <div className="w-full shrink-0 bg-gradient-to-t from-[#020508]/95 via-[#0B1A2A]/80 to-transparent z-40 px-6 flex items-center justify-between pb-4 pt-2">
-        <div className="flex gap-4 h-16 flex-1 items-end">
-          {[
-            { id: 'party', icon: Users, label: 'EQUIPO' },
-            { id: 'inventory', icon: Box, label: 'INVENT', action: 'inventory' },
-            { id: 'tavern', icon: UserPlus, label: 'GREMIO' },
-            { id: 'gacha', icon: Sparkles, label: 'NEXO' }
-          ].map(btn => (
-            <PanelButton
-              key={btn.id}
-              variant="default"
-              onClick={() => btn.action === 'inventory' ? onOpenFullInventory() : onNavigate(btn.id as any)}
-              className="flex-1 h-14 flex flex-col items-center justify-center gap-1"
-              whileTap={{ scale: 0.95 }}
-            >
-              <btn.icon size={18} className="text-white/80" />
-              <span className="text-[8px] font-black tracking-widest text-white/60 uppercase">{btn.label}</span>
-            </PanelButton>
-          ))}
-        </div>
+        {/* Bottom Dock */}
+        <div className="w-full shrink-0 bg-gradient-to-t from-[#020508]/95 via-[#0B1A2A]/80 to-transparent z-40 px-6 flex items-center justify-between pb-4 pt-2">
+          <div className="flex gap-4 h-16 flex-1 items-end">
+            {[
+              { id: 'party', icon: Users, label: 'EQUIPO' },
+              { id: 'inventory', icon: Box, label: 'INVENT', action: 'inventory' },
+              { id: 'tavern', icon: UserPlus, label: 'GREMI' },
+              { id: 'gacha', icon: Sparkles, label: 'NEXO' }
+            ].map(btn => (
+              <Button
+                key={btn.id}
+                variant="secondary"
+                onClick={() => btn.action === 'inventory' ? onOpenFullInventory() : onNavigate(btn.id as any)}
+                className="flex-1 h-14 flex flex-col items-center justify-center gap-1 !rounded-xl"
+                whileTap={{ scale: 0.95 }}
+              >
+                <btn.icon size={18} className="text-white/80" />
+                <span className="text-[8px] font-black tracking-widest text-white/60 uppercase">{btn.label}</span>
+              </Button>
+            ))}
+          </div>
 
         <div className="w-24 h-24 relative flex items-center justify-center mx-4">
           <div className="absolute inset-0 bg-[#F5C76B]/10 blur-[30px] rounded-full scale-75" />

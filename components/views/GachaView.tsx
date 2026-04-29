@@ -9,6 +9,7 @@ import { ChevronLeft, Sparkles, Diamond, Coins, Star, Sword, Box, ScrollText } f
 import { GachaService } from '@/lib/services/gacha-service';
 import { motion, AnimatePresence } from 'motion/react';
 import { getRarityCode } from '@/lib/config/assets-config';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 interface GachaViewProps {
   profile: any;
@@ -16,6 +17,7 @@ interface GachaViewProps {
 }
 
 export function GachaView({ profile, onNavigate }: GachaViewProps) {
+  const { showToast } = useToast();
   const [results, setResults] = useState<any[]>([]);
   const [isPulling, setIsPulling] = useState(false);
 
@@ -25,7 +27,7 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
       const items = await GachaService.pull(amount, currency);
       setResults(items);
     } catch (e: any) {
-      alert(e.message);
+      showToast(e.message, 'error');
     } finally {
       setIsPulling(false);
     }

@@ -9,9 +9,11 @@ import { ConfigService } from '@/lib/services/config-service';
 import { CampaignService } from '@/lib/services/campaign-service';
 import { Stage } from '@/lib/rpg-system/campaign-types';
 
+type ToastFn = (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
+
 export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'stage_details';
 
-export function useGameState() {
+export function useGameState(toast?: ToastFn) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -150,15 +152,16 @@ export function useGameState() {
   const handleEquipItem = async (item: any) => {
     if (!targetSlot) return;
     if (!selectedUnitId) {
-      alert('Selecciona una unidad para equipar objetos');
+      if (toast) toast('Selecciona una unidad para equipar objetos', 'warning');
       return;
     }
     try {
         await EquipmentService.equipItem(selectedUnitId, item.id, targetSlot);
         await refreshState();
         setView('unit_details');
+        if (toast) toast('Objeto equipado', 'success');
     } catch (e: any) {
-        alert(e.message);
+        if (toast) toast(e.message, 'error');
     }
   };
 
@@ -188,7 +191,7 @@ export function useGameState() {
   const handleStartBattle = async (stage: Stage) => {
     const success = await CampaignService.deductEnergy(stage.energy_cost);
     if (!success) {
-        alert("No tienes suficiente energía para esta incursión.");
+        if (toast) toast("No tienes suficiente energía para esta incursión.", 'warning');
         return;
     }
     await refreshState();

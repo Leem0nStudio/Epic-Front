@@ -12,6 +12,7 @@ import {
   Users
 } from 'lucide-react';
 import { Stage } from '@/lib/rpg-system/campaign-types';
+import { Button } from '@/components/ui/Button';
 
 interface StageDetailsViewProps {
   stage: Stage;
@@ -98,19 +99,17 @@ export function StageDetailsView({ stage, playerEnergy, onBack, onStartBattle }:
 
       {/* Start Button */}
       <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-[#020508] via-[#020508] to-transparent">
-        <button
-          disabled={!canAfford}
+        <Button
           onClick={() => onStartBattle(stage)}
-          className={`w-full py-5 rounded-[24px] flex items-center justify-center gap-4 transition-all ${
-            canAfford
-            ? 'bg-gradient-to-r from-[#F5C76B] to-[#b88c3a] text-black shadow-[0_10px_30px_rgba(245,199,107,0.3)] active:scale-95'
-            : 'bg-white/5 border border-white/10 text-white/20'
-          }`}
+          disabled={!canAfford}
+          variant={canAfford ? 'primary' : 'secondary'}
+          size="lg"
+          className="w-full flex items-center justify-center gap-4"
         >
-          <Sword size={20} className="font-black" />
-          <span className="text-sm font-black uppercase tracking-[0.2em] italic">Comenzar Incursión</span>
-          {!canAfford && <span className="text-[10px] opacity-40 ml-2 font-mono">(Energía Insuficiente)</span>}
-        </button>
+          <Sword size={20} />
+          <span className="uppercase">Comenzar Incursión</span>
+          {!canAfford && <span className="text-[10px] opacity-40 ml-2">(Energía Insuficiente)</span>}
+        </Button>
       </div>
     </div>
   );

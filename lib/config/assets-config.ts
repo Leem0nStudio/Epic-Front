@@ -161,11 +161,11 @@ export const ITEM_ASSETS = {
 } as const;
 
 /**
- * 9-Slice Configuration for Kenny Fantasy UI Assets
+ * 9-Slice Configuration for Fantasy UI Assets
  * All panel/border assets are 96x96px → slice = 96/3 = 32px
  */
 export const NINE_SLICE_CONFIG = {
-  /** Default slice value for all Kenny UI assets */
+  /** Default slice value for all UI assets */
   defaultSlice: 32,
   /** Filled panel assets (use `fill` keyword in border-image-slice) */
   panels: {
