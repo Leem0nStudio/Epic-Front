@@ -11,18 +11,28 @@ interface SpriteAtlasIconProps {
 }
 
 export function SpriteAtlasIcon({ index, size, className = '', alt = '' }: SpriteAtlasIconProps) {
-  const spriteSize = size || AssetService.SPRITE_SIZE;
+  const displaySize = size || AssetService.SPRITE_SIZE;
   const pos = AssetService.getSpriteAtlasPosition(index);
+  const atlasUrl = AssetService.getSpriteAtlasUrl();
+  const nativeSize = AssetService.SPRITE_SIZE;
+  const scale = displaySize / nativeSize;
+  
+  // Scale the atlas and position proportionally
+  const scaledAtlasWidth = 1024 * scale;
+  const scaledAtlasHeight = 8768 * scale;
+  const scaledPosX = pos.x * scale;
+  const scaledPosY = pos.y * scale;
   
   return (
     <div
       className={`inline-block ${className}`}
       style={{
-        backgroundImage: `url('${AssetService.getSpriteAtlasUrl()}')`,
-        backgroundPosition: `-${pos.x}px -${pos.y}px`,
+        backgroundImage: `url('${atlasUrl}')`,
+        backgroundPosition: `-${scaledPosX}px -${scaledPosY}px`,
         backgroundRepeat: 'no-repeat',
-        width: `${spriteSize}px`,
-        height: `${spriteSize}px`,
+        backgroundSize: `${scaledAtlasWidth}px ${scaledAtlasHeight}px`,
+        width: `${displaySize}px`,
+        height: `${displaySize}px`,
         imageRendering: 'pixelated',
       }}
       role="img"

@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Button } from '@/components/ui/Button';
+import { SpriteAtlasIcon } from '@/components/ui/SpriteAtlasIcon';
+import { SPRITE_INDEX } from '@/lib/config/sprite-atlas-config';
 import {
   Users,
   Coins,
@@ -138,8 +140,8 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
       <div className="w-full h-16 shrink-0 flex items-center justify-between px-6 z-30 pt-3">
         <div className="flex items-center gap-4">
           <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 border border-white/10 flex items-center justify-center overflow-hidden shadow-lg">
-            <img alt="Player Profile" src={AssetService.getSpriteUrl(primaryUnit?.sprite_id || AssetService.getJobSpriteId('novice'))} className="w-[150%] transform translate-y-1" style={{imageRendering: 'pixelated'}} />
-          </div>
+             <SpriteAtlasIcon index={SPRITE_INDEX.icon_novice} size={44} alt="Novice" />
+           </div>
           <div className="flex flex-col text-left gap-1.5">
             <div className="flex items-center gap-3">
               <span className="text-[10px] font-black bg-[#F5C76B] text-black px-2 py-0.5 rounded-md italic uppercase shadow-[0_0_10px_rgba(245,199,107,0.3)]">Lvl. {playerLevel}</span>

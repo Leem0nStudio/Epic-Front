@@ -154,6 +154,14 @@ export class AssetService {
     return this.SPRITE_ATLAS_PATH;
   }
 
+  static getSpriteAtlasConfig() {
+    return {
+      spriteSize: this.SPRITE_SIZE,
+      columns: this.ATLAS_COLS,
+      rows: 137,
+    };
+  }
+
   static getSpriteAtlasPosition(index: number): { x: number; y: number } {
     const col = index % this.ATLAS_COLS;
     const row = Math.floor(index / this.ATLAS_COLS);
