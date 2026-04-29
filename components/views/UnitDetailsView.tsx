@@ -7,7 +7,9 @@ import { EquipmentService } from '@/lib/services/equipment-service';
 import { PanelButton } from '@/components/ui/PanelButton';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { RarityIcon } from '@/components/ui/RarityIcon';
+import { SpriteAtlasIcon } from '@/components/ui/SpriteAtlasIcon';
 import { RARITY_COLORS, getRarityCode } from '@/lib/config/assets-config';
+import { SPRITE_INDEX } from '@/lib/config/sprite-atlas-config';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, Shield, Sword, Zap, Heart, Star, Briefcase, Sparkles, Box, Plus, X, ArrowUpCircle, ShieldAlert } from 'lucide-react';
 
@@ -266,8 +268,8 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                   <>
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,199,107,0.2),transparent_70%)]" />
                     <RarityIcon rarity={getRarityCode(weapon.rarity)} size="sm" glass={true}>
-                      <Sword size={24} className="text-[#F5C76B] drop-shadow-[0_0_10px_rgba(245,199,107,0.4)]" />
-                    </RarityIcon>
+                       <SpriteAtlasIcon index={SPRITE_INDEX.weapon_sword} size={24} className="drop-shadow-[0_0_10px_rgba(245,199,107,0.4)]" />
+                     </RarityIcon>
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleUnequip(weapon.id, 'weapon'); }} 
                       className="absolute -top-1.5 -right-1.5 bg-red-500 rounded-full p-1 border border-white/20 shadow-lg text-white z-20 hover:scale-110 transition-transform"
@@ -302,8 +304,8 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                       <>
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.2),transparent_70%)]" />
                         <RarityIcon rarity={getRarityCode(card.rarity)} size="sm" glass={true}>
-                          <Sparkles size={24} className="text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]" />
-                        </RarityIcon>
+                           <SpriteAtlasIcon index={SPRITE_INDEX.card_common} size={24} className="drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]" />
+                         </RarityIcon>
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleUnequip(card.id, 'card'); }} 
                           className="absolute -top-1.5 -right-1.5 bg-red-500 rounded-full p-1 border border-white/20 shadow-lg text-white z-20 hover:scale-110 transition-transform"
@@ -361,10 +363,8 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
                       <>
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(34,211,238,0.2),transparent_70%)]" />
                         <RarityIcon rarity={getRarityCode(skill.rarity)} size="sm" glass={true}>
-                          <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10">
-                            <img src={AssetService.getIconUrl(unit.icon_id)} className="w-full h-full object-contain brightness-125" />
-                          </div>
-                        </RarityIcon>
+                           <SpriteAtlasIcon index={SPRITE_INDEX.skill_attack} size={32} />
+                         </RarityIcon>
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleUnequip(skill.id, 'skill'); }} 
                           className="absolute -top-1.5 -right-1.5 bg-red-500 rounded-full p-1 border border-white/20 shadow-lg text-white z-20 hover:scale-110 transition-transform"

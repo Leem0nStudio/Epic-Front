@@ -248,8 +248,8 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
       </div>
 
         {/* Bottom Dock */}
-        <div className="w-full shrink-0 bg-gradient-to-t from-[#020508]/95 via-[#0B1A2A]/80 to-transparent z-40 px-6 flex items-center justify-between pb-4 pt-2">
-          <div className="flex gap-4 h-16 flex-1 items-end">
+        <div className="w-full shrink-0 bg-gradient-to-t from-[#020508]/95 via-[#0B1A2A]/80 to-transparent z-40 px-4 flex items-center justify-between pb-4 pt-2">
+          <div className="flex gap-2 h-16 flex-1 items-end overflow-x-auto">
             {[
               { id: 'party', icon: Users, label: 'EQUIPO' },
               { id: 'inventory', icon: Box, label: 'INVENT', action: 'inventory' },
@@ -260,11 +260,11 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
                 key={btn.id}
                 variant="secondary"
                 onClick={() => btn.action === 'inventory' ? onOpenFullInventory() : onNavigate(btn.id as any)}
-                className="flex-1 h-14 flex flex-col items-center justify-center gap-1 !rounded-xl"
+                className="flex-1 min-w-0 h-14 flex flex-col items-center justify-center gap-1 !rounded-xl"
                 whileTap={{ scale: 0.95 }}
               >
-                <btn.icon size={18} className="text-white/80" />
-                <span className="text-[8px] font-black tracking-widest text-white/60 uppercase">{btn.label}</span>
+                <btn.icon size={16} className="text-white/80" />
+                <span className="text-[7px] font-black tracking-widest text-white/60 uppercase truncate w-full">{btn.label}</span>
               </Button>
             ))}
           </div>

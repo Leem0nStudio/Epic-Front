@@ -9,6 +9,9 @@ export class AssetService {
   
   private static SPRITE_PATH = `${this.LOCAL_BASE}/sprites`;
   private static UI_PATH = `${this.LOCAL_BASE}/ui`;
+  static SPRITE_ATLAS_PATH = `${this.UI_PATH}/64x64.png`;
+  static SPRITE_SIZE = 64;
+  static ATLAS_COLS = 16;
   private static BG_PATH = `${this.LOCAL_BASE}/bg`;
   private static ITEMS_PATH = `${this.LOCAL_BASE}/items`;
 
@@ -34,8 +37,8 @@ export class AssetService {
   };
 
   // UI Icon mappings
-  private static JOB_ICON_MAP: Record<string, string> = {
-    'novice': 'icon_novice.png',
+  private   static JOB_ICON_MAP: Record<string, string> = {
+    'novice': 'Icon_novice.png',
     'swordman': 'icon_swordsman.png',
     'mage': 'icon_mage.png',
     'ranger': 'icon_ranger.png',
@@ -127,12 +130,12 @@ export class AssetService {
   static getJobIconId(jobId: string): string {
     const iconName = this.JOB_ICON_MAP[jobId.toLowerCase()];
     if (iconName) return iconName;
-    return 'icon_novice.png';
+    return 'Icon_novice.png';
   }
 
   static getIconUrl(iconId: string): string {
     if (!iconId) {
-      return `${this.UI_PATH}/icon_novice.png`;
+      return `${this.UI_PATH}/Icon_novice.png`;
     }
     if (iconId.startsWith('http') || iconId.startsWith('/')) {
       return iconId;
@@ -144,6 +147,66 @@ export class AssetService {
     const fileName = this.UI_ICON_MAP[uiKey];
     if (fileName) return `${this.UI_PATH}/${fileName}`;
     return '';
+  }
+
+  // Sprite Atlas methods (64x64 grid)
+  static getSpriteAtlasUrl(): string {
+    return this.SPRITE_ATLAS_PATH;
+  }
+
+  static getSpriteAtlasPosition(index: number): { x: number; y: number } {
+    const col = index % this.ATLAS_COLS;
+    const row = Math.floor(index / this.ATLAS_COLS);
+    return { x: col * this.SPRITE_SIZE, y: row * this.SPRITE_SIZE };
+  }
+
+  static getSpriteAtlasStyle(index: number): React.CSSProperties {
+    const pos = this.getSpriteAtlasPosition(index);
+    return {
+      backgroundImage: `url('${this.SPRITE_ATLAS_PATH}')`,
+      backgroundPosition: `-${pos.x}px -${pos.y}px`,
+      backgroundRepeat: 'no-repeat',
+      width: `${this.SPRITE_SIZE}px`,
+      height: `${this.SPRITE_SIZE}px`,
+      display: 'inline-block',
+    };
+  }
+
+  // Get sprite atlas index for item types
+  static getItemSpriteIndex(itemType: ItemType, itemId: string): number | null {
+    // This maps item types/ids to sprite atlas indices
+    // Indices should match the actual layout of 64x64.png
+    const mapping: Record<string, number> = {
+      // Weapons (starting at row 1, col 0 = index 16)
+      'weapon_sword': 16,
+      'weapon_axe': 17,
+      'weapon_spear': 18,
+      'weapon_bow': 19,
+      'weapon_staff': 20,
+      
+      // Skills (starting at row 7, col 0 = index 112)
+      'skill_attack': 112,
+      'skill_fire': 113,
+      'skill_ice': 114,
+      'skill_lightning': 115,
+      'skill_heal': 116,
+      
+      // Cards (starting at row 8, col 0 = index 128)
+      'card_001': 128,
+      'card_002': 129,
+      
+      // Armor
+      'armor_helmet': 32,
+      'armor_chest': 33,
+      'armor_boots': 34,
+      
+      // Accessories
+      'accessory_ring': 48,
+      'accessory_necklace': 49,
+    };
+    
+    const key = `${itemType}_${itemId}`;
+    return mapping[key] || null;
   }
 
   // Background getters

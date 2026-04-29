@@ -3,7 +3,9 @@ import { AssetService } from '@/lib/services/asset-service';
 import { UIService } from '@/lib/services/ui-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { RarityIcon } from '@/components/ui/RarityIcon';
+import { SpriteAtlasIcon } from '@/components/ui/SpriteAtlasIcon';
 import { Button } from '@/components/ui/Button';
+import { SPRITE_INDEX } from '@/lib/config/sprite-atlas-config';
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Box, Sparkles, Sword, Search, Filter } from 'lucide-react';
@@ -139,10 +141,10 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
                       className="shrink-0"
                       glass={true}
                     >
-                      {item.item_type === 'weapon' ? <Sword size={24} className="text-[#F5C76B] drop-shadow-[0_0_8px_rgba(245,199,107,0.4)]" /> :
-                       item.item_type === 'card' ? <Sparkles size={24} className="text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]" /> :
-                       item.item_type === 'job_core' ? <img src={AssetService.getIconUrl(AssetService.getJobIconId(item.item_id.replace('core_', '')))} className="w-8 h-8 object-contain brightness-125" /> :
-                       <Box size={24} className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]" />}
+                      {item.item_type === 'weapon' ? <SpriteAtlasIcon index={SPRITE_INDEX.weapon_sword} size={24} className="drop-shadow-[0_0_8px_rgba(245,199,107,0.4)]" /> :
+                       item.item_type === 'card' ? <SpriteAtlasIcon index={SPRITE_INDEX.card_common} size={24} className="drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]" /> :
+                       item.item_type === 'job_core' ? <SpriteAtlasIcon index={SPRITE_INDEX.icon_novice} size={24} className="brightness-125" /> :
+                       <SpriteAtlasIcon index={SPRITE_INDEX.resource_gold} size={24} className="drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]" />}
                     </RarityIcon>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
