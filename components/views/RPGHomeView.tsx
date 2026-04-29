@@ -21,6 +21,7 @@ import {
   Sword,
   Star,
   Box,
+  BookOpen,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { AssetService } from '@/lib/services/asset-service';
@@ -256,6 +257,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
               { id: 'party', icon: Users, label: 'EQUIPO' },
               { id: 'inventory', icon: Box, label: 'INVENT', action: 'inventory' },
               { id: 'tavern', icon: UserPlus, label: 'GREMI' },
+              { id: 'quests', icon: BookOpen, label: 'QUEST' },
               { id: 'gacha', icon: Sparkles, label: 'NEXO' }
             ].map(btn => (
               <Button

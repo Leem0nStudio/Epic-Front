@@ -11,6 +11,7 @@ import { UnitDetailsView } from '@/components/views/UnitDetailsView';
 import { InventoryView } from '@/components/views/InventoryView';
 import { BattleScreenView } from '@/components/views/BattleScreenView';
 import { CampaignMapView } from '@/components/views/CampaignMapView';
+import { QuestLogView } from '@/components/views/QuestLogView';
 import { StageDetailsView } from '@/components/views/StageDetailsView';
 import { AuthView } from '@/components/views/AuthView';
 import { motion, AnimatePresence } from 'motion/react';
@@ -114,6 +115,12 @@ export default function Applet() {
                  playerEnergy={state.profile?.energy || 0}
                  onNavigate={actions.navigateTo}
                  onSelectStage={actions.handleSelectStage}
+               />;
+      case 'quests':
+        return <QuestLogView
+                 playerEnergy={state.profile?.energy || 0}
+                 onNavigate={actions.navigateTo}
+                 onOpenQuest={actions.handleOpenQuest}
                />;
       case 'stage_details':
         return <StageDetailsView

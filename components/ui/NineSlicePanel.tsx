@@ -68,6 +68,15 @@ export function NineSlicePanel({
   const nineSliceStyle = type === 'panel' 
     ? UIService.getPanelNineSliceStyle(resolvedAssetId)
     : UIService.getBorderNineSliceStyle(resolvedAssetId);
+  
+  // Override border widths to make them thinner (more compact)
+  if (type === 'border') {
+    const sliceValue = nineSliceStyle.borderImageSlice as number;
+    if (sliceValue && sliceValue > 16) {
+      // Reduce slice value for thinner borders
+      nineSliceStyle.borderImageSlice = Math.round(sliceValue / 2);
+    }
+  }
 
   // Resolve tint color from rarity or direct prop
   const resolvedTintColor = rarity 

@@ -11,7 +11,7 @@ import { Stage } from '@/lib/rpg-system/campaign-types';
 
 type ToastFn = (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
 
-export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'stage_details';
+export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'quests' | 'stage_details';
 
 export function useGameState(toast?: ToastFn) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -198,6 +198,11 @@ export function useGameState(toast?: ToastFn) {
     setView('battle');
   };
 
+  const handleOpenQuest = (stage: Stage) => {
+    setSelectedStage(stage);
+    setView('stage_details');
+  };
+
   const activePartyUnits = Array(5).fill(null).map((_, i) => party.find(p => p.slot_index === i)?.unit || null);
 
   return {
@@ -226,6 +231,7 @@ export function useGameState(toast?: ToastFn) {
       openFullInventory,
       handleEquipItem,
       handleSelectStage,
+      handleOpenQuest,
       handleStartBattle,
       refreshState
     }

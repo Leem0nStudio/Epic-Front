@@ -48,6 +48,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const [initError, setInitError] = useState<string | null>(null);
   const [targetId, setTargetId] = useState<string | null>(null);
   const [completionData, setCompletionData] = useState<any>(null);
+  const [showBattleLog, setShowBattleLog] = useState(false);
   const [isRecordingResult, setIsRecordingResult] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [damageNumbers, setDamageNumbers] = useState<{ id: number, value: number, x: number, y: number, color: string, isCrit?: boolean }[]>([]);
@@ -377,26 +378,36 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
        </div>
 
         {/* Battle Log Terminal Overlay - Fixed position below boss HP bar */}
-        <div className="absolute top-40 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pointer-events-none z-20">
-          <NineSlicePanel
-            type="border"
-            variant="transparent"
-            className="max-h-[100px] overflow-y-auto flex flex-col gap-1 p-3"
-            style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
-          >
-            {battleLog.slice(-5).map((log, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="border-l-2 border-[#F5C76B]/40 pl-2 py-1"
-                style={{ lineHeight: '1.4' }}
-              >
-                <span className="text-[7px] font-mono text-white/90 uppercase tracking-widest">{log}</span>
-              </motion.div>
-            ))}
-          </NineSlicePanel>
-        </div>
+         <div className="absolute top-40 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pointer-events-none z-20">
+           <div className="flex flex-col items-end gap-1">
+             <button
+               onClick={() => setShowBattleLog(!showBattleLog)}
+               className="pointer-events-auto px-3 py-1 text-[8px] font-black uppercase tracking-widest text-white/60 hover:text-white bg-black/40 rounded-lg border border-white/10 hover:border-white/20 transition-all"
+             >
+               {showBattleLog ? 'OCULTAR LOG' : 'VER LOG'}
+             </button>
+             {showBattleLog && (
+               <NineSlicePanel
+                 type="border"
+                 variant="transparent"
+                 className="w-full max-h-[80px] overflow-y-auto flex flex-col gap-0.5 p-2"
+                 style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+               >
+                 {battleLog.slice(-5).map((log, i) => (
+                   <motion.div 
+                     key={i}
+                     initial={{ opacity: 0, x: -20 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     className="border-l border-[#F5C76B]/30 pl-1.5 py-0.5"
+                     style={{ lineHeight: '1.2' }}
+                   >
+                     <span className="text-[6px] font-mono text-white/70 uppercase tracking-wider">{log}</span>
+                   </motion.div>
+                 ))}
+               </NineSlicePanel>
+             )}
+           </div>
+         </div>
 
       {/* Victory/Defeat Overlay */}
       <AnimatePresence>
