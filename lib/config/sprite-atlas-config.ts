@@ -7,7 +7,7 @@ export const ATLAS_CONFIG = {
   columns: 16,
   rows: 137,
   totalSprites: 2192,
-  imagePath: '/assets/ui/64x64.png',
+  imagePath: '/assets/ui/atlas.png',
 } as const;
 
 // Sprite index mappings (row-major order: index = row * 16 + col)

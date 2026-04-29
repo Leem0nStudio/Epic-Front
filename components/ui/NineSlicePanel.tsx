@@ -31,6 +31,12 @@ export interface NineSlicePanelProps {
   /** Enable glassmorphism effect with backdrop-filter blur */
   glassmorphism?: boolean;
 
+  // Visual Alchemy props
+  /** Enable Earthstone-style ornate frame (heavy ornamental borders) */
+  earthstoneFrame?: boolean;
+  /** Glass variant: 'frosted' (readable) or 'crystal' (immersive) */
+  glassVariant?: 'frosted' | 'crystal';
+
   /** Additional props to pass to the rendered component (e.g., motion props) */
   [key: string]: any;
 }
@@ -50,6 +56,9 @@ export function NineSlicePanel({
   tintIntensity = 0.5,
   // Glassmorphism prop
   glassmorphism = false,
+  // Visual Alchemy props
+  earthstoneFrame = false,
+  glassVariant = 'frosted',
   ...rest
 }: NineSlicePanelProps) {
   // Resolve asset ID
@@ -88,10 +97,42 @@ export function NineSlicePanel({
     ? UIService.getGlassStyle() 
     : {};
 
+  // Visual Alchemy: Earthstone frame + Glass variants
+  let earthstoneFrameStyle: React.CSSProperties = {};
+  let glassVariantStyle: React.CSSProperties = {};
+  
+  if (earthstoneFrame) {
+    earthstoneFrameStyle = {
+      border: `2px solid rgba(245, 199, 107, ${tintIntensity || 0.3})`,
+      boxShadow: `
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 2px 8px rgba(0, 0, 0, 0.3)
+      `.trim(),
+    };
+  }
+
+  if (glassVariant === 'frosted') {
+    glassVariantStyle = {
+      backgroundColor: 'rgba(11, 26, 42, 0.6)',
+      backdropFilter: 'blur(20px) saturate(120%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(120%)',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+    };
+  } else if (glassVariant === 'crystal') {
+    glassVariantStyle = {
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+      backdropFilter: 'blur(12px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+      border: '1px solid rgba(255, 255, 255, 0.12)',
+    };
+  }
+
   // Merge with custom styles
   const mergedStyle: React.CSSProperties = {
     position: 'relative',
     ...nineSliceStyle,
+    ...earthstoneFrameStyle,
+    ...glassVariantStyle,
     ...glassmorphismStyle,
     ...style,
   };

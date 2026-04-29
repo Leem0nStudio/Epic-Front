@@ -130,6 +130,22 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     setStats(prev => ({ ...prev, totalTurns: prev.totalTurns + 1 }));
   };
 
+  const handleBattleOver = async (winnerSide: 'player' | 'enemy', deaths: number) => {
+    setIsBattleOver(true);
+    setWinner(winnerSide);
+    if (winnerSide === 'player' && stageId) {
+      setIsRecordingResult(true);
+      try {
+        const result = await CampaignService.completeStage(stageId, { turns: round, deaths });
+        setCompletionData(result);
+      } catch (e) {
+        console.error("Failed to record stage completion:", e);
+      } finally {
+        setIsRecordingResult(false);
+      }
+    }
+  };
+
   useEffect(() => {
     if (isInitializing || isBattleOver || initError) return;
 
@@ -165,22 +181,6 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       return () => clearTimeout(timer);
     }
   }, [units, turn, isInitializing, isBattleOver, initError]);
-
-  const handleBattleOver = async (winnerSide: 'player' | 'enemy', deaths: number) => {
-    setIsBattleOver(true);
-    setWinner(winnerSide);
-    if (winnerSide === 'player' && stageId) {
-      setIsRecordingResult(true);
-      try {
-        const result = await CampaignService.completeStage(stageId, { turns: round, deaths });
-        setCompletionData(result);
-      } catch (e) {
-        console.error("Failed to record stage completion:", e);
-      } finally {
-        setIsRecordingResult(false);
-      }
-    }
-  };
 
   if (isInitializing) return <LoadingScreen />;
   if (initError) return <ErrorScreen error={initError} onBack={onBack} />;

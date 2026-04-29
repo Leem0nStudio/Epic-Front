@@ -24,11 +24,7 @@ import { useToast } from '@/lib/contexts/ToastContext';
 export default function Applet() {
   const { showToast } = useToast();
   const { state, actions } = useGameState(showToast);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const [isMounted, setIsMounted] = useState(true);
 
   if (!isMounted || state.isAuthLoading) {
     return (
