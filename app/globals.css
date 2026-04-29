@@ -194,6 +194,99 @@
     font-weight: 700;
     letter-spacing: 0.05em;
   }
+
+  /* === PREMIUM UI OVERHAUL CLASSES === */
+  
+  .badge-rank-circle {
+    background: radial-gradient(circle at 30% 30%, #fff2a8 0%, #d4af37 50%, #8a6b1c 100%);
+    box-shadow: 
+      inset 0 2px 4px rgba(255, 255, 255, 0.6),
+      inset 0 -4px 8px rgba(0, 0, 0, 0.4),
+      0 4px 10px rgba(0, 0, 0, 0.5);
+    border: 2px solid #fff9d6;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .pill-dark {
+    background: linear-gradient(180deg, #2a3b5c 0%, #1a253a 100%);
+    border: 1px solid #4a5c82;
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(0, 0, 0, 0.4);
+    border-radius: 9999px;
+  }
+
+  .stat-panel {
+    background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+    border: 2px solid #34495e;
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 8px 16px rgba(0, 0, 0, 0.6);
+    border-radius: 0.75rem;
+  }
+
+  .btn-premium-blue {
+    background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+    border: 2px solid #e0f7fa;
+    box-shadow: 
+      inset 0 2px 4px rgba(255, 255, 255, 0.6),
+      inset 0 -4px 8px rgba(0, 100, 150, 0.4),
+      0 4px 15px rgba(0, 242, 254, 0.4);
+    border-radius: 1rem;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s ease;
+  }
+  
+  .btn-premium-blue:hover {
+    filter: brightness(1.1);
+    box-shadow: 
+      inset 0 2px 4px rgba(255, 255, 255, 0.8),
+      inset 0 -4px 8px rgba(0, 100, 150, 0.4),
+      0 6px 20px rgba(0, 242, 254, 0.6);
+  }
+
+  .btn-premium-blue:active {
+    transform: scale(0.95);
+  }
+
+  .btn-nav-square {
+    background: linear-gradient(180deg, #3a4a63 0%, #1f2a3c 100%);
+    border-radius: 1rem;
+    border: 2px solid #5a6b8a;
+    box-shadow: 
+      inset 0 2px 4px rgba(255, 255, 255, 0.1),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.3),
+      0 4px 8px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s ease;
+  }
+  
+  .btn-nav-square:hover {
+    border-color: #8a9bb8;
+    background: linear-gradient(180deg, #4a5a73 0%, #2f3a4c 100%);
+  }
+
+  .btn-nav-square.active {
+    border-color: #F5C76B;
+    background: linear-gradient(180deg, #4a5a73 0%, #2f3a4c 100%);
+    box-shadow: 
+      inset 0 2px 4px rgba(255, 255, 255, 0.2),
+      0 0 15px rgba(245, 199, 107, 0.4);
+  }
+
+  .rarity-ring {
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 0 20px currentColor;
+  }
+  .rarity-ring::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    opacity: 0.8;
+    filter: blur(2px);
+  }
 }
 
 /* === ANIMATIONS (outside @layer utilities) === */
