@@ -44,24 +44,24 @@ export function PartyManagementView({
 
   return (
     <div className="flex flex-col h-full bg-[#0B1A2A] bg-cover bg-center bg-no-repeat p-6 overflow-hidden relative" style={{ backgroundImage: `url('${AssetService.getBgUrl('party')}')` }}>
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/5 to-transparent pointer-events-none" />
+       <div className="absolute inset-0 view-overlay pointer-events-none" />
 
-      <div className="flex items-center gap-4 mb-8 z-10 shrink-0">
-        <button 
-            onClick={() => onNavigate('home')} 
-            className="p-2.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-xl text-white/60 hover:text-white hover:border-white/20 transition-all active:scale-95 shadow-lg"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <h1 className="text-xl font-black text-white tracking-widest uppercase italic drop-shadow-md">Formación de Combate</h1>
-      </div>
+       <div className="flex items-center gap-4 mb-8 z-10 shrink-0">
+         <button 
+             onClick={() => onNavigate('home')} 
+             className="btn-back shadow-lg"
+         >
+           <ChevronLeft size={20} />
+         </button>
+         <h1 className="view-title">Formación de Combate</h1>
+       </div>
 
-       <NineSlicePanel
-            type="border"
-            variant="default"
-            className="p-6 shadow-2xl mb-8 relative z-10 shrink-0 rounded-3xl"
-            glassmorphism={true}
-          >
+        <NineSlicePanel
+             type="border"
+             variant="default"
+             className="p-6 shadow-2xl mb-8 relative z-10 shrink-0 rounded-3xl panel-glass"
+             glassmorphism={true}
+           >
            <div className="flex justify-between items-center mb-6">
               <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#F5C76B] shadow-[0_0_8px_#F5C76B]" />
@@ -140,19 +140,19 @@ export function PartyManagementView({
                   <UserMinus size={16} /> Retirar de formación
                 </button>
                )}
-                 {saveData.roster
-                  .filter((u: any) => !activePartyUnits.some(pu => pu?.id === u.id))
-                  .map((unit: any) => (
-                    <NineSlicePanel
-                      key={unit.id}
-                      type="border"
-                      variant="default"
-                      className="p-4 flex items-center gap-4 hover:border-[#F5C76B]/30 cursor-pointer transition-all relative rounded-2xl"
-                      glassmorphism={true}
-                      onClick={() => { onAssignToParty(selectedSlot, unit.id); setSelectedSlot(null); }}
-                      as={motion.div}
-                      whileHover={{ x: 6, transition: { duration: 0.2 } }}
-                    >
+                  {saveData.roster
+                   .filter((u: any) => !activePartyUnits.some(pu => pu?.id === u.id))
+                   .map((unit: any) => (
+                     <NineSlicePanel
+                       key={unit.id}
+                       type="border"
+                       variant="default"
+                       className="p-4 flex items-center gap-4 hover:border-[#F5C76B]/30 cursor-pointer transition-all relative rounded-2xl panel-glass"
+                       glassmorphism={true}
+                       onClick={() => { onAssignToParty(selectedSlot, unit.id); setSelectedSlot(null); }}
+                       as={motion.div}
+                       whileHover={{ x: 6, transition: { duration: 0.2 } }}
+                     >
                         <RarityIcon
                           rarity={getRarityCode('C')}
                           size="sm"
@@ -197,17 +197,17 @@ export function PartyManagementView({
                 Reserva General ({saveData.roster.length})
              </h3>
               <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                  {saveData.roster.map((unit: any) => (
-                      <NineSlicePanel
-                        key={unit.id}
-                        type="border"
-                        variant="default"
-                        className="p-4 flex items-center gap-4 hover:border-[#F5C76B]/30 cursor-pointer group relative rounded-2xl"
-                        glassmorphism={true}
-                        onClick={() => onSelectUnit(unit.id)}
-                        as={motion.div}
-                        whileHover={{ x: 6, transition: { duration: 0.2 } }}
-                      >
+                   {saveData.roster.map((unit: any) => (
+                       <NineSlicePanel
+                         key={unit.id}
+                         type="border"
+                         variant="default"
+                         className="p-4 flex items-center gap-4 hover:border-[#F5C76B]/30 cursor-pointer group relative rounded-2xl panel-glass"
+                         glassmorphism={true}
+                         onClick={() => onSelectUnit(unit.id)}
+                         as={motion.div}
+                         whileHover={{ x: 6, transition: { duration: 0.2 } }}
+                       >
                           <RarityIcon
                             rarity={getRarityCode('C')}
                             size="md"

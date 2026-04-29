@@ -28,6 +28,64 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
+
+  /* === EPIC FRONT UI STANDARDS === */  
+  /* Standard view background overlay */
+  .view-overlay {
+    background: linear-gradient(to bottom, rgba(11, 26, 42, 0.4), transparent, rgba(2, 5, 8, 0.8));
+  }
+
+  /* Standard glass panel background */
+  .panel-glass {
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  /* Standard back button */
+  .btn-back {
+    padding: 0.625rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.2s ease;
+  }
+  .btn-back:hover {
+    color: rgb(255, 255, 255);
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(0, 0, 0, 0.6);
+  }
+  .btn-back:active {
+    transform: scale(0.95);
+  }
+
+  /* Standard currency display */
+  .currency-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  /* View title standard */
+  .view-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-style: italic;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
 }
 
 @keyframes float {

@@ -45,7 +45,7 @@ const rarityGlow = (rarity: string) => {
   }
 };
 
-const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any) => {
+const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flipped = false }: any) => {
   const sprite = unit ? AssetService.getSpriteUrl(unit.sprite_id || 
     (unit.name && unit.name.toLowerCase().includes('kael') ? AssetService.getJobSpriteId('archer') :
      unit.name && unit.name.toLowerCase().includes('garran') ? AssetService.getJobSpriteId('swordman') :
@@ -67,12 +67,19 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false }: any)
             className="w-full h-full relative"
           >
             {unit ? (
-              <ImageWithFallback
-                src={sprite || ''}
-                alt={unit.name}
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200%] h-auto object-contain transform origin-bottom"
-                fallbackSrc={AssetService.getSpriteUrl('novice_idle.png')}
-              />
+              <div
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[160%] h-auto object-contain origin-bottom"
+                style={{ 
+                  transform: flipped ? 'scaleX(-1) translateX(50%)' : 'translateX(-50%)'
+                }}
+              >
+                <ImageWithFallback
+                  src={sprite || ''}
+                  alt={unit.name}
+                  className="w-full h-auto object-contain"
+                  fallbackSrc={AssetService.getSpriteUrl('novice_idle.png')}
+                />
+              </div>
             ) : (
               <div className="w-full h-full flex items-center justify-center opacity-20">
                 <Users size={48} className="text-white" />
@@ -189,15 +196,15 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
       <div className="flex-1 relative flex items-center justify-center px-6">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] aspect-square bg-[#F5C76B]/5 blur-[120px] rounded-full pointer-events-none" />
         
-        <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-8">
-          <div className="w-[30%] h-full pb-4 flex items-end">
-            <CharacterSlot unit={leftUnit} scale={0.85} zIndex={10} />
+        <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-20 gap-2">
+          <div className="w-[28%] h-full pb-4 flex items-end">
+            <CharacterSlot unit={leftUnit} scale={0.9} zIndex={10} flipped />
           </div>
-          <div className="w-[40%] h-full flex items-end pb-2">
-            <CharacterSlot unit={primaryUnit} scale={1.1} zIndex={20} emphasized />
+          <div className="w-[34%] h-full flex items-end">
+            <CharacterSlot unit={primaryUnit} scale={1.0} zIndex={20} emphasized />
           </div>
-          <div className="w-[30%] h-full pb-4 flex items-end">
-            <CharacterSlot unit={rightUnit} scale={0.85} zIndex={10} />
+          <div className="w-[28%] h-full pb-4 flex items-end">
+            <CharacterSlot unit={rightUnit} scale={0.9} zIndex={10} />
           </div>
         </div>
 

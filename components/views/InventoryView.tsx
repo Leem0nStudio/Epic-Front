@@ -53,40 +53,40 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
 
   return (
     <div className="flex flex-col h-full bg-[#0B1A2A] p-6 overflow-hidden relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/10 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute inset-0 view-overlay pointer-events-none" />
 
         <div className="flex items-center justify-between mb-6 z-10">
-        <div className="flex items-center gap-4">
-          <Button 
-            onClick={onBack} 
-            variant="secondary"
-            size="sm"
-            className="!rounded-xl"
-          >
-            <ChevronLeft size={20} />
-          </Button>
-          <div className="flex flex-col">
-            <h1 className="text-xl font-black text-white tracking-widest uppercase italic drop-shadow-md">
-              {targetSlot ? `Seleccionar ${targetSlot}` : 'Inventario'}
-            </h1>
-            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-0.5">
-              {fromUnitDetails ? 'Equipar a unidad' : 'Almacén de Equipo'}
-            </span>
-          </div>
-        </div>
-        {!targetSlot && (
-          <div className="flex gap-2">
-             <Button 
-                onClick={() => setFilter(f => f === 'all' ? 'weapon' : f === 'weapon' ? 'card' : f === 'card' ? 'skill' : 'all')} 
-                variant="secondary"
-                size="sm"
-                className="!rounded-xl"
-             >
-               {filter === 'all' ? <Box size={18} /> : filter === 'weapon' ? <Sword size={18} /> : filter === 'card' ? <Sparkles size={18} /> : <Box size={18} />}
-             </Button>
-          </div>
-        )}
-      </div>
+         <div className="flex items-center gap-4">
+           <Button 
+             onClick={onBack} 
+             variant="secondary"
+             size="sm"
+             className="!rounded-xl btn-back"
+           >
+             <ChevronLeft size={20} />
+           </Button>
+           <div className="flex flex-col">
+             <h1 className="view-title">
+               {targetSlot ? `Seleccionar ${targetSlot}` : 'Inventario'}
+             </h1>
+             <span className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-0.5">
+               {fromUnitDetails ? 'Equipar a unidad' : 'Almacén de Equipo'}
+             </span>
+           </div>
+         </div>
+         {!targetSlot && (
+           <div className="flex gap-2">
+              <Button 
+                 onClick={() => setFilter(f => f === 'all' ? 'weapon' : f === 'weapon' ? 'card' : f === 'card' ? 'skill' : 'all')} 
+                 variant="secondary"
+                 size="sm"
+                 className="!rounded-xl btn-back"
+              >
+                {filter === 'all' ? <Box size={18} /> : filter === 'weapon' ? <Sword size={18} /> : filter === 'card' ? <Sparkles size={18} /> : <Box size={18} />}
+              </Button>
+           </div>
+         )}
+       </div>
 
       {!targetSlot && (
         <div className="mb-5 z-10">
@@ -97,7 +97,7 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar objeto..."
-              className="w-full bg-black/50 backdrop-blur-md border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#F5C76B]/40 transition-colors"
+              className="w-full bg-black/50 backdrop-blur-md border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#F5C76B]/40 transition-colors panel-glass"
             />
           </div>
         </div>
@@ -121,8 +121,7 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
                   key={item.id}
                   type="border"
                   variant="default"
-                  className="p-4 flex items-center gap-4 hover:border-[#F5C76B]/30 transition-all cursor-pointer group relative rounded-2xl"
-                  style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}
+                  className="p-4 flex items-center gap-4 hover:border-[#F5C76B]/30 transition-all cursor-pointer group relative rounded-2xl panel-glass"
                   onClick={() => {
                     if (targetSlot) {
                       onEquip(item);
