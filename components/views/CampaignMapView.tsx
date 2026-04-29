@@ -95,13 +95,13 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-3 px-4 py-1 bg-white/5 border border-white/10 rounded-full mb-3"
+            className="inline-flex items-center gap-3 px-4 py-1 bg-white/5 border border-white/10 rounded-full mb-3 glass-frosted"
           >
             <MapIcon size={12} className="text-[#F5C76B]" />
-            <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Capítulo {currentChapter.index}</span>
+            <span className="text-[8px] font-black text-white/40 uppercase tracking-widest font-stats">Capítulo {currentChapter.index}</span>
           </motion.div>
-          <h2 className="text-2xl font-black text-white tracking-widest uppercase italic">{currentChapter.name}</h2>
-          <p className="text-[10px] text-white/30 uppercase tracking-wider mt-2 max-w-[250px] mx-auto leading-relaxed">{currentChapter.description}</p>
+          <h2 className="text-2xl font-black text-white tracking-widest uppercase italic font-display">{currentChapter.name}</h2>
+          <p className="text-[10px] text-white/30 uppercase tracking-wider mt-2 max-w-[250px] mx-auto leading-relaxed font-stats">{currentChapter.description}</p>
         </div>
 
         {/* Stages Grid */}
@@ -112,22 +112,22 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
 
             return (
               <NineSlicePanel
-                key={stage.id}
-                type="border"
-                variant="default"
-                className={`group relative flex items-center gap-4 p-4 rounded-3xl transition-all ${
-                  unlocked
-                  ? 'hover:border-[#F5C76B]/40 cursor-pointer active:scale-[0.98]'
-                  : 'opacity-40 grayscale cursor-not-allowed'
-                }`}
-                style={{ backgroundColor: unlocked ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.4)' }}
-                onClick={() => unlocked && onSelectStage(stage)}
-                as={motion.button}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                disabled={!unlocked}
-              >
+                 key={stage.id}
+                 type="border"
+                 variant="default"
+                 className={`group relative flex items-center gap-4 p-4 rounded-3xl transition-all glass-frosted frame-earthstone ${
+                   unlocked
+                   ? 'hover:border-[#F5C76B]/40 cursor-pointer active:scale-[0.98]'
+                   : 'opacity-40 grayscale cursor-not-allowed'
+                 }`}
+                 style={{ backgroundColor: unlocked ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.4)' }}
+                 onClick={() => unlocked && onSelectStage(stage)}
+                 as={motion.button}
+                 initial={{ opacity: 0, x: -20 }}
+                 animate={{ opacity: 1, x: 0 }}
+                 transition={{ delay: idx * 0.1 }}
+                 disabled={!unlocked}
+               >
                 {/* Index / Status */}
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border ${
                   unlocked ? 'bg-[#F5C76B]/10 border-[#F5C76B]/20 text-[#F5C76B]' : 'bg-white/5 border-white/5 text-white/10'

@@ -1,5 +1,5 @@
 'use client';
- 
+
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Mail, Lock, UserPlus, LogIn, ShieldCheck, Sparkles } from 'lucide-react';
@@ -50,12 +50,12 @@ export function AuthView() {
         animate={{ opacity: 1, scale: 1 }}
         className="w-full"
       >
-        <NineSlicePanel type="panel" variant="panel-021" className="overflow-hidden relative z-10">
+        <NineSlicePanel type="panel" variant="panel-021" className="overflow-hidden relative z-10 glass-frosted frame-earthstone">
           <div className="absolute inset-0 bg-gradient-to-b from-blue-900/10 to-transparent pointer-events-none"></div>
-        
+          
           <div className="p-10 text-center relative z-10">
-             <div className="w-24 h-24 bg-black/40 border border-[#F5C76B]/20 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-2xl relative group overflow-hidden">
-                <div className="absolute inset-0 bg-[#F5C76B]/5 group-hover:bg-[#F5C76B]/10 transition-colors" />
+             <div className="w-24 h-24 bg-black/40 border border-[#F5C76B]/20 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-2xl relative group overflow-hidden glass-crystal frame-earthstone">
+                <div className="absolute inset-0 bg-[#F5C76B]/5" />
                 <ShieldCheck size={48} className="text-[#F5C76B] drop-shadow-[0_0_15px_rgba(245,199,107,0.4)]" />
                 <motion.div
                   animate={{ rotate: 360 }}
@@ -63,12 +63,12 @@ export function AuthView() {
                   className="absolute inset-0 border border-dashed border-[#F5C76B]/10 rounded-full scale-110"
                 />
              </div>
-             <h1 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
+             <h1 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic font-display drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
                Project: Etherea
              </h1>
              <div className="flex items-center justify-center gap-2 mt-4">
                 <div className="h-[1px] w-8 bg-white/10" />
-                <span className="text-[10px] text-white/40 font-black uppercase tracking-[0.3em]">Guardian Access</span>
+                <span className="text-[10px] text-white/40 font-black uppercase tracking-[0.3em] font-stats">Guardian Access</span>
                 <div className="h-[1px] w-8 bg-white/10" />
              </div>
           </div>
@@ -81,15 +81,15 @@ export function AuthView() {
                   animate={{ opacity: 1, y: 0 }}
                   className="text-center py-8"
                 >
-                  <Sparkles size={48} className="text-[#F5C76B] mx-auto mb-6" />
-                  <div className="text-white font-black uppercase tracking-widest text-lg mb-2 italic">Inscripción Completada</div>
-                  <p className="text-white/40 text-[10px] uppercase font-bold leading-relaxed tracking-wider">
+                  <Sparkles size={48} className="text-[#F5C76B] mx-auto mb-6 drop-shadow-[0_0_20px_rgba(245,199,107,0.5)]" />
+                  <div className="text-white font-black uppercase tracking-widest text-lg mb-2 italic font-display">Inscripción Completada</div>
+                  <p className="text-white/40 text-[10px] uppercase font-bold leading-relaxed tracking-wider font-stats">
                     Verifica tu correo electrónico para sellar el pacto y poder entrar al reino.
                   </p>
                   <PanelButton
                     variant="default"
                     onClick={() => { setIsRegistering(false); setSuccess(false); }}
-                    className="mt-8 w-full py-4"
+                    className="mt-8 w-full py-4 btn-back"
                   >
                     Regresar al Portal
                   </PanelButton>
@@ -106,14 +106,14 @@ export function AuthView() {
                     <motion.div
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-[9px] text-red-400 font-black uppercase text-center tracking-tight"
+                      className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-[9px] text-red-400 font-black uppercase text-center tracking-tight glass-frosted frame-earthstone"
                     >
                       {error}
                     </motion.div>
                   )}
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">Firma de Aventurero (Email)</label>
+                    <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2 font-stats">Firma de Aventurero (Email)</label>
                     <div className="relative">
                       <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
                       <input
@@ -128,7 +128,7 @@ export function AuthView() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">Código de Encriptación (Clave)</label>
+                    <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2 font-stats">Código de Encriptación (Clave)</label>
                     <div className="relative">
                       <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
                       <input
@@ -163,7 +163,7 @@ export function AuthView() {
                     <button
                       type="button"
                       onClick={() => setIsRegistering(!isRegistering)}
-                      className="text-[10px] font-black text-white/20 hover:text-white transition-colors uppercase tracking-widest"
+                      className="text-[10px] font-black text-white/20 hover:text-white transition-colors uppercase tracking-widest font-stats"
                     >
                       {isRegistering ? '¿Ya eres un Guardián? Conectarse' : '¿Nuevo Aventurero? Crear Cuenta'}
                     </button>

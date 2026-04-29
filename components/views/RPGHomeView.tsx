@@ -141,59 +141,66 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2A]/40 via-transparent to-[#020508]/80 pointer-events-none" />
 
-      {/* Top Bar */}
-      <div className="w-full h-16 shrink-0 flex items-center justify-between px-6 z-30 pt-3">
-        <div className="flex items-center gap-4">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 border border-white/10 flex items-center justify-center overflow-hidden shadow-lg">
-             <SpriteAtlasIcon index={SPRITE_INDEX.icon_novice} size={44} alt="Novice" />
+      {/* Top Bar - Visual Alchemy: Earthstone frame + Glass */}
+       <div className="w-full h-16 shrink-0 flex items-center justify-between px-6 z-30 pt-3">
+         <div className="flex items-center gap-4">
+           <div className="w-11 h-11 rounded-xl frame-earthstone flex items-center justify-center overflow-hidden">
+              <SpriteAtlasIcon index={SPRITE_INDEX.icon_novice} size={44} alt="Novice" />
+            </div>
+           <div className="flex flex-col text-left gap-1.5">
+             <div className="flex items-center gap-2">
+               <span className="text-[10px] font-black bg-[#F5C76B] text-black px-2 py-0.5 rounded-md italic uppercase shadow-[0_0_10px_rgba(245,199,107,0.3)]">Lvl. {playerLevel}</span>
+               <span className="text-white text-sm font-bold tracking-wider drop-shadow-md font-stats">{saveData.profile.username}</span>
+             </div>
+             <div className="flex items-center gap-3 mt-1.5">
+               <div className="w-28 h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                 <motion.div 
+                   initial={{ width: 0 }} 
+                   animate={{ width: `${expProgress}%` }} 
+                   transition={{ duration: 1, ease: "easeOut" }}
+                   className="h-full bg-gradient-to-r from-[#F5C76B] to-[#FFD88F] shadow-[0_0_8px_rgba(245,199,107,0.6)]" 
+                 />
+               </div>
+               <div className="flex items-center gap-1 text-[#F5C76B] bg-black/30 px-2 py-0.5 rounded-full border border-[#F5C76B]/10">
+                 <Zap size={10} className="fill-current" />
+                 <span className="text-[8px] font-black uppercase tracking-wider font-stats">{saveData.profile.energy}/{saveData.profile.max_energy}</span>
+               </div>
+             </div>
            </div>
-          <div className="flex flex-col text-left gap-1.5">
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-black bg-[#F5C76B] text-black px-2 py-0.5 rounded-md italic uppercase shadow-[0_0_10px_rgba(245,199,107,0.3)]">Lvl. {playerLevel}</span>
-              <span className="text-white text-sm font-bold tracking-wider drop-shadow-md truncate">{saveData.profile.username}</span>
-            </div>
-            <div className="flex items-center gap-3 mt-1.5">
-              <div className="w-28 h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
-                <motion.div 
-                  initial={{ width: 0 }} 
-                  animate={{ width: `${expProgress}%` }} 
-                  transition={{ duration: 1, ease: "easeOut" }}
-                  className="h-full bg-gradient-to-r from-[#F5C76B] to-[#FFD88F] shadow-[0_0_8px_rgba(245,199,107,0.6)]" 
-                />
-              </div>
-              <div className="flex items-center gap-1 text-[#F5C76B] bg-black/30 px-2 py-0.5 rounded-full border border-[#F5C76B]/10">
-                <Zap size={10} className="fill-current" />
-                <span className="text-[8px] font-black uppercase tracking-wider">{saveData.profile.energy}/{saveData.profile.max_energy}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/5 shadow-lg">
-            <Coins size={16} className="text-[#F5C76B] drop-shadow-[0_0_5px_rgba(245,199,107,0.5)]" />
-            <span className="text-sm font-bold text-white tracking-wide">{displayCurrency}</span>
-          </div>
-          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/5 shadow-lg">
-            <Diamond size={16} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
-            <span className="text-sm font-bold text-white tracking-wide">{displayGems}</span>
-          </div>
-          <Button
-            onClick={async () => { await supabase?.auth.signOut(); window.location.href = '/'; }}
-            variant="secondary"
-            size="sm"
-            className="rounded-xl"
-          >
-            <SpriteAtlasIcon index={SPRITE_INDEX.icon_novice} size={18} alt="Novice" />
-          </Button>
-        </div>
-      </div>
+         <div className="flex items-center gap-3">
+           <div className="flex items-center gap-2 glass-frosted px-3 py-1.5 rounded-xl border border-white/5">
+             <Coins size={16} className="text-[#F5C76B] drop-shadow-[0_0_5px_rgba(245,199,107,0.5)]" />
+             <span className="text-sm font-bold text-white tracking-wide font-stats">{displayCurrency}</span>
+           </div>
+           <div className="flex items-center gap-2 glass-frosted px-3 py-1.5 rounded-xl border border-white/5">
+             <Diamond size={16} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
+             <span className="text-sm font-bold text-white tracking-wide font-stats">{displayGems}</span>
+           </div>
+           <button
+             onClick={async () => { await supabase?.auth.signOut(); window.location.href = '/'; }}
+             className="btn-alchemy w-11 h-11 rounded-xl"
+           >
+             <SpriteAtlasIcon index={SPRITE_INDEX.icon_novice} size={18} alt="Novice" />
+           </button>
+         </div>
+       </div>
 
-      {/* Main Display Area */}
-      <div className="flex-1 relative flex items-center justify-center px-6">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] aspect-square bg-[#F5C76B]/5 blur-[120px] rounded-full pointer-events-none" />
-        
-        <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-20 gap-2">
+       {/* Main Display Area */}
+       <div className="flex-1 relative flex items-center justify-center px-6">
+         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] aspect-square bg-[#F5C76B]/5 blur-[120px] rounded-full pointer-events-none" />
+         
+         {/* Particle effects */}
+         <div className="absolute inset-0 pointer-events-none overflow-hidden">
+           <div className="particle-magic" style={{ top: '20%', left: '15%', animationDelay: '0s' }} />
+           <div className="particle-magic" style={{ top: '40%', right: '20%', animationDelay: '1s' }} />
+           <div className="particle-magic" style={{ bottom: '30%', left: '25%', animationDelay: '2s' }} />
+           <div className="particle-magic" style={{ top: '60%', right: '15%', animationDelay: '0.5s' }} />
+           <div className="particle-magic" style={{ bottom: '40%', right: '30%', animationDelay: '1.5s' }} />
+         </div>
+         
+         <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-20 gap-2">
           <div className="w-[28%] h-full pb-4 flex items-end">
             <CharacterSlot unit={leftUnit} scale={0.9} zIndex={10} flipped />
           </div>

@@ -59,7 +59,7 @@ export function PartyManagementView({
         <NineSlicePanel
              type="border"
              variant="default"
-             className="p-6 shadow-2xl mb-8 relative z-10 shrink-0 rounded-3xl panel-glass"
+             className="p-6 shadow-2xl mb-8 relative z-10 shrink-0 rounded-3xl glass-core frame-earthstone"
              glassmorphism={true}
            >
            <div className="flex justify-between items-center mb-6">
@@ -143,16 +143,16 @@ export function PartyManagementView({
                   {saveData.roster
                    .filter((u: any) => !activePartyUnits.some(pu => pu?.id === u.id))
                    .map((unit: any) => (
-                     <NineSlicePanel
-                       key={unit.id}
-                       type="border"
-                       variant="default"
-                       className="p-4 flex items-center gap-4 hover:border-[#F5C76B]/30 cursor-pointer transition-all relative rounded-2xl panel-glass"
-                       glassmorphism={true}
-                       onClick={() => { onAssignToParty(selectedSlot, unit.id); setSelectedSlot(null); }}
-                       as={motion.div}
-                       whileHover={{ x: 6, transition: { duration: 0.2 } }}
-                     >
+                       <NineSlicePanel
+                        key={unit.id}
+                        type="border"
+                        variant="default"
+                        className="p-4 flex items-center gap-4 hover:border-[#F5C76B]/30 cursor-pointer transition-all relative rounded-2xl glass-frosted frame-earthstone"
+                        glassmorphism={true}
+                        onClick={() => { onAssignToParty(selectedSlot, unit.id); setSelectedSlot(null); }}
+                        as={motion.div}
+                        whileHover={{ x: 6, transition: { duration: 0.2 } }}
+                      >
                          <RarityIcon
                            rarity={getRarityCode(unit?.rarity || 'C')}
                            size="sm"
@@ -199,15 +199,15 @@ export function PartyManagementView({
               <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                    {saveData.roster.map((unit: any) => (
                        <NineSlicePanel
-                         key={unit.id}
-                         type="border"
-                         variant="default"
-                         className="p-4 flex items-center gap-4 hover:border-[#F5C76B]/30 cursor-pointer group relative rounded-2xl panel-glass"
-                         glassmorphism={true}
-                         onClick={() => onSelectUnit(unit.id)}
-                         as={motion.div}
-                         whileHover={{ x: 6, transition: { duration: 0.2 } }}
-                       >
+                          key={unit.id}
+                          type="border"
+                          variant="default"
+                          className="p-4 flex items-center gap-4 hover:border-[#F5C76B]/30 cursor-pointer group relative rounded-2xl glass-frosted frame-earthstone"
+                          glassmorphism={true}
+                          onClick={() => onSelectUnit(unit.id)}
+                          as={motion.div}
+                          whileHover={{ x: 6, transition: { duration: 0.2 } }}
+                        >
                          <RarityIcon
                              rarity={getRarityCode(unit?.rarity || 'C')}
                              size="md"

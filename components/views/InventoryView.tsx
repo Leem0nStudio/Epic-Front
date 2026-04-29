@@ -92,13 +92,13 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
         <div className="mb-5 z-10">
           <div className="relative">
             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar objeto..."
-              className="w-full bg-black/50 backdrop-blur-md border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#F5C76B]/40 transition-colors panel-glass"
-            />
+             <input
+               type="text"
+               value={search}
+               onChange={e => setSearch(e.target.value)}
+               placeholder="Buscar objeto..."
+               className="w-full bg-black/50 backdrop-blur-md border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#F5C76B]/40 transition-colors glass-frosted"
+             />
           </div>
         </div>
       )}
@@ -121,7 +121,7 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
                   key={item.id}
                   type="border"
                   variant="default"
-                  className="p-4 flex items-center gap-4 hover:border-[#F5C76B]/30 transition-all cursor-pointer group relative rounded-2xl panel-glass"
+                  className="p-4 flex items-center gap-4 hover:border-[#F5C76B]/30 transition-all cursor-pointer group relative rounded-2xl glass-frosted frame-earthstone"
                   onClick={() => {
                     if (targetSlot) {
                       onEquip(item);
@@ -223,11 +223,11 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
               <NineSlicePanel
                 type="border"
                 variant="default"
-                className="w-full p-5"
+                className="w-full p-5 glass-frosted frame-earthstone"
                 glassmorphism={true}
               >
-                <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-2">Tipo de Objeto</p>
-                <p className="text-white text-sm font-bold tracking-wide">{selectedItem.item_type}</p>
+                <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-2 font-stats">Tipo de Objeto</p>
+                <p className="text-white text-sm font-bold tracking-wide font-stats">{selectedItem.item_type}</p>
               </NineSlicePanel>
             </div>
 

@@ -87,7 +87,7 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
                   key="results"
                   type="border"
                   variant="default"
-                   className="grid grid-cols-5 gap-4 w-full max-w-lg p-6 rounded-3xl shadow-2xl panel-glass"
+                   className="grid grid-cols-5 gap-4 w-full max-w-lg p-6 rounded-3xl shadow-2xl glass-core frame-earthstone"
                    as={motion.div}
                    initial={{ opacity: 0, scale: 0.8 }}
                    animate={{ opacity: 1, scale: 1 }}
@@ -138,15 +138,15 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
 
                <div className="grid grid-cols-2 gap-4 w-full max-w-md">
                    <NineSlicePanel
-                     type="border"
-                     variant="default"
-                     className="p-6 flex flex-col items-center gap-3 hover:border-[#F5C76B]/30 transition-all relative overflow-hidden cursor-pointer rounded-2xl panel-glass"
-                     onClick={() => handlePull(1, 'soft')}
-                     as={motion.button}
-                     whileHover={{ scale: 1.03, y: -2 }}
-                     whileTap={{ scale: 0.97 }}
-                     disabled={isPulling}
-                   >
+                      type="border"
+                      variant="default"
+                      className="p-6 flex flex-col items-center gap-3 hover:border-[#F5C76B]/30 transition-all relative overflow-hidden cursor-pointer rounded-2xl glass-frosted frame-earthstone"
+                      onClick={() => handlePull(1, 'soft')}
+                      as={motion.button}
+                      whileHover={{ scale: 1.03, y: -2 }}
+                      whileTap={{ scale: 0.97 }}
+                      disabled={isPulling}
+                    >
                      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#F5C76B]/40 to-transparent" />
                      <Coins size={28} className="text-[#F5C76B] drop-shadow-[0_0_10px_rgba(245,199,107,0.5)]" />
                      <div className="text-center">
@@ -162,7 +162,7 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
                     <NineSlicePanel
                       type="border"
                       variant="blue"
-                      className="p-6 flex flex-col items-center gap-3 hover:border-cyan-400/30 transition-all relative overflow-hidden cursor-pointer rounded-2xl panel-glass"
+                      className="p-6 flex flex-col items-center gap-3 hover:border-cyan-400/30 transition-all relative overflow-hidden cursor-pointer rounded-2xl glass-crystal frame-earthstone"
                       onClick={() => handlePull(10, 'premium')}
                       as={motion.button}
                       whileHover={{ scale: 1.03, y: -2 }}
@@ -183,23 +183,23 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
                     </NineSlicePanel>
                 </div>
 
-              <div className="mt-16 flex flex-col items-center gap-3">
-                <div className="flex items-center gap-4 text-white/40">
-                   <div className="h-[1px] w-16 bg-gradient-to-r from-transparent to-white/10" />
-                   <span className="text-[9px] font-black tracking-[0.4em] uppercase">Garantía Pity</span>
-                   <div className="h-[1px] w-16 bg-gradient-to-l from-transparent to-white/10" />
-                </div>
-                <div className="flex gap-4">
-                  <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-purple-500/20">
-                     <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
-                     <span className="text-[8px] font-black text-white/60 tracking-wider">ÉPICO EN: <span className="text-purple-400 font-black">10</span></span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-orange-500/20">
-                     <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
-                     <span className="text-[8px] font-black text-white/60 tracking-wider">UR EN: <span className="text-orange-400 font-black">80</span></span>
-                  </div>
-                </div>
-              </div>
+                <div className="mt-16 flex flex-col items-center gap-3">
+                 <div className="flex items-center gap-4 text-white/40">
+                    <div className="h-[1px] w-16 bg-gradient-to-r from-transparent to-white/10" />
+                    <span className="text-[9px] font-black tracking-[0.4em] uppercase font-display">Garantía Pity</span>
+                    <div className="h-[1px] w-16 bg-gradient-to-l from-transparent to-white/10" />
+                 </div>
+                 <div className="flex gap-4">
+                   <div className="flex items-center gap-2 glass-frosted px-4 py-2 rounded-full border border-purple-500/20">
+                      <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
+                      <span className="text-[8px] font-black text-white/60 tracking-wider font-stats">ÉPICO EN: <span className="text-purple-400 font-black">10</span></span>
+                   </div>
+                   <div className="flex items-center gap-2 glass-frosted px-4 py-2 rounded-full border border-orange-500/20">
+                      <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
+                      <span className="text-[8px] font-black text-white/60 tracking-wider font-stats">UR EN: <span className="text-orange-400 font-black">80</span></span>
+                   </div>
+                 </div>
+               </div>
             </div>
           )}
         </AnimatePresence>

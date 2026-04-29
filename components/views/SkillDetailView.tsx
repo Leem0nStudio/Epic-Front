@@ -76,17 +76,17 @@ export function SkillDetailView({ skillId, itemId, onBack, onEquip, onDiscard }:
     <div className="flex flex-col h-full bg-[#0B1A2A] p-4 overflow-hidden relative">
       <div className="absolute inset-0 bg-gradient-to-b from-blue-900/10 via-transparent to-transparent pointer-events-none" />
       
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6 z-10">
-        <button onClick={onBack} className="p-2 bg-black/40 border border-white/10 rounded-xl text-white/60 hover:text-white transition-colors">
-          <ChevronLeft size={20} />
-        </button>
-        <div className="flex flex-col items-center">
-          <h1 className="text-xl font-black text-white tracking-widest uppercase italic">Detalles</h1>
-          <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Habilidad</span>
-        </div>
-        <div className="w-10" />
-      </div>
+       {/* Header */}
+       <div className="flex items-center justify-between mb-6 z-10">
+         <button onClick={onBack} className="p-2 bg-black/40 border border-white/10 rounded-xl text-white/60 hover:text-white transition-colors btn-back">
+           <ChevronLeft size={20} />
+         </button>
+         <div className="flex flex-col items-center">
+           <h1 className="text-xl font-black text-white tracking-widest uppercase italic font-display">Detalles</h1>
+           <span className="text-[10px] font-black text-white/40 uppercase tracking-widest font-stats">Habilidad</span>
+         </div>
+         <div className="w-10" />
+       </div>
 
       <div className="flex-1 overflow-y-auto z-10 space-y-6">
          {/* Skill Icon & Name */}
@@ -106,115 +106,115 @@ export function SkillDetailView({ skillId, itemId, onBack, onEquip, onDiscard }:
            </div>
          </div>
 
-          {/* Description */}
-          {skill?.description && (
-            <NineSlicePanel
-              type="border"
-              variant="default"
-              className="p-4"
-              glassmorphism={true}
-            >
-              <p className="text-white/80 text-sm text-center leading-relaxed">{skill.description}</p>
-            </NineSlicePanel>
-          )}
+           {/* Description */}
+           {skill?.description && (
+             <NineSlicePanel
+               type="border"
+               variant="default"
+               className="p-4 glass-frosted frame-earthstone"
+               glassmorphism={true}
+             >
+               <p className="text-white/80 text-sm text-center leading-relaxed font-stats">{skill.description}</p>
+             </NineSlicePanel>
+           )}
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-3">
-            <NineSlicePanel
-              type="border"
-              variant="default"
-              className="p-4"
-              glassmorphism={true}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Clock size={14} className="text-white/40" />
-                <span className="text-[10px] font-black text-white/40 uppercase tracking-wider">Cooldown</span>
-              </div>
-              <p className="text-xl font-black text-white">{skill?.cooldown || 0}</p>
-            </NineSlicePanel>
+           {/* Stats */}
+           <div className="grid grid-cols-2 gap-3">
+             <NineSlicePanel
+               type="border"
+               variant="default"
+               className="p-4 glass-frosted frame-earthstone"
+               glassmorphism={true}
+             >
+               <div className="flex items-center gap-2 mb-2">
+                 <Clock size={14} className="text-white/40" />
+                 <span className="text-[10px] font-black text-white/40 uppercase tracking-wider font-stats">Cooldown</span>
+               </div>
+               <p className="text-xl font-black text-white font-stats">{skill?.cooldown || 0}</p>
+             </NineSlicePanel>
 
-            <NineSlicePanel
-              type="border"
-              variant="default"
-              className="p-4"
-              glassmorphism={true}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Zap size={14} className="text-[#F5C76B]" />
-                <span className="text-[10px] font-black text-white/40 uppercase tracking-wider">Power</span>
-              </div>
-              <p className="text-xl font-black text-white">{scaling?.mult || effect?.power || 1.0}x</p>
-            </NineSlicePanel>
-          </div>
+             <NineSlicePanel
+               type="border"
+               variant="default"
+               className="p-4 glass-frosted frame-earthstone"
+               glassmorphism={true}
+             >
+               <div className="flex items-center gap-2 mb-2">
+                 <Zap size={14} className="text-[#F5C76B]" />
+                 <span className="text-[10px] font-black text-white/40 uppercase tracking-wider font-stats">Power</span>
+               </div>
+               <p className="text-xl font-black text-white font-stats">{scaling?.mult || effect?.power || 1.0}x</p>
+             </NineSlicePanel>
+           </div>
 
-          {/* Effect Details */}
-          {effect && Object.keys(effect).length > 0 && (
-            <NineSlicePanel
-              type="border"
-              variant="default"
-              className="p-4"
-              glassmorphism={true}
-            >
-              <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-3">Efectos</h3>
-              <div className="space-y-2">
-                {effect.type && (
-                  <div className="flex items-center gap-3">
-                    {getEffectIcon(effect.type)}
-                    <span className="text-white text-sm font-bold uppercase">{effect.type}</span>
-                  </div>
-                )}
-                {effect.scaling && (
-                  <div className="flex items-center gap-2 text-[12px] text-white/60">
-                    <span className="font-black">Scaling:</span>
-                    <span className="uppercase">{effect.scaling}</span>
-                  </div>
-                )}
-                {effect.target && (
-                  <div className="flex items-center gap-2 text-[12px] text-white/60">
-                    <span className="font-black">Target:</span>
-                    <span className="uppercase">{effect.target.replace('_', ' ')}</span>
-                  </div>
-                )}
-                {effect.status && (
-                  <div className="flex items-center gap-2 text-[12px] text-white/60">
-                    <span className="font-black">Status:</span>
-                    <span className="uppercase">{effect.status}</span>
-                  </div>
-                )}
-                {effect.chance && (
-                  <div className="flex items-center gap-2 text-[12px] text-white/60">
-                    <span className="font-black">Chance:</span>
-                    <span>{Math.floor(effect.chance * 100)}%</span>
-                  </div>
-                )}
-                {effect.duration && (
-                  <div className="flex items-center gap-2 text-[12px] text-white/60">
-                    <span className="font-black">Duration:</span>
-                    <span>{effect.duration} turns</span>
-                  </div>
-                )}
-              </div>
-            </NineSlicePanel>
-          )}
+           {/* Effect Details */}
+           {effect && Object.keys(effect).length > 0 && (
+             <NineSlicePanel
+               type="border"
+               variant="default"
+               className="p-4 glass-frosted frame-earthstone"
+               glassmorphism={true}
+             >
+               <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-3 font-stats">Efectos</h3>
+               <div className="space-y-2">
+                 {effect.type && (
+                   <div className="flex items-center gap-3">
+                     {getEffectIcon(effect.type)}
+                     <span className="text-white text-sm font-bold uppercase font-stats">{effect.type}</span>
+                   </div>
+                 )}
+                 {effect.scaling && (
+                   <div className="flex items-center gap-2 text-[12px] text-white/60 font-stats">
+                     <span className="font-black">Scaling:</span>
+                     <span className="uppercase">{effect.scaling}</span>
+                   </div>
+                 )}
+                 {effect.target && (
+                   <div className="flex items-center gap-2 text-[12px] text-white/60 font-stats">
+                     <span className="font-black">Target:</span>
+                     <span className="uppercase">{effect.target.replace('_', ' ')}</span>
+                   </div>
+                 )}
+                 {effect.status && (
+                   <div className="flex items-center gap-2 text-[12px] text-white/60 font-stats">
+                     <span className="font-black">Status:</span>
+                     <span className="uppercase">{effect.status}</span>
+                   </div>
+                 )}
+                 {effect.chance && (
+                   <div className="flex items-center gap-2 text-[12px] text-white/60 font-stats">
+                     <span className="font-black">Chance:</span>
+                     <span>{Math.floor(effect.chance * 100)}%</span>
+                   </div>
+                 )}
+                 {effect.duration && (
+                   <div className="flex items-center gap-2 text-[12px] text-white/60 font-stats">
+                     <span className="font-black">Duration:</span>
+                     <span>{effect.duration} turns</span>
+                   </div>
+                 )}
+               </div>
+             </NineSlicePanel>
+           )}
 
-          {/* Scaling Info */}
-          {scaling && scaling.stat && (
-            <NineSlicePanel
-              type="border"
-              variant="default"
-              className="p-4"
-              glassmorphism={true}
-            >
-              <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-3">Scaling</h3>
-              <div className="flex items-center gap-3">
-                <Zap size={16} className="text-[#F5C76B]" />
-                <div>
-                  <p className="text-white text-sm font-bold uppercase">{scaling.stat}</p>
-                  <p className="text-[10px] text-white/40">Multiplier: {scaling.mult}x</p>
-                </div>
-              </div>
-            </NineSlicePanel>
-          )}
+           {/* Scaling Info */}
+           {scaling && scaling.stat && (
+             <NineSlicePanel
+               type="border"
+               variant="default"
+               className="p-4 glass-frosted frame-earthstone"
+               glassmorphism={true}
+             >
+               <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-3 font-stats">Scaling</h3>
+               <div className="flex items-center gap-3">
+                 <Zap size={16} className="text-[#F5C76B]" />
+                 <div>
+                   <p className="text-white text-sm font-bold uppercase font-stats">{scaling.stat}</p>
+                   <p className="text-[10px] text-white/40 font-stats">Multiplier: {scaling.mult}x</p>
+                 </div>
+               </div>
+             </NineSlicePanel>
+           )}
       </div>
 
       {/* Actions */}
