@@ -5,6 +5,7 @@ import { ActionButton } from '@/components/ui/ActionButton';
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorDisplay } from '@/components/ui/ErrorDisplay';
+import { EnemyCardModal } from '@/components/ui/EnemyCardModal';
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -21,7 +22,8 @@ import {
   Heart,
   Target,
   Gift,
-  Star as StarIcon
+  Star as StarIcon,
+  CreditCard
 } from 'lucide-react';
 import { CombatUnit, SkillDefinition } from '@/lib/types/combat';
 import { BattleManager } from '@/lib/services/battle-manager';
@@ -419,54 +421,78 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
 
 function EnemySprite({ enemy, isTargeted, onTarget }: { enemy: CombatUnit, isTargeted: boolean, onTarget: () => void }) {
   const [imgError, setImgError] = useState(false);
+  const [showCard, setShowCard] = useState(false);
   
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowCard(true);
+  };
+
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ 
-        opacity: 1, 
-        y: isTargeted ? [0, -5, 0] : 0,
-        scale: isTargeted ? 1.15 : 1 
-      }}
-      transition={isTargeted ? { repeat: Infinity, duration: 1 } : {}}
-      onClick={onTarget}
-      className="relative cursor-pointer group"
-    >
-      <div className="absolute -top-14 left-1/2 -translate-x-1/2 w-20 flex flex-col items-center gap-1">
-        <div className="flex items-center gap-1">
-           <span className="text-[7px] font-black text-red-500 bg-black/40 px-1 rounded-sm border border-red-500/20">LV.5</span>
-           <span className="text-[8px] font-black text-white drop-shadow-lg truncate uppercase tracking-tighter">{enemy.name}</span>
-        </div>
-        <div className="w-full h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10 shadow-lg">
-           <div className="h-full bg-gradient-to-r from-red-600 to-red-400" style={{ width: `${(enemy.currentHp / enemy.maxHp) * 100}%` }} />
-        </div>
-      </div>
-
-      {/* Target Marker */}
-      {isTargeted && (
-        <motion.div 
-          animate={{ scale: [1, 1.2, 1], rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="absolute -inset-8 border-2 border-dashed border-red-500/40 rounded-full"
-        />
-      )}
-
-      {imgError ? (
-        <div className="w-40 h-40 flex items-center justify-center bg-red-900/20 border-2 border-red-500/30 rounded-full">
-          <div className="text-center">
-            <div className="text-4xl mb-2">?</div>
-            <span className="text-[8px] font-black text-red-400 uppercase">{enemy.name}</span>
+    <>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ 
+          opacity: 1, 
+          y: isTargeted ? [0, -5, 0] : 0,
+          scale: isTargeted ? 1.15 : 1 
+        }}
+        transition={isTargeted ? { repeat: Infinity, duration: 1 } : {}}
+        onClick={onTarget}
+        className="relative cursor-pointer group"
+      >
+        <div className="absolute -top-14 left-1/2 -translate-x-1/2 w-20 flex flex-col items-center gap-1">
+          <div className="flex items-center gap-1">
+             <span className="text-[7px] font-black text-red-500 bg-black/40 px-1 rounded-sm border border-red-500/20">LV.5</span>
+             <span className="text-[8px] font-black text-white drop-shadow-lg truncate uppercase tracking-tighter">{enemy.name}</span>
+             {/* Card button */}
+             <button
+               onClick={handleCardClick}
+               className="w-4 h-4 rounded-sm bg-[#F5C76B]/20 border border-[#F5C76B]/40 flex items-center justify-center hover:bg-[#F5C76B]/30 transition-colors"
+               title="View card"
+             >
+               <CreditCard size={10} className="text-[#F5C76B]" />
+             </button>
+          </div>
+          <div className="w-full h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10 shadow-lg">
+             <div className="h-full bg-gradient-to-r from-red-600 to-red-400" style={{ width: `${(enemy.currentHp / enemy.maxHp) * 100}%` }} />
           </div>
         </div>
-      ) : (
-        <img 
-          src={AssetService.getSpriteUrl(enemy.sprite_id || "abbys_sprite_001")}
-          onError={() => setImgError(true)}
-          className={`w-40 h-40 object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,1)] scale-x-[-1] transition-all duration-300 ${isTargeted ? 'brightness-125 saturate-150' : 'brightness-90 saturate-50'}`}
-          style={{ imageRendering: 'pixelated' }}
-        />
-      )}
-    </motion.div>
+
+        {/* Target Marker */}
+        {isTargeted && (
+          <motion.div 
+            animate={{ scale: [1, 1.2, 1], rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="absolute -inset-8 border-2 border-dashed border-red-500/40 rounded-full"
+          />
+        )}
+
+        {imgError ? (
+          <div className="w-40 h-40 flex items-center justify-center bg-red-900/20 border-2 border-red-500/30 rounded-full">
+            <div className="text-center">
+              <div className="text-4xl mb-2">?</div>
+              <span className="text-[8px] font-black text-red-400 uppercase">{enemy.name}</span>
+            </div>
+          </div>
+        ) : (
+          <img 
+            src={AssetService.getSpriteUrl(enemy.sprite_id || "abbys_sprite_001")}
+            onError={() => setImgError(true)}
+            className={`w-40 h-40 object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,1)] scale-x-[-1] transition-all duration-300 ${isTargeted ? 'brightness-125 saturate-150' : 'brightness-90 saturate-50'}`}
+            style={{ imageRendering: 'pixelated' }}
+          />
+        )}
+      </motion.div>
+
+      {/* Card Modal */}
+      <EnemyCardModal
+        isOpen={showCard}
+        onClose={() => setShowCard(false)}
+        cardUrl={AssetService.getEnemyCardUrl(enemy.name)}
+        enemyName={enemy.name}
+      />
+    </>
   );
 }
 

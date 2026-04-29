@@ -58,7 +58,7 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flippe
     >
       {/* Rarity Badge above Character */}
       {unit && (
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 flex flex-col items-center z-20">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 flex flex-col items-center z-20">
           <div className={`w-12 h-12 rarity-ring flex flex-col items-center justify-center ${colorClass}`}>
             <span className="text-xl font-black font-display leading-none drop-shadow-md text-white">{rarity}</span>
           </div>
@@ -201,10 +201,27 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
             </div>
           </div>
         </div>
-      </div>
+       </div>
 
-      {/* Main Display Area (Characters) */}
-      <div className="flex-1 relative flex items-center justify-center px-4 mt-8">
+       {/* Battle Button - Top Area */}
+       <div className="w-full flex justify-center mt-4 mb-2 relative z-40">
+          <motion.button 
+            onClick={() => onNavigate('campaign')}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn-premium-blue px-14 py-3.5 text-xl font-black font-display tracking-widest uppercase z-10 flex items-center justify-center gap-2"
+          >
+            BATTLE
+          </motion.button>
+          
+          {/* 3 Stars floating next to battle button */}
+          <div className="absolute right-8 top-1/2 -translate-y-1/2 flex gap-0.5 z-20">
+            {[1,2,3].map(i => <Star key={i} size={16} className="text-yellow-400 fill-current drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" />)}
+          </div>
+       </div>
+
+       {/* Main Display Area (Characters) */}
+      <div className="flex-1 relative flex items-center justify-center px-4 mt-4">
         {/* Magic Glow behind characters */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] aspect-square bg-blue-900/10 blur-[120px] rounded-full pointer-events-none" />
         
@@ -216,7 +233,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
           <div className="particle-magic" style={{ top: '60%', right: '15%', animationDelay: '0.5s' }} />
         </div>
         
-        <div className="w-full h-full max-w-lg flex items-end justify-center relative pb-32 gap-1">
+        <div className="w-full h-full max-w-lg flex items-center justify-center relative pb-16 gap-1">
          <div className="w-[30%] h-full pb-4 flex items-end">
            <CharacterSlot unit={leftUnit} scale={0.95} zIndex={10} flipped />
          </div>
@@ -249,41 +266,26 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
        </div>
       </div>
 
-      {/* Central Campaign Block & Bottom Dock */}
-      <div className="absolute bottom-0 left-0 right-0 z-40 flex flex-col items-center pointer-events-none">
-         
-         {/* Campaign Banner */}
-         <div className="w-[90%] max-w-[400px] mb-8 relative flex flex-col items-center pointer-events-auto">
-           <div className="w-full stat-panel border-[#5a6b8a] p-3 pb-8 text-center shadow-2xl relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 pill-dark px-5 py-1 border-[#5a6b8a] shadow-lg">
-                <span className="text-[9px] text-white/90 font-bold uppercase tracking-widest flex items-center gap-1.5">
-                  Current Objective 
-                  <div className="w-3.5 h-3.5 rounded-full border border-white/40 flex items-center justify-center text-[8px] font-serif text-white/70">i</div>
-                </span>
-              </div>
-              
-              <p className="text-[#a8b8d0] text-[9px] font-black uppercase tracking-[0.2em] mt-3 mb-0.5">Chapter 18:</p>
-              <h3 className="text-white text-base font-black font-display uppercase tracking-widest drop-shadow-md">The Sunken Temple</h3>
-           </div>
-           
-           {/* Battle Button overlapping bottom of banner */}
-           <motion.button 
-             onClick={() => onNavigate('campaign')}
-             whileHover={{ scale: 1.05 }}
-             whileTap={{ scale: 0.95 }}
-             className="btn-premium-blue px-14 py-3.5 absolute -bottom-5 left-1/2 -translate-x-1/2 text-xl font-black font-display tracking-widest uppercase z-10 flex items-center justify-center gap-2"
-           >
-             BATTLE
-           </motion.button>
-           
-           {/* 3 Stars floating next to battle button */}
-           <div className="absolute -bottom-3 right-8 flex gap-0.5 z-20">
-             {[1,2,3].map(i => <Star key={i} size={16} className="text-yellow-400 fill-current drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" />)}
-           </div>
-         </div>
+       {/* Campaign Banner & Bottom Dock */}
+       <div className="absolute bottom-0 left-0 right-0 z-40 flex flex-col items-center pointer-events-none">
+          
+          {/* Campaign Banner */}
+          <div className="w-[90%] max-w-[400px] mb-4 relative flex flex-col items-center pointer-events-auto">
+            <div className="w-full stat-panel border-[#5a6b8a] p-3 pb-6 text-center shadow-2xl relative">
+               <div className="absolute -top-3 left-1/2 -translate-x-1/2 pill-dark px-5 py-1 border-[#5a6b8a] shadow-lg">
+                 <span className="text-[9px] text-white/90 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                   Current Objective 
+                   <div className="w-3.5 h-3.5 rounded-full border border-white/40 flex items-center justify-center text-[8px] font-serif text-white/70">i</div>
+                 </span>
+               </div>
+               
+               <p className="text-[#a8b8d0] text-[9px] font-black uppercase tracking-[0.2em] mt-3 mb-0.5">Chapter 18:</p>
+               <h3 className="text-white text-base font-black font-display uppercase tracking-widest drop-shadow-md">The Sunken Temple</h3>
+            </div>
+          </div>
 
-         {/* Bottom Dock Navigation */}
-         <div className="w-full bg-[#050A0F]/95 backdrop-blur-xl border-t border-white/10 pb-6 pt-4 px-4 flex justify-center gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.6)] pointer-events-auto">
+          {/* Bottom Dock Navigation */}
+          <div className="w-full bg-[#050A0F]/95 backdrop-blur-xl border-t border-white/10 pb-6 pt-4 px-4 flex justify-center gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.6)] pointer-events-auto">
            <div className="flex max-w-[500px] w-full justify-between gap-2">
              {[
                { id: 'party', icon: Users, label: 'PARTY', active: true },

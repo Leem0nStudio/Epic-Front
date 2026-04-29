@@ -247,6 +247,12 @@ export class AssetService {
     return `${this.ITEMS_PATH}/accessory_${accessoryId}.png`;
   }
 
+  // Enemy card images (stored in UI folder as per user request)
+  static getEnemyCardUrl(enemyName: string): string {
+    const normalized = enemyName.toLowerCase().replace(/\s+/g, '_');
+    return `${this.UI_PATH}/card_${normalized}.png`;
+  }
+
   static getItemIconUrl(itemType: ItemType, itemId: string): string {
     switch (itemType) {
       case 'weapon':
