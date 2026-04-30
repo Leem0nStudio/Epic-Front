@@ -1,2 +1,0 @@
--- DEPRECATED: Use cleanup.sql instead
--- This file is deprecated and replaced by cleanup.sql
