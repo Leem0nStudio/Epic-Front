@@ -8,7 +8,7 @@ export type BackgroundKey = 'home' | 'party' | 'gacha' | 'battle' | 'campaign' |
 
 export class AssetService {
   private static LOCAL_BASE = '/assets';
-  
+
   private static SPRITE_PATH = `${this.LOCAL_BASE}/sprites`;
   private static UI_PATH = `${this.LOCAL_BASE}/ui`;
   static SPRITE_ATLAS_PATH = ATLAS_CONFIG.imagePath;
@@ -17,38 +17,38 @@ export class AssetService {
   private static BG_PATH = `${this.LOCAL_BASE}/bg`;
   private static ITEMS_PATH = `${this.LOCAL_BASE}/items`;
 
-  // Sprite mappings
+  // Sprite mappings (follows naming convention: sprite_[name]_idle_64.png)
   private static JOB_SPRITE_MAP: Record<string, string> = {
-    'novice': 'novice_idle.png',
-    'swordman': 'swordsman_idle.png',
-    'mage': 'mage_idle.png',
-    'ranger': 'ranger_idle.png',
-    'archer': 'archer_idle.png',
-    'acolyte': 'acolyte_idle.png',
-    'knight': 'knight_idle.png',
-    'wizard': 'wizard_idle.png',
-    'priest': 'priest_idle.png'
+    'novice': 'sprite_novice_idle_64.png',
+    'swordman': 'sprite_swordman_idle_64.png',
+    'mage': 'sprite_mage_idle_64.png',
+    'ranger': 'sprite_ranger_idle_64.png',
+    'archer': 'sprite_archer_idle_64.png',
+    'acolyte': 'sprite_acolyte_idle_64.png',
+    'knight': 'sprite_knight_idle_64.png',
+    'wizard': 'sprite_wizard_idle_64.png',
+    'priest': 'sprite_priest_idle_64.png'
   };
 
   private static ARCHETYPE_SPRITE_MAP: Record<AssetArchetype, string> = {
-    melee: 'warrior_idle.png',
-    magic: 'mage_idle.png',
-    ranged: 'ranger_idle.png',
-    support: 'priest_idle.png',
-    neutral: 'novice_idle.png'
+    melee: 'sprite_warrior_idle_64.png',
+    magic: 'sprite_mage_idle_64.png',
+    ranged: 'sprite_ranger_idle_64.png',
+    support: 'sprite_priest_idle_64.png',
+    neutral: 'sprite_novice_idle_64.png'
   };
 
-  // UI Icon mappings
-  private   static JOB_ICON_MAP: Record<string, string> = {
-    'novice': 'icon_novice.png',
-    'swordman': 'icon_swordsman.png',
-    'mage': 'icon_mage.png',
-    'ranger': 'icon_ranger.png',
-    'archer': 'icon_archer.png',
-    'acolyte': 'icon_acolyte.png',
-    'knight': 'icon_knight.png',
-    'wizard': 'icon_wizard.png',
-    'priest': 'icon_priest.png'
+  // UI Icon mappings (follows naming convention: ui_icon_[name]_64.png)
+  private static JOB_ICON_MAP: Record<string, string> = {
+    'novice': 'ui_icon_novice_64.png',
+    'swordman': 'ui_icon_swordman_64.png',
+    'mage': 'ui_icon_mage_64.png',
+    'ranger': 'ui_icon_ranger_64.png',
+    'archer': 'ui_icon_archer_64.png',
+    'acolyte': 'ui_icon_acolyte_64.png',
+    'knight': 'ui_icon_knight_64.png',
+    'wizard': 'ui_icon_wizard_64.png',
+    'priest': 'ui_icon_priest_64.png'
   };
 
   private static UI_ICON_MAP: Record<string, string> = {
@@ -59,15 +59,15 @@ export class AssetService {
     'world': 'world_button_base.png'
   };
 
-  // Background mappings
+  // Background mappings (follows naming convention: bg_[name]_1920.jpg)
   private static BACKGROUND_MAP: Record<BackgroundKey, string> = {
-    'home': 'home_bg.png',
-    'party': 'partybg.png',
-    'gacha': 'home_bg.png',
-    'battle': 'battle_scenic.png',
-    'campaign': 'home_bg.png',
-    'tavern': 'home_bg.png',
-    'inventory': 'home_bg.png'
+    'home': 'bg_home_1920.jpg',
+    'party': 'bg_party_1920.jpg',
+    'gacha': 'bg_home_1920.jpg',
+    'battle': 'bg_battle_scenic_1920.jpg',
+    'campaign': 'bg_home_1920.jpg',
+    'tavern': 'bg_home_1920.jpg',
+    'inventory': 'bg_home_1920.jpg'
   };
 
   // Weapon icons
@@ -106,12 +106,12 @@ export class AssetService {
 
   static getSpriteUrl(spriteId: string): string {
     if (!spriteId) {
-      return `${this.SPRITE_PATH}/novice_idle.png`;
+      return `${this.SPRITE_PATH}/sprite_novice_idle_64.png`;
     }
 
     const normalized = spriteId.toLowerCase();
-    if (normalized === 'novice' || normalized === 'novice_idle') {
-      return `${this.SPRITE_PATH}/novice_idle.png`;
+    if (normalized === 'novice' || normalized === 'novice_idle' || normalized === 'sprite_novice_idle_64.png') {
+      return `${this.SPRITE_PATH}/sprite_novice_idle_64.png`;
     }
 
     if (spriteId.startsWith('http') || spriteId.startsWith('/')) {
@@ -123,8 +123,8 @@ export class AssetService {
   }
 
   static getSpriteWithState(jobId: string, state: 'idle' | 'attack' | 'hit' | 'dead' | 'walk' = 'idle'): string {
-    const baseName = this.JOB_SPRITE_MAP[jobId.toLowerCase()] || 'novice_idle.png';
-    const fileName = baseName.replace('_idle.png', `_${state}.png`);
+    const baseName = this.JOB_SPRITE_MAP[jobId.toLowerCase()] || 'sprite_novice_idle_64.png';
+    const fileName = baseName.replace('_idle_64.png', `_${state}_64.png`);
     return `${this.SPRITE_PATH}/${fileName}`;
   }
 
@@ -132,17 +132,19 @@ export class AssetService {
   static getJobIconId(jobId: string): string {
     const iconName = this.JOB_ICON_MAP[jobId.toLowerCase()];
     if (iconName) return iconName;
-    return 'icon_novice.png';
+    return 'ui_icon_novice_64.png';
   }
 
   static getIconUrl(iconId: string): string {
     if (!iconId) {
-      return `${this.UI_PATH}/icon_novice.png`;
+      return `${this.UI_PATH}/ui_icon_novice_64.png`;
     }
     if (iconId.startsWith('http') || iconId.startsWith('/')) {
       return iconId;
     }
-    return `${this.UI_PATH}/${iconId}`;
+    const fileName = iconId.endsWith('.png') ? iconId : `${iconId}.png`;
+    const withPrefix = fileName.includes('ui_') ? fileName : `ui_${fileName}`;
+    return `${this.UI_PATH}/${withPrefix}`;
   }
 
   static getUIUrl(uiKey: string): string {
@@ -180,8 +182,6 @@ export class AssetService {
 
   // Get sprite atlas index for item types
   static getItemSpriteIndex(itemType: ItemType, itemId: string): number | null {
-    // This maps item types/ids to sprite atlas indices
-    // Indices should match the actual layout of 64x64.png
     const mapping: Record<string, number> = {
       // Weapons (starting at row 1, col 0 = index 16)
       'weapon_sword': 16,
@@ -189,28 +189,28 @@ export class AssetService {
       'weapon_spear': 18,
       'weapon_bow': 19,
       'weapon_staff': 20,
-      
+
       // Skills (starting at row 7, col 0 = index 112)
       'skill_attack': 112,
       'skill_fire': 113,
       'skill_ice': 114,
       'skill_lightning': 115,
       'skill_heal': 116,
-      
+
       // Cards (starting at row 8, col 0 = index 128)
       'card_001': 128,
       'card_002': 129,
-      
+
       // Armor
       'armor_helmet': 32,
       'armor_chest': 33,
       'armor_boots': 34,
-      
+
       // Accessories
       'accessory_ring': 48,
       'accessory_necklace': 49,
     };
-    
+
     const key = `${itemType}_${itemId}`;
     return mapping[key] || null;
   }
@@ -221,7 +221,8 @@ export class AssetService {
     if (fileName.startsWith('http') || fileName.startsWith('/')) {
       return fileName;
     }
-    return `${this.BG_PATH}/${fileName}`;
+    const fullName = fileName.includes('.') ? fileName : `${fileName}.jpg`;
+    return `${this.BG_PATH}/${fullName}`;
   }
 
   // Item getters
@@ -247,10 +248,10 @@ export class AssetService {
     return `${this.ITEMS_PATH}/accessory_${accessoryId}.png`;
   }
 
-  // Enemy card images (stored in UI folder as per user request)
+  // Enemy card images (follows naming convention: ui_card_[name]_256.png)
   static getEnemyCardUrl(enemyName: string): string {
     const normalized = enemyName.toLowerCase().replace(/\s+/g, '_');
-    return `${this.UI_PATH}/card_${normalized}.png`;
+    return `${this.UI_PATH}/ui_card_${normalized}_256.png`;
   }
 
   static getItemIconUrl(itemType: ItemType, itemId: string): string {

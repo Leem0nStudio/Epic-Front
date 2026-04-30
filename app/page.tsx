@@ -22,6 +22,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorDisplay } from '@/components/ui/ErrorDisplay';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/lib/contexts/ToastContext';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 export default function Applet() {
   const { showToast } = useToast();
@@ -50,7 +51,7 @@ export default function Applet() {
         <ErrorDisplay
           title="Error de Carga"
           message={state.error}
-          onRetry={() => window.location.reload()}
+          onRetry={state.needsOnboarding ? actions.retryOnboarding : () => window.location.reload()}
         />
       </div>
     );
@@ -159,27 +160,54 @@ export default function Applet() {
     }
   };
 
+  // Global keyboard navigation handler
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!state.isAuthenticated || state.error) return;
+
+    const key = e.key.toLowerCase();
+    switch (key) {
+      case '1': actions.navigateTo('party'); break;
+      case '2': actions.navigateTo('tavern'); break;
+      case '3': actions.navigateTo('gacha'); break;
+      case '4': actions.navigateTo('inventory'); break;
+      case 'b':
+      case 'c': actions.navigateTo('campaign'); break;
+      case 'q': actions.navigateTo('quests'); break;
+      case 'escape': {
+        if (state.view !== 'home') actions.navigateTo('home');
+        break;
+      }
+      default: break;
+    }
+  };
+
+  const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
-    <div className="min-h-screen bg-[#020508] font-sans flex items-center justify-center overflow-hidden">
+    <div
+      className="min-h-screen bg-[#020508] font-sans flex items-center justify-center overflow-hidden"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+    >
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] aspect-square bg-blue-600/10 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] aspect-square bg-purple-600/10 blur-[120px] rounded-full" />
       </div>
 
       <div className="w-full max-w-sm sm:max-w-md md:max-w-lg bg-[#0B1A2A] h-[100dvh] sm:h-[850px] shadow-[0_0_80px_rgba(0,0,0,0.9)] sm:rounded-[40px] overflow-hidden relative border-white/5 flex flex-col items-center sm:border">
-        <div className="w-full h-full relative overflow-hidden">
-          <AnimatePresence mode="wait">
+      <div className="w-full h-full relative overflow-hidden">
+          <AnimatePrescence mode="wait">
             <motion.div
               key={state.view}
-              initial={{ opacity: 0 }}
+              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+              transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.3 }}
               className="absolute inset-0 flex flex-col overflow-hidden"
             >
               {renderView()}
             </motion.div>
-          </AnimatePresence>
+          </AnimatePrescence>
         </div>
       </div>
     </div>

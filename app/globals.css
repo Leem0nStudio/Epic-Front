@@ -1,5 +1,79 @@
 @import "tailwindcss";
 
+/* === TAILWIND 4 DESIGN TOKENS === */
+@theme {
+  /* Surface & Backgrounds */
+  --color-bg-deep: #020508;
+  --color-bg-panel: #0B1A2A;
+  --color-bg-surface: #050A0F;
+  --color-bg-overlay: rgba(0, 0, 0, 0.6);
+
+  /* Gold / Primary Accent */
+  --color-gold: #F5C76B;
+  --color-gold-muted: rgba(245, 199, 107, 0.4);
+  --color-gold-dim: rgba(245, 199, 107, 0.1);
+
+  /* Semantic Text */
+  --color-text-primary: rgba(255, 255, 255, 0.9);
+  --color-text-secondary: rgba(255, 255, 255, 0.6);
+  --color-text-tertiary: rgba(255, 255, 255, 0.3);
+  --color-text-disabled: rgba(255, 255, 255, 0.1);
+
+  /* Rarity Colors */
+  --color-rarity-common: #9CA3AF;
+  --color-rarity-rare: #3B82F6;
+  --color-rarity-super-rare: #D946EF;
+  --color-rarity-ultra-rare: #F59E0B;
+  --color-rarity-mythic: #EF4444;
+
+  /* Semantic States */
+  --color-state-success: #10B981;
+  --color-state-warning: #F59E0B;
+  --color-state-error: #EF4444;
+  --color-state-info: #3B82F6;
+
+  /* Energy & Resources */
+  --color-energy: #A855F7;
+  --color-currency: #F5C76B;
+  --color-premium: #22D3EE;
+
+  /* Typography */
+  --font-display: 'MedievalSharp', 'Georgia', serif;
+  --font-stats: 'Montserrat', 'Arial', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Motion Tokens */
+  --motion-duration-fast: 0.15s;
+  --motion-duration-normal: 0.3s;
+  --motion-duration-slow: 0.5s;
+}
+
+/* === FOCUS VISIBLE STYLES (Accessibility) === */
+*:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(245, 199, 107, 0.3);
+}
+
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+/* === REDUCED MOTION SUPPORT === */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* === TYPOGRAPHY: Visual Alchemy === */
 @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Montserrat:wght@400;700;900&display=swap');
 

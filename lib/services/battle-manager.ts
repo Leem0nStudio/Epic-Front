@@ -74,12 +74,14 @@ export class BattleManager {
 
   /**
    * Processes a full turn for a unit using a specific skill.
+   * When isBurst is true, applies 1.5x damage multiplier and resets burst to 0.
    */
   static executeTurn(
     actor: CombatUnit,
     skill: SkillDefinition,
     allUnits: CombatUnit[],
-    manualTargetId?: string
+    manualTargetId?: string,
+    isBurst: boolean = false
   ): { results: EffectResult[], updatedUnits: CombatUnit[] } {
     const targets = this.getTargets(actor, skill, allUnits, manualTargetId);
     const results = EffectEngine.processSkill(skill, actor, targets);
@@ -98,9 +100,19 @@ export class BattleManager {
       actorInState.cooldowns[skill.id] = skill.cooldown;
     }
 
+    // Apply burst effect: 1.5x damage multiplier, reset burst to 0
+    if (isBurst && actorInState) {
+      actorInState.burst = 0;
+    }
+
     for (const result of results) {
       const target = updatedUnits.find(u => u.id === result.targetId);
       if (!target) continue;
+
+      // Apply burst damage multiplier
+      if (isBurst && result.type === 'damage' && result.value) {
+        result.value = Math.floor(result.value * 1.5);
+      }
 
       if (result.type === 'damage' && result.value) {
         target.currentHp = Math.max(0, target.currentHp - result.value);
@@ -123,8 +135,8 @@ export class BattleManager {
       }
     }
 
-    // Flat turn gain
-    if (actorInState) actorInState.burst = Math.min(100, actorInState.burst + 5);
+    // Flat turn gain (only if not burst, burst already resets to 0)
+    if (!isBurst && actorInState) actorInState.burst = Math.min(100, actorInState.burst + 5);
 
     return { results, updatedUnits };
   }

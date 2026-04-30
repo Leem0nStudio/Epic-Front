@@ -1,4 +1,5 @@
 'use client';
+
 import { AssetService } from '@/lib/services/asset-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { ActionButton } from '@/components/ui/ActionButton';
@@ -6,6 +7,7 @@ import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorDisplay } from '@/components/ui/ErrorDisplay';
 import { EnemyCardModal } from '@/components/ui/EnemyCardModal';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -53,8 +55,11 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const [showBattleLog, setShowBattleLog] = useState(false);
   const [isRecordingResult, setIsRecordingResult] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
+  const [isBurstActive, setIsBurstActive] = useState(false);
   const [damageNumbers, setDamageNumbers] = useState<{ id: number, value: number, x: number, y: number, color: string, isCrit?: boolean }[]>([]);
   const [participatingUnits, setParticipatingUnits] = useState<Set<string>>(new Set());
+
+  const preferrsReducedMotion = usePrefersReducedMotion();
 
   // Statistics for Star calculation
   const [stats, setStats] = useState({
@@ -115,14 +120,14 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     if (value > 10) triggerShake();
   };
 
-  const runTurn = (actor: CombatUnit, skill: SkillDefinition, manualTargetId?: string) => {
+  const runTurn = (actor: CombatUnit, skill: SkillDefinition, manualTargetId?: string, isBurst: boolean = false) => {
     if (isBattleOver) return;
 
-    const { results, updatedUnits } = BattleManager.executeTurn(actor, skill, units, manualTargetId);
+    const { results, updatedUnits } = BattleManager.executeTurn(actor, skill, units, manualTargetId, isBurst);
 
     results.forEach(r => {
       if (r.type === 'damage' && r.value && r.value > 0) {
-        addDamageNumber(r.value, r.targetId, 'text-red-500');
+        addDamageNumber(r.value, r.targetId, isBurst ? 'text-yellow-300' : 'text-red-500', isBurst);
       }
     });
 
@@ -138,6 +143,31 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     setTurn(prev => prev + 1);
     setTargetId(null);
     setStats(prev => ({ ...prev, totalTurns: prev.totalTurns + 1 }));
+  };
+
+  const handleBurst = () => {
+    if (isBattleOver || !currentActor || currentActor.side !== 'player') return;
+    if (currentActor.burst < 100) return;
+
+    setIsBurstActive(true);
+
+    // Create a burst skill: 1.5x damage, resets burst to 0
+    const burstSkill: SkillDefinition = {
+      id: 'burst_ultra',
+      name: 'Burst Ultra',
+      type: 'burst',
+      cooldown: 0,
+      effects: [
+        { type: 'damage', scaling: 'atk', power: 1.5, target: 'enemy' },
+        { type: 'apply_status', target: 'self', status: 'burst_cooldown' }
+      ]
+    };
+
+    // Execute burst turn and reset burst
+    runTurn(currentActor, burstSkill, targetId || undefined, true);
+
+    // Reset burst after a short delay for visual feedback
+    setTimeout(() => setIsBurstActive(false), 1500);
   };
 
   const handleBattleOver = async (winnerSide: 'player' | 'enemy', deaths: number) => {
@@ -291,23 +321,23 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
 
         {/* Damage Numbers Container */}
         <div className="absolute inset-0 pointer-events-none z-50">
-          <AnimatePresence>
+          <AnimatePrescence>
             {damageNumbers.map(d => (
               <motion.div
                 key={d.id}
-                initial={{ opacity: 0, y: 0, scale: 0.5, rotate: -10 }}
-                animate={{ opacity: 1, y: d.y, scale: d.isCrit ? 2.5 : 1.8, rotate: Math.random() * 20 - 10 }}
-                exit={{ opacity: 0, scale: 0.2 }}
-                transition={{ type: 'spring', damping: 10 }}
+                initial={preferrsReducedMotion ? { opacity: 1, scale: 1 } : { opacity: 0, y: 0, scale: 0.5, rotate: -10 }}
+                animate={preferrsReducedMotion ? { opacity: 1 } : { opacity: 1, y: d.y, scale: d.isCrit ? 2.5 : 1.8, rotate: Math.random() * 20 - 10 }}
+                exit={preferrsReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.2 }}
+                transition={preferrsReducedMotion ? { duration: 0.01 } : { type: 'spring', damping: 10 }}
                 className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-black text-3xl italic drop-shadow-[0_4px_8px_rgba(0,0,0,1)] flex flex-col items-center z-60 ${d.color}`}
                 style={{ marginLeft: d.x }}
               >
-               {d.isCrit && <span className="text-[10px] uppercase tracking-[0.3em] mb-[-4px] text-yellow-300 drop-shadow-none">CRITICAL</span>}
-               {d.value}
-             </motion.div>
-           ))}
-         </AnimatePresence>
-       </div>
+                {d.isCrit && <span className="text-[10px] uppercase tracking-[0.3em] mb-[-4px] text-yellow-300 drop-shadow-none">CRITICAL</span>}
+                {d.value}
+              </motion.div>
+            ))}
+          </AnimatePrescence>
+        </div>
 
        {/* Status Effects Visualization */}
        <div className="absolute inset-0 pointer-events-none z-40">
@@ -375,19 +405,44 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
              ))}
            </div>
 
-            <ActionButton 
-              onClick={() => {}} 
+            <ActionButton
+              onClick={handleBurst}
               variant="burst"
-              className="w-16 h-16 rounded-full p-1 shadow-[0_0_30px_rgba(239,68,68,0.4)] group relative"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.9 }}
+              disabled={!currentActor || (currentActor?.burst || 0) < 100 || isBurstActive}
+              className={`w-16 h-16 rounded-full p-1 shadow-[0_0_30px_rgba(239,68,68,0.4)] group relative ${(currentActor?.burst || 0) >= 100 ? 'animate-pulse' : ''}`}
+              whileHover={(currentActor?.burst || 0) >= 100 ? { scale: 1.05 } : {}}
+              whileTap={(currentActor?.burst || 0) >= 100 ? { scale: 0.9 } : {}}
             >
-               <div className="w-full h-full bg-[#0B1A2A]/90 rounded-full flex flex-col items-center justify-center border-2 border-white/20">
-                  <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5 }} className="absolute inset-0 bg-white/10 rounded-full" />
-                  <span className="text-[7px] font-black text-white/60 uppercase tracking-widest leading-none mb-0.5">Burst</span>
-                  <span className="text-[11px] font-black text-white uppercase leading-none italic drop-shadow-lg">ULTRA</span>
-               </div>
-            </ActionButton>
+                <div className={`w-full h-full bg-[#0B1A2A]/90 rounded-full flex flex-col items-center justify-center border-2 ${(currentActor?.burst || 0) >= 100 ? 'border-red-400' : 'border-white/20'}`}>
+                   {isBurstActive ? (
+                     <motion.div
+                       initial={{ scale: 0.5, opacity: 0 }}
+                       animate={{ scale: 2, opacity: 1 }}
+                       transition={{ duration: 0.8 }}
+                       className="text-yellow-300 font-black text-xs uppercase tracking-widest"
+                     >
+                       ULTRA!
+                     </motion.div>
+                   ) : (
+                     <>
+                       <motion.div
+                         animate={(currentActor?.burst || 0) >= 100 ? { opacity: [0.4, 1, 0.4] } : { opacity: 0.4 }}
+                         transition={{ repeat: Infinity, duration: 1.5 }}
+                         className="absolute inset-0 bg-white/10 rounded-full"
+                       />
+                       <span className={`text-[7px] font-black uppercase tracking-widest leading-none mb-0.5 ${(currentActor?.burst || 0) >= 100 ? 'text-yellow-300' : 'text-white/60'}`}>Burst</span>
+                       <span className={`text-[11px] font-black uppercase leading-none italic drop-shadow-lg ${(currentActor?.burst || 0) >= 100 ? 'text-yellow-300' : 'text-white'}`}>ULTRA</span>
+                       {/* Burst bar mini indicator */}
+                       <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-black/40 rounded-full overflow-hidden">
+                         <div
+                           className={`h-full ${(currentActor?.burst || 0) >= 100 ? 'bg-yellow-400' : 'bg-cyan-400'}`}
+                           style={{ width: `${currentActor?.burst || 0}%` }}
+                         />
+                       </div>
+                     </>
+                   )}
+                </div>
+             </ActionButton>
          </NineSlicePanel>
        </div>
 

@@ -1,14 +1,8 @@
-import { useState, useEffect } from 'react';
+'use client';
+
+import { useEffect } from 'react';
+import { useGameStore } from '@/lib/stores/game-store';
 import { supabase } from '@/lib/supabase';
-import { OnboardingService } from '@/lib/services/onboarding-service';
-import { UnitService } from '@/lib/services/unit-service';
-import { RecruitmentService } from '@/lib/services/recruitment-service';
-import { PartyService } from '@/lib/services/party-service';
-import { EquipmentService } from '@/lib/services/equipment-service';
-import { ConfigService } from '@/lib/services/config-service';
-import { CampaignService } from '@/lib/services/campaign-service';
-import { TrainingService } from '@/lib/services/training-service';
-import { DailyRewardsService } from '@/lib/services/daily-rewards-service';
 import { Stage } from '@/lib/rpg-system/campaign-types';
 
 type ToastFn = (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
@@ -16,161 +10,82 @@ type ToastFn = (message: string, type?: 'success' | 'error' | 'warning' | 'info'
 export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'quests' | 'stage_details' | 'training' | 'daily_rewards';
 
 export function useGameState(toast?: ToastFn) {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [profile, setProfile] = useState<any>(null);
-  const [roster, setRoster] = useState<any[]>([]);
-  const [party, setParty] = useState<any[]>([]);
-  const [tavernSlots, setTavernSlots] = useState<any[]>([]);
-  const [view, setView] = useState<ViewType>('home');
-  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
-  const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
-  const [targetSlot, setTargetSlot] = useState<'weapon' | 'card' | 'skill' | null>(null);
+  const store = useGameStore();
 
-  const navigateTo = (newView: ViewType) => setView(newView);
-
-  const regenEnergy = async () => {
-    if (!supabase) return;
-    try {
-      await supabase.rpc('rpc_regen_energy');
-    } catch (e) {
-      console.warn('Unable to refresh energy from server:', e);
-    }
-  };
-
-  const refreshState = async () => {
-    if (!supabase) return;
-    try {
-        const { data: authData } = await supabase.auth.getUser();
-        const user = authData?.user;
-        if (!user) return;
-
-        await regenEnergy();
-
-        const [profRes, unitsRes, partyRes, recruitsRes] = await Promise.all([
-            supabase.from('players').select('*').eq('id', user.id).single(),
-            supabase.from('units').select('*'),
-            supabase.from('party').select('*, unit:units(*)').eq('player_id', user.id).order('slot_index'),
-            supabase.from('recruitment_queue').select('*').eq('player_id', user.id).eq('is_claimed', false)
-        ]);
-
-        if (profRes.data) setProfile(profRes.data);
-        setRoster(unitsRes.data || []);
-        setParty(partyRes.data || []);
-        setTavernSlots(recruitsRes.data || []);
-    } catch (e) {
-        console.error("Critical error in refreshState:", e);
-    }
-  };
-
+  // Setup auth listener on mount
   useEffect(() => {
     if (!supabase) return;
 
+    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
-      setIsAuthLoading(false);
+      store.setIsAuthenticated(!!session);
+      store.setIsAuthLoading(false);
     });
 
+    // Auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
+      store.setIsAuthenticated(!!session);
       if (!session) {
-        setProfile(null);
-        setIsLoaded(false);
+        store.setProfile(null);
+        store.setIsLoaded(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Initial game initialization if authenticated
+    if (store.isAuthenticated) {
+      store.initializeGame();
+    }
+
+    // Periodic refresh
+    const interval = setInterval(async () => {
+      await store.regenEnergy();
+      await store.refreshState();
+    }, 30000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(interval);
+    };
   }, []);
 
+  // Re-initialize when auth state changes
   useEffect(() => {
-    async function loadGame() {
-      if (!supabase || !isAuthenticated) return;
-
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        await ConfigService.syncConfig();
-        await regenEnergy();
-
-        const { data: prof, error: profError } = await supabase.from('players').select('*').eq('id', user.id).single();
-
-        if (profError && profError.code !== 'PGRST116') {
-          setError("Error al cargar perfil: " + profError.message);
-          return;
-        }
-
-        if (!prof) {
-          try {
-            await OnboardingService.initializePlayer(user.email?.split('@')[0] || "Héroe");
-            const { data: newProf } = await supabase.from('players').select('*').eq('id', user.id).single();
-            if (!newProf) throw new Error("No se pudo crear el perfil.");
-            setProfile(newProf);
-          } catch (initErr: any) {
-            setError("Error en Onboarding: " + initErr.message);
-            return;
-          }
-        } else {
-          setProfile(prof);
-        }
-
-        await refreshState();
-        setIsLoaded(true);
-      } catch (e: any) {
-        console.error("Initialization error:", e);
-        setError("Error inesperado: " + (e.message || "Desconocido"));
-      }
+    if (store.isAuthenticated && !store.isLoaded && !store.error) {
+      store.initializeGame();
     }
-
-    loadGame();
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (!supabase || !isAuthenticated) return;
-    const interval = setInterval(async () => {
-      await regenEnergy();
-      await refreshState();
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [isAuthenticated]);
+  }, [store.isAuthenticated]);
 
   const handleSelectUnit = (id: string) => {
-    setSelectedUnitId(id);
-    setView('unit_details');
+    store.setSelectedUnitId(id);
+    store.setView('unit_details');
   };
 
   const handleOpenInventory = (slot: 'weapon' | 'card' | 'skill') => {
-    setTargetSlot(slot);
-    setView('inventory');
+    store.setTargetSlot(slot);
+    store.setView('inventory');
   };
 
   const openFullInventory = () => {
-    setTargetSlot(null);
-    setView('inventory');
+    store.setTargetSlot(null);
+    store.setView('inventory');
   };
 
   const handleEquipItem = async (item: any) => {
-    if (!targetSlot) return;
-    if (!selectedUnitId) {
+    if (!store.targetSlot) return;
+    if (!store.selectedUnitId) {
       if (toast) toast('Selecciona una unidad para equipar objetos', 'warning');
       return;
     }
     try {
-        await EquipmentService.equipItem(selectedUnitId, item.id, targetSlot);
-        await refreshState();
-        setView('unit_details');
-        if (toast) toast('Objeto equipado', 'success');
+      await store.handleEquipItem(item, toast);
     } catch (e: any) {
-        if (toast) toast(e.message, 'error');
+      if (toast) toast(e.message, 'error');
     }
   };
 
   const handleClaimRecruit = async (slotId: string) => {
     try {
-      await RecruitmentService.claimRecruit(slotId);
-      await refreshState();
+      await store.handleClaimRecruit(slotId);
     } catch (e) {
       console.error(e);
     }
@@ -178,77 +93,72 @@ export function useGameState(toast?: ToastFn) {
 
   const handleAssignPartySlot = async (slotIndex: number, unitId: string | null) => {
     try {
-      await PartyService.assignToParty(slotIndex, unitId);
-      await refreshState();
+      await store.handleAssignPartySlot(slotIndex, unitId);
     } catch (e) {
       console.error(e);
     }
   };
 
   const handleSelectStage = (stage: Stage) => {
-    setSelectedStage(stage);
-    setView('stage_details');
+    store.setSelectedStage(stage);
+    store.setView('stage_details');
   };
 
   const handleStartBattle = async (stage: Stage) => {
-    const success = await CampaignService.deductEnergy(stage.energy_cost);
-    if (!success) {
-        if (toast) toast("No tienes suficiente energía para esta incursión.", 'warning');
-        return;
-    }
-    await refreshState();
-    setView('battle');
+    await store.handleStartBattle(stage, toast);
   };
 
   const handleRefillEnergy = async (gemCost: number = 50) => {
     try {
-      const success = await CampaignService.refillEnergyWithGems(gemCost);
-      if (success) {
-        await refreshState();
-        if (toast) toast("¡Energía recargada!", 'success');
-      } else {
-        if (toast) toast("Gems insuficientes para recargar energía.", 'error');
-      }
+      await store.handleRefillEnergy(gemCost, toast);
     } catch (e: any) {
       if (toast) toast("Error al recargar energía: " + e.message, 'error');
     }
   };
 
   const handleOpenQuest = (stage: Stage) => {
-    setSelectedStage(stage);
-    setView('stage_details');
+    store.setSelectedStage(stage);
+    store.setView('stage_details');
   };
 
   const handleOpenTraining = (unitId: string) => {
-    setSelectedUnitId(unitId);
-    setView('training');
+    store.setSelectedUnitId(unitId);
+    store.setView('training');
   };
 
   const handleOpenDailyRewards = () => {
-    setView('daily_rewards');
+    store.setView('daily_rewards');
   };
 
-  const activePartyUnits = Array(5).fill(null).map((_, i) => party.find(p => p.slot_index === i)?.unit || null);
+  const retryOnboarding = async () => {
+    await store.retryOnboarding();
+  };
+
+  // Compute activePartyUnits from store.party
+  const activePartyUnits = Array(5).fill(null).map((_, i) =>
+    store.party.find(p => p.slot_index === i)?.unit || null
+  );
 
   return {
     state: {
-      isLoaded,
-      isAuthLoading,
-      isAuthenticated,
-      error,
-      profile,
-      roster,
-      party,
-      tavernSlots,
-      view,
-      selectedUnitId,
-      selectedStage,
+      isLoaded: store.isLoaded,
+      isAuthLoading: store.isAuthLoading,
+      isAuthenticated: store.isAuthenticated,
+      error: store.error,
+      needsOnboarding: store.needsOnboarding,
+      profile: store.profile,
+      roster: store.roster,
+      party: store.party,
+      tavernSlots: store.tavernSlots,
+      view: store.view,
+      selectedUnitId: store.selectedUnitId,
+      selectedStage: store.selectedStage,
       activePartyUnits,
-      targetSlot,
-      version: ConfigService.getActiveVersion()
+      targetSlot: store.targetSlot,
+      version: store.version
     },
     actions: {
-      navigateTo,
+      navigateTo: store.setView,
       handleSelectUnit,
       handleClaimRecruit,
       handleAssignPartySlot,
@@ -261,7 +171,8 @@ export function useGameState(toast?: ToastFn) {
       handleRefillEnergy,
       handleOpenTraining,
       handleOpenDailyRewards,
-      refreshState
+      retryOnboarding,
+      refreshState: store.refreshState
     }
   };
 }
