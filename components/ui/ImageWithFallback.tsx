@@ -11,7 +11,7 @@ interface ImageWithFallbackProps {
 export function ImageWithFallback({
   src,
   alt,
-  fallbackSrc = '/placeholder-unit.png',
+  fallbackSrc = '/assets/sprites/sprite_novice_idle_64.png',
   className = '',
   onError,
 }: ImageWithFallbackProps) {

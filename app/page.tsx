@@ -29,6 +29,15 @@ export default function Applet() {
   const { state, actions } = useGameState(showToast);
   const prefersReducedMotion = usePrefersReducedMotion();
 
+  // Show login screen if not authenticated
+  if (!state.isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#020508] flex items-center justify-center">
+        <AuthView />
+      </div>
+    );
+  }
+
   const renderView = () => {
     switch (state.view) {
       case 'home':

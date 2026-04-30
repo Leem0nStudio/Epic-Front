@@ -20,9 +20,9 @@ export class AssetService {
   // Sprite mappings (follows naming convention: sprite_[name]_idle_64.png)
   private static JOB_SPRITE_MAP: Record<string, string> = {
     'novice': 'sprite_novice_idle_64.png',
-    'swordman': 'sprite_swordman_idle_64.png',
+    'swordman': 'sprite_knight_idle_64.png',
     'mage': 'sprite_mage_idle_64.png',
-    'ranger': 'sprite_ranger_idle_64.png',
+    'ranger': 'sprite_archer_idle_64.png',
     'archer': 'sprite_archer_idle_64.png',
     'acolyte': 'sprite_acolyte_idle_64.png',
     'knight': 'sprite_knight_idle_64.png',
