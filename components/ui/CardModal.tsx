@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Sparkles, Zap, Shield, Heart } from 'lucide-react';
+import { X, Sparkles, Zap, Shield, Heart, Star } from 'lucide-react';
 import { Button } from './Button';
 import { RarityIcon } from './RarityIcon';
+import { AssetService } from '@/lib/services/asset-service';
 import { NineSlicePanel } from './NineSlicePanel';
 
 interface CardModalProps {
@@ -83,48 +84,60 @@ export function CardModal({ card, onClose, onEquip, isEquipped }: CardModalProps
             {/* Content Container */}
             <div className="flex-1 overflow-y-auto px-6 pb-8 custom-scrollbar">
               {/* Card Visual */}
-              <div className="relative aspect-[3/4] w-full max-w-[280px] mx-auto mb-8 rounded-[2rem] overflow-hidden group">
+              <div className="relative aspect-[3/4] w-full max-w-[280px] mx-auto mb-8 rounded-[2rem] overflow-hidden group shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                 <div className={`absolute inset-0 bg-gradient-to-br ${rarityColors[rarity]} opacity-20`} />
                 
-                {/* Placeholder/Art */}
-                <div className="absolute inset-2 rounded-[1.5rem] bg-black/40 backdrop-blur-md border border-white/5 flex flex-col items-center justify-center text-center p-6 overflow-hidden">
-                  {card.artUrl ? (
-                    <img src={card.artUrl} alt={card.name} className="absolute inset-0 w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex flex-col items-center gap-4 opacity-20 group-hover:opacity-40 transition-opacity">
-                       <Sparkles size={64} className="text-white" />
-                       <span className="font-black text-sm uppercase tracking-widest text-white">Visual Artifact</span>
-                    </div>
-                  )}
+                {/* Image Container */}
+                <div className="absolute inset-2 rounded-[1.5rem] bg-black/40 backdrop-blur-md border border-white/5 flex flex-col items-center justify-center text-center overflow-hidden">
+                  <img 
+                    src={AssetService.getCardUrl(card.item_id || card.id)} 
+                    alt={card.def?.name || card.name} 
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/assets/ui/ui_card_placeholder_256.png';
+                      target.style.opacity = '0.3';
+                    }}
+                  />
                   
+                  {/* Decorative Elements */}
+                  <div className="absolute top-4 right-4 z-20">
+                    <RarityIcon rarity={rarity} size="sm" glass={true}>
+                      <Star size={16} className="text-white drop-shadow-md" />
+                    </RarityIcon>
+                  </div>
+
                   {/* Overlay Info */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                    <h3 className="text-xl font-black text-white uppercase italic truncate drop-shadow-lg">
+                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-20">
+                    <h3 className="text-xl font-black text-white uppercase italic truncate drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                       {card.def?.name || card.name}
                     </h3>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-white uppercase`}>
-                        {rarity}
-                      </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="h-1 w-12 bg-[#F5C76B] rounded-full" />
+                      <span className="text-[8px] font-black text-[#F5C76B] uppercase tracking-[0.2em]">Memory Fragment</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Animated Borders */}
-                <div className="absolute inset-0 border-2 border-[#F5C76B]/20 rounded-[2rem] pointer-events-none group-hover:border-[#F5C76B]/40 transition-colors" />
+                <div className="absolute inset-0 border-2 border-white/10 rounded-[2rem] pointer-events-none group-hover:border-[#F5C76B]/40 transition-colors" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
               </div>
 
               {/* Stats & Description */}
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-3">
-                  <StatItem icon={<Heart size={14} />} label="HP" value={card.def?.passiveBonus?.hp || 0} color="text-red-400" />
-                  <StatItem icon={<Zap size={14} />} label="ATK" value={card.def?.passiveBonus?.atk || 0} color="text-yellow-400" />
-                  <StatItem icon={<Shield size={14} />} label="DEF" value={card.def?.passiveBonus?.def || 0} color="text-blue-400" />
-                  <StatItem icon={<Sparkles size={14} />} label="REC" value={card.def?.passiveBonus?.rec || 0} color="text-purple-400" />
+                  <StatItem icon={<Heart size={14} />} label="HP" value={card.def?.stat_bonuses?.hp || card.def?.passiveBonus?.hp || 0} color="text-red-400" />
+                  <StatItem icon={<Zap size={14} />} label="ATK" value={card.def?.stat_bonuses?.atk || card.def?.passiveBonus?.atk || 0} color="text-yellow-400" />
+                  <StatItem icon={<Shield size={14} />} label="DEF" value={card.def?.stat_bonuses?.def || card.def?.passiveBonus?.def || 0} color="text-blue-400" />
+                  <StatItem icon={<Sparkles size={14} />} label="REC" value={card.def?.stat_bonuses?.rec || card.def?.passiveBonus?.rec || 0} color="text-purple-400" />
                 </div>
 
-                <NineSlicePanel type="border" className="p-5 glass-frosted rounded-[1.5rem]">
-                  <h4 className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-3">Efecto Pasivo</h4>
+                <NineSlicePanel type="border" className="p-5 glass-frosted rounded-[1.5rem] frame-earthstone">
+                  <h4 className="text-[10px] font-black text-[#F5C76B] uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#F5C76B]" />
+                    Efecto Pasivo
+                  </h4>
                   <p className="text-sm text-white/80 leading-relaxed italic font-medium">
                     {card.def?.description || 'Esta carta otorga bonificaciones místicas a su portador una vez equipada.'}
                   </p>

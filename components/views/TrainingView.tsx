@@ -166,7 +166,7 @@ export function TrainingView({ unitId, unitName, onBack, onUpdate }: TrainingVie
                     <div className="grid grid-cols-1 gap-3 mb-8">
                        <div className="p-4 bg-[#F5C76B]/10 border border-[#F5C76B]/20 rounded-2xl">
                           <span className="text-[9px] font-black text-[#F5C76B]/60 uppercase tracking-widest block mb-1">Experiencia Ganada</span>
-                          <span className="text-2xl font-black text-[#F5C76B] font-display italic">+{result.expGain} EXP</span>
+                          <span className="text-2xl font-black text-[#F5C76B] font-display italic">+{result.expGained} EXP</span>
                        </div>
                        {result.newLevel && (
                          <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">

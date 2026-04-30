@@ -2,7 +2,7 @@ import { CharacterData, Item } from './types';
 
 export const CHARACTERS: CharacterData[] = [
   {
-    id: 'c1', name: 'Knight Sergio', title: 'ROGUE', element: 'Water', rarity: 3, level: 1, maxLevel: 40, exp: 0, maxExp: 15, cost: 5,
+    id: 'c1', name: 'Knight Sergio', title: 'ROGUE', element: 'Water', rarity: 'R', level: 1, maxLevel: 40, exp: 0, maxExp: 15, cost: 5,
     baseStats: { hp: 2050, atk: 600, def: 600, rec: 580 },
     spriteUrl: 'https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png',
     cssFilter: 'sepia(0) hue-rotate(0deg)',
@@ -12,7 +12,7 @@ export const CHARACTERS: CharacterData[] = [
     ]
   },
   {
-    id: 'c2', name: 'Vargas', title: 'SWORDSMAN', element: 'Fire', rarity: 4, level: 12, maxLevel: 40, exp: 120, maxExp: 450, cost: 8,
+    id: 'c2', name: 'Vargas', title: 'SWORDSMAN', element: 'Fire', rarity: 'SR', level: 12, maxLevel: 40, exp: 120, maxExp: 450, cost: 8,
     baseStats: { hp: 2400, atk: 850, def: 550, rec: 400 },
     spriteUrl: 'https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png',
     cssFilter: 'sepia(0.5) saturate(2) hue-rotate(-50deg)',
@@ -22,7 +22,7 @@ export const CHARACTERS: CharacterData[] = [
     ]
   },
   {
-    id: 'c3', name: 'Lance', title: 'PIKEMAN', element: 'Earth', rarity: 3, level: 25, maxLevel: 40, exp: 800, maxExp: 1200, cost: 6,
+    id: 'c3', name: 'Lance', title: 'PIKEMAN', element: 'Earth', rarity: 'R', level: 25, maxLevel: 40, exp: 800, maxExp: 1200, cost: 6,
     baseStats: { hp: 3100, atk: 550, def: 800, rec: 350 },
     spriteUrl: 'https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png',
     cssFilter: 'sepia(0.5) saturate(1.5) hue-rotate(80deg)',
@@ -32,7 +32,7 @@ export const CHARACTERS: CharacterData[] = [
     ]
   },
   {
-    id: 'c4', name: 'Magress', title: 'KNIGHT', element: 'Dark', rarity: 5, level: 30, maxLevel: 60, exp: 4500, maxExp: 5000, cost: 12,
+    id: 'c4', name: 'Magress', title: 'KNIGHT', element: 'Dark', rarity: 'SSR', level: 30, maxLevel: 60, exp: 4500, maxExp: 5000, cost: 12,
     baseStats: { hp: 4200, atk: 900, def: 950, rec: 200 },
     spriteUrl: 'https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png',
     cssFilter: 'sepia(0.8) hue-rotate(220deg) saturate(0.5) brightness(0.8)',
@@ -43,7 +43,7 @@ export const CHARACTERS: CharacterData[] = [
     ]
   },
   {
-    id: 'c5', name: 'Eze', title: 'THUNDER GOD', element: 'Thunder', rarity: 6, level: 45, maxLevel: 80, exp: 8000, maxExp: 12000, cost: 15,
+    id: 'c5', name: 'Eze', title: 'THUNDER GOD', element: 'Thunder', rarity: 'UR', level: 45, maxLevel: 80, exp: 8000, maxExp: 12000, cost: 15,
     baseStats: { hp: 4500, atk: 1200, def: 800, rec: 600 },
     spriteUrl: 'https://raw.githubusercontent.com/Leem0nGames/gameassets/main/RO/abbys_sprite_001.png',
     cssFilter: 'sepia(0.2) saturate(2) hue-rotate(20deg) brightness(1.2)',
@@ -56,36 +56,36 @@ export const CHARACTERS: CharacterData[] = [
 
 export const INVENTORY: Item[] = [
   {
-    id: 'w1', name: 'Brave Sword', type: 'Weapon', rarity: 3, description: 'A standard sword assigned to brave warriors.',
+    id: 'w1', name: 'Brave Sword', type: 'weapon', rarity: 'R', description: 'A standard sword assigned to brave warriors.',
     stats: { hp: 0, atk: 120, def: 0, rec: 0 },
     sprite: { col: 2, row: 0, className: "drop-shadow-[0_2px_4px_#111]" },
     effects: ['10% chance to ignore enemy DEF']
   },
   {
-    id: 'w2', name: 'Flame Dagger', type: 'Weapon', rarity: 4, description: 'A dagger imbued with fire magic.',
+    id: 'w2', name: 'Flame Dagger', type: 'weapon', rarity: 'SR', description: 'A dagger imbued with fire magic.',
     stats: { hp: 0, atk: 250, def: 0, rec: 50 },
     sprite: { col: 0, row: 2, className: "drop-shadow-[0_2px_4px_#311]" },
     effects: ['Adds Fire element to attack', '15% boost to Spark damage']
   },
   {
-    id: 'a1', name: 'Knight Shield', type: 'Armor', rarity: 3, description: 'Sturdy iron shield.',
+    id: 'a1', name: 'Knight Shield', type: 'armor', rarity: 'R', description: 'Sturdy iron shield.',
     stats: { hp: 200, atk: 0, def: 150, rec: 0 },
     sprite: { col: 3, row: 0, className: "drop-shadow-[0_2px_4px_#111]" },
     effects: ['Reduces damage taken by 5%']
   },
   {
-    id: 'a2', name: 'Aura Plate', type: 'Armor', rarity: 5, description: 'Legendary plate glowing with aura.',
+    id: 'a2', name: 'Aura Plate', type: 'armor', rarity: 'SSR', description: 'Legendary plate glowing with aura.',
     stats: { hp: 500, atk: 0, def: 400, rec: 100 },
     sprite: { col: 1, row: 1, className: "drop-shadow-[0_2px_4px_#111]" },
     effects: ['Negates all status ailments', 'Restores HP each turn']
   },
   {
-    id: 'ac1', name: 'Hero Ring', type: 'Accessory', rarity: 4, description: 'Boosts all stats slightly.',
+    id: 'ac1', name: 'Hero Ring', type: 'accessory', rarity: 'SR', description: 'Boosts all stats slightly.',
     stats: { hp: 100, atk: 50, def: 50, rec: 50 },
     sprite: { col: 0, row: 1, className: "drop-shadow-[0_2px_4px_#111]" }
   },
   {
-    id: 'ac2', name: 'Recovery Amulet', type: 'Accessory', rarity: 3, description: 'Enhances healing capability.',
+    id: 'ac2', name: 'Recovery Amulet', type: 'accessory', rarity: 'R', description: 'Enhances healing capability.',
     stats: { hp: 0, atk: 0, def: 0, rec: 300 },
     sprite: { col: 1, row: 0, className: "drop-shadow-[0_2px_4px_#111]" },
     effects: ['Boosts BC & HC drop rate by 10%']

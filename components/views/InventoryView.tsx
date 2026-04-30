@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { SPRITE_INDEX } from '@/lib/config/sprite-atlas-config';
 
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Box, Sparkles, Sword, Search, Filter } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Box, Sparkles, Sword, Search, Filter, Zap } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { motion } from 'motion/react';
 import { SkillDetailView } from './SkillDetailView';
