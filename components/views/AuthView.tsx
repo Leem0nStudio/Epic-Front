@@ -80,8 +80,12 @@ export function AuthView() {
               transition={{ delay: 0.2, type: 'spring', damping: 20 }}
               className="w-24 h-24 mx-auto mb-8 relative"
             >
-              <div className="absolute inset-0 bg-[#F5C76B]/10 rounded-3xl border-2 border-[#F5C76B]/30 flex items-center justify-center shadow-[0_0_40px_rgba(245,199,107,0.3)] frame-earthstone">
-                <ShieldCheck size={48} className="text-[#F5C76B] drop-shadow-[0_0_20px_rgba(245,199,107,0.5)]" />
+              <div className="absolute inset-0 bg-[#F5C76B]/5 rounded-3xl border border-[#F5C76B]/20 flex items-center justify-center shadow-[0_0_50px_rgba(245,199,107,0.15)] overflow-hidden">
+                <img 
+                  src="/assets/logo.png" 
+                  alt="Epic Frontier" 
+                  className="w-full h-full object-contain p-2 drop-shadow-[0_0_15px_rgba(245,199,107,0.4)]"
+                />
               </div>
               
               {/* Rotating decorative rings */}
@@ -104,7 +108,7 @@ export function AuthView() {
               transition={{ delay: 0.3 }}
               className="text-4xl font-black text-white tracking-[0.2em] uppercase italic drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] font-display"
             >
-              Project: Etherea
+              Epic Frontier
             </motion.h1>
 
             {/* Subtitle */}
@@ -187,7 +191,7 @@ export function AuthView() {
                         onChange={(e) => setEmail(e.target.value)}
                         required
                         className="w-full bg-black/40 border border-white/5 rounded-2xl px-12 py-4 text-sm text-white placeholder-white/10 focus:border-[#F5C76B]/40 focus:outline-none transition-all font-bold tracking-wider"
-                        placeholder="usuario@etherea.app"
+                        placeholder="usuario@epicfrontier.app"
                       />
                     </div>
                   </div>

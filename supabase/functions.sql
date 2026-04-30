@@ -1,4 +1,4 @@
--- Epic RPG Database Functions & RPCs
+-- Epic Frontier Database Functions & RPCs
 -- This file contains all stored procedures and functions
 -- Run this after schema.sql
 

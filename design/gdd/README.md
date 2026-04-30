@@ -1,7 +1,7 @@
-# Game Design Document (GDD) - Epic RPG
+# Game Design Document (GDD) - Epic Frontier
 
 ## Structure
-This folder contains the modular GDD for Epic RPG, broken into focused documents.
+This folder contains the modular GDD for Epic Frontier, broken into focused documents.
 
 ## Documents
 | File | Description | Status |

@@ -109,7 +109,7 @@ a:focus-visible,
     -webkit-backdrop-filter: blur(12px);
   }
 
-  /* === EPIC FRONT UI STANDARDS === */
+  /* === EPIC FRONTIER UI STANDARDS === */
   .view-overlay {
     background: linear-gradient(to bottom, rgba(11, 26, 42, 0.4), transparent, rgba(2, 5, 8, 0.8));
   }
