@@ -7,11 +7,13 @@ import { PartyService } from '@/lib/services/party-service';
 import { EquipmentService } from '@/lib/services/equipment-service';
 import { ConfigService } from '@/lib/services/config-service';
 import { CampaignService } from '@/lib/services/campaign-service';
+import { TrainingService } from '@/lib/services/training-service';
+import { DailyRewardsService } from '@/lib/services/daily-rewards-service';
 import { Stage } from '@/lib/rpg-system/campaign-types';
 
 type ToastFn = (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
 
-export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'quests' | 'stage_details';
+export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'quests' | 'stage_details' | 'training' | 'daily_rewards';
 
 export function useGameState(toast?: ToastFn) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -217,6 +219,15 @@ export function useGameState(toast?: ToastFn) {
     setView('stage_details');
   };
 
+  const handleOpenTraining = (unitId: string) => {
+    setSelectedUnitId(unitId);
+    setView('training');
+  };
+
+  const handleOpenDailyRewards = () => {
+    setView('daily_rewards');
+  };
+
   const activePartyUnits = Array(5).fill(null).map((_, i) => party.find(p => p.slot_index === i)?.unit || null);
 
   return {
@@ -248,6 +259,8 @@ export function useGameState(toast?: ToastFn) {
       handleOpenQuest,
       handleStartBattle,
       handleRefillEnergy,
+      handleOpenTraining,
+      handleOpenDailyRewards,
       refreshState
     }
   };

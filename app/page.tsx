@@ -13,6 +13,8 @@ import { BattleScreenView } from '@/components/views/BattleScreenView';
 import { CampaignMapView } from '@/components/views/CampaignMapView';
 import { QuestLogView } from '@/components/views/QuestLogView';
 import { StageDetailsView } from '@/components/views/StageDetailsView';
+import { TrainingView } from '@/components/views/TrainingView';
+import { DailyRewardsView } from '@/components/views/DailyRewardsView';
 import { AuthView } from '@/components/views/AuthView';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
@@ -128,11 +130,23 @@ export default function Applet() {
                />;
       case 'battle':
         return <BattleScreenView 
-                 squad={state.activePartyUnits} 
-                 stageId={state.selectedStage?.id}
-                 onBack={() => actions.navigateTo('campaign')}
-                 onRefresh={actions.refreshState}
-               />;
+                  squad={state.activePartyUnits} 
+                  stageId={state.selectedStage?.id}
+                  onBack={() => actions.navigateTo('campaign')}
+                  onRefresh={actions.refreshState}
+                />;
+      case 'training':
+        return <TrainingView 
+                  unitId={state.selectedUnitId!}
+                  unitName={state.roster.find(u => u.id === state.selectedUnitId)?.name || 'Unit'}
+                  onBack={() => actions.navigateTo('unit_details')}
+                  onUpdate={actions.refreshState}
+                />;
+      case 'daily_rewards':
+        return <DailyRewardsView 
+                  onBack={() => actions.navigateTo('home')}
+                  onUpdate={actions.refreshState}
+                />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full space-y-4">
