@@ -130,19 +130,19 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
   const leftUnit = activePartyUnits[1];
   const rightUnit = activePartyUnits[2];
 
-  const [displayCurrency, setDisplayCurrency] = useState<number>(saveData.profile.currency);
-  const [displayGems, setDisplayGems] = useState<number>(saveData.profile.premium_currency);
+  const [displayCurrency, setDisplayCurrency] = useState<number>(saveData.profile?.currency || 0);
+  const [displayGems, setDisplayGems] = useState<number>(saveData.profile?.premium_currency || 0);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (displayCurrency < saveData.profile.currency) setDisplayCurrency(prev => Math.min(saveData.profile.currency, prev + 50));
-      if (displayGems < saveData.profile.premium_currency) setDisplayGems(prev => Math.min(saveData.profile.premium_currency, prev + 5));
+      if (displayCurrency < (saveData.profile?.currency || 0)) setDisplayCurrency(prev => Math.min(saveData.profile?.currency || 0, prev + 50));
+      if (displayGems < (saveData.profile?.premium_currency || 0)) setDisplayGems(prev => Math.min(saveData.profile?.premium_currency || 0, prev + 5));
     }, 50);
-    return () => clearTimeout(timer);
-  }, [saveData.profile.currency, saveData.profile.premium_currency, displayCurrency, displayGems]);
+      return () => clearTimeout(timer);
+  }, [saveData.profile?.currency, saveData.profile?.premium_currency, displayCurrency, displayGems]);
 
-  const playerLevel = saveData.profile.level || 65;
-  const playerExp = saveData.profile.exp || 4500;
+  const playerLevel = saveData.profile?.level || 65;
+  const playerExp = saveData.profile?.exp || 4500;
   const nextLevelExp = playerLevel * 100;
   const expProgress = Math.min((playerExp / nextLevelExp) * 100, 75); // Forced 75% for visual match
 
@@ -158,9 +158,9 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
         {/* Left: Rank & Username */}
         <div className="relative flex items-center pl-8">
           <div className="pill-dark pl-10 pr-6 py-2 flex flex-col justify-center min-w-[160px] border-[#F5C76B]/40 shadow-xl relative z-0">
-            <span className="text-white text-sm font-bold tracking-wide drop-shadow-md font-stats truncate">
-              {saveData.profile.username || "Aethel_Player"}
-            </span>
+              <span className="text-white text-sm font-bold tracking-wide drop-shadow-md font-stats truncate">
+                {saveData.profile?.username || "Aethel_Player"}
+              </span>
             <div className="w-full flex items-center gap-2 mt-1">
               <span className="text-[8px] font-black uppercase text-white/60">Lv. {playerLevel}</span>
               <div className="flex-1 h-1 bg-black/60 rounded-full overflow-hidden">

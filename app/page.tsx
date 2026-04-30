@@ -17,7 +17,7 @@ import { TrainingView } from '@/components/views/TrainingView';
 import { DailyRewardsView } from '@/components/views/DailyRewardsView';
 import { AuthView } from '@/components/views/AuthView';
 import { motion, AnimatePresence } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorDisplay } from '@/components/ui/ErrorDisplay';
 import { Button } from '@/components/ui/Button';
@@ -27,43 +27,7 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 export default function Applet() {
   const { showToast } = useToast();
   const { state, actions } = useGameState(showToast);
-  const [isMounted, setIsMounted] = useState(true);
-
-  if (!isMounted || state.isAuthLoading) {
-    return (
-      <div className="min-h-screen bg-[#0B1A2A] flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Conectando..." />
-      </div>
-    );
-  }
-
-  if (!state.isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-[#0B1A2A] flex items-center justify-center p-4">
-        <AuthView />
-      </div>
-    );
-  }
-
-  if (state.error) {
-    return (
-      <div className="min-h-screen bg-[#0B1A2A] flex items-center justify-center p-4">
-        <ErrorDisplay
-          title="Error de Carga"
-          message={state.error}
-          onRetry={state.needsOnboarding ? actions.retryOnboarding : () => window.location.reload()}
-        />
-      </div>
-    );
-  }
-
-  if (!state.isLoaded) {
-    return (
-      <div className="min-h-screen bg-[#0B1A2A] flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Cargando Reino..." />
-      </div>
-    );
-  }
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const renderView = () => {
     switch (state.view) {
@@ -180,8 +144,6 @@ export default function Applet() {
       default: break;
     }
   };
-
-  const prefersReducedMotion = usePrefersReducedMotion();
 
   return (
     <div
