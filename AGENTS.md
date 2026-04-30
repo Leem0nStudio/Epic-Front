@@ -19,7 +19,7 @@ Create `.env.local` (see `.env.example`):
 - Next.js 15 App Router, single package (not monorepo)
 - Path alias: `@/*` → `./` (tsconfig.json:22)
 - Views: `components/views/*.tsx` — self-contained game screens
-- Supabase: auth + database, RPC game logic in `supabase/Epic_schema.sql`
+- Supabase: auth + database, RPC game logic in consolidated `supabase/` files
 - Styling: Tailwind 4 via `@tailwindcss/postcss` (no tailwind.config.js)
 - `motion` package transpiled in next.config.ts (line 23)
 
@@ -27,7 +27,12 @@ Create `.env.local` (see `.env.example`):
 - **main** — primary branch (no `experimental` branch exists)
 
 ## Database
-Run `supabase/setup_complete.sql` in Supabase SQL Editor to deploy schema, seed data, and RPC functions.
+Run these in Supabase SQL Editor in order:
+1. `supabase/schema.sql` — Tables & RLS policies
+2. `supabase/functions.sql` — RPCs & procedures
+3. `supabase/seed.sql` — Initial game data
+
+See `supabase/README.md` for detailed setup instructions.
 
 ## Known Issues
 - Onboarding fails if `rpc_initialize_player` RPC not deployed

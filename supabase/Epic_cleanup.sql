@@ -1,36 +1,3 @@
--- Epic_cleanup.sql
--- Consolidated cleanup script for the RPG system
-
--- 1. Drop Functions/RPCs
-DROP FUNCTION IF EXISTS rpc_initialize_player(TEXT, JSONB[]);
-DROP FUNCTION IF EXISTS rpc_pull_gacha(INTEGER, TEXT);
-DROP FUNCTION IF EXISTS rpc_evolve_unit(UUID, TEXT);
-DROP FUNCTION IF EXISTS rpc_add_currency(BIGINT, BIGINT);
-DROP FUNCTION IF EXISTS rpc_reset_player_data();
-DROP FUNCTION IF EXISTS rpc_complete_stage(TEXT, INTEGER, INTEGER, JSONB);
-
--- 2. Drop Tables
-DROP TABLE IF EXISTS campaign_progress CASCADE;
-DROP TABLE IF EXISTS recruitment_queue CASCADE;
-DROP TABLE IF EXISTS party CASCADE;
-DROP TABLE IF EXISTS inventory CASCADE;
-DROP TABLE IF EXISTS units CASCADE;
-DROP TABLE IF EXISTS gacha_state CASCADE;
-DROP TABLE IF EXISTS players CASCADE;
-
--- 3. Drop Static Tables
-DROP TABLE IF EXISTS jobs CASCADE;
-DROP TABLE IF EXISTS skills CASCADE;
-DROP TABLE IF EXISTS cards CASCADE;
-DROP TABLE IF EXISTS weapons CASCADE;
-DROP TABLE IF EXISTS job_cores CASCADE;
-DROP TABLE IF EXISTS game_configs CASCADE;
-
--- 4. Legacy Cleanup
-DROP TABLE IF EXISTS profiles CASCADE;
-DROP TABLE IF EXISTS item_definitions CASCADE;
-DROP TABLE IF EXISTS job_definitions CASCADE;
-DROP TABLE IF EXISTS game_data_versions CASCADE;
-DROP TABLE IF EXISTS inventory_items CASCADE;
-DROP TABLE IF EXISTS party_slots CASCADE;
-DROP TABLE IF EXISTS recruitment_slots CASCADE;
+-- DEPRECATED: Este archivo fue consolidado en los archivos supabase/schema.sql, supabase/functions.sql, supabase/seed.sql y supabase/cleanup.sql
+-- No ejecutar este archivo.
+SELECT 'DEPRECATED FILE - use supabase/schema.sql, supabase/functions.sql, supabase/seed.sql, supabase/cleanup.sql'::text;
