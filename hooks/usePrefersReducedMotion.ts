@@ -13,10 +13,12 @@ export function usePrefersReducedMotion(): boolean {
     if (typeof window === 'undefined') return;
 
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
+     
+    setTimeout(() => setPrefersReducedMotion(mediaQuery.matches), 0);
 
     const handleChange = (e: MediaQueryListEvent) => {
-      setPrefersReducedMotion(e.matches);
+       
+      setTimeout(() => setPrefersReducedMotion(e.matches), 0);
     };
 
     mediaQuery.addEventListener('change', handleChange);

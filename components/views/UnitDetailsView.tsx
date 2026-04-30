@@ -33,35 +33,43 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory,
   const [loadingSkills, setLoadingSkills] = useState(false);
 
   const loadData = async () => {
-    setLoading(true);
+     
+    setTimeout(() => setLoading(true), 0);
     try {
       const details = await UnitService.getUnitDetails(unitId);
-      setData(details);
+       
+      setTimeout(() => setData(details), 0);
       const jobs = await UnitService.getNextJobs(details.job.id);
-      setNextJobs(jobs);
+       
+      setTimeout(() => setNextJobs(jobs), 0);
     } catch (e: any) {
       console.error(e);
-      setError(e.message || "Falla de Enlace ID de unidad no válido");
+       
+      setTimeout(() => setError(e.message || "Falla de Enlace ID de unidad no válido"), 0);
     } finally {
-      setLoading(false);
+       
+      setTimeout(() => setLoading(false), 0);
     }
   };
 
   const loadAvailableSkills = async () => {
     if (!supabase) return;
-    setLoadingSkills(true);
+     
+    setTimeout(() => setLoadingSkills(true), 0);
     try {
       const { data, error } = await supabase
         .from('skills')
         .select('*')
         .order('rarity', { ascending: true });
       if (!error && data) {
-        setAvailableSkills(data);
+         
+        setTimeout(() => setAvailableSkills(data), 0);
       }
     } catch (e) {
       console.error(e);
     } finally {
-      setLoadingSkills(false);
+       
+      setTimeout(() => setLoadingSkills(false), 0);
     }
   };
 
@@ -324,7 +332,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory,
               </div>
               {selectedSkill.def?.description && (
                 <div className="w-full p-6 bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-xl shadow-2xl glass-frosted frame-earthstone">
-                  <p className="text-white/70 text-sm text-center leading-relaxed font-medium italic font-stats">"{selectedSkill.def.description}"</p>
+                  <p className="text-white/70 text-sm text-center leading-relaxed font-medium italic font-stats">&quot;{selectedSkill.def.description}&quot;</p>
                 </div>
               )}
               <div className="w-full grid grid-cols-2 gap-4">

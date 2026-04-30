@@ -211,14 +211,16 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     if (order.length === 0) return;
 
     if (turn >= order.length) {
-      setTurn(0);
-      setRound(prev => prev + 1);
-      setUnits(prev => prev.map(u => BattleManager.updateUnitStartTurn(u)));
+      setTimeout(() => {
+        setTurn(0);
+        setRound(prev => prev + 1);
+        setUnits(prev => prev.map(u => BattleManager.updateUnitStartTurn(u)));
+      }, 0);
       return;
     }
 
     const currentActor = order[turn];
-    setActiveUnitId(currentActor.id);
+    setTimeout(() => setActiveUnitId(currentActor.id), 0);
 
     if (currentActor.side === 'enemy') {
       const skill = currentActor.skills[0];
@@ -327,7 +329,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
               <motion.div
                 key={d.id}
                 initial={preferrsReducedMotion ? { opacity: 1, scale: 1 } : { opacity: 0, y: 0, scale: 0.5, rotate: -10 }}
-                animate={preferrsReducedMotion ? { opacity: 1 } : { opacity: 1, y: d.y, scale: d.isCrit ? 2.5 : 1.8, rotate: Math.random() * 20 - 10 }}
+                animate={preferrsReducedMotion ? { opacity: 1 } : { opacity: 1, y: d.y, scale: d.isCrit ? 2.5 : 1.8, rotate: 0 }}
                 exit={preferrsReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.2 }}
                 transition={preferrsReducedMotion ? { duration: 0.01 } : { type: 'spring', damping: 10 }}
                 className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-black text-3xl italic drop-shadow-[0_4px_8px_rgba(0,0,0,1)] flex flex-col items-center z-60 ${d.color}`}

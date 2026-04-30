@@ -236,7 +236,7 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
               </div>
 
               <p className="text-sm text-white/60 text-center leading-relaxed max-w-sm italic">
-                "{selectedItem.def?.description || 'Sin descripción'}"
+                &quot;{selectedItem.def?.description || 'Sin descripción'}&quot;
               </p>
 
               {selectedItem.quantity > 1 && (

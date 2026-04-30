@@ -105,7 +105,7 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
               </div>
                {results.map((item, i) => (
                     <motion.div
-                      key={`${item.item_id}_${i}_${Date.now()}`}
+                      key={`${item.item_id}_${i}`}
                       initial={{ opacity: 0, y: 20, scale: 0.8 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       transition={{ delay: i * 0.05, type: 'spring', damping: 15 }}

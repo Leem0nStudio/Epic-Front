@@ -44,7 +44,7 @@ export function AuthView() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full p-4 w-full max-w-sm relative overflow-hidden">
+    <div className="flex flex-col items-center justify-center h-full p-3 sm:p-4 w-full max-w-sm relative overflow-hidden">
       {/* Animated background particles */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="particle-magic" style={{ top: '10%', left: '20%', animationDelay: '0s' }} />
@@ -63,7 +63,7 @@ export function AuthView() {
         <NineSlicePanel 
           type="panel" 
           variant="panel-021" 
-          className="overflow-hidden relative z-10 glass-crystal frame-earthstone"
+          className="overflow-hidden relative z-10 glass-crystal"
           glassmorphism={true}
         >
           {/* Decorative gradient overlay */}
@@ -72,32 +72,32 @@ export function AuthView() {
           {/* Floating decorative elements */}
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-24 h-24 bg-[#F5C76B]/5 blur-3xl rounded-full animate-pulse" />
           
-          <div className="p-10 text-center relative z-10">
-            {/* Icon section with Earthstone frame */}
+          <div className="p-6 sm:p-10 text-center relative z-10">
+            {/* Icon section - logo bigger, no frame, with glow only */}
             <motion.div 
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2, type: 'spring', damping: 20 }}
-              className="w-24 h-24 mx-auto mb-8 relative"
+              className="w-32 h-32 sm:w-40 sm:h-40 mx-auto mb-6 relative"
             >
-              <div className="absolute inset-0 bg-[#F5C76B]/5 rounded-3xl border border-[#F5C76B]/20 flex items-center justify-center shadow-[0_0_50px_rgba(245,199,107,0.15)] overflow-hidden">
-                <img 
-                  src="/assets/logo.png" 
-                  alt="Epic Frontier" 
-                  className="w-full h-full object-contain p-2 drop-shadow-[0_0_15px_rgba(245,199,107,0.4)]"
-                />
-              </div>
+              {/* Glow effect only - no border */}
+              <div className="absolute inset-0 bg-[#F5C76B]/10 rounded-full blur-2xl animate-pulse" />
+              <img 
+                src="/assets/logo.png" 
+                alt="Epic Frontier" 
+                className="w-full h-full object-contain drop-shadow-[0_0_30px_rgba(245,199,107,0.5)]"
+              />
               
-              {/* Rotating decorative rings */}
+              {/* Rotating decorative rings - adjusted for larger logo */}
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-[-8px] border-2 border-dashed border-[#F5C76B]/20 rounded-full"
+                className="absolute inset-[-12px] sm:inset-[-16px] border-2 border-dashed border-[#F5C76B]/20 rounded-full"
               />
               <motion.div
                 animate={{ rotate: -360 }}
                 transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-[-16px] border border-dotted border-cyan-400/20 rounded-full"
+                className="absolute inset-[-20px] sm:inset-[-24px] border border-dotted border-cyan-400/20 rounded-full"
               />
             </motion.div>
 
@@ -106,7 +106,7 @@ export function AuthView() {
               initial={{ y: -10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-4xl font-black text-white tracking-[0.2em] uppercase italic drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] font-display"
+              className="text-3xl sm:text-4xl font-black text-white tracking-[0.15em] sm:tracking-[0.2em] uppercase italic drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] font-display"
             >
               Epic Frontier
             </motion.h1>
@@ -116,15 +116,15 @@ export function AuthView() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
-              className="flex items-center justify-center gap-2 mt-4 mb-8"
+              className="flex items-center justify-center gap-2 mt-3 sm:mt-4 mb-6 sm:mb-8"
             >
-              <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#F5C76B]/60" />
-              <span className="text-[10px] text-white/40 font-black uppercase tracking-[0.3em] font-stats">Guardian Access</span>
-              <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#F5C76B]/60" />
+              <div className="h-[1px] w-8 sm:w-12 bg-gradient-to-r from-transparent to-[#F5C76B]/60" />
+              <span className="text-[9px] sm:text-[10px] text-white/40 font-black uppercase tracking-[0.25em] sm:tracking-[0.3em] font-stats">Guardian Access</span>
+              <div className="h-[1px] w-8 sm:w-12 bg-gradient-to-l from-transparent to-[#F5C76B]/60" />
             </motion.div>
           </div>
 
-          <div className="px-10 pb-10 relative z-10">
+          <div className="px-6 sm:px-10 pb-6 sm:pb-10 relative z-10">
             <AnimatePresence mode="wait">
               {success ? (
                 <motion.div
@@ -180,34 +180,34 @@ export function AuthView() {
                   )}
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-2 font-stats">
+                    <label className="text-[9px] sm:text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-2 font-stats">
                       Firma de Aventurero (Email)
                     </label>
                     <div className="relative">
-                      <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#F5C76B]/40" />
+                      <Mail size={16} className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-[#F5C76B]/40" />
                       <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-12 py-4 text-sm text-white placeholder-white/10 focus:border-[#F5C76B]/40 focus:outline-none transition-all font-bold tracking-wider"
+                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-10 sm:px-12 py-3 sm:py-4 text-sm text-white placeholder-white/10 focus:border-[#F5C76B]/40 focus:outline-none transition-all font-bold tracking-wider"
                         placeholder="usuario@epicfrontier.app"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-2 font-stats">
+                    <label className="text-[9px] sm:text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-2 font-stats">
                       Código de Encriptación (Clave)
                     </label>
                     <div className="relative">
-                      <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#F5C76B]/40" />
+                      <Lock size={16} className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-[#F5C76B]/40" />
                       <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-12 py-4 text-sm text-white placeholder-white/10 focus:border-[#F5C76B]/40 focus:outline-none transition-all font-bold tracking-wider"
+                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-10 sm:px-12 py-3 sm:py-4 text-sm text-white placeholder-white/10 focus:border-[#F5C76B]/40 focus:outline-none transition-all font-bold tracking-wider"
                         placeholder="••••••••"
                       />
                     </div>
@@ -216,7 +216,7 @@ export function AuthView() {
                   <PanelButton
                     variant="gold"
                     onClick={() => handleAuth(new Event('submit') as any)}
-                    className="w-full py-5 flex items-center justify-center gap-3 text-lg"
+                    className="w-full py-4 sm:py-5 flex items-center justify-center gap-2 sm:gap-3 text-base sm:text-lg"
                     whileHover={{ scale: 1.02, boxShadow: '0 0 30px rgba(245,199,107,0.4)' }}
                     whileTap={{ scale: 0.98 }}
                   >

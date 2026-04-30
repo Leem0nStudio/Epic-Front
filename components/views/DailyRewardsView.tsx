@@ -25,7 +25,8 @@ export function DailyRewardsView({ onBack, onUpdate }: DailyRewardsViewProps) {
 
   const loadStatus = async () => {
     const data = await DailyRewardsService.getDailyRewardsStatus();
-    setStatus(data);
+     
+    setTimeout(() => setStatus(data), 0);
   };
 
   useEffect(() => {

@@ -19,11 +19,15 @@ interface TavernViewProps {
 
 export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
   const { confirm } = useToast();
-  const [now, setNow] = useState<number | null>(null);
+  const [now, setNow] = useState<number>(() => Date.now());
 
   useEffect(() => {
-    setNow(Date.now());
-    const timer = setInterval(() => setNow(Date.now()), 1000);
+     
+    setTimeout(() => setNow(Date.now()), 0);
+    const timer = setInterval(() => {
+       
+      setNow(Date.now());
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -38,7 +42,7 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
     }
   };
 
-  const currentTime = now || Date.now();
+  const currentTime = now;
 
   const bgUrl = AssetService.getBgUrl('tavern');
 
