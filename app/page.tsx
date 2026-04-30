@@ -145,6 +145,41 @@ export default function Applet() {
     }
   };
 
+  if (state.isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-[#020508] flex items-center justify-center">
+        <LoadingSpinner text="Verificando identidad..." />
+      </div>
+    );
+  }
+
+  if (!state.isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#020508] flex items-center justify-center">
+        <AuthView />
+      </div>
+    );
+  }
+
+  if (state.error) {
+    return (
+      <div className="min-h-screen bg-[#020508] flex items-center justify-center p-4">
+        <ErrorDisplay 
+          message={state.error} 
+          onRetry={state.needsOnboarding ? actions.retryOnboarding : actions.refreshState} 
+        />
+      </div>
+    );
+  }
+
+  if (!state.isLoaded) {
+    return (
+      <div className="min-h-screen bg-[#020508] flex items-center justify-center">
+        <LoadingSpinner text="Sincronizando universo..." />
+      </div>
+    );
+  }
+
   return (
     <div
       className="min-h-screen bg-[#020508] font-sans flex items-center justify-center overflow-hidden"
