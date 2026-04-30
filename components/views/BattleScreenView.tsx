@@ -9,7 +9,7 @@ import { ErrorDisplay } from '@/components/ui/ErrorDisplay';
 
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ChevronLeft,
@@ -110,14 +110,16 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     initBattle();
   }, [squad, stageId]);
 
-  const addDamageNumber = (value: number, unitId: string, color: string = 'text-white', isCrit: boolean = false) => {
-    const id = Date.now() + Math.random();
-    const xOffset = Math.random() * 60 - 30;
-    const yOffset = -50 - Math.random() * 20;
-    setDamageNumbers(prev => [...prev, { id, value, x: xOffset, y: yOffset, color, isCrit }]);
-    setTimeout(() => setDamageNumbers(prev => prev.filter(d => d.id !== id)), 1200);
+  const addDamageNumber = useCallback((value: number, unitId: string, color: string = 'text-white', isCrit: boolean = false) => {
+    setDamageNumbers(prev => {
+      const id = Date.now() + Math.random();
+      const xOffset = Math.random() * 60 - 30;
+      const yOffset = -50 - Math.random() * 20;
+      return [...prev, { id, value, x: xOffset, y: yOffset, color, isCrit }];
+    });
+    setTimeout(() => setDamageNumbers(prev => prev.filter(d => d.value === value && d.x !== 0)), 1200);
     if (value > 10) triggerShake();
-  };
+  }, []);
 
   const runTurn = (actor: CombatUnit, skill: SkillDefinition, manualTargetId?: string, isBurst: boolean = false) => {
     if (isBattleOver) return;
@@ -197,11 +199,11 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     const deadPlayers = units.filter(u => u.side === 'player' && u.isDead).length;
 
     if (aliveEnemies.length === 0) {
-      handleBattleOver('player', deadPlayers);
+      setTimeout(() => handleBattleOver('player', deadPlayers), 0);
       return;
     }
     if (alivePlayers.length === 0) {
-      handleBattleOver('enemy', deadPlayers);
+      setTimeout(() => handleBattleOver('enemy', deadPlayers), 0);
       return;
     }
 

@@ -28,9 +28,9 @@ Create `.env.local` (see `.env.example`):
 
 ## Database
 Run these in Supabase SQL Editor in order:
-1. `supabase/schema.sql` — Tables & RLS policies
-2. `supabase/functions.sql` — RPCs & procedures
-3. `supabase/seed.sql` — Initial game data
+1. `supabase/01-schema.sql` — Tables & RLS policies
+2. `supabase/02-functions.sql` — RPCs & procedures
+3. `supabase/03-seed.sql` — Initial game data
 
 See `supabase/README.md` for detailed setup instructions.
 

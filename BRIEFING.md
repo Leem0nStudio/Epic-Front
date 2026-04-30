@@ -203,14 +203,21 @@ Using <img> could result in slower LCP
    - Create reusable `ParticleBackground` component
    - Animate particles with Framer Motion
 
-6. **Fix Remaining Views**
-   - `TavernView.tsx` (140 lines) - Needs Visual Alchemy
-   - `QuestLogView.tsx` (145 lines) - Needs Visual Alchemy
+### Medium Priority (COMPLETED)
+6. **Fix Remaining Views** ✅
+   - `TavernView.tsx` - Visual Alchemy applied
+   - `QuestLogView.tsx` - Visual Alchemy applied
 
-### Low Priority
-7. **Create `supabase/setup_complete.sql`**
-   - AGENTS.md references this file but it doesn't exist
-   - Currently split across: `epic_schema.sql`, `epic_seed.sql`, `epic_cleanup.sql`, `rls_policies.sql`
+### Low Priority (DATABASE REFACTOR COMPLETED)
+7. **Database SQL files cleaned for production** ✅
+   - Fixed syntax error in seed.sql (VALUES: → VALUES)
+   - Removed duplicate rpc_train_unit function
+   - Fixed rpc_learn_skill bug (was modifying static jobs table)
+   - Added CHECK constraints (8 total)
+   - Added FK constraint for units.current_job_id
+   - Added RLS DELETE policies (8 policies)
+   - Added composite indexes (6 indexes)
+   - Added DELETE grants
 
 8. **Update `.env.example`**
    - Line 4 has malformed URL (truncated)
@@ -242,10 +249,10 @@ Using <img> could result in slower LCP
 - No test framework configured
 
 ### Files Needing Attention
-1. **BattleScreenView.tsx** (680 lines) - Needs refactor + bug fix
-2. **UnitDetailsView.tsx** (685 lines) - Large but now clean
+1. **BattleScreenView.tsx** (810 lines) - Fixed lint errors, useCallback added
+2. **UnitDetailsView.tsx** (685 lines) - Large but clean
 3. **app/globals.css** (302 lines) - Monitor for future corruption
-4. **supabase/** - No `setup_complete.sql` exists
+4. **supabase/** - Cleaned: 01-schema.sql (430 lines), 02-functions.sql (633 lines), 03-seed.sql (150 lines)
 
 ---
 

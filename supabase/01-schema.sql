@@ -115,6 +115,10 @@ CREATE TABLE IF NOT EXISTS units (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Foreign key: units.current_job_id must reference a valid job
+ALTER TABLE units ADD CONSTRAINT fk_units_current_job 
+    FOREIGN KEY (current_job_id) REFERENCES jobs(id);
+
 CREATE TABLE IF NOT EXISTS inventory (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
@@ -318,17 +322,106 @@ CREATE POLICY "Allow read jobs" ON jobs FOR SELECT TO authenticated USING (true)
 CREATE POLICY "Allow read job_cores" ON job_cores FOR SELECT TO authenticated USING (true);
 
 -- =====================================================
+-- SECTION 5: RLS DELETE POLICIES
+-- =====================================================
+
+-- Players: Delete own account
+CREATE POLICY "Allow authenticated players delete own account" ON players
+    FOR DELETE TO authenticated
+    USING (auth.uid() = id);
+
+-- Units: Delete own units
+CREATE POLICY "Allow authenticated players delete own units" ON units
+    FOR DELETE TO authenticated
+    USING (auth.uid() = player_id);
+
+-- Inventory: Delete own items
+CREATE POLICY "Allow authenticated players delete own inventory" ON inventory
+    FOR DELETE TO authenticated
+    USING (auth.uid() = player_id);
+
+-- Party: Delete own party slots
+CREATE POLICY "Allow authenticated players delete own party" ON party
+    FOR DELETE TO authenticated
+    USING (auth.uid() = player_id);
+
+-- Recruitment: Delete own recruitment slots
+CREATE POLICY "Allow authenticated players delete own recruitment" ON recruitment_queue
+    FOR DELETE TO authenticated
+    USING (auth.uid() = player_id);
+
+-- Gacha: Delete own gacha state
+CREATE POLICY "Allow authenticated players delete own gacha" ON gacha_state
+    FOR DELETE TO authenticated
+    USING (auth.uid() = player_id);
+
+-- Campaign: Delete own progress
+CREATE POLICY "Allow authenticated players delete own campaign" ON campaign_progress
+    FOR DELETE TO authenticated
+    USING (auth.uid() = player_id);
+
+-- Daily Rewards: Delete own rewards
+CREATE POLICY "Allow authenticated players delete own daily_rewards" ON player_daily_rewards
+    FOR DELETE TO authenticated
+    USING (auth.uid() = player_id);
+
+-- =====================================================
+-- SECTION 6: CHECK CONSTRAINTS
+-- =====================================================
+
+-- Players: ensure non-negative values and valid levels
+ALTER TABLE players ADD CONSTRAINT chk_players_energy CHECK (energy >= 0);
+ALTER TABLE players ADD CONSTRAINT chk_players_currency CHECK (currency >= 0);
+ALTER TABLE players ADD CONSTRAINT chk_players_level CHECK (level >= 1);
+ALTER TABLE players ADD CONSTRAINT chk_players_max_energy CHECK (max_energy >= 1);
+
+-- Units: ensure non-negative exp and valid levels
+ALTER TABLE units ADD CONSTRAINT chk_units_level CHECK (level >= 1);
+ALTER TABLE units ADD CONSTRAINT chk_units_exp CHECK (exp >= 0);
+
+-- Inventory: ensure positive quantity
+ALTER TABLE inventory ADD CONSTRAINT chk_inventory_quantity CHECK (quantity > 0);
+
+-- Party: ensure valid slot index (0-2 for 3 slots)
+ALTER TABLE party ADD CONSTRAINT chk_party_slot CHECK (slot_index >= 0 AND slot_index <= 2);
+
+-- Recruitment queue: ensure valid slot index
+ALTER TABLE recruitment_queue ADD CONSTRAINT chk_recruitment_slot CHECK (slot_index >= 0 AND slot_index <= 2);
+
+-- =====================================================
+-- SECTION 5B: COMPOSITE INDEXES FOR PERFORMANCE
+-- =====================================================
+
+-- Index for querying units by player with level filter (frequent in battle/party)
+CREATE INDEX IF NOT EXISTS idx_units_player_level ON units(player_id, level);
+
+-- Index for querying inventory by player and item type (frequent filtering)
+CREATE INDEX IF NOT EXISTS idx_inventory_player_type ON inventory(player_id, item_type);
+
+-- Index for party lookups by player (frequent in battle)
+CREATE INDEX IF NOT EXISTS idx_party_player ON party(player_id);
+
+-- Index for gacha state by player (frequent in gacha view)
+CREATE INDEX IF NOT EXISTS idx_gacha_state_player ON gacha_state(player_id);
+
+-- Index for campaign progress by player and stage (frequent in campaign)
+CREATE INDEX IF NOT EXISTS idx_campaign_progress_player_stage ON campaign_progress(player_id, stage_id);
+
+-- Index for daily rewards by player (frequent in daily rewards view)
+CREATE INDEX IF NOT EXISTS idx_player_daily_rewards_player ON player_daily_rewards(player_id);
+
+-- =====================================================
 -- SECTION 6: GRANTS & PERMISSIONS
 -- =====================================================
 
-GRANT SELECT, INSERT, UPDATE ON players TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON units TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON inventory TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON party TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON recruitment_queue TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON gacha_state TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON campaign_progress TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON player_daily_rewards TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON players TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON units TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON inventory TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON party TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON recruitment_queue TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON gacha_state TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON campaign_progress TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON player_daily_rewards TO authenticated;
 GRANT SELECT ON game_configs TO authenticated;
 GRANT SELECT ON jobs TO authenticated;
 GRANT SELECT ON skills TO authenticated;

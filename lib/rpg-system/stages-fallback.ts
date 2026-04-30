@@ -28,7 +28,8 @@ export const FALLBACK_CHAPTERS: Chapter[] = [
                 first_clear_rewards: {
                     currency: 500,
                     premium_currency: 20,
-                    exp: 100
+                    exp: 100,
+                    materials: []
                 },
                 star_conditions: [
                     { type: 'win', description: 'Completa la etapa' },
@@ -54,7 +55,8 @@ export const FALLBACK_CHAPTERS: Chapter[] = [
                 first_clear_rewards: {
                     currency: 800,
                     premium_currency: 30,
-                    exp: 150
+                    exp: 150,
+                    materials: []
                 },
                 star_conditions: [
                     { type: 'win', description: 'Completa la etapa' },
@@ -81,7 +83,8 @@ export const FALLBACK_CHAPTERS: Chapter[] = [
                 first_clear_rewards: {
                     currency: 1000,
                     premium_currency: 50,
-                    exp: 200
+                    exp: 200,
+                    materials: []
                 },
                 star_conditions: [
                     { type: 'win', description: 'Limpia las ruinas' },

@@ -137,7 +137,7 @@ VALUES
 -- =====================================================
 
 INSERT INTO job_cores (id, version, name, rarity, unlocks_job_id)
-VALUES:
+VALUES
     ('core_knight', '1.0.0', 'Knight Core', 'epic', 'knight'),
     ('core_wizard', '1.0.0', 'Wizard Core', 'epic', 'wizard'),
     -- Tier 3 Job Cores

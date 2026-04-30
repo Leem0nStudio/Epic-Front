@@ -495,11 +495,6 @@ BEGIN
     VALUES (v_user_id, p_skill_id, 'skill', p_skill_data)
     RETURNING id INTO v_inventory_id;
 
-    UPDATE jobs
-    SET skills_unlocked = skills_unlocked || jsonb_build_array(p_skill_data)
-    WHERE id = v_job_id
-    AND version = (SELECT version FROM game_configs WHERE is_active = true LIMIT 1);
-
     RETURN v_inventory_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -682,56 +677,4 @@ FROM units u;
 
 GRANT SELECT ON unit_progress TO authenticated;
 -- =====================================================
--- SECTION 6: TRAINING SYSTEM
--- =====================================================
 
-CREATE OR REPLACE FUNCTION rpc_train_unit(
-    p_unit_id UUID,
-    p_energy_cost INTEGER,
-    p_exp_gain INTEGER
-)
-RETURNS JSONB AS $$
-DECLARE
-    v_user_id UUID := auth.uid();
-    v_player_energy INTEGER;
-    v_unit_exp INTEGER;
-    v_unit_level INTEGER;
-    v_next_level_exp INTEGER;
-    v_new_level BOOLEAN := false;
-BEGIN
-    -- Check energy
-    SELECT energy INTO v_player_energy FROM players WHERE id = v_user_id;
-    IF v_player_energy < p_energy_cost THEN
-        RETURN jsonb_build_object('success', false, 'message', 'Energía insuficiente');
-    END IF;
-
-    -- Update energy
-    UPDATE players SET energy = energy - p_energy_cost WHERE id = v_user_id;
-
-    -- Update unit exp
-    UPDATE units 
-    SET exp = exp + p_exp_gain
-    WHERE id = p_unit_id AND player_id = v_user_id
-    RETURNING exp, level INTO v_unit_exp, v_unit_level;
-
-    -- Level up logic (100 exp base, +50 per level)
-    v_next_level_exp := 100 + (v_unit_level * 50);
-    
-    WHILE v_unit_exp >= v_next_level_exp LOOP
-        v_unit_exp := v_unit_exp - v_next_level_exp;
-        v_unit_level := v_unit_level + 1;
-        v_next_level_exp := 100 + (v_unit_level * 50);
-        v_new_level := true;
-    END LOOP;
-
-    IF v_new_level THEN
-        UPDATE units SET exp = v_unit_exp, level = v_unit_level WHERE id = p_unit_id;
-    END IF;
-
-    RETURN jsonb_build_object(
-        'success', true, 
-        'expGained', p_exp_gain, 
-        'newLevel', CASE WHEN v_new_level THEN v_unit_level ELSE NULL END
-    );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
