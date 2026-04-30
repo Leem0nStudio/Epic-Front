@@ -46,7 +46,7 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
   // Get appropriate icon for item type
   const getItemIcon = (item: any) => {
     if (item.item_type === 'weapon') return <Sword size={24} className="text-white/80" />;
-    if (item.item_type === 'card') return <Sparkles size={24} className="text-white/80" />;
+    if (item.item_type === 'card') return <img src={AssetService.getCardUrl(item.item_id)} className="w-10 h-10 object-contain" alt={item.item_name} />;
     if (item.item_type === 'skill') return <ScrollText size={24} className="text-white/80" />;
     if (item.item_type === 'job_core') return <img src={AssetService.getIconUrl(AssetService.getJobIconId(item.item_id.replace('core_', '')))} className="w-8 h-8 object-contain" />;
     return <Box size={24} className="text-white/80" />;

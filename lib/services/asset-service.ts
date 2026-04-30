@@ -237,6 +237,15 @@ export class AssetService {
   }
 
   static getCardUrl(cardId: string): string {
+    const id = cardId.toLowerCase();
+    
+    // Check for specific UI card assets
+    if (id.includes('goblin')) return `${this.UI_PATH}/ui_card_goblin_256.png`;
+    if (id.includes('zombie')) return `${this.UI_PATH}/ui_card_zombie_256.png`;
+    if (id.includes('baphomet')) return `${this.UI_PATH}/ui_baphomet_256.png`;
+    if (id.includes('banshee')) return `${this.UI_PATH}/ui_card_banshee_256.png`;
+    if (id.includes('lamia')) return `${this.UI_PATH}/ui_card_lamia_queen_256.png`;
+
     return `${this.ITEMS_PATH}/card_${cardId}.png`;
   }
 

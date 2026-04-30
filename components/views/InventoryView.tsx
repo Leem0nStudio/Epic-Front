@@ -165,7 +165,7 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
                       glass={true}
                     >
                       {item.item_type === 'weapon' ? <SpriteAtlasIcon index={SPRITE_INDEX.weapon_sword} size={24} className="drop-shadow-[0_0_8px_rgba(245,199,107,0.4)]" /> :
-                       item.item_type === 'card' ? <SpriteAtlasIcon index={SPRITE_INDEX.card_common} size={24} className="drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]" /> :
+                       item.item_type === 'card' ? <img src={AssetService.getCardUrl(item.item_id)} className="w-8 h-8 object-contain drop-shadow-[0_0_5px_rgba(168,85,247,0.4)]" alt="card" /> :
                        item.item_type === 'job_core' ? <SpriteAtlasIcon index={SPRITE_INDEX.icon_novice} size={24} className="brightness-125" /> :
                        item.item_type === 'skill' || item.item_type === 'skill_scroll' ? <SpriteAtlasIcon index={SPRITE_INDEX.skill_attack} size={24} className="text-cyan-400" /> :
                        <SpriteAtlasIcon index={SPRITE_INDEX.resource_gold} size={24} className="drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]" />}
