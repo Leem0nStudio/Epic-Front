@@ -10,8 +10,7 @@ export interface TrainingResult {
 
 export class TrainingService {
   /**
-   * Train a unit to gain EXP
-   * Costs energy and gives EXP based on training type
+   * Train a unit to gain EXP using the database RPC
    */
   static async trainUnit(
     unitId: string,
@@ -19,52 +18,27 @@ export class TrainingService {
   ): Promise<TrainingResult> {
     if (!supabase) return { success: false, unitId, expGained: 0, message: 'No supabase connection' };
 
-    const energyCosts = {
-      basic: 5,
-      intensive: 15,
-      elite: 30
-    };
-
-    const expGains = {
-      basic: 25,
-      intensive: 75,
-      elite: 200
-    };
-
-    const energyCost = energyCosts[trainingType];
-    const expGain = expGains[trainingType];
+    const config = this.getTrainingOptions().find(c => c.id === trainingType);
+    if (!config) return { success: false, unitId, expGained: 0, message: 'Invalid training type' };
 
     try {
-      // Check if player has enough energy
-      const { data: player } = await supabase
-        .from('players')
-        .select('energy')
-        .single();
-
-      if (!player || player.energy < energyCost) {
-        return { success: false, unitId, expGained: 0, message: 'Insufficient energy' };
-      }
-
-      // Deduct energy
-      const { error: energyError } = await supabase.rpc('rpc_deduct_energy', { p_cost: energyCost });
-      if (energyError) throw energyError;
-
-      // Award EXP to unit
-      const { error: expError } = await supabase.rpc('rpc_award_unit_exp', {
+      const { data, error } = await supabase.rpc('rpc_train_unit', {
         p_unit_id: unitId,
-        p_exp_gain: expGain
+        p_energy_cost: config.energyCost,
+        p_exp_gain: config.expGain
       });
 
-      if (expError) throw expError;
+      if (error) throw error;
 
       return {
         success: true,
         unitId,
-        expGained: expGain,
-        message: `Unit gained ${expGain} EXP!`
+        expGained: config.expGain,
+        message: `Entrenamiento completado. +${config.expGain} EXP`
       };
     } catch (e: any) {
-      return { success: false, unitId, expGained: 0, message: e.message };
+      console.error('Training failed:', e);
+      return { success: false, unitId, expGained: 0, message: e.message || 'Error en el entrenamiento' };
     }
   }
 

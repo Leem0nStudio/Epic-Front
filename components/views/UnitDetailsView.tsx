@@ -18,9 +18,10 @@ interface UnitDetailsViewProps {
   onNavigate: (view: any) => void;
   onUpdate: () => void;
   onOpenInventory: (type: 'card' | 'weapon' | 'skill') => void;
+  onOpenCardDetails: (cardId: string) => void;
 }
 
-export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory }: UnitDetailsViewProps) {
+export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory, onOpenCardDetails }: UnitDetailsViewProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -157,6 +158,15 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
             <div className="w-32 h-1.5 bg-white/5 rounded-full mt-1 overflow-hidden border border-white/5 backdrop-blur-sm">
               <motion.div initial={{ width: 0 }} animate={{ width: `${unit.exp / unit.next_level_exp * 100}%` }} className="h-full bg-gradient-to-r from-[#F5C76B] to-[#FFD88F] shadow-[0_0_8px_rgba(245,199,107,0.6)]" />
             </div>
+            
+            {/* Training Button */}
+            <button 
+              onClick={() => onNavigate('training')}
+              className="mt-3 flex items-center gap-2 px-3 py-1 bg-[#F5C76B]/10 border border-[#F5C76B]/20 rounded-lg hover:bg-[#F5C76B]/20 transition-colors group"
+            >
+              <Zap size={10} className="text-[#F5C76B] group-hover:animate-pulse" />
+              <span className="text-[8px] font-black text-[#F5C76B] uppercase tracking-widest">Entrenar</span>
+            </button>
           </div>
           <div className="absolute bottom-6 right-6 flex items-center gap-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 shadow-2xl">
             <div className="relative">
@@ -215,7 +225,16 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory 
             {[0, 1, 2, 3].map((idx, i) => {
               const card = cards[idx];
               return (
-                <motion.div key={idx} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.3 + (i * 0.05) }} whileTap={{ scale: 0.9 }} onClick={() => !card && onOpenInventory('card')} className={`aspect-square flex items-center justify-center relative rounded-2xl border backdrop-blur-xl transition-all cursor-pointer group shadow-lg ${card ? 'glass-crystal frame-earthstone' : 'border-white/5 bg-white/5 hover:border-white/10 hover:bg-white/10'}`} style={card ? { borderColor: `${RARITY_COLORS[getRarityCode(card.rarity)]}66`, backgroundColor: `${RARITY_COLORS[getRarityCode(card.rarity)]}11` } : {}}>
+                <motion.div 
+                  key={idx} 
+                  initial={{ scale: 0.8, opacity: 0 }} 
+                  animate={{ scale: 1, opacity: 1 }} 
+                  transition={{ delay: 0.3 + (i * 0.05) }} 
+                  whileTap={{ scale: 0.9 }} 
+                  onClick={() => card ? onOpenCardDetails(card.id) : onOpenInventory('card')} 
+                  className={`aspect-square flex items-center justify-center relative rounded-2xl border backdrop-blur-xl transition-all cursor-pointer group shadow-lg ${card ? 'glass-crystal frame-earthstone' : 'border-white/5 bg-white/5 hover:border-white/10 hover:bg-white/10'}`} 
+                  style={card ? { borderColor: `${RARITY_COLORS[getRarityCode(card.rarity)]}66`, backgroundColor: `${RARITY_COLORS[getRarityCode(card.rarity)]}11` } : {}}
+                >
                   {card ? (
                     <>
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.2),transparent_70%)]" />

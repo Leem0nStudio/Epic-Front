@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Users,
   Coins,
@@ -17,11 +17,14 @@ import {
   BookOpen,
   Heart,
   Shield,
-  Info
+  Info,
+  ChevronRight,
+  TrendingUp
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { AssetService } from '@/lib/services/asset-service';
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
+import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
+import { Button } from '@/components/ui/Button';
 
 interface RPGHomeViewProps {
   saveData: any;
@@ -31,12 +34,12 @@ interface RPGHomeViewProps {
   onRefillEnergy?: () => void;
 }
 
-const rarityGlow = (rarity: string) => {
+const rarityColor = (rarity: string) => {
   switch (rarity?.toUpperCase()) {
-    case 'UR': return 'text-orange-400';
-    case 'SR': return 'text-fuchsia-400';
-    case 'R': return 'text-blue-400';
-    default: return 'text-gray-400';
+    case 'UR': return '#F59E0B';
+    case 'SR': return '#D946EF';
+    case 'R': return '#3B82F6';
+    default: return '#9CA3AF';
   }
 };
 
@@ -48,78 +51,96 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flippe
   ) : undefined;
   
   const rarity = unit?.rarity || (emphasized ? 'UR' : 'R');
-  const colorClass = rarityGlow(rarity);
+  const color = rarityColor(rarity);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       className={`relative flex flex-col items-center justify-end h-full w-full ${emphasized ? 'z-20' : 'z-10'}`}
-      style={{ scale }}
+      style={{ scale: scale * 1.25 }} // Increased size by ~25%
     >
+      {/* Rarity Aura / Glow behind character */}
+      {unit && (
+        <div 
+          className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-32 h-32 blur-3xl opacity-20 pointer-events-none rounded-full"
+          style={{ backgroundColor: color }}
+        />
+      )}
+
       {/* Rarity Badge above Character */}
       {unit && (
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 flex flex-col items-center z-20">
-          <div className={`w-12 h-12 rarity-ring flex flex-col items-center justify-center ${colorClass}`}>
-            <span className="text-xl font-black font-display leading-none drop-shadow-md text-white">{rarity}</span>
+        <motion.div 
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.5, type: 'spring' }}
+          className="absolute top-0 left-1/2 -translate-x-1/2 flex flex-col items-center z-20"
+        >
+          <div 
+            className="w-10 h-10 rounded-full flex flex-col items-center justify-center border-2 shadow-lg"
+            style={{ borderColor: color, backgroundColor: `${color}22`, color: color }}
+          >
+            <span className="text-lg font-black font-display leading-none drop-shadow-md text-white">{rarity}</span>
           </div>
           <div className="flex gap-0.5 mt-1">
              {[...Array(rarity === 'UR' ? 5 : rarity === 'SR' ? 4 : 3)].map((_, i) => (
-                <Star key={i} size={8} className={`${colorClass} fill-current drop-shadow-md`} />
+                <Star key={i} size={8} className="fill-current" style={{ color }} />
              ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {/* Character Sprite (No Box) */}
-      <div className={`relative w-full h-[65%] flex items-end justify-center mb-1`}>
+      {/* Character Sprite */}
+      <div className="relative w-full h-[70%] flex items-end justify-center mb-2">
         {unit ? (
-          <motion.div
-            animate={{ y: [0, -5, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: emphasized ? 0 : 1 }}
-            className={`w-[160%] h-auto object-contain origin-bottom ${flipped ? 'scale-x-[-1]' : ''}`}
-          >
-            <ImageWithFallback
-              src={sprite || ''}
-              alt={unit.name}
-              className="w-full h-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]"
-              fallbackSrc={AssetService.getSpriteUrl('novice_idle.png')}
-            />
-          </motion.div>
+          <>
+            {/* Feet Shadow */}
+            <div className="absolute bottom-0 w-20 h-4 bg-black/40 blur-md rounded-full -z-10" />
+            
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: emphasized ? 0 : 1 }}
+              className={`w-[180%] max-w-[200px] h-auto object-contain origin-bottom ${flipped ? 'scale-x-[-1]' : ''}`}
+            >
+              <ImageWithFallback
+                src={sprite || ''}
+                alt={unit.name}
+                className="w-full h-auto object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.9)]"
+                fallbackSrc={AssetService.getSpriteUrl('novice_idle.png')}
+              />
+            </motion.div>
+          </>
         ) : (
-           <div className="w-16 h-16 rounded-full bg-black/20 border-2 border-dashed border-white/20 flex items-center justify-center mb-8">
-             <Users size={24} className="text-white/30" />
+           <div className="w-16 h-16 rounded-full bg-black/30 border-2 border-dashed border-white/10 flex items-center justify-center mb-8">
+             <Users size={24} className="text-white/20" />
            </div>
         )}
       </div>
 
-      {/* Stat Panel Below */}
+      {/* Stat Panel Below - More compact and premium */}
       {unit && (
-        <div className="w-[115%] stat-panel flex flex-col relative px-2 pb-2 pt-3 mt-1 shadow-2xl">
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 pill-dark px-3 py-0.5 whitespace-nowrap border-white/20 shadow-md">
-             <span className="text-[9px] font-black text-white uppercase tracking-wider">Lv. {unit.level || 60}</span>
+        <NineSlicePanel
+          type="border"
+          variant="default"
+          className="w-[120%] p-3 glass-frosted frame-earthstone relative overflow-hidden group hover:border-white/20 transition-all"
+          style={{ borderColor: `${color}44` }}
+        >
+          <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-[#0B1A2A] border border-white/10 px-3 py-0.5 rounded-full shadow-lg z-10">
+             <span className="text-[10px] font-black text-white uppercase tracking-tighter">LV.{unit.level || 60}</span>
           </div>
-          <h4 className="text-center text-white text-[10px] font-bold tracking-wide truncate mt-1 mb-1.5">{unit.name}</h4>
+          <h4 className="text-center text-white text-[11px] font-black tracking-widest uppercase truncate mb-2 mt-1 drop-shadow-md">{unit.name}</h4>
           
-          <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[8px] font-stats font-bold px-1">
-             <div className="flex items-center justify-between">
-                <span className="text-pink-400 flex items-center gap-1"><Heart size={8}/> HP</span>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[9px] font-stats font-bold">
+             <div className="flex items-center justify-between border-b border-white/5 pb-0.5">
+                <span className="text-pink-400/80 uppercase">HP</span>
                 <span className="text-white">{(unit.base_stats?.hp || unit.baseStats?.hp || 300)}</span>
              </div>
-             <div className="flex items-center justify-between">
-                <span className="text-orange-400 flex items-center gap-1"><Sword size={8}/> ATK</span>
+             <div className="flex items-center justify-between border-b border-white/5 pb-0.5">
+                <span className="text-orange-400/80 uppercase">ATK</span>
                 <span className="text-white">{(unit.base_stats?.atk || unit.baseStats?.atk || 250)}</span>
              </div>
-             <div className="flex items-center justify-between">
-                <span className="text-blue-400 flex items-center gap-1"><Shield size={8}/> DEF</span>
-                <span className="text-white">{(unit.base_stats?.def || unit.baseStats?.def || 100)}</span>
-             </div>
-             <div className="flex items-center justify-between">
-                <span className="text-cyan-400 flex items-center gap-1"><Shield size={8}/> M.DEF</span>
-                <span className="text-white">{(unit.base_stats?.mdef || unit.baseStats?.mdef || 90)}</span>
-             </div>
           </div>
-        </div>
+        </NineSlicePanel>
       )}
     </motion.div>
   );
@@ -135,200 +156,282 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (displayCurrency < (saveData.profile?.currency || 0)) setDisplayCurrency(prev => Math.min(saveData.profile?.currency || 0, prev + 50));
-      if (displayGems < (saveData.profile?.premium_currency || 0)) setDisplayGems(prev => Math.min(saveData.profile?.premium_currency || 0, prev + 5));
-    }, 50);
+      if (displayCurrency < (saveData.profile?.currency || 0)) setDisplayCurrency(prev => Math.min(saveData.profile?.currency || 0, prev + 100));
+      if (displayGems < (saveData.profile?.premium_currency || 0)) setDisplayGems(prev => Math.min(saveData.profile?.premium_currency || 0, prev + 10));
+    }, 30);
       return () => clearTimeout(timer);
   }, [saveData.profile?.currency, saveData.profile?.premium_currency, displayCurrency, displayGems]);
 
-  const playerLevel = saveData.profile?.level || 65;
-  const playerExp = saveData.profile?.exp || 4500;
+  const playerLevel = saveData.profile?.level || 1;
+  const playerExp = saveData.profile?.exp || 0;
   const nextLevelExp = playerLevel * 100;
-  const expProgress = Math.min((playerExp / nextLevelExp) * 100, 75); // Forced 75% for visual match
+  const expProgress = Math.min((playerExp / nextLevelExp) * 100, 100);
 
   return (
     <div
       className="w-full h-full flex flex-col relative bg-[#0B1A2A] bg-cover bg-center bg-no-repeat overflow-hidden font-sans"
       style={{ backgroundImage: `url('${AssetService.getBgUrl('home')}')` }}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2A]/60 via-transparent to-[#020508]/90 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2A]/40 via-transparent to-[#020508]/95 pointer-events-none" />
 
-      {/* Top Bar - Premium Redesign */}
-      <div className="w-full shrink-0 flex items-center justify-between px-4 z-30 pt-6">
-        {/* Left: Rank & Username */}
-        <div className="relative flex items-center pl-8">
-          <div className="pill-dark pl-10 pr-6 py-2 flex flex-col justify-center min-w-[160px] border-[#F5C76B]/40 shadow-xl relative z-0">
-              <span className="text-white text-sm font-bold tracking-wide drop-shadow-md font-stats truncate">
-                {saveData.profile?.username || "Aethel_Player"}
-              </span>
-            <div className="w-full flex items-center gap-2 mt-1">
-              <span className="text-[8px] font-black uppercase text-white/60">Lv. {playerLevel}</span>
-              <div className="flex-1 h-1 bg-black/60 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-[#F5C76B] to-[#FFD88F]" style={{ width: `${expProgress}%` }} />
+      {/* Top Bar - 8px Grid Spacing */}
+      <div className="w-full shrink-0 flex items-center justify-between px-6 z-30 pt-8 gap-4">
+        {/* Left: Player Profile */}
+        <div className="relative flex items-center gap-4">
+           <div className="relative group cursor-pointer" onClick={() => onNavigate('profile')}>
+              <div className="absolute inset-0 bg-[#F5C76B] blur-md opacity-20 group-hover:opacity-40 transition-opacity rounded-full" />
+              <div className="w-14 h-14 rounded-full border-2 border-[#F5C76B]/60 bg-gradient-to-b from-[#2a3b5c] to-[#1a253a] flex items-center justify-center shadow-2xl relative overflow-hidden">
+                <span className="text-xl font-black text-white italic">{saveData.profile?.username?.charAt(0).toUpperCase() || 'A'}</span>
               </div>
-            </div>
-          </div>
-          
-          {/* Circular Rank Badge overlapping */}
-          <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-[4.5rem] h-[4.5rem] badge-rank-circle rounded-full flex flex-col items-center justify-center text-white z-10 shadow-2xl">
-            <span className="text-[10px] font-black uppercase tracking-wider mb-[-4px] text-[#2a1c0b]">Rank</span>
-            <span className="text-2xl font-black font-display leading-none text-[#1a1107]">{playerLevel}</span>
-          </div>
+              <div className="absolute -bottom-1 -right-1 bg-[#F5C76B] text-[#0B1A2A] text-[9px] font-black px-1.5 py-0.5 rounded-md border border-[#0B1A2A] shadow-md">
+                {playerLevel}
+              </div>
+           </div>
+           
+           <div className="flex flex-col gap-1">
+              <h2 className="text-white text-sm font-black tracking-widest uppercase italic drop-shadow-md">
+                {saveData.profile?.username || "Commander"}
+              </h2>
+              <div className="flex items-center gap-2">
+                 <div className="w-32 h-1.5 bg-black/60 rounded-full border border-white/5 overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${expProgress}%` }}
+                      className="h-full bg-gradient-to-r from-[#F5C76B] to-[#FFD88F] shadow-[0_0_8px_rgba(245,199,107,0.5)]" 
+                    />
+                 </div>
+                 <span className="text-[8px] font-black text-white/40 uppercase tracking-tighter">{playerExp} / {nextLevelExp}</span>
+              </div>
+           </div>
         </div>
 
-        {/* Right: Currencies & Notification */}
+        {/* Right: Currencies */}
         <div className="flex items-center gap-3">
           <div className="flex flex-col gap-2">
-             <div className="pill-dark flex items-center justify-between px-3 py-1.5 min-w-[120px] shadow-lg relative overflow-hidden group cursor-pointer hover:border-[#F5C76B] transition-colors">
-               <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-               <Coins size={16} className="text-[#F5C76B] drop-shadow-[0_0_5px_rgba(245,199,107,0.5)]" />
-               <span className="text-xs font-bold text-white tracking-wide font-stats">{displayCurrency.toLocaleString()}</span>
-               <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center ml-1"><span className="text-[10px] font-black">+</span></div>
-             </div>
-             <div className="pill-dark flex items-center justify-between px-3 py-1.5 min-w-[120px] shadow-lg relative overflow-hidden group cursor-pointer hover:border-cyan-400 transition-colors">
-               <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-               <Diamond size={16} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
-               <span className="text-xs font-bold text-white tracking-wide font-stats">{displayGems.toLocaleString()}</span>
-               <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center ml-1"><span className="text-[10px] font-black">+</span></div>
-             </div>
-             {/* Energy Refill Button */}
-             {saveData.energy < saveData.max_energy && (
-               <button
-                 onClick={onRefillEnergy}
-                 className="pill-dark flex items-center justify-between px-3 py-1.5 min-w-[120px] shadow-lg relative overflow-hidden group cursor-pointer hover:border-purple-400 transition-colors"
-               >
-                 <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                 <Zap size={16} className="text-purple-400 drop-shadow-[0_0_5px_rgba(168,85,247,0.5)]" />
-                 <span className="text-xs font-bold text-white/90 tracking-wide font-stats">50</span>
-                 <div className="w-4 h-4 rounded-full bg-purple-400/20 flex items-center justify-center ml-1">
-                   <span className="text-[8px] font-black text-purple-400">+</span>
-                 </div>
+             <motion.div 
+               whileHover={{ scale: 1.05 }}
+               className="bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-3 pl-3 pr-1 py-1 min-w-[110px] shadow-lg"
+             >
+               <Coins size={14} className="text-[#F5C76B] drop-shadow-[0_0_5px_rgba(245,199,107,0.5)]" />
+               <span className="text-[11px] font-black text-white font-stats flex-1 text-center">{displayCurrency.toLocaleString()}</span>
+               <button className="w-5 h-5 rounded-lg bg-[#F5C76B]/20 text-[#F5C76B] flex items-center justify-center hover:bg-[#F5C76B]/30 transition-colors">
+                 <span className="text-xs font-black">+</span>
                </button>
-             )}
-           </div>
-          
-          <div className="relative cursor-pointer hover:scale-105 transition-transform">
-            <div className="w-12 h-12 rounded-full pill-dark flex items-center justify-center text-white/80 shadow-lg border-white/10">
-              <Bell size={20} />
-            </div>
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-[#1a253a] flex items-center justify-center shadow-md">
-              <span className="text-[9px] font-black text-white">!</span>
-            </div>
+             </motion.div>
+             
+             <motion.div 
+               whileHover={{ scale: 1.05 }}
+               className="bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-3 pl-3 pr-1 py-1 min-w-[110px] shadow-lg"
+             >
+               <Diamond size={14} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
+               <span className="text-[11px] font-black text-white font-stats flex-1 text-center">{displayGems.toLocaleString()}</span>
+               <button className="w-5 h-5 rounded-lg bg-cyan-400/20 text-cyan-400 flex items-center justify-center hover:bg-cyan-400/30 transition-colors">
+                 <span className="text-xs font-black">+</span>
+               </button>
+             </motion.div>
           </div>
+          
+          <button className="p-3 bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl text-white/60 hover:text-white transition-all active:scale-90 relative shadow-xl">
+            <Bell size={20} />
+            <div className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#0B1A2A]" />
+          </button>
         </div>
-       </div>
+      </div>
 
-       {/* Battle Button - Top Area */}
-       <div className="w-full flex justify-center mt-4 mb-2 relative z-40">
+      {/* Battle CTA - Main Focus */}
+      <div className="w-full flex flex-col items-center mt-12 z-40">
+        <div className="relative group">
+          {/* Pulse Glow Effect */}
+          <motion.div 
+            animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-0 bg-cyan-400 blur-2xl rounded-full opacity-40 pointer-events-none"
+          />
+          
           <motion.button 
             onClick={() => onNavigate('campaign')}
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
-            className="btn-premium-blue px-14 py-3.5 text-xl font-black font-display tracking-widest uppercase z-10 flex items-center justify-center gap-2"
+            className="btn-premium-blue px-16 py-5 text-2xl font-black font-display tracking-[0.2em] uppercase z-10 flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(79,172,254,0.4)]"
           >
+            <Sword size={24} className="animate-pulse" />
             BATTLE
           </motion.button>
           
-          {/* 3 Stars floating next to battle button */}
-          <div className="absolute right-8 top-1/2 -translate-y-1/2 flex gap-0.5 z-20">
-            {[1,2,3].map(i => <Star key={i} size={16} className="text-yellow-400 fill-current drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" />)}
+          {/* Star decorations */}
+          <div className="absolute -right-6 -top-4 flex flex-col gap-1 z-20">
+            {[1,2,3].map(i => (
+              <motion.div
+                key={i}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 10 + i * 2, repeat: Infinity, ease: "linear" }}
+              >
+                <Star size={12 + i * 2} className="text-yellow-400 fill-current drop-shadow-[0_2px_10px_rgba(245,199,107,0.8)]" />
+              </motion.div>
+            ))}
           </div>
-       </div>
-
-       {/* Main Display Area (Characters) */}
-      <div className="flex-1 relative flex items-center justify-center px-4 mt-4">
-        {/* Magic Glow behind characters */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] aspect-square bg-blue-900/10 blur-[120px] rounded-full pointer-events-none" />
-        
-        {/* Particle effects */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="particle-magic" style={{ top: '20%', left: '15%', animationDelay: '0s' }} />
-          <div className="particle-magic" style={{ top: '40%', right: '20%', animationDelay: '1s' }} />
-          <div className="particle-magic" style={{ bottom: '30%', left: '25%', animationDelay: '2s' }} />
-          <div className="particle-magic" style={{ top: '60%', right: '15%', animationDelay: '0.5s' }} />
         </div>
-        
-        <div className="w-full h-full max-w-lg flex items-center justify-center relative pb-16 gap-1">
-         <div className="w-[30%] h-full pb-4 flex items-end">
-           <CharacterSlot unit={leftUnit} scale={0.95} zIndex={10} flipped />
-         </div>
-         <div className="w-[38%] h-full flex items-end">
-           <CharacterSlot unit={primaryUnit} scale={1.1} zIndex={20} emphasized />
-         </div>
-         <div className="w-[30%] h-full pb-4 flex items-end">
-           <CharacterSlot unit={rightUnit} scale={0.95} zIndex={10} />
-         </div>
-       </div>
+      </div>
 
-       {/* Right Floating Sidebar */}
-       <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-5 z-50">
-         {[
-            { icon: Calendar, label: 'Events', badge: null },
-            { icon: Mail, label: 'Notifs', badge: '1' }
-         ].map((btn, i) => (
-            <div key={i} className="flex flex-col items-center gap-1.5 group cursor-pointer relative hover:scale-105 transition-transform">
-              <div className="w-14 h-14 rounded-2xl pill-dark flex flex-col items-center justify-center border-[#F5C76B]/30 shadow-xl group-hover:border-[#F5C76B] transition-colors relative">
-                <btn.icon size={22} className="text-[#F5C76B] mb-0.5" />
-                <span className="text-[7px] font-black text-white/90 uppercase tracking-widest">{btn.label}</span>
+      {/* Main Display Area (Characters) - Fixed spacing */}
+      <div className="flex-1 relative flex items-center justify-center px-4 -mt-12 overflow-visible">
+        {/* Background Magic Elements */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[160%] aspect-square bg-blue-900/10 blur-[150px] rounded-full pointer-events-none animate-pulse" />
+        
+        <div className="w-full h-full max-w-2xl flex items-end justify-center relative pb-32 gap-0 overflow-visible">
+          <div className="w-[28%] h-[80%] flex items-end -mr-4">
+            <CharacterSlot unit={leftUnit} scale={0.9} zIndex={10} flipped />
+          </div>
+          <div className="w-[36%] h-[90%] flex items-end z-20">
+            <CharacterSlot unit={primaryUnit} scale={1.15} zIndex={30} emphasized />
+          </div>
+          <div className="w-[28%] h-[80%] flex items-end -ml-4">
+            <CharacterSlot unit={rightUnit} scale={0.9} zIndex={10} />
+          </div>
+        </div>
+
+        {/* Floating Sidebar Actions */}
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-6 z-50">
+          {[
+            { icon: Calendar, label: 'DAILY', badge: saveData.canClaimDaily ? '!' : null, view: 'daily_rewards', color: 'text-yellow-400' },
+            { icon: BookOpen, label: 'TRAIN', badge: null, view: 'training', color: 'text-cyan-400' },
+            { icon: Mail, label: 'NOTIFS', badge: '1', view: 'quests', color: 'text-white' }
+          ].map((btn, i) => (
+            <motion.div 
+              key={i} 
+              whileHover={{ scale: 1.1, x: -5 }}
+              className="flex flex-col items-center gap-1.5 group cursor-pointer relative"
+              onClick={() => onNavigate(btn.view as any)}
+            >
+              <NineSlicePanel 
+                type="border" 
+                variant="fancy"
+                className="w-14 h-14 flex flex-col items-center justify-center glass-frosted frame-earthstone group-hover:border-[#F5C76B] transition-all shadow-2xl"
+              >
+                <btn.icon size={20} className={`${btn.color} mb-0.5 drop-shadow-[0_0_5px_currentColor]`} />
+                <span className="text-[7px] font-black text-white/90 uppercase tracking-[0.2em] font-stats">{btn.label}</span>
                 {btn.badge && (
-                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full border-2 border-[#1a253a] flex items-center justify-center text-[10px] font-black text-white shadow-md">
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full border-2 border-[#0B1A2A] flex items-center justify-center text-[10px] font-black text-white shadow-lg animate-bounce">
                     {btn.badge}
                   </div>
                 )}
-              </div>
-            </div>
-         ))}
-       </div>
+              </NineSlicePanel>
+            </motion.div>
+          ))}
+        </div>
       </div>
 
-       {/* Campaign Banner & Bottom Dock */}
-       <div className="absolute bottom-0 left-0 right-0 z-40 flex flex-col items-center pointer-events-none">
+      {/* Bottom Area: Objective & Nav */}
+      <div className="absolute bottom-0 left-0 right-0 z-40 flex flex-col items-center pb-8 pt-20 pointer-events-none bg-gradient-to-t from-black via-black/80 to-transparent">
           
-          {/* Campaign Banner */}
-          <div className="w-[90%] max-w-[400px] mb-4 relative flex flex-col items-center pointer-events-auto">
-            <div className="w-full stat-panel border-[#5a6b8a] p-3 pb-6 text-center shadow-2xl relative">
-               <div className="absolute -top-3 left-1/2 -translate-x-1/2 pill-dark px-5 py-1 border-[#5a6b8a] shadow-lg">
-                 <span className="text-[9px] text-white/90 font-bold uppercase tracking-widest flex items-center gap-1.5">
-                   Current Objective 
-                   <div className="w-3.5 h-3.5 rounded-full border border-white/40 flex items-center justify-center text-[8px] font-serif text-white/70">i</div>
+          {/* Objective Panel - Using NineSlicePanel with Fancy Border */}
+          <motion.div 
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="w-[92%] max-w-md mb-8 relative pointer-events-auto"
+          >
+            <NineSlicePanel 
+              type="border" 
+              variant="fancy"
+              className="p-6 pb-8 text-center glass-frosted frame-earthstone shadow-[0_0_50px_rgba(0,0,0,0.8)] group transition-all hover:border-[#F5C76B]/40"
+            >
+               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0B1A2A] border border-[#F5C76B]/30 px-6 py-1.5 rounded-full shadow-2xl flex items-center gap-3">
+                 <span className="text-[10px] text-[#F5C76B] font-black uppercase tracking-[0.3em] font-stats flex items-center gap-2 italic">
+                   <Target className="w-3 h-3" />
+                   Current Objective
                  </span>
                </div>
                
-               <p className="text-[#a8b8d0] text-[9px] font-black uppercase tracking-[0.2em] mt-3 mb-0.5">Chapter 18:</p>
-               <h3 className="text-white text-base font-black font-display uppercase tracking-widest drop-shadow-md">The Sunken Temple</h3>
-            </div>
-          </div>
+               <div className="mt-4 space-y-1">
+                  <div className="flex items-center justify-center gap-2 text-white/40 mb-1">
+                     <span className="h-[1px] w-8 bg-current opacity-20" />
+                     <p className="text-[10px] font-black uppercase tracking-[0.2em]">Chapter 18</p>
+                     <span className="h-[1px] w-8 bg-current opacity-20" />
+                  </div>
+                  <h3 className="text-xl font-black font-display uppercase tracking-[0.1em] text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] italic">
+                    The Sunken Temple
+                  </h3>
+                  <div className="flex items-center justify-center gap-2 mt-4 text-[#F5C76B]/60 group-hover:text-[#F5C76B] transition-colors cursor-pointer">
+                    <span className="text-[9px] font-black uppercase tracking-widest font-stats">Details</span>
+                    <ChevronRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                  </div>
+               </div>
+            </NineSlicePanel>
+          </motion.div>
 
           {/* Bottom Dock Navigation */}
-          <div className="w-full bg-[#050A0F]/95 backdrop-blur-xl border-t border-white/10 pb-6 pt-4 px-4 flex justify-center gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.6)] pointer-events-auto">
-           <div className="flex max-w-[500px] w-full justify-between gap-2">
-             {[
-               { id: 'party', icon: Users, label: 'PARTY', active: true },
-               { id: 'tavern', icon: UserPlus, label: 'RECRUIT', badge: 'new' },
-               { id: 'gacha', icon: Sparkles, label: 'GACHA', badge: '1', activeGlow: true },
-               { id: 'inventory', icon: Sword, label: 'BATTLE', action: 'inventory' }
-             ].map((btn, index) => (
-                <button
+          <div className="w-full px-6 flex justify-center pointer-events-auto">
+            <div className="flex max-w-xl w-full justify-between gap-3 bg-black/40 backdrop-blur-2xl p-2 rounded-[2rem] border border-white/5 shadow-2xl">
+              {[
+                { id: 'party', icon: Users, label: 'PARTY', active: true },
+                { id: 'tavern', icon: UserPlus, label: 'RECRUIT', badge: 'new' },
+                { id: 'gacha', icon: Sparkles, label: 'GACHA', badge: '1', activeGlow: true },
+                { id: 'inventory', icon: Sword, label: 'EQUIP', action: 'inventory' }
+              ].map((btn) => (
+                <motion.button
                   key={btn.id}
                   onClick={() => btn.action === 'inventory' ? onOpenFullInventory() : onNavigate(btn.id as any)}
-                  className={`flex-1 min-w-[70px] aspect-[4/3] max-h-[80px] flex flex-col items-center justify-center gap-1 relative btn-nav-square ${btn.active ? 'active' : ''} ${btn.activeGlow ? 'border-[#a855f7]' : ''}`}
+                  whileHover={{ y: -5 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`flex-1 h-20 flex flex-col items-center justify-center gap-1.5 relative rounded-2xl transition-all border ${
+                    btn.active 
+                      ? 'bg-gradient-to-b from-[#2a3b5c] to-[#1a253a] border-[#F5C76B]/60 shadow-[0_0_20px_rgba(245,199,107,0.15)]' 
+                      : 'bg-white/5 border-transparent hover:bg-white/10'
+                  }`}
                 >
-                  {btn.activeGlow && <div className="absolute inset-0 bg-fuchsia-500/10 blur-md rounded-xl pointer-events-none" />}
-                  {btn.active && <div className="absolute inset-0 bg-[#F5C76B]/10 blur-md rounded-xl pointer-events-none" />}
-                  
-                  <btn.icon size={26} className={btn.active ? 'text-[#F5C76B]' : btn.activeGlow ? 'text-fuchsia-300' : 'text-white/70'} />
-                  <span className={`text-[9px] font-black tracking-widest uppercase mt-0.5 ${btn.active ? 'text-[#F5C76B]' : 'text-white/90'}`}>{btn.label}</span>
+                  <div className={`relative ${btn.active ? 'scale-110' : ''} transition-transform`}>
+                    <btn.icon size={24} className={btn.active ? 'text-[#F5C76B]' : 'text-white/40'} />
+                    {btn.activeGlow && (
+                      <motion.div 
+                        animate={{ opacity: [0.2, 0.5, 0.2] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="absolute inset-0 bg-cyan-400 blur-md rounded-full -z-10" 
+                      />
+                    )}
+                  </div>
+                  <span className={`text-[9px] font-black tracking-widest uppercase font-stats ${btn.active ? 'text-[#F5C76B]' : 'text-white/30'}`}>
+                    {btn.label}
+                  </span>
                   
                   {btn.badge && (
-                    <div className={`absolute -top-2 right-1 ${btn.badge === 'new' ? 'bg-orange-500 rounded px-1.5 py-0.5' : 'w-6 h-6 bg-red-500 rounded-full flex items-center justify-center'} border-2 border-[#1f2a3c] text-[9px] font-black text-white uppercase tracking-tighter shadow-lg`}>
+                    <div className={`absolute -top-1 -right-1 ${btn.badge === 'new' ? 'bg-orange-500 rounded px-1.5 py-0.5' : 'w-5 h-5 bg-red-500 rounded-full flex items-center justify-center'} border-2 border-[#0B1A2A] text-[8px] font-black text-white uppercase tracking-tighter shadow-lg`}>
                       {btn.badge}
                     </div>
                   )}
-                </button>
-             ))}
-           </div>
-         </div>
+                  
+                  {btn.active && (
+                    <motion.div 
+                      layoutId="active-indicator"
+                      className="absolute -bottom-1 w-8 h-1 bg-[#F5C76B] rounded-full shadow-[0_0_10px_#F5C76B]"
+                    />
+                  )}
+                </motion.button>
+              ))}
+            </div>
+          </div>
       </div>
     </div>
+  );
+}
+
+// Helper icons for objective panel
+function Target(props: any) {
+  return (
+    <svg 
+      {...props}
+      xmlns="http://www.w3.org/2000/svg" 
+      width="24" 
+      height="24" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </svg>
   );
 }

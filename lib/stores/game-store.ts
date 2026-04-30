@@ -32,6 +32,7 @@ interface GameState {
   view: ViewType;
   selectedUnitId: string | null;
   selectedStage: Stage | null;
+  selectedCardId: string | null; // Added
   targetSlot: 'weapon' | 'card' | 'skill' | null;
 
   // Computed Values
@@ -50,6 +51,7 @@ interface GameState {
   setView: (view: ViewType) => void;
   setSelectedUnitId: (id: string | null) => void;
   setSelectedStage: (stage: Stage | null) => void;
+  setSelectedCardId: (id: string | null) => void; // Added
   setTargetSlot: (slot: 'weapon' | 'card' | 'skill' | null) => void;
 
   // Complex Actions
@@ -69,6 +71,7 @@ interface GameState {
   handleRefillEnergy: (gemCost: number, toast?: (message: string, type?: any) => void) => Promise<void>;
   handleOpenTraining: (unitId: string) => void;
   handleOpenDailyRewards: () => void;
+  handleOpenCardDetails: (cardId: string) => void; // Added
 }
 
 const updateActivePartyUnits = (party: any[]) => {
@@ -93,6 +96,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   view: 'home',
   selectedUnitId: null,
   selectedStage: null,
+  selectedCardId: null,
   targetSlot: null,
 
   version: null,
@@ -110,6 +114,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   setView: (view) => set({ view }),
   setSelectedUnitId: (id) => set({ selectedUnitId: id }),
   setSelectedStage: (stage) => set({ selectedStage: stage }),
+  setSelectedCardId: (id) => set({ selectedCardId: id }),
   setTargetSlot: (slot) => set({ targetSlot: slot }),
 
   // Complex Actions
@@ -293,5 +298,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   handleOpenDailyRewards: () => {
     set({ view: 'daily_rewards' });
+  },
+
+  handleOpenCardDetails: (cardId) => {
+    set({ selectedCardId: cardId });
   },
 }));

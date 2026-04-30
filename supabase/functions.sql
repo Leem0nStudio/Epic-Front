@@ -562,7 +562,110 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =====================================================
--- SECTION 9: UTILITY VIEWS
+-- SECTION 9: DAILY REWARDS
+-- =====================================================
+
+CREATE OR REPLACE FUNCTION rpc_claim_daily_reward(
+    p_reward_currency INTEGER,
+    p_reward_premium INTEGER,
+    p_reward_exp INTEGER
+)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_streak INTEGER;
+    v_last_claim DATE;
+    v_today DATE := CURRENT_DATE;
+    v_can_claim BOOLEAN := FALSE;
+BEGIN
+    SELECT streak, last_claim_date INTO v_streak, v_last_claim
+    FROM player_daily_rewards WHERE player_id = v_user_id;
+
+    IF NOT FOUND THEN
+        INSERT INTO player_daily_rewards (player_id, streak, last_claim_date)
+        VALUES (v_user_id, 0, NULL);
+        v_streak := 0;
+        v_last_claim := NULL;
+    END IF;
+
+    IF v_last_claim IS NULL OR v_last_claim < v_today THEN
+        IF v_last_claim = v_today - INTERVAL '1 day' THEN
+            v_streak := v_streak + 1;
+        ELSIF v_last_claim IS NULL OR v_last_claim < v_today - INTERVAL '1 day' THEN
+            v_streak := 1;
+        END IF;
+        v_can_claim := TRUE;
+    END IF;
+
+    IF NOT v_can_claim THEN
+        RAISE EXCEPTION 'Reward already claimed today';
+    END IF;
+
+    -- Update streak and claim date
+    UPDATE player_daily_rewards
+    SET streak = v_streak,
+        last_claim_date = v_today
+    WHERE player_id = v_user_id;
+
+    -- Add currency rewards
+    PERFORM rpc_add_currency(p_reward_currency::BIGINT, p_reward_premium);
+
+    -- Add player EXP
+    IF p_reward_exp > 0 THEN
+        UPDATE players
+        SET exp = exp + p_reward_exp
+        WHERE id = v_user_id;
+        
+        -- Check for player level up
+        -- (This is a simplified version, ideally we'd have a common function)
+        UPDATE players
+        SET level = level + floor(exp / (level * 100)),
+            exp = exp % (level * 100)
+        WHERE id = v_user_id AND exp >= (level * 100);
+    END IF;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'new_streak', v_streak,
+        'currency_gained', p_reward_currency,
+        'premium_gained', p_reward_premium,
+        'exp_gained', p_reward_exp
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
+-- SECTION 10: TRAINING SYSTEM
+-- =====================================================
+
+CREATE OR REPLACE FUNCTION rpc_train_unit(
+    p_unit_id UUID,
+    p_energy_cost INTEGER,
+    p_exp_gain INTEGER
+)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_current_energy INTEGER;
+BEGIN
+    -- 1. Deduct Energy
+    IF NOT rpc_deduct_energy(p_energy_cost) THEN
+        RAISE EXCEPTION 'Insufficient energy';
+    END IF;
+
+    -- 2. Award EXP to unit
+    PERFORM rpc_award_unit_exp(p_unit_id, p_exp_gain);
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'unit_id', p_unit_id,
+        'exp_gained', p_exp_gain
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
+-- SECTION 11: UTILITY VIEWS
 -- =====================================================
 
 CREATE OR REPLACE VIEW unit_progress AS

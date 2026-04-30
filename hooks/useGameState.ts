@@ -153,6 +153,7 @@ export function useGameState(toast?: ToastFn) {
       view: store.view,
       selectedUnitId: store.selectedUnitId,
       selectedStage: store.selectedStage,
+      selectedCardId: store.selectedCardId,
       activePartyUnits,
       targetSlot: store.targetSlot,
       version: store.version
@@ -171,6 +172,8 @@ export function useGameState(toast?: ToastFn) {
       handleRefillEnergy,
       handleOpenTraining,
       handleOpenDailyRewards,
+      handleOpenCardDetails: store.handleOpenCardDetails,
+      setSelectedCardId: store.setSelectedCardId,
       retryOnboarding,
       refreshState: store.refreshState
     }

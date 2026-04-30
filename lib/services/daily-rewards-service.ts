@@ -80,11 +80,8 @@ export class DailyRewardsService {
   /**
    * Claim daily reward
    */
-  static async claimDailyReward(): Promise<{ success: boolean; message: string }> {
+  static async claimDailyReward(): Promise<{ success: boolean; message: string; results?: any }> {
     if (!supabase) return { success: false, message: 'No supabase connection' };
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, message: 'Not authenticated' };
 
     try {
       const status = await this.getDailyRewardsStatus();
@@ -96,51 +93,20 @@ export class DailyRewardsService {
       const reward = status.nextReward;
       if (!reward) return { success: false, message: 'No reward available' };
 
-      // Add rewards
-      const { error: rpcError } = await supabase.rpc('rpc_add_currency', {
-        p_currency_amount: reward.currency,
-        p_premium_amount: reward.premium_currency
+      // Use the new RPC to handle everything atomically
+      const { data, error } = await supabase.rpc('rpc_claim_daily_reward', {
+        p_reward_currency: reward.currency,
+        p_reward_premium: reward.premium_currency,
+        p_reward_exp: reward.exp
       });
 
-      if (rpcError) throw rpcError;
+      if (error) throw error;
 
-      // Update player EXP
-      if (reward.exp > 0) {
-        const { data: player } = await supabase
-          .from('players')
-          .select('exp, level')
-          .eq('id', user.id)
-          .single();
-
-        if (player) {
-          let newExp = player.exp + reward.exp;
-          let newLevel = player.level;
-          
-          while (newExp >= newLevel * 100) {
-            newExp -= newLevel * 100;
-            newLevel++;
-          }
-
-          await supabase
-            .from('players')
-            .update({ exp: newExp, level: newLevel })
-            .eq('id', user.id);
-        }
-      }
-
-      // Update streak
-      const newStreak = status.currentStreak + 1;
-      const today = new Date().toISOString().split('T')[0];
-
-      await supabase
-        .from('player_daily_rewards')
-        .upsert({
-          player_id: user.id,
-          streak: newStreak,
-          last_claim_date: today
-        });
-
-      return { success: true, message: `¡Recompensa reclamada! +${reward.currency} oro, +${reward.premium_currency} gems` };
+      return { 
+        success: true, 
+        message: `¡Recompensa reclamada! +${reward.currency} oro, +${reward.premium_currency} gems`,
+        results: data
+      };
     } catch (e: any) {
       return { success: false, message: e.message };
     }

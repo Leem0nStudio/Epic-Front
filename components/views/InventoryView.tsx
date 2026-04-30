@@ -19,14 +19,15 @@ interface InventoryViewProps {
   fromUnitDetails: boolean;
   onBack: () => void;
   onEquip: (item: any) => void;
+  onOpenCardDetails: (cardId: string) => void;
 }
 
-export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: InventoryViewProps) {
+export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, onOpenCardDetails }: InventoryViewProps) {
   const { confirm: confirmToast } = useToast();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'all' | 'weapon' | 'card' | 'skill'>('all');
+  const [filter, setFilter] = useState<'all' | 'weapon' | 'card' | 'skill' | 'material' | 'job_core'>('all');
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
 
@@ -40,12 +41,23 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
            const enriched = await Promise.all(data.map(async (inv) => {
                let table = 'cards';
                if (inv.item_type === 'weapon') table = 'weapons';
-               // Handle both 'skill' and 'skill_scroll' for backwards compatibility
                if (inv.item_type === 'skill' || inv.item_type === 'skill_scroll') table = 'skills';
+               if (inv.item_type === 'material') table = 'materials';
+               if (inv.item_type === 'job_core') table = 'jobs';
+               
                const { data: def } = await supabase.from(table).select('*').eq('id', inv.item_id).single();
                return { ...inv, def };
            }));
-           setItems(targetSlot ? enriched.filter(i => (targetSlot === 'weapon' && i.item_type === 'weapon') || (targetSlot === 'card' && i.item_type === 'card') || (targetSlot === 'skill' && (i.item_type === 'skill' || i.item_type === 'skill_scroll'))) : enriched);
+           
+           let filtered = enriched;
+           if (targetSlot) {
+             filtered = enriched.filter(i => 
+               (targetSlot === 'weapon' && i.item_type === 'weapon') || 
+               (targetSlot === 'card' && i.item_type === 'card') || 
+               (targetSlot === 'skill' && (i.item_type === 'skill' || i.item_type === 'skill_scroll'))
+             );
+           }
+           setItems(filtered);
        }
       setLoading(false);
     }
@@ -77,14 +89,23 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
          </div>
          {!targetSlot && (
            <div className="flex gap-2">
-              <Button 
-                 onClick={() => setFilter(f => f === 'all' ? 'weapon' : f === 'weapon' ? 'card' : f === 'card' ? 'skill' : 'all')} 
-                 variant="secondary"
-                 size="sm"
-                 className="!rounded-xl btn-back"
-              >
-                {filter === 'all' ? <Box size={18} /> : filter === 'weapon' ? <Sword size={18} /> : filter === 'card' ? <Sparkles size={18} /> : <Box size={18} />}
-              </Button>
+              <div className="flex bg-black/40 p-1 rounded-xl border border-white/5 backdrop-blur-md">
+                {[
+                  { id: 'all', icon: Box },
+                  { id: 'weapon', icon: Sword },
+                  { id: 'card', icon: Sparkles },
+                  { id: 'skill', icon: Zap },
+                  { id: 'material', icon: Box }
+                ].map((btn) => (
+                  <button
+                    key={btn.id}
+                    onClick={() => setFilter(btn.id as any)}
+                    className={`p-2 rounded-lg transition-all ${filter === btn.id ? 'bg-[#F5C76B] text-black shadow-lg' : 'text-white/40 hover:text-white/60'}`}
+                  >
+                    <btn.icon size={16} />
+                  </button>
+                ))}
+              </div>
            </div>
          )}
        </div>
@@ -126,8 +147,10 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
                   onClick={() => {
                     if (targetSlot) {
                       onEquip(item);
-                    } else if (item.item_type === 'skill_scroll') {
+                    } else if (item.item_type === 'skill' || item.item_type === 'skill_scroll') {
                       setSelectedSkill(item.item_id);
+                    } else if (item.item_type === 'card') {
+                      onOpenCardDetails(item.id);
                     } else {
                       setSelectedItem(item);
                     }
@@ -144,6 +167,7 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip }: 
                       {item.item_type === 'weapon' ? <SpriteAtlasIcon index={SPRITE_INDEX.weapon_sword} size={24} className="drop-shadow-[0_0_8px_rgba(245,199,107,0.4)]" /> :
                        item.item_type === 'card' ? <SpriteAtlasIcon index={SPRITE_INDEX.card_common} size={24} className="drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]" /> :
                        item.item_type === 'job_core' ? <SpriteAtlasIcon index={SPRITE_INDEX.icon_novice} size={24} className="brightness-125" /> :
+                       item.item_type === 'skill' || item.item_type === 'skill_scroll' ? <SpriteAtlasIcon index={SPRITE_INDEX.skill_attack} size={24} className="text-cyan-400" /> :
                        <SpriteAtlasIcon index={SPRITE_INDEX.resource_gold} size={24} className="drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]" />}
                     </RarityIcon>
                     <div className="flex-1 min-w-0">

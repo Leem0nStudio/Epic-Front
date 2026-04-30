@@ -23,6 +23,7 @@ import { ErrorDisplay } from '@/components/ui/ErrorDisplay';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { CardModal } from '@/components/ui/CardModal';
 
 export default function Applet() {
   const { showToast } = useToast();
@@ -75,6 +76,7 @@ export default function Applet() {
                  onNavigate={actions.navigateTo}
                  onUpdate={actions.refreshState}
                  onOpenInventory={actions.handleOpenInventory}
+                 onOpenCardDetails={actions.handleOpenCardDetails}
                />;
       case 'inventory':
         return <InventoryView
@@ -82,6 +84,7 @@ export default function Applet() {
                  fromUnitDetails={!!state.selectedUnitId}
                  onBack={() => actions.navigateTo(state.selectedUnitId ? 'unit_details' : 'home')}
                  onEquip={actions.handleEquipItem}
+                 onOpenCardDetails={actions.handleOpenCardDetails}
                />;
       case 'campaign':
         return <CampaignMapView
@@ -181,6 +184,16 @@ export default function Applet() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Global Card Details Modal */}
+      {state.selectedCardId && (
+        <CardModal 
+          card={state.inventory.find(i => i.id === state.selectedCardId)}
+          onClose={() => actions.setSelectedCardId(null)}
+          onEquip={state.selectedUnitId ? actions.handleEquipItem : undefined}
+          isEquipped={state.activePartyUnits.some(u => u.cards?.some((c: any) => c.id === state.selectedCardId))}
+        />
+      )}
     </div>
   );
 }

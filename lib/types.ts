@@ -1,14 +1,25 @@
-export type ItemType = 'Weapon' | 'Armor' | 'Accessory';
+export type ItemType = 'weapon' | 'armor' | 'accessory' | 'card' | 'skill' | 'material' | 'job_core' | 'consumable';
 
 export interface Item {
   id: string;
   name: string;
   type: ItemType;
   sprite: { col: number; row: number; className?: string };
-  rarity: number;
-  stats: { hp: number; atk: number; def: number; rec: number };
+  rarity: string; // Changed to string (C, UC, R, SR, SSR, UR)
+  stats?: { hp: number; atk: number; def: number; rec: number };
   description: string;
   effects?: string[];
+  quantity?: number;
+}
+
+export interface Card extends Item {
+  type: 'card';
+  artUrl?: string;
+  passiveBonus: { hp?: number; atk?: number; def?: number; rec?: number };
+}
+
+export interface Material extends Item {
+  type: 'material';
 }
 
 export interface CharacterSkill {
@@ -28,7 +39,7 @@ export interface CharacterData {
   name: string;
   title: string;
   element: 'Water' | 'Fire' | 'Earth' | 'Dark' | 'Thunder';
-  rarity: number;
+  rarity: string;
   level: number;
   maxLevel: number;
   exp: number;
@@ -38,6 +49,13 @@ export interface CharacterData {
   spriteUrl: string;
   cssFilter: string;
   skills: CharacterSkill[];
+  energy?: number;
+  maxEnergy?: number;
 }
 
-export type CharEquipment = { Weapon: Item | null; Armor: Item | null; Accessory: Item | null };
+export type CharEquipment = { 
+  weapon: Item | null; 
+  armor: Item | null; 
+  accessory: Item | null;
+  card: Card | null;
+};
