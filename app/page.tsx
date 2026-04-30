@@ -191,7 +191,7 @@ export default function Applet() {
           card={state.inventory.find(i => i.id === state.selectedCardId)}
           onClose={() => actions.setSelectedCardId(null)}
           onEquip={state.selectedUnitId ? actions.handleEquipItem : undefined}
-          isEquipped={state.activePartyUnits.some(u => u.cards?.some((c: any) => c.id === state.selectedCardId))}
+          isEquipped={state.activePartyUnits.some(u => u?.cards?.some((c: any) => c.id === state.selectedCardId))}
         />
       )}
     </div>
