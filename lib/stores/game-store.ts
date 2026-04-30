@@ -26,6 +26,7 @@ interface GameState {
   roster: any[];
   party: any[];
   tavernSlots: any[];
+  inventory: any[]; // Added
   activePartyUnits: any[];
 
   // Navigation State
@@ -48,6 +49,7 @@ interface GameState {
   setRoster: (roster: any[]) => void;
   setParty: (party: any[]) => void;
   setTavernSlots: (slots: any[]) => void;
+  setInventory: (items: any[]) => void; // Added
   setView: (view: ViewType) => void;
   setSelectedUnitId: (id: string | null) => void;
   setSelectedStage: (stage: Stage | null) => void;
@@ -91,6 +93,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   roster: [],
   party: [],
   tavernSlots: [],
+  inventory: [], // Added
   activePartyUnits: Array(5).fill(null),
 
   view: 'home',
@@ -111,6 +114,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   setRoster: (roster) => set({ roster }),
   setParty: (party) => set({ party, activePartyUnits: updateActivePartyUnits(party) }),
   setTavernSlots: (tavernSlots) => set({ tavernSlots }),
+  setInventory: (inventory) => set({ inventory }), // Added
   setView: (view) => set({ view }),
   setSelectedUnitId: (id) => set({ selectedUnitId: id }),
   setSelectedStage: (stage) => set({ selectedStage: stage }),
@@ -136,17 +140,19 @@ export const useGameStore = create<GameState>((set, get) => ({
 
       await get().regenEnergy();
 
-      const [profRes, unitsRes, partyRes, recruitsRes] = await Promise.all([
+      const [profRes, unitsRes, partyRes, recruitsRes, inventoryRes] = await Promise.all([
         supabase.from('players').select('*').eq('id', user.id).single(),
         supabase.from('units').select('*'),
         supabase.from('party').select('*, unit:units(*)').eq('player_id', user.id).order('slot_index'),
-        supabase.from('recruitment_queue').select('*').eq('player_id', user.id).eq('is_claimed', false)
+        supabase.from('recruitment_queue').select('*').eq('player_id', user.id).eq('is_claimed', false),
+        supabase.from('inventory').select('*').eq('player_id', user.id) 
       ]);
-
+ 
       if (profRes.data) set({ profile: profRes.data });
       set({ roster: unitsRes.data || [] });
       set({ party: partyRes.data || [] });
       set({ tavernSlots: recruitsRes.data || [] });
+      set({ inventory: inventoryRes.data || [] }); 
     } catch (e) {
       console.error("Critical error in refreshState:", e);
     }

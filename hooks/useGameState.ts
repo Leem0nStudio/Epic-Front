@@ -150,6 +150,7 @@ export function useGameState(toast?: ToastFn) {
       roster: store.roster,
       party: store.party,
       tavernSlots: store.tavernSlots,
+      inventory: store.inventory, // Added
       view: store.view,
       selectedUnitId: store.selectedUnitId,
       selectedStage: store.selectedStage,
