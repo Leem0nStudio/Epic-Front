@@ -233,7 +233,7 @@ RETURNS void AS $$
 DECLARE
     v_user_id UUID := auth.uid();
     v_energy_per_tick INTEGER := 1;
-    v_tick_interval INTERVAL := '6 minutes';
+    v_tick_interval INTERVAL := '4 minutes';
     v_now TIMESTAMP WITH TIME ZONE := NOW();
     v_last_regen TIMESTAMP WITH TIME ZONE;
     v_current_energy INTEGER;
@@ -275,7 +275,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION rpc_refill_energy_with_gems(p_gem_cost INTEGER DEFAULT 50)
+CREATE OR REPLACE FUNCTION rpc_refill_energy_with_gems(p_gem_cost INTEGER DEFAULT 30)
 RETURNS BOOLEAN AS $$
 DECLARE
     v_user_id UUID := auth.uid();
@@ -308,7 +308,7 @@ CREATE OR REPLACE FUNCTION rpc_complete_stage(
     p_rewards JSONB,
     p_participating_units UUID[] DEFAULT NULL
 )
-RETURNS void AS $$
+RETURNS JSONB AS $$
 DECLARE
     v_user_id UUID := auth.uid();
     v_material RECORD;
@@ -318,22 +318,54 @@ DECLARE
     v_next_level_exp INTEGER;
     v_unit_id UUID;
     v_unit_exp_gain INTEGER;
+    v_is_first_clear BOOLEAN := FALSE;
+    v_clear_count INTEGER := 0;
+    v_final_rewards JSONB;
+    v_stage_record RECORD;
 BEGIN
-    -- Record stage completion
-    INSERT INTO campaign_progress (player_id, stage_id, stars, best_turns)
-    VALUES (v_user_id, p_stage_id, p_stars, p_turns)
+    -- Check if this is first clear
+    SELECT clear_count INTO v_clear_count FROM campaign_progress
+    WHERE player_id = v_user_id AND stage_id = p_stage_id;
+
+    v_is_first_clear := COALESCE(v_clear_count, 0) = 0;
+
+    -- Record stage completion and increment clear count
+    INSERT INTO campaign_progress (player_id, stage_id, stars, best_turns, clear_count)
+    VALUES (v_user_id, p_stage_id, p_stars, p_turns, 1)
     ON CONFLICT (player_id, stage_id) DO UPDATE SET
         stars = GREATEST(campaign_progress.stars, EXCLUDED.stars),
-        best_turns = LEAST(COALESCE(campaign_progress.best_turns, 999), EXCLUDED.best_turns);
+        best_turns = LEAST(COALESCE(campaign_progress.best_turns, 999), EXCLUDED.best_turns),
+        clear_count = campaign_progress.clear_count + 1,
+        cleared_at = NOW();
+
+    -- Apply diminishing returns for repeated clears (50% reduction after first 3 clears)
+    v_final_rewards := p_rewards;
+    IF NOT v_is_first_clear AND v_clear_count >= 3 THEN
+        v_final_rewards := jsonb_set(v_final_rewards, '{currency}',
+            ((p_rewards->>'currency')::NUMERIC * 0.5)::TEXT::JSONB);
+        v_final_rewards := jsonb_set(v_final_rewards, '{exp}',
+            ((p_rewards->>'exp')::NUMERIC * 0.5)::TEXT::JSONB);
+    END IF;
     
-    -- 1. Apply Currency Rewards
+    -- 1. Apply Currency Rewards (with diminishing returns if applicable)
     UPDATE players
-    SET currency = currency + (p_rewards->>'currency')::BIGINT,
-        premium_currency = premium_currency + COALESCE((p_rewards->>'premium_currency')::INTEGER, 0)
+    SET currency = currency + (v_final_rewards->>'currency')::BIGINT,
+        premium_currency = premium_currency + COALESCE((v_final_rewards->>'premium_currency')::INTEGER, 0)
     WHERE id = v_user_id;
+
+    -- First clear bonus: extra 50% currency and 100 bonus exp
+    IF v_is_first_clear THEN
+        UPDATE players
+        SET currency = currency + floor((v_final_rewards->>'currency')::NUMERIC * 0.5),
+            exp = exp + 100
+        WHERE id = v_user_id;
+
+        v_final_rewards := jsonb_set(v_final_rewards, '{firstClearBonus}',
+            '{"currency": true, "exp": 100}'::JSONB);
+    END IF;
     
     -- 2. Apply Player EXP and Level Up
-    v_exp_gain := COALESCE((p_rewards->>'exp')::INTEGER, 0);
+    v_exp_gain := COALESCE((v_final_rewards->>'exp')::INTEGER, 0);
     IF v_exp_gain > 0 THEN
         SELECT exp, level INTO v_player_exp, v_player_level FROM players WHERE id = v_user_id;
         v_player_exp := v_player_exp + v_exp_gain;
@@ -359,14 +391,29 @@ BEGIN
         END LOOP;
     END IF;
     
-    -- 4. Apply Material Rewards
-    IF p_rewards->'materials' IS NOT NULL AND jsonb_array_length(p_rewards->'materials') > 0 THEN
-        FOR v_material IN SELECT * FROM jsonb_to_recordset(p_rewards->'materials') AS x("itemId" TEXT, amount INTEGER) LOOP
+    -- 4. Apply Material Rewards (diminishing returns on repeated clears)
+    IF v_final_rewards->'materials' IS NOT NULL AND jsonb_array_length(v_final_rewards->'materials') > 0 THEN
+        FOR v_material IN SELECT * FROM jsonb_to_recordset(v_final_rewards->'materials') AS x("itemId" TEXT, amount INTEGER) LOOP
+            -- On repeated clears (not first clear), 30% chance to drop
+            IF NOT v_is_first_clear AND v_clear_count >= 3 THEN
+                CONTINUE WHEN random() > 0.3;
+            END IF;
+
             INSERT INTO inventory (player_id, item_id, item_type, quantity)
             VALUES (v_user_id, v_material."itemId", 'material', v_material.amount)
             ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + v_material.amount;
         END LOOP;
     END IF;
+
+    -- Return summary of applied rewards
+    RETURN jsonb_build_object(
+        'isFirstClear', v_is_first_clear,
+        'currency', (v_final_rewards->>'currency')::INTEGER,
+        'exp', COALESCE((v_final_rewards->>'exp')::INTEGER, 0),
+        'premiumCurrency', COALESCE((v_final_rewards->>'premium_currency')::INTEGER, 0),
+        'materials', COALESCE(v_final_rewards->'materials', '[]'::JSONB),
+        'firstClearBonus', CASE WHEN v_is_first_clear THEN '{"currency": true, "exp": 100}'::JSONB ELSE '{}'::JSONB END
+    );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

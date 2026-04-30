@@ -196,7 +196,7 @@ export default function Applet() {
 
       <div className="w-full max-w-sm sm:max-w-md md:max-w-lg bg-[#0B1A2A] h-[100dvh] sm:h-[850px] shadow-[0_0_80px_rgba(0,0,0,0.9)] sm:rounded-[40px] overflow-hidden relative border-white/5 flex flex-col items-center sm:border">
       <div className="w-full h-full relative overflow-hidden">
-          <AnimatePrescence mode="wait">
+          <AnimatePresence mode="wait">
             <motion.div
               key={state.view}
               initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
@@ -207,7 +207,7 @@ export default function Applet() {
             >
               {renderView()}
             </motion.div>
-          </AnimatePrescence>
+          </AnimatePresence>
         </div>
       </div>
     </div>

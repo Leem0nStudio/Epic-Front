@@ -133,13 +133,20 @@ export class CampaignService {
             rpcParams.p_participating_units = participatingUnitIds;
         }
 
-        const { error } = await supabase.rpc('rpc_complete_stage', rpcParams);
+        const { data, error } = await supabase.rpc('rpc_complete_stage', rpcParams);
 
         if (error) throw error;
 
+        // Handle the JSON return from the updated RPC
+        const rewardResults = data || {};
+
         return {
             stars,
-            rewards: finalRewards
+            rewards: finalRewards,
+            isFirstClear: rewardResults.isFirstClear || false,
+            firstClearBonus: rewardResults.firstClearBonus || {},
+            currencyGained: rewardResults.currency || 0,
+            expGained: rewardResults.exp || 0
         };
     }
 

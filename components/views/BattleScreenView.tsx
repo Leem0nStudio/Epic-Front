@@ -321,7 +321,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
 
         {/* Damage Numbers Container */}
         <div className="absolute inset-0 pointer-events-none z-50">
-          <AnimatePrescence>
+          <AnimatePresence>
             {damageNumbers.map(d => (
               <motion.div
                 key={d.id}
@@ -336,7 +336,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
                 {d.value}
               </motion.div>
             ))}
-          </AnimatePrescence>
+          </AnimatePresence>
         </div>
 
        {/* Status Effects Visualization */}

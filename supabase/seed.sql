@@ -44,12 +44,56 @@ VALUES
  '{}', 
  '{"minLevel": 10, "currencyCost": 1000, "materials": []}'),
 
-('wizard', '1.0.0', 'Wizard', 2, 'mage', 
- '{"hp": 0.7, "atk": 0.6, "def": 0.7, "matk": 1.8, "mdef": 1.5, "agi": 0.8}', 
- '{"staff"}', 
- '[{"id": "meteor", "name": "Meteor", "type": "active", "powerMod": 4.0, "cooldown": 5}]', 
- '{"SP Recovery+10%"}', 
- '{"minLevel": 40, "currencyCost": 5000, "materials": [], "requiredJobCore": "core_wizard"}');
+('wizard', '1.0.0', 'Wizard', 2, 'mage',
+  '{"hp": 0.7, "atk": 0.6, "def": 0.7, "matk": 1.8, "mdef": 1.5, "agi": 0.8}',
+  '{"staff"}',
+  '[{"id": "meteor", "name": "Meteor", "type": "active", "powerMod": 4.0, "cooldown": 5}]',
+  '{"SP Recovery+10%"}',
+  '{"minLevel": 40, "currencyCost": 5000, "materials": [], "requiredJobCore": "core_wizard"}'),
+
+-- Tier 3 Jobs (Level 70+)
+('paladin', '1.0.0', 'Paladin', 3, 'knight',
+  '{"hp": 1.8, "atk": 1.2, "def": 1.6, "matk": 0.9, "mdef": 1.3, "agi": 0.8}',
+  '{"sword", "mace"}',
+  '[{"id": "holy_shield", "name": "Holy Shield", "type": "active", "powerMod": 2.0, "cooldown": 4}, {"id": "divine_heal", "name": "Divine Heal", "type": "active", "powerMod": 3.0, "cooldown": 3}]',
+  '{"Holy Resistance+20%", "Heal Bonus+15%"}',
+  '{"minLevel": 70, "currencyCost": 15000, "materials": [], "requiredJobCore": "core_paladin"}'),
+
+('crusader', '1.0.0', 'Crusader', 3, 'knight',
+  '{"hp": 2.0, "atk": 1.4, "def": 1.5, "matk": 0.6, "mdef": 1.0, "agi": 0.7}',
+  '{"sword", "spear"}',
+  '[{"id": "grand_cross", "name": "Grand Cross", "type": "active", "powerMod": 3.5, "cooldown": 5}, {"id": "defender", "name": "Defender", "type": "passive", "powerMod": 0, "cooldown": 0}]',
+  '{"Physical Damage Reduction+10%"}',
+  '{"minLevel": 70, "currencyCost": 15000, "materials": [], "requiredJobCore": "core_crusader"}'),
+
+('sage', '1.0.0', 'Sage', 3, 'wizard',
+  '{"hp": 0.8, "atk": 0.5, "def": 0.6, "matk": 2.2, "mdef": 1.8, "agi": 0.9}',
+  '{"staff", "book"}',
+  '[{"id": "lord_of_vermin", "name": "Lord of Vermin", "type": "active", "powerMod": 5.0, "cooldown": 6}, {"id": "stone_curse", "name": "Stone Curse", "type": "active", "powerMod": 0, "cooldown": 4}]',
+  '{"SP Cost-15%", "Status Effect Chance+10%"}',
+  '{"minLevel": 70, "currencyCost": 15000, "materials": [], "requiredJobCore": "core_sage"}'),
+
+('archmage', '1.0.0', 'Archmage', 3, 'wizard',
+  '{"hp": 0.6, "atk": 0.5, "def": 0.5, "matk": 2.5, "mdef": 1.6, "agi": 1.0}',
+  '{"staff"}',
+  '[{"id": "storm_gust", "name": "Storm Gust", "type": "active", "powerMod": 4.5, "cooldown": 5}, {"id": "magic_rock", "name": "Magic Rock", "type": "passive", "powerMod": 0, "cooldown": 0}]',
+  '{"MATK+10%", "Frost Damage+20%"}',
+  '{"minLevel": 70, "currencyCost": 15000, "materials": [], "requiredJobCore": "core_archmage"}'),
+
+-- Tier 4 Jobs (Level 90+ Endgame)
+('arch_paladin', '1.0.0', 'Arch Paladin', 4, 'paladin',
+  '{"hp": 2.2, "atk": 1.3, "def": 2.0, "matk": 1.0, "mdef": 1.5, "agi": 0.7}',
+  '{"sword", "mace"}',
+  '[{"id": "sanctuary", "name": "Sanctuary", "type": "active", "powerMod": 6.0, "cooldown": 7}, {"id": "divine_protection", "name": "Divine Protection", "type": "passive", "powerMod": 0, "cooldown": 0}]',
+  '{"All Healing+25%", "Holy Damage+15%"}',
+  '{"minLevel": 90, "currencyCost": 50000, "materials": [], "requiredJobCore": "core_arch_paladin"}'),
+
+('grand_archmage', '1.0.0', 'Grand Archmage', 4, 'sage',
+  '{"hp": 0.7, "atk": 0.4, "def": 0.5, "matk": 3.0, "mdef": 2.0, "agi": 1.1}',
+  '{"staff", "book"}',
+  '[{"id": "meteor_storm", "name": "Meteor Storm", "type": "active", "powerMod": 7.0, "cooldown": 8}, {"id": "magic_mastery", "name": "Magic Mastery", "type": "passive", "powerMod": 0, "cooldown": 0}]',
+  '{"All Magic Damage+20%", "SP Recovery+15%"}',
+  '{"minLevel": 90, "currencyCost": 50000, "materials": [], "requiredJobCore": "core_grand_archmage"}');
 
 -- =====================================================
 -- SECTION 3: SKILLS
@@ -93,6 +137,14 @@ VALUES
 -- =====================================================
 
 INSERT INTO job_cores (id, version, name, rarity, unlocks_job_id)
-VALUES
-('core_knight', '1.0.0', 'Knight Core', 'epic', 'knight'),
-('core_wizard', '1.0.0', 'Wizard Core', 'epic', 'wizard');
+VALUES:
+    ('core_knight', '1.0.0', 'Knight Core', 'epic', 'knight'),
+    ('core_wizard', '1.0.0', 'Wizard Core', 'epic', 'wizard'),
+    -- Tier 3 Job Cores
+    ('core_paladin', '1.0.0', 'Paladin Core', 'legendary', 'paladin'),
+    ('core_crusader', '1.0.0', 'Crusader Core', 'legendary', 'crusader'),
+    ('core_sage', '1.0.0', 'Sage Core', 'legendary', 'sage'),
+    ('core_archmage', '1.0.0', 'Archmage Core', 'legendary', 'archmage'),
+    -- Tier 4 Job Cores (Endgame)
+    ('core_arch_paladin', '1.0.0', 'Arch Paladin Core', 'mythic', 'arch_paladin'),
+    ('core_grand_archmage', '1.0.0', 'Grand Archmage Core', 'mythic', 'grand_archmage');

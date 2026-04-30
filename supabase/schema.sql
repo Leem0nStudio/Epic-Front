@@ -78,8 +78,8 @@ CREATE TABLE IF NOT EXISTS players (
     username TEXT,
     currency BIGINT DEFAULT 1000,
     premium_currency BIGINT DEFAULT 100,
-    energy INTEGER DEFAULT 20,
-    max_energy INTEGER DEFAULT 20,
+    energy INTEGER DEFAULT 30,
+    max_energy INTEGER DEFAULT 30,
     level INTEGER DEFAULT 1,
     exp INTEGER DEFAULT 0,
     last_energy_regen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -150,6 +150,7 @@ CREATE TABLE IF NOT EXISTS campaign_progress (
     best_turns INTEGER,
     enemy_data JSONB DEFAULT NULL,
     cleared_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    clear_count INTEGER DEFAULT 0,
     PRIMARY KEY (player_id, stage_id)
 );
 

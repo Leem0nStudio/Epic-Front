@@ -120,6 +120,38 @@ export const GACHA_DATABASE: Record<string, AnyGachaItem> = {
         id: 'core_dark_knight', name: 'Heart of the Abyss', type: 'job_core', rarity: 'legendary', version: 'v1.0',
         description: 'Unlocks the secret Dark Knight evolution path for Knights.',
         unlocksJobId: 'dark_knight'
+    },
+    // Tier 3 Job Cores (Level 70+)
+    'core_paladin': {
+        id: 'core_paladin', name: 'Paladin Core', type: 'job_core', rarity: 'legendary', version: 'v1.0',
+        description: 'Unlocks the Paladin evolution path for Knights.',
+        unlocksJobId: 'paladin'
+    },
+    'core_crusader': {
+        id: 'core_crusader', name: 'Crusader Core', type: 'job_core', rarity: 'legendary', version: 'v1.0',
+        description: 'Unlocks the Crusader evolution path for Knights.',
+        unlocksJobId: 'crusader'
+    },
+    'core_sage': {
+        id: 'core_sage', name: 'Sage Core', type: 'job_core', rarity: 'legendary', version: 'v1.0',
+        description: 'Unlocks the Sage evolution path for Wizards.',
+        unlocksJobId: 'sage'
+    },
+    'core_archmage': {
+        id: 'core_archmage', name: 'Archmage Core', type: 'job_core', rarity: 'legendary', version: 'v1.0',
+        description: 'Unlocks the Archmage evolution path for Wizards.',
+        unlocksJobId: 'archmage'
+    },
+    // Tier 4 Job Cores (Level 90+ Endgame)
+    'core_arch_paladin': {
+        id: 'core_arch_paladin', name: 'Arch Paladin Core', type: 'job_core', rarity: 'legendary', version: 'v1.0',
+        description: 'Unlocks the ultimate Arch Paladin evolution path.',
+        unlocksJobId: 'arch_paladin'
+    },
+    'core_grand_archmage': {
+        id: 'core_grand_archmage', name: 'Grand Archmage Core', type: 'job_core', rarity: 'legendary', version: 'v1.0',
+        description: 'Unlocks the ultimate Grand Archmage evolution path.',
+        unlocksJobId: 'grand_archmage'
     }
 };
 

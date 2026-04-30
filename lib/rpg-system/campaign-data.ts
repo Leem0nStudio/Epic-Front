@@ -37,13 +37,13 @@ export const CAMPAIGN_CHAPTERS: Chapter[] = [
                     { type: 'turn_limit', value: 10, description: 'Menos de 10 turnos' }
                 ]
             },
-            {
-                id: 'stage_1_2',
-                chapter_id: 'chapter_1',
-                index: 2,
-                name: 'Bosque Susurrante',
-                description: 'Los árboles guardan secretos peligrosos.',
-                energy_cost: 6,
+    {
+        id: 'stage_1_2',
+        chapter_id: 'chapter_1',
+        index: 2,
+        name: 'Bosque Susurrante',
+        description: 'Los árboles guardan secretos peligrosos.',
+        energy_cost: 5,
                 enemies: [
                     { id: 'bat_1', name: 'Murciélago', level: 2, position: 0, skillIds: ['basic_attack'] },
                     { id: 'slime_1', name: 'Limo Pegajoso', level: 2, position: 1, skillIds: ['debuff_slow'] },
@@ -69,13 +69,13 @@ export const CAMPAIGN_CHAPTERS: Chapter[] = [
                 ],
                 unlock_requirements: { stage_id: 'stage_1_1' }
             },
-            {
-                id: 'stage_1_3',
-                chapter_id: 'chapter_1',
-                index: 3,
-                name: 'Ruinas de la Atalaya',
-                description: 'Ecos de batallas pasadas aún resuenan aquí.',
-                energy_cost: 6,
+    {
+        id: 'stage_1_3',
+        chapter_id: 'chapter_1',
+        index: 3,
+        name: 'Ruinas de la Atalaya',
+        description: 'Ecos de batallas pasadas aún resuenan aquí.',
+        energy_cost: 5,
                 enemies: [
                     { id: 'skeleton_1', name: 'Esqueleto Guerrero', level: 3, position: 0, skillIds: ['basic_attack', 'taunt'] },
                     { id: 'skeleton_2', name: 'Esqueleto Guerrero', level: 3, position: 2, skillIds: ['basic_attack', 'taunt'] },
@@ -101,13 +101,13 @@ export const CAMPAIGN_CHAPTERS: Chapter[] = [
                 ],
                 unlock_requirements: { stage_id: 'stage_1_2' }
             },
-            {
-                id: 'stage_1_ex',
-                chapter_id: 'chapter_1',
-                index: 99,
-                name: 'Santuario Oculto (EX)',
-                description: 'Un lugar sagrado protegido por guardianes ancestrales.',
-                energy_cost: 12,
+    {
+        id: 'stage_1_ex',
+        chapter_id: 'chapter_1',
+        index: 99,
+        name: 'Santuario Oculto (EX)',
+        description: 'Un lugar sagrado protegido por guardianes ancestrales.',
+        energy_cost: 8,
                 enemies: [
                     { id: 'spirit_1', name: 'Espíritu de Luz', level: 8, position: 1, skillIds: ['aoe_damage', 'heal'] },
                     { id: 'spirit_2', name: 'Espíritu de Luz', level: 8, position: 2, skillIds: ['aoe_damage', 'heal'] }
@@ -132,13 +132,13 @@ export const CAMPAIGN_CHAPTERS: Chapter[] = [
                 ],
                 unlock_requirements: { stage_id: 'stage_1_3' }
             },
-            {
-                id: 'stage_1_4',
-                chapter_id: 'chapter_1',
-                index: 4,
-                name: 'Sendero Sombrío',
-                description: 'La oscuridad se vuelve más densa cerca de la guarida.',
-                energy_cost: 8,
+    {
+        id: 'stage_1_4',
+        chapter_id: 'chapter_1',
+        index: 4,
+        name: 'Sendero Sombrío',
+        description: 'La oscuridad se vuelve más densa cerca de la guarida.',
+        energy_cost: 6,
                 enemies: [
                     { id: 'ghost_1', name: 'Espectro', level: 4, position: 1, skillIds: ['debuff_poison', 'basic_attack'] },
                     { id: 'skeleton_1', name: 'Esqueleto Guerrero', level: 4, position: 0, skillIds: ['basic_attack', 'taunt'] },
@@ -164,13 +164,13 @@ export const CAMPAIGN_CHAPTERS: Chapter[] = [
                 ],
                 unlock_requirements: { stage_id: 'stage_1_3' }
             },
-            {
-                id: 'stage_1_5',
-                chapter_id: 'chapter_1',
-                index: 5,
-                name: 'Cámara del Gran Limo',
-                description: 'El primer gran desafío.',
-                energy_cost: 10,
+    {
+        id: 'stage_1_5',
+        chapter_id: 'chapter_1',
+        index: 5,
+        name: 'Cámara del Gran Limo',
+        description: 'El primer gran desafío.',
+        energy_cost: 7,
                 enemies: [
                     { id: 'slime_1', name: 'Limo Guardián', level: 5, position: 0, skillIds: ['basic_attack', 'taunt'] },
                     { id: 'boss_slime', name: 'Rey Limo', level: 6, position: 1, skillIds: ['aoe_damage', 'debuff_slow', 'basic_attack'] },
