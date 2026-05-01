@@ -121,7 +121,7 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
                       <div className="flex items-center gap-2">
                           <h3 className="font-display text-white text-lg">{unit.name}</h3>
                           <div className="flex items-center gap-1 bg-[#F5C76B]/10 px-1.5 py-0.5 rounded border border-[#F5C76B]/20">
-                            <img src={AssetService.getIconUrl(unit.iconId)} className="w-3 h-3 object-contain" />
+                            <img src={AssetService.getIconUrl(unit.iconId)} className="w-3 h-3 object-contain" alt="" />
                             <span className="text-[10px] font-bold text-[#F5C76B] italic">NOVICE</span>
                           </div>
                       </div>

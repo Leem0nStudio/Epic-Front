@@ -578,6 +578,17 @@ FROM skill_modules sm WHERE sm.name = 'Shield Bash'
 ON CONFLICT DO NOTHING;
 
 -- =============================================
+-- SEED: TEST PLAYER (for development)
+-- =============================================
+INSERT INTO players (id, username, currency, energy, max_energy, level, experience, current_job_id)
+VALUES ('7e71e36c-2e63-446e-bec5-cf96125b3fa8', 'TestPlayer', 10000, 100, 100, 10, 500, 'novice')
+ON CONFLICT (id) DO UPDATE SET username = EXCLUDED.username;
+
+INSERT INTO gacha_state (player_id) 
+VALUES ('7e71e36c-2e63-446e-bec5-cf96125b3fa8')
+ON CONFLICT (player_id) DO NOTHING;
+
+-- =============================================
 -- RPC FUNCTIONS (from 02-functions.sql)
 -- =============================================
 
