@@ -70,6 +70,61 @@ CREATE TABLE IF NOT EXISTS job_cores (
 );
 
 -- =====================================================
+-- SECTION 2B: NEW SKILL SYSTEM (Modular/Combo)
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS tags (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS triggers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS effects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    type TEXT NOT NULL,
+    value NUMERIC,
+    duration INTEGER,
+    extra JSONB
+);
+
+CREATE TABLE IF NOT EXISTS skill_modules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    version TEXT REFERENCES game_configs(version),
+    name TEXT NOT NULL,
+    description TEXT,
+    base_power INTEGER NOT NULL,
+    cooldown INTEGER DEFAULT 0,
+    tags TEXT[] DEFAULT ARRAY[]::TEXT[],
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS skill_module_tags (
+    skill_id UUID REFERENCES skill_modules(id) ON DELETE CASCADE,
+    tag_id UUID REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (skill_id, tag_id)
+);
+
+CREATE TABLE IF NOT EXISTS skill_module_effects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    skill_id UUID REFERENCES skill_modules(id) ON DELETE CASCADE,
+    trigger_id UUID REFERENCES triggers(id) ON DELETE CASCADE,
+    effect_id UUID REFERENCES effects(id) ON DELETE CASCADE,
+    condition JSONB DEFAULT '{}',
+    order_index INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS job_skill_modules (
+    job_id TEXT REFERENCES jobs(id) ON DELETE CASCADE,
+    skill_module_id UUID REFERENCES skill_modules(id) ON DELETE CASCADE,
+    slot_index INTEGER DEFAULT 0,
+    PRIMARY KEY (job_id, skill_module_id)
+);
+
+-- =====================================================
 -- SECTION 3: PLAYER DATA TABLES
 -- =====================================================
 
@@ -344,3 +399,29 @@ GRANT SELECT ON skills TO authenticated;
 GRANT SELECT ON cards TO authenticated;
 GRANT SELECT ON weapons TO authenticated;
 GRANT SELECT ON job_cores TO authenticated;
+
+-- New Skill System
+GRANT SELECT ON tags TO authenticated;
+GRANT SELECT ON triggers TO authenticated;
+GRANT SELECT ON effects TO authenticated;
+GRANT SELECT ON skill_modules TO authenticated;
+GRANT SELECT ON skill_module_tags TO authenticated;
+GRANT SELECT ON skill_module_effects TO authenticated;
+GRANT SELECT ON job_skill_modules TO authenticated;
+
+-- RLS for new tables
+ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE triggers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE effects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE skill_modules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE skill_module_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE skill_module_effects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE job_skill_modules ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow read tags" ON tags FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read triggers" ON triggers FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read effects" ON effects FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read skill_modules" ON skill_modules FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read skill_module_tags" ON skill_module_tags FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read skill_module_effects" ON skill_module_effects FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read job_skill_modules" ON job_skill_modules FOR SELECT TO authenticated USING (true);

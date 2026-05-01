@@ -148,3 +148,66 @@ VALUES
     -- Tier 4 Job Cores (Endgame)
     ('core_arch_paladin', '1.0.0', 'Arch Paladin Core', 'mythic', 'arch_paladin'),
     ('core_grand_archmage', '1.0.0', 'Grand Archmage Core', 'mythic', 'grand_archmage');
+
+-- =====================================================
+-- SECTION 7: NEW SKILL SYSTEM (Modular/Combo)
+-- =====================================================
+
+-- Tags
+INSERT INTO tags (name) VALUES
+    ('burn'), ('poison'), ('freeze'), ('stun'), ('sleep'),
+    ('crit'), ('aoe'), ('chain'), ('heal'), ('shield'),
+    ('buff'), ('debuff'), ('self_buff'), ('drain')
+ON CONFLICT (name) DO NOTHING;
+
+-- Triggers
+INSERT INTO triggers (name) VALUES
+    ('on_hit'), ('on_crit'), ('on_kill'), ('on_skill_use'), ('on_damage_taken'), ('on_death')
+ON CONFLICT (name) DO NOTHING;
+
+-- Effects
+INSERT INTO effects (type, value, duration, extra) VALUES
+    ('damage', 50, NULL, '{"scaling": "atk"}'::jsonb),
+    ('heal', 30, NULL, '{"scaling": "matk"}'::jsonb),
+    ('apply_status', NULL, 3, '{"status": "burn", "chance": 0.5}'::jsonb),
+    ('apply_status', NULL, 2, '{"status": "poison", "chance": 0.6}'::jsonb),
+    ('apply_status', NULL, 2, '{"status": "stun", "chance": 0.3}'::jsonb),
+    ('shield', 20, 2, NULL),
+    ('buff', NULL, 3, '{"stat": "atk", "multiplier": 1.3}'::jsonb),
+    ('debuff', NULL, 2, '{"stat": "def", "multiplier": 0.7}'::jsonb),
+    ('drain', 10, NULL, '{"heal_percent": 0.5}'::jsonb),
+    ('explode', 100, NULL, '{"radius": 2}'::jsonb),
+    ('reduce_cooldown', -1, NULL, NULL),
+    ('boost_crit', 50, 2, NULL)
+ON CONFLICT DO NOTHING;
+
+-- Skill Modules
+INSERT INTO skill_modules (version, name, description, base_power, cooldown, tags) VALUES
+    ('1.0.0', 'Basic Attack', 'Basic melee attack', 15, 0, ARRAY['crit']),
+    ('1.0.0', 'Fire Strike', 'Fire attack that applies burn', 25, 2, ARRAY['burn', 'aoe']),
+    ('1.0.0', 'Ice Spike', 'Ice attack that may freeze', 20, 2, ARRAY['freeze', 'aoe']),
+    ('1.0.0', 'Thunder', 'Lightning damage to all enemies', 30, 3, ARRAY['aoe']),
+    ('1.0.0', 'Poison Dagger', 'Poisoned blade', 15, 1, ARRAY['poison', 'debuff']),
+    ('1.0.0', 'Healing Light', 'Restore HP to ally', 35, 3, ARRAY['heal']),
+    ('1.0.0', 'Shield Bash', 'Stun with shield', 20, 2, ARRAY['stun', 'shield']),
+    ('1.0.0', 'Berserk', 'Boost attack, lower defense', 40, 4, ARRAY['buff', 'self_buff', 'debuff']),
+    ('1.0.0', 'Chain Lightning', 'Chain attack hits multiple targets', 25, 2, ARRAY['chain', 'aoe']),
+    ('1.0.0', 'Vampire Bite', 'Drain HP from enemy', 20, 2, ARRAY['drain', 'crit']),
+    ('1.0.0', 'Holy Smite', 'Holy damage, bonus vs evil', 35, 3, ARRAY['aoe']),
+    ('1.0.0', 'Focus Shot', 'High crit chance critical hit', 30, 2, ARRAY['crit', 'chain']);
+
+-- Job Skill Modules (skills available per job)
+INSERT INTO job_skill_modules (job_id, skill_module_id, slot_index)
+SELECT 'novice', sm.id, ROW_NUMBER() OVER () - 1
+FROM skill_modules sm WHERE sm.name = 'Basic Attack'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO job_skill_modules (job_id, skill_module_id, slot_index) VALUES
+    ('swordman', (SELECT id FROM skill_modules WHERE name = 'Shield Bash'), 0),
+    ('swordman', (SELECT id FROM skill_modules WHERE name = 'Fire Strike'), 1),
+    ('mage', (SELECT id FROM skill_modules WHERE name = 'Ice Spike'), 0),
+    ('mage', (SELECT id FROM skill_modules WHERE name = 'Thunder'), 1),
+    ('knight', (SELECT id FROM skill_modules WHERE name = 'Shield Bash'), 0),
+    ('knight', (SELECT id FROM skill_modules WHERE name = 'Holy Smite'), 1),
+    ('wizard', (SELECT id FROM skill_modules WHERE name = 'Fire Strike'), 0),
+    ('wizard', (SELECT id FROM skill_modules WHERE name = 'Chain Lightning'), 1);
