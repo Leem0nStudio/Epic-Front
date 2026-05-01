@@ -34,8 +34,8 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.11",
-    "@testing-library/jest-dom": "^6.1.5",
-    "@testing-library/react": "^14.1.2",
+    "@testing-library/jest-dom": "^6.6.0",
+    "@testing-library/react": "^16.0.0",
     "@types/jest": "^29.5.8",
     "@types/node": "^20",
     "@types/react": "^19",
