@@ -122,11 +122,10 @@ CREATE TABLE IF NOT EXISTS inventory (
 );
 
 CREATE TABLE IF NOT EXISTS party (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
-    unit_id UUID REFERENCES units(id) ON DELETE CASCADE,
+    player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
     slot_index INTEGER NOT NULL,
-    PRIMARY KEY (player_id, unit_id)
+    unit_id UUID REFERENCES units(id) ON DELETE SET NULL,
+    PRIMARY KEY (player_id, slot_index)
 );
 
 CREATE TABLE IF NOT EXISTS recruitment_queue (
