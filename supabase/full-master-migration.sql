@@ -578,6 +578,53 @@ FROM skill_modules sm WHERE sm.name = 'Shield Bash'
 ON CONFLICT DO NOTHING;
 
 -- =============================================
+-- RPC FUNCTIONS (from 02-functions.sql)
+-- =============================================
+
+-- Energy Regeneration
+CREATE OR REPLACE FUNCTION rpc_regen_energy()
+RETURNS void AS $$
+BEGIN
+    UPDATE players 
+    SET energy = LEAST(max_energy, energy + 10),
+        last_energy_regen = NOW()
+    WHERE energy < max_energy;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Initialize Player (simplified for testing)
+CREATE OR REPLACE FUNCTION rpc_initialize_player(p_player_id UUID, p_username TEXT)
+RETURNS void AS $$
+BEGIN
+    INSERT INTO players (id, username, energy, max_energy, currency, level) 
+    VALUES (p_player_id, p_username, 100, 100, 1000, 1)
+    ON CONFLICT (id) DO UPDATE SET username = EXCLUDED.username;
+
+    INSERT INTO gacha_state (player_id) 
+    VALUES (p_player_id)
+    ON CONFLICT (player_id) DO NOTHING;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Add currency
+CREATE OR REPLACE FUNCTION rpc_add_currency(p_player_id UUID, p_amount INTEGER)
+RETURNS void AS $$
+BEGIN
+    UPDATE players SET currency = currency + p_amount WHERE id = p_player_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Add energy
+CREATE OR REPLACE FUNCTION rpc_add_energy(p_player_id UUID, p_amount INTEGER)
+RETURNS void AS $$
+BEGIN
+    UPDATE players 
+    SET energy = LEAST(max_energy, energy + p_amount) 
+    WHERE id = p_player_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =============================================
 -- VERIFICATION
 -- =============================================
 SELECT '=== MIGRATION COMPLETE ===' as status;
@@ -587,3 +634,7 @@ SELECT table_name FROM information_schema.tables
 WHERE table_schema = 'public' 
 AND table_name NOT LIKE '%pg_%'
 ORDER BY table_name;
+
+SELECT 'Functions created:' as info;
+SELECT routine_name FROM information_schema.routines 
+WHERE routine_schema = 'public';
