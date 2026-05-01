@@ -19,12 +19,15 @@ import {
   Shield,
   Info,
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  Gift
 } from 'lucide-react';
 import { AssetService } from '@/lib/services/asset-service';
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { Button } from '@/components/ui/Button';
+import { LevelProgress } from '@/components/ui/LevelProgress';
+import { getExpForNextLevel, getUnlockForLevel } from '@/lib/config/level-curve';
 
 interface RPGHomeViewProps {
   saveData: any;
@@ -188,21 +191,19 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
               </div>
            </div>
            
-           <div className="flex flex-col gap-1">
-              <h2 className="text-white text-sm font-black tracking-widest uppercase italic drop-shadow-md">
-                {saveData.profile?.username || "Commander"}
-              </h2>
-              <div className="flex items-center gap-2">
-                 <div className="w-32 h-1.5 bg-black/60 rounded-full border border-white/5 overflow-hidden">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${expProgress}%` }}
-                      className="h-full bg-gradient-to-r from-[#F5C76B] to-[#FFD88F] shadow-[0_0_8px_rgba(245,199,107,0.5)]" 
-                    />
-                 </div>
-                 <span className="text-[8px] font-black text-white/40 uppercase tracking-tighter">{playerExp} / {nextLevelExp}</span>
-              </div>
-           </div>
+<div className="flex flex-col gap-1">
+               <h2 className="text-white text-sm font-black tracking-widest uppercase italic drop-shadow-md">
+                 {saveData.profile?.username || "Commander"}
+               </h2>
+               <div className="w-40">
+                 <LevelProgress 
+                   level={playerLevel} 
+                   currentExp={playerExp}
+                   showUnlocks={true}
+                   compact={true}
+                 />
+               </div>
+            </div>
         </div>
 
         {/* Right: Currencies */}
@@ -219,16 +220,27 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
                </button>
              </motion.div>
              
-             <motion.div 
-               whileHover={{ scale: 1.05 }}
-               className="bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-3 pl-3 pr-1 py-1 min-w-[110px] shadow-lg"
-             >
-               <Diamond size={14} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
-               <span className="text-[11px] font-black text-white font-stats flex-1 text-center">{displayGems.toLocaleString()}</span>
-               <button className="w-5 h-5 rounded-lg bg-cyan-400/20 text-cyan-400 flex items-center justify-center hover:bg-cyan-400/30 transition-colors">
-                 <span className="text-xs font-black">+</span>
-               </button>
-             </motion.div>
+<motion.div 
+                whileHover={{ scale: 1.05 }}
+                className="bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-3 pl-3 pr-1 py-1 min-w-[110px] shadow-lg"
+              >
+                <Diamond size={14} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
+                <span className="text-[11px] font-black text-white font-stats flex-1 text-center">{displayGems.toLocaleString()}</span>
+                <button className="w-5 h-5 rounded-lg bg-cyan-400/20 text-cyan-400 flex items-center justify-center hover:bg-cyan-400/30 transition-colors">
+                  <span className="text-xs font-black">+</span>
+                </button>
+              </motion.div>
+
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onNavigate('daily_rewards')}
+                className="relative p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl border border-purple-400 shadow-lg"
+                title="Daily Rewards"
+              >
+                <Gift size={20} className="text-white" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+              </motion.button>
           </div>
           
           <button className="p-3 bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl text-white/60 hover:text-white transition-all active:scale-90 relative shadow-xl">
