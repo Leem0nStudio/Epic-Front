@@ -4,7 +4,7 @@ import { ATLAS_CONFIG } from '../config/sprite-atlas-config';
 
 export type AssetArchetype = 'melee' | 'magic' | 'ranged' | 'support' | 'neutral';
 export type ItemType = 'weapon' | 'card' | 'skill' | 'armor' | 'accessory';
-export type BackgroundKey = 'home' | 'party' | 'gacha' | 'battle' | 'campaign' | 'tavern' | 'inventory';
+export type BackgroundKey = 'home' | 'party' | 'gacha' | 'battle' | 'campaign' | 'tavern' | 'inventory' | 'quest';
 
 export class AssetService {
   private static LOCAL_BASE = '/assets';
@@ -67,7 +67,8 @@ export class AssetService {
     'battle': 'bg_battle_scenic_1920.jpg',
     'campaign': 'bg_home_1920.jpg',
     'tavern': 'bg_home_1920.jpg',
-    'inventory': 'bg_home_1920.jpg'
+    'inventory': 'bg_home_1920.jpg',
+    'quest': 'bg_home_1920.jpg'
   };
 
   // Weapon icons

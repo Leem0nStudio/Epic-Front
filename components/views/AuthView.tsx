@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { AssetService } from '@/lib/services/asset-service';
 import { Mail, Lock, UserPlus, LogIn, ShieldCheck, Sparkles, Stars, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PanelButton } from '@/components/ui/PanelButton';
@@ -83,7 +84,7 @@ export function AuthView() {
               {/* Glow effect only - no border */}
               <div className="absolute inset-0 bg-[#F5C76B]/10 rounded-full blur-2xl animate-pulse" />
               <img 
-                src="/assets/logo.png" 
+                src={AssetService.getUIUrl('logo')} 
                 alt="Epic Frontier" 
                 className="w-full h-full object-contain drop-shadow-[0_0_30px_rgba(245,199,107,0.5)]"
               />
