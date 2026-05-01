@@ -1,5 +1,7 @@
 import { CombatUnit, CombatState, SkillDefinition, TargetType } from '../types/combat';
-import { EffectEngine, EffectResult } from './effect-engine';
+import { EffectEngine } from './effect-engine';
+import { executeSkillWithModule, updateUnitStartTurnWithStatus, loadSkillModuleCached } from './skill-integration';
+import type { EffectResult } from './effect-engine';
 
 export class BattleManager {
   /**
@@ -141,25 +143,35 @@ export class BattleManager {
     return { results, updatedUnits };
   }
 
-  /**
-   * Updates status effects and cooldowns for a unit.
-   */
+/**
+    * Updates status effects and cooldowns for a unit.
+    */
   static updateUnitStartTurn(unit: CombatUnit): CombatUnit {
-    const nextStatus = unit.statusEffects
-      .map(s => ({ ...s, remainingTurns: s.remainingTurns - 1 }))
-      .filter(s => s.remainingTurns > 0);
+    return updateUnitStartTurnWithStatus(unit);
+  }
 
-    const nextCooldowns = { ...unit.cooldowns };
-    Object.keys(nextCooldowns).forEach(id => {
-      nextCooldowns[id] = Math.max(0, nextCooldowns[id] - 1);
-      if (nextCooldowns[id] === 0) delete nextCooldowns[id];
-    });
+  /**
+   * Executes turn using the modular skill system (skill_modules).
+   * Falls back to legacy system if skill not found in DB.
+   */
+  static async executeTurnWithModules(
+    actor: CombatUnit,
+    skill: SkillDefinition,
+    allUnits: CombatUnit[],
+    manualTargetId?: string,
+    isBurst: boolean = false
+  ): Promise<{ results: EffectResult[], updatedUnits: CombatUnit[] }> {
+    const targets = this.getTargets(actor, skill, allUnits, manualTargetId);
 
-    return {
-      ...unit,
-      statusEffects: nextStatus,
-      cooldowns: nextCooldowns,
-      isTaunting: nextStatus.some(s => s.id === 'taunt')
-    };
+    const moduleData = await loadSkillModuleCached(skill.id);
+    if (moduleData) {
+      const result = await executeSkillWithModule(skill.id, actor, targets, allUnits, isBurst);
+      return { 
+        results: result.results as EffectResult[], 
+        updatedUnits: result.updatedUnits 
+      };
+    }
+
+    return this.executeTurn(actor, skill, allUnits, manualTargetId, isBurst);
   }
 }

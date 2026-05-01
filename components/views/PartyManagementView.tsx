@@ -186,11 +186,12 @@ export function PartyManagementView({
                         className="shrink-0"
                         glass={true}
                       >
-                        <img src={AssetService.getSpriteUrl(unit.sprite_id)} className="w-[160%] transform translate-y-2 brightness-110" style={{imageRendering: 'pixelated'}} />
+<img src={AssetService.getSpriteUrl(unit.sprite_id)} className="w-[160%] transform translate-y-2 brightness-110" style={{imageRendering: 'pixelated'}} alt="" />
                       </RarityIcon>
-
                       <div className="flex-1 flex flex-col min-w-0">
-                        <span className="font-display text-white text-sm truncate">{unit.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-display text-white text-sm truncate">{unit.name}</span>
+                        </div>
                         <div className="flex gap-3 mt-1">
                           <div className="flex items-center gap-1 text-[10px] text-white/50 font-stats">
                             <Sword size={10} className="text-[#F5C76B]" /> 
