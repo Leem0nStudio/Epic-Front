@@ -44,7 +44,14 @@ class Logger {
   }
 
   private shouldLog(level: LogLevel): boolean {
-    return level >= config.monitoring.logLevel;
+    const levelMap: Record<string, number> = {
+      debug: 0,
+      info: 1,
+      warn: 2,
+      error: 3,
+    };
+    const configLevel = levelMap[config.monitoring.logLevel] ?? 1;
+    return level >= configLevel;
   }
 
   private createEntry(

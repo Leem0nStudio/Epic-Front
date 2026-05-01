@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { usePreloadAssets } from '@/lib/asset-manager';
 import { config } from '@/lib/config/app-config';

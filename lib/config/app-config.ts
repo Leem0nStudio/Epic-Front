@@ -102,11 +102,16 @@ const defaultConfig: AppConfig = {
     maxConcurrentRequests: 3,
     enableAssetPreloading: true,
     preloadCriticalAssets: true,
+    enableVirtualization: true,
+    virtualizationThreshold: 50,
   },
 
   monitoring: {
     enableAnalytics: false,
     enableErrorReporting: true,
+    enablePerformanceMonitoring: false,
+    reportErrorsToConsole: true,
+    enableWebVitalsTracking: false,
     logLevel: process.env.NODE_ENV === 'development' ? 'debug' : 'warn',
   },
 };
