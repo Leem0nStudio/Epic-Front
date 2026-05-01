@@ -20,7 +20,10 @@ import {
   Info,
   ChevronRight,
   TrendingUp,
-  Gift
+  Gift,
+  Trophy,
+  Crown,
+  Castle
 } from 'lucide-react';
 import { AssetService } from '@/lib/services/asset-service';
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
@@ -421,6 +424,65 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
               ))}
             </div>
           </div>
+
+          {/* Contextual Feature Buttons - Unlock based on level */}
+          {playerLevel >= 15 && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="px-6 pb-4"
+            >
+              <div className="text-white/30 text-[9px] font-bold uppercase tracking-widest text-center mb-2">
+                Available Features
+              </div>
+              <div className="flex gap-2 justify-center">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onNavigate('guild')}
+                  className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-xl border border-indigo-500/30 flex flex-col items-center gap-1"
+                >
+                  <Users size={18} className="text-indigo-400" />
+                  <span className="text-[8px] font-bold text-indigo-300 uppercase">Guild</span>
+                </motion.button>
+
+                {playerLevel >= 30 && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => onNavigate('arena')}
+                    className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-xl border border-red-500/30 flex flex-col items-center gap-1"
+                  >
+                    <Trophy size={18} className="text-red-400" />
+                    <span className="text-[8px] font-bold text-red-300 uppercase">Arena PvP</span>
+                  </motion.button>
+                )}
+
+                {playerLevel >= 35 && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => onNavigate('tower')}
+                    className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-xl border border-amber-500/30 flex flex-col items-center gap-1"
+                  >
+                    <Castle size={18} className="text-amber-400" />
+                    <span className="text-[8px] font-bold text-amber-300 uppercase">Tower</span>
+                  </motion.button>
+                )}
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onNavigate('daily_rewards')}
+                  className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl border border-green-500/30 flex flex-col items-center gap-1"
+                >
+                  <Gift size={18} className="text-green-400" />
+                  <span className="text-[8px] font-bold text-green-300 uppercase">Daily</span>
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
       </div>
     </div>
   );
