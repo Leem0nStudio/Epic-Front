@@ -155,7 +155,68 @@ CREATE TABLE IF NOT EXISTS player_daily_rewards (
 );
 
 -- =============================================
--- PARTE 2: SEEDS BASE (03-seed.sql)
+-- PARTE 2: SCHEMA ADDITIONS (enemy_templates, chapters, stages)
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS enemy_templates (
+    id TEXT PRIMARY KEY,
+    version TEXT REFERENCES game_configs(version),
+    name TEXT NOT NULL,
+    base_level INTEGER NOT NULL,
+    base_hp INTEGER NOT NULL,
+    base_atk INTEGER NOT NULL,
+    base_def INTEGER NOT NULL,
+    base_matk INTEGER NOT NULL,
+    base_mdef INTEGER NOT NULL,
+    base_agi INTEGER NOT NULL,
+    growth_factor FLOAT DEFAULT 1.05,
+    skill_ids TEXT[] DEFAULT ARRAY[]::TEXT[],
+    elemental_type TEXT DEFAULT 'neutral',
+    race TEXT DEFAULT 'demihuman',
+    size TEXT DEFAULT 'medium'
+);
+
+CREATE TABLE IF NOT EXISTS chapters (
+    id TEXT PRIMARY KEY,
+    version TEXT REFERENCES game_configs(version),
+    index_num INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS stages (
+    id TEXT PRIMARY KEY,
+    chapter_id TEXT REFERENCES chapters(id) ON DELETE CASCADE,
+    index_num INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    energy_cost INTEGER DEFAULT 5,
+    enemy_template_ids TEXT[] DEFAULT ARRAY[]::TEXT[],
+    enemy_positions INTEGER[] DEFAULT ARRAY[]::INTEGER[],
+    rewards_currency INTEGER DEFAULT 100,
+    rewards_exp INTEGER DEFAULT 50,
+    rewards_materials JSONB DEFAULT '[]'::JSONB,
+    first_clear_currency INTEGER,
+    first_clear_premium INTEGER,
+    first_clear_exp INTEGER,
+    first_clear_materials JSONB DEFAULT '[]'::JSONB,
+    star_conditions JSONB DEFAULT '[]'::JSONB,
+    unlock_stage_id TEXT REFERENCES stages(id),
+    min_player_level INTEGER DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS stage_rewards (
+    stage_id TEXT REFERENCES stages(id) ON DELETE CASCADE,
+    reward_type TEXT NOT NULL,
+    currency INTEGER DEFAULT 0,
+    premium_currency INTEGER DEFAULT 0,
+    exp INTEGER DEFAULT 0,
+    materials JSONB DEFAULT '[]'::JSONB,
+    PRIMARY KEY (stage_id, reward_type)
+);
+
+-- =============================================
+-- PARTE 3: SEEDS BASE (03-seed.sql)
 -- =============================================
 
 -- Game Config
