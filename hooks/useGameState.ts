@@ -7,7 +7,7 @@ import { Stage } from '@/lib/rpg-system/campaign-types';
 
 type ToastFn = (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
 
-export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'quests' | 'stage_details' | 'training' | 'daily_rewards';
+export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'quests' | 'stage_details' | 'training' | 'daily_rewards' | 'arena' | 'tower' | 'guild';
 
 export function useGameState(toast?: ToastFn) {
   const store = useGameStore();
