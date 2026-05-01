@@ -6,9 +6,9 @@
 2. Tener las credenciales del proyecto (URL y anon key)
 3. Haber configurado las variables de entorno en `.env.local`
 
-## Pasos de Instalación
+## Quick Setup (3 Steps)
 
-### 1. Configurar entorno
+### Step 1: Configurar entorno
 
 Crear archivo `.env.local` en la raíz del proyecto:
 
@@ -18,16 +18,44 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_supabase_anon_key
 GEMINI_API_KEY=tu_gemini_api_key
 ```
 
-### 2. Ejecutar scripts SQL
+### Step 2: Abrir SQL Editor
 
-Abrir **Supabase Dashboard** → **SQL Editor** y ejecutar los archivos en este orden:
+Ir a: **Supabase Dashboard** → **SQL Editor**
 
-#### 2.1 Ejecutar `01-schema.sql`
-- Crea todas las tablas
-- Añade constraints y índices
-- Activa Row Level Security (RLS)
-- Crea políticas de acceso
-- Asigna permisos
+```
+https://supabase.com/dashboard/project/TU_PROYECTO/sql-editor
+```
+
+### Step 3: Ejecutar los 3 archivos (en orden)
+
+Copiar y ejecutar cada archivo completo:
+
+1. **01-schema.sql** → Click "New query" → Paste → Run (Ctrl+Enter)
+2. **03-functions.sql** → New query → Paste → Run
+3. **04-seed.sql** → New query → Paste → Run
+
+## Verificar Setup
+
+```sql
+-- Ver tablas
+SELECT table_name FROM information_schema.tables 
+WHERE table_schema = 'public' ORDER BY table_name;
+
+-- Ver funciones RPC
+SELECT proname FROM pg_proc 
+WHERE pronamespace = 'public'::regnamespace;
+
+-- Ver datos seed
+SELECT COUNT(*) as jobs FROM jobs;
+SELECT COUNT(*) as skills FROM skills;
+SELECT COUNT(*) as weapons FROM weapons;
+```
+
+## Expected Results
+
+- **13+ tables**: players, units, inventory, party, campaign_progress, etc.
+- **13+ functions**: rpc_initialize_player, rpc_pull_gacha, rpc_complete_stage, etc.
+- **Data**: 10+ jobs, 20+ skills, 15+ weapons
 
 #### 2.2 Ejecutar `03-functions.sql`
 - `rpc_initialize_player` - Inicializa jugador con 3 personajes

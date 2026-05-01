@@ -13,8 +13,8 @@ import { BattleScreenView } from '@/components/views/BattleScreenView';
 import { CampaignMapView } from '@/components/views/CampaignMapView';
 import { QuestLogView } from '@/components/views/QuestLogView';
 import { StageDetailsView } from '@/components/views/StageDetailsView';
-import { TrainingView } from '@/components/views/TrainingView';
 import { DailyRewardsView } from '@/components/views/DailyRewardsView';
+import { TrainingView } from '@/components/views/TrainingView';
 import { AuthView } from '@/components/views/AuthView';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
@@ -122,7 +122,6 @@ export default function Applet() {
       case 'daily_rewards':
         return <DailyRewardsView 
                   onBack={() => actions.navigateTo('home')}
-                  onUpdate={actions.refreshState}
                 />;
       default:
         return (
