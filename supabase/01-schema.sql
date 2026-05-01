@@ -1,6 +1,6 @@
--- Epic RPG Database Schema
--- This file contains all table definitions and Row Level Security policies
--- Run this first to initialize the database structure
+-- Epic RPG Database Schema - TABLES ONLY
+-- This file contains ONLY table definitions and constraints
+-- Run this FIRST to create all tables
 
 -- =====================================================
 -- SECTION 1: METADATA & CONFIG
@@ -98,6 +98,104 @@ CREATE TABLE IF NOT EXISTS gacha_state (
 CREATE TABLE IF NOT EXISTS units (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    level INTEGER DEFAULT 1,
+    exp INTEGER DEFAULT 0,
+    base_stats JSONB NOT NULL,
+    growth_rates JSONB NOT NULL,
+    affinity TEXT NOT NULL,
+    trait TEXT,
+    current_job_id TEXT NOT NULL,
+    unlocked_jobs TEXT[] DEFAULT ARRAY['novice'],
+    equipped_weapon_instance_id UUID,
+    equipped_card_instance_ids UUID[] DEFAULT ARRAY[]::UUID[],
+    equipped_skill_instance_ids UUID[] DEFAULT ARRAY[]::UUID[],
+    sprite_id TEXT,
+    icon_id TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Foreign key: units.current_job_id must reference a valid job
+ALTER TABLE units ADD CONSTRAINT fk_units_current_job
+    FOREIGN KEY (current_job_id) REFERENCES jobs(id);
+
+CREATE TABLE IF NOT EXISTS inventory (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+    item_id TEXT NOT NULL,
+    item_type TEXT NOT NULL,
+    quantity INTEGER DEFAULT 1,
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT unique_player_item UNIQUE (player_id, item_id)
+);
+
+CREATE TABLE IF NOT EXISTS party (
+    player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+    slot_index INTEGER NOT NULL,
+    unit_id UUID REFERENCES units(id) ON DELETE SET NULL,
+    PRIMARY KEY (player_id, slot_index)
+);
+
+CREATE TABLE IF NOT EXISTS recruitment_queue (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+    slot_index INTEGER NOT NULL,
+    unit_data JSONB NOT NULL,
+    available_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_claimed BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS campaign_progress (
+    player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+    stage_id TEXT NOT NULL,
+    stars INTEGER DEFAULT 0,
+    best_turns INTEGER,
+    enemy_data JSONB DEFAULT NULL,
+    cleared_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    clear_count INTEGER DEFAULT 0,
+    PRIMARY KEY (player_id, stage_id)
+);
+
+CREATE TABLE IF NOT EXISTS player_daily_rewards (
+    player_id UUID PRIMARY KEY REFERENCES players(id) ON DELETE CASCADE,
+    streak INTEGER DEFAULT 0,
+    last_claim_date DATE DEFAULT NULL
+);
+
+-- =====================================================
+-- SECTION 4: CHECK CONSTRAINTS
+-- =====================================================
+
+-- Players: ensure non-negative values and valid levels
+ALTER TABLE players ADD CONSTRAINT chk_players_energy CHECK (energy >= 0);
+ALTER TABLE players ADD CONSTRAINT chk_players_currency CHECK (currency >= 0);
+ALTER TABLE players ADD CONSTRAINT chk_players_level CHECK (level >= 1);
+ALTER TABLE players ADD CONSTRAINT chk_players_max_energy CHECK (max_energy >= 1);
+
+-- Units: ensure non-negative exp and valid levels
+ALTER TABLE units ADD CONSTRAINT chk_units_level CHECK (level >= 1);
+ALTER TABLE units ADD CONSTRAINT chk_units_exp CHECK (exp >= 0);
+
+-- Inventory: ensure positive quantity
+ALTER TABLE inventory ADD CONSTRAINT chk_inventory_quantity CHECK (quantity > 0);
+
+-- Party: ensure valid slot index (0-2 for 3 slots)
+ALTER TABLE party ADD CONSTRAINT chk_party_slot CHECK (slot_index >= 0 AND slot_index <= 2);
+
+-- Recruitment queue: ensure valid slot index
+ALTER TABLE recruitment_queue ADD CONSTRAINT chk_recruitment_slot CHECK (slot_index >= 0 AND slot_index <= 2);
+
+-- =====================================================
+-- SECTION 5: INDEXES FOR PERFORMANCE
+-- =====================================================
+
+-- Index for querying units by player with level filter (frequent in battle/party)
+CREATE INDEX IF NOT EXISTS idx_units_player_level ON units(player_id, level);
+
+-- Index for querying inventory by player and item type (frequent filtering)
+CREATE INDEX IF NOT EXISTS idx_inventory_player_type ON inventory(player_id, item_type);
     name TEXT NOT NULL,
     level INTEGER DEFAULT 1,
     exp INTEGER DEFAULT 0,

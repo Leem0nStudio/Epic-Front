@@ -1,6 +1,7 @@
 -- Epic RPG Database Cleanup Script
 -- This script removes all data, functions and table structures
--- Use this to reset the database completely
+-- Run this ONLY when you want to completely reset the database
+-- WARNING: This will delete ALL data permanently!
 
 -- =====================================================
 -- SECTION 1: DROP FUNCTIONS & RPCs
@@ -20,6 +21,8 @@ DROP FUNCTION IF EXISTS rpc_regen_energy() CASCADE;
 DROP FUNCTION IF EXISTS rpc_deduct_energy(INTEGER) CASCADE;
 DROP FUNCTION IF EXISTS rpc_refill_energy_with_gems(INTEGER) CASCADE;
 DROP FUNCTION IF EXISTS rpc_award_unit_exp(UUID, INTEGER) CASCADE;
+DROP FUNCTION IF EXISTS rpc_claim_daily_reward(INTEGER, INTEGER, INTEGER) CASCADE;
+DROP FUNCTION IF EXISTS rpc_train_unit(UUID, INTEGER, INTEGER) CASCADE;
 
 -- =====================================================
 -- SECTION 2: DROP VIEWS

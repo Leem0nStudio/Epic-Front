@@ -1,22 +1,27 @@
 # Supabase Database Setup Guide
 
 ## Overview
-The database schema for Epic RPG is organized into 3 main files for production use.
+The database schema for Epic RPG is organized into 4 main files for production use.
 
 ## Setup Instructions
 
 Execute files in this order in the Supabase SQL Editor:
 
-### 1. **schema.sql** (Tables & Policies)
-Creates all database tables, Row Level Security policies, constraints, and indexes.
+### 1. **01-schema.sql** (Tables Only)
+Creates all database tables, constraints, and indexes.
 - Game configs, jobs, skills, cards, weapons, job cores
 - Player data tables (players, units, inventory, party, etc.)
-- RLS policies for data protection (SELECT, INSERT, UPDATE, DELETE)
 - CHECK constraints for data integrity (energy >= 0, level >= 1, etc.)
 - Composite indexes for query performance
 - Foreign key: units.current_job_id → jobs(id)
 
-### 2. **functions.sql** (RPCs & Procedures)
+### 2. **02-security.sql** (RLS Policies Only)
+Creates all Row Level Security policies for data protection.
+- RLS policies for all tables (SELECT, INSERT, UPDATE, DELETE)
+- Player data isolation (users can only access their own data)
+- Static content access for authenticated users
+
+### 3. **03-functions.sql** (RPCs & Procedures)
 Creates all stored procedures and RPC functions.
 - Player initialization
 - Gacha system
@@ -25,17 +30,19 @@ Creates all stored procedures and RPC functions.
 - Campaign & battle logic
 - Unit progression and skills
 - Currency management
+- Daily rewards
+- Training system
 
-### 3. **seed.sql** (Initial Data)
+### 4. **04-seed.sql** (Initial Data)
 Populates the database with initial game content.
 - Game config (v1.0.0)
-- 5 Jobs (Novice, Swordman, Knight, Mage, Wizard)
+- 11 Jobs (Novice through endgame classes)
 - 10 Skills (spells, attacks, buffs)
 - 3 Cards (character boost cards)
 - 3 Weapons (sword, staff, etc.)
 - 10 Job Cores (unlockable job items)
 
-### 4. **cleanup.sql** (Reset Database)
+### 5. **cleanup.sql** (Reset Database)
 Drops all functions, views, and tables.
 Use only when you need to completely reset the database.
 
@@ -43,12 +50,21 @@ Use only when you need to completely reset the database.
 
 ```
 supabase/
-├── 01-schema.sql       # Tables + RLS policies + constraints + indexes
-├── 02-functions.sql    # RPCs & stored procedures
-├── 03-seed.sql        # Initial game data
+├── 01-schema.sql       # Tables + constraints + indexes
+├── 02-security.sql     # RLS policies only
+├── 03-functions.sql    # RPCs & stored procedures
+├── 04-seed.sql        # Initial game data
 ├── 04-cleanup.sql     # Complete database reset
 └── README.md          # This file
 ```
+
+## Important Notes
+
+- **Order matters**: Always run files in numerical order
+- **RLS Security**: Policies in 02-security.sql ensure users can only access their own data
+- **Dependencies**: Functions in 03-functions.sql depend on tables from 01-schema.sql
+- **Data Integrity**: Constraints prevent invalid data (negative currency, invalid levels, etc.)
+- **Performance**: Indexes optimize common queries (unit filtering, inventory searches)
 
 ## Deprecated Files (Do Not Use)
 The following files have been consolidated and should not be executed:

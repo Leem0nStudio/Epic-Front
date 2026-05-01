@@ -1,6 +1,6 @@
--- Epic Frontier Database Functions & RPCs
+-- Epic RPG Database Functions & RPCs
 -- This file contains all stored procedures and functions
--- Run this after schema.sql
+-- Run this AFTER 02-security.sql
 
 -- =====================================================
 -- SECTION 1: PLAYER INITIALIZATION
@@ -14,11 +14,11 @@ DECLARE
     v_unit_id UUID;
     v_idx INTEGER := 0;
 BEGIN
-    INSERT INTO players (id, username, energy, max_energy) 
+    INSERT INTO players (id, username, energy, max_energy)
     VALUES (v_user_id, p_username, 20, 20)
     ON CONFLICT (id) DO UPDATE SET username = EXCLUDED.username;
 
-    INSERT INTO gacha_state (player_id) 
+    INSERT INTO gacha_state (player_id)
     VALUES (v_user_id)
     ON CONFLICT (player_id) DO NOTHING;
 
@@ -27,7 +27,7 @@ BEGIN
 
     FOREACH v_novice IN ARRAY p_novices LOOP
         INSERT INTO units (player_id, name, base_stats, growth_rates, affinity, trait, current_job_id, sprite_id, icon_id)
-        VALUES (v_user_id, v_novice->>'name', (v_novice->'baseStats'), (v_novice->'growthRates'), 
+        VALUES (v_user_id, v_novice->>'name', (v_novice->'baseStats'), (v_novice->'growthRates'),
                 v_novice->>'affinity', v_novice->>'trait', 'novice', v_novice->>'spriteId', v_novice->>'iconId')
         RETURNING id INTO v_unit_id;
 
@@ -69,66 +69,66 @@ BEGIN
 
     v_total_cost := CASE WHEN p_amount >= 10 THEN (p_amount - 1) * v_cost_per_pull ELSE p_amount * v_cost_per_pull END;
 
-    IF v_balance < v_total_cost THEN 
-        RAISE EXCEPTION 'Moneda insuficiente'; 
+    IF v_balance < v_total_cost THEN
+        RAISE EXCEPTION 'Moneda insuficiente';
     END IF;
 
     SELECT version INTO v_active_version FROM game_configs WHERE is_active = true LIMIT 1;
-    SELECT pulls_since_epic, pulls_since_legendary INTO v_p_epic, v_p_leg 
+    SELECT pulls_since_epic, pulls_since_legendary INTO v_p_epic, v_p_leg
     FROM gacha_state WHERE player_id = v_user_id;
 
     FOR i IN 1..p_amount LOOP
         v_p_epic := v_p_epic + 1;
         v_p_leg := v_p_leg + 1;
         v_roll := random();
-        
-        IF v_p_leg >= 50 OR v_roll < 0.02 THEN 
-            v_rarity := 'legendary'; 
-            v_p_leg := 0; 
+
+        IF v_p_leg >= 50 OR v_roll < 0.02 THEN
+            v_rarity := 'legendary';
+            v_p_leg := 0;
             v_p_epic := 0;
-        ELSIF v_p_epic >= 10 OR v_roll < 0.10 THEN 
-            v_rarity := 'epic'; 
+        ELSIF v_p_epic >= 10 OR v_roll < 0.10 THEN
+            v_rarity := 'epic';
             v_p_epic := 0;
-        ELSIF v_roll < 0.35 THEN 
+        ELSIF v_roll < 0.35 THEN
             v_rarity := 'rare';
-        ELSE 
+        ELSE
             v_rarity := 'common';
         END IF;
 
         v_roll := random();
-        IF v_rarity = 'legendary' AND random() < 0.15 THEN 
+        IF v_rarity = 'legendary' AND random() < 0.15 THEN
             v_target_type := 'job_core';
-        ELSIF v_roll < 0.4 THEN 
+        ELSIF v_roll < 0.4 THEN
             v_target_type := 'card';
-        ELSIF v_roll < 0.7 THEN 
+        ELSIF v_roll < 0.7 THEN
             v_target_type := 'weapon';
-        ELSE 
+        ELSE
             v_target_type := 'skill';
         END IF;
 
         IF v_target_type = 'card' THEN
-            SELECT id, name INTO v_target_id, v_target_name 
-            FROM cards WHERE rarity = v_rarity AND version = v_active_version 
+            SELECT id, name INTO v_target_id, v_target_name
+            FROM cards WHERE rarity = v_rarity AND version = v_active_version
             ORDER BY random() LIMIT 1;
         ELSIF v_target_type = 'weapon' THEN
-            SELECT id, name INTO v_target_id, v_target_name 
-            FROM weapons WHERE rarity = v_rarity AND version = v_active_version 
+            SELECT id, name INTO v_target_id, v_target_name
+            FROM weapons WHERE rarity = v_rarity AND version = v_active_version
             ORDER BY random() LIMIT 1;
         ELSIF v_target_type = 'skill' THEN
-            SELECT id, name INTO v_target_id, v_target_name 
-            FROM skills WHERE rarity = v_rarity AND version = v_active_version 
+            SELECT id, name INTO v_target_id, v_target_name
+            FROM skills WHERE rarity = v_rarity AND version = v_active_version
             ORDER BY random() LIMIT 1;
         ELSE -- job_core
-            SELECT id, name INTO v_target_id, v_target_name 
-            FROM job_cores WHERE rarity = v_rarity AND version = v_active_version 
+            SELECT id, name INTO v_target_id, v_target_name
+            FROM job_cores WHERE rarity = v_rarity AND version = v_active_version
             ORDER BY random() LIMIT 1;
         END IF;
 
         IF v_target_id IS NOT NULL THEN
-            INSERT INTO inventory (player_id, item_id, item_type) 
+            INSERT INTO inventory (player_id, item_id, item_type)
             VALUES (v_user_id, v_target_id, v_target_type)
             ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + 1;
-            
+
             res_item_id := v_target_id;
             res_item_name := v_target_name;
             res_item_rarity := v_rarity;
@@ -143,8 +143,8 @@ BEGIN
         UPDATE players SET currency = currency - v_total_cost WHERE id = v_user_id;
     END IF;
 
-    UPDATE gacha_state 
-    SET pulls_since_epic = v_p_epic, pulls_since_legendary = v_p_leg, last_pull_at = NOW() 
+    UPDATE gacha_state
+    SET pulls_since_epic = v_p_epic, pulls_since_legendary = v_p_leg, last_pull_at = NOW()
     WHERE player_id = v_user_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -168,58 +168,58 @@ DECLARE
     v_core_id TEXT;
 BEGIN
     SELECT version INTO v_active_version FROM game_configs WHERE is_active = true LIMIT 1;
-    SELECT current_job_id, level INTO v_current_job_id, v_level 
+    SELECT current_job_id, level INTO v_current_job_id, v_level
     FROM units WHERE id = p_unit_id AND player_id = v_user_id;
-    
-    IF NOT FOUND THEN 
-        RAISE EXCEPTION 'Unidad no encontrada'; 
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Unidad no encontrada';
     END IF;
 
-    SELECT evolution_requirements, parent_job_id INTO v_reqs, v_parent_job_id 
+    SELECT evolution_requirements, parent_job_id INTO v_reqs, v_parent_job_id
     FROM jobs WHERE id = p_target_job_id AND version = v_active_version;
-    
-    IF v_current_job_id IS DISTINCT FROM v_parent_job_id THEN 
-        RAISE EXCEPTION 'Ruta de evolución incorrecta'; 
+
+    IF v_current_job_id IS DISTINCT FROM v_parent_job_id THEN
+        RAISE EXCEPTION 'Ruta de evolución incorrecta';
     END IF;
-    
-    IF v_level < (v_reqs->>'minLevel')::INTEGER THEN 
-        RAISE EXCEPTION 'Nivel insuficiente'; 
+
+    IF v_level < (v_reqs->>'minLevel')::INTEGER THEN
+        RAISE EXCEPTION 'Nivel insuficiente';
     END IF;
 
     v_cost := (v_reqs->>'currencyCost')::BIGINT;
     v_materials := v_reqs->'materials';
     v_core_id := v_reqs->>'requiredJobCore';
 
-    UPDATE players SET currency = currency - v_cost 
+    UPDATE players SET currency = currency - v_cost
     WHERE id = v_user_id AND currency >= v_cost;
-    
-    IF NOT FOUND THEN 
-        RAISE EXCEPTION 'Zeny insuficiente'; 
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Zeny insuficiente';
     END IF;
 
     IF v_materials IS NOT NULL AND jsonb_array_length(v_materials) > 0 THEN
         FOR v_material IN SELECT * FROM jsonb_to_recordset(v_materials) AS x("itemId" TEXT, amount INTEGER) LOOP
-            UPDATE inventory SET quantity = quantity - v_material.amount 
+            UPDATE inventory SET quantity = quantity - v_material.amount
             WHERE player_id = v_user_id AND item_id = v_material."itemId" AND quantity >= v_material.amount;
-            
-            IF NOT FOUND THEN 
-                RAISE EXCEPTION 'Materiales faltantes'; 
+
+            IF NOT FOUND THEN
+                RAISE EXCEPTION 'Materiales faltantes';
             END IF;
         END LOOP;
     END IF;
 
     IF v_core_id IS NOT NULL THEN
-        UPDATE inventory SET quantity = quantity - 1 
+        UPDATE inventory SET quantity = quantity - 1
         WHERE player_id = v_user_id AND item_id = v_core_id AND quantity >= 1;
-        
-        IF NOT FOUND THEN 
-            RAISE EXCEPTION 'Se requiere el núcleo de trabajo'; 
+
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Se requiere el núcleo de trabajo';
         END IF;
     END IF;
 
     DELETE FROM inventory WHERE quantity <= 0;
-    UPDATE units SET current_job_id = p_target_job_id, 
-                     unlocked_jobs = array_append(unlocked_jobs, p_target_job_id) 
+    UPDATE units SET current_job_id = p_target_job_id,
+                     unlocked_jobs = array_append(unlocked_jobs, p_target_job_id)
     WHERE id = p_unit_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -282,17 +282,17 @@ DECLARE
     v_current_gems BIGINT;
 BEGIN
     SELECT premium_currency INTO v_current_gems FROM players WHERE id = v_user_id;
-    
+
     IF v_current_gems < p_gem_cost THEN
         RAISE EXCEPTION 'Insufficient gems';
     END IF;
-    
+
     UPDATE players
     SET premium_currency = premium_currency - p_gem_cost,
         energy = max_energy,
         last_energy_regen = NOW()
     WHERE id = v_user_id;
-    
+
     RETURN FOUND;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -346,7 +346,7 @@ BEGIN
         v_final_rewards := jsonb_set(v_final_rewards, '{exp}',
             ((p_rewards->>'exp')::NUMERIC * 0.5)::TEXT::JSONB);
     END IF;
-    
+
     -- 1. Apply Currency Rewards (with diminishing returns if applicable)
     UPDATE players
     SET currency = currency + (v_final_rewards->>'currency')::BIGINT,
@@ -363,14 +363,14 @@ BEGIN
         v_final_rewards := jsonb_set(v_final_rewards, '{firstClearBonus}',
             '{"currency": true, "exp": 100}'::JSONB);
     END IF;
-    
+
     -- 2. Apply Player EXP and Level Up
     v_exp_gain := COALESCE((v_final_rewards->>'exp')::INTEGER, 0);
     IF v_exp_gain > 0 THEN
         SELECT exp, level INTO v_player_exp, v_player_level FROM players WHERE id = v_user_id;
         v_player_exp := v_player_exp + v_exp_gain;
         v_next_level_exp := v_player_level * 100;
-        
+
         IF v_player_exp >= v_next_level_exp THEN
             UPDATE players
             SET level = level + 1,
@@ -381,16 +381,16 @@ BEGIN
             UPDATE players SET exp = v_player_exp WHERE id = v_user_id;
         END IF;
     END IF;
-    
+
     -- 3. Award EXP to Participating Units
     IF p_participating_units IS NOT NULL AND array_length(p_participating_units, 1) > 0 THEN
         v_unit_exp_gain := 50 + GREATEST(0, 20 - p_turns) * 5;
-        
+
         FOREACH v_unit_id IN ARRAY p_participating_units LOOP
             PERFORM rpc_award_unit_exp(v_unit_id, v_unit_exp_gain);
         END LOOP;
     END IF;
-    
+
     -- 4. Apply Material Rewards (diminishing returns on repeated clears)
     IF v_final_rewards->'materials' IS NOT NULL AND jsonb_array_length(v_final_rewards->'materials') > 0 THEN
         FOR v_material IN SELECT * FROM jsonb_to_recordset(v_final_rewards->'materials') AS x("itemId" TEXT, amount INTEGER) LOOP
@@ -433,24 +433,24 @@ DECLARE
     v_next_level_exp INTEGER;
 BEGIN
     SELECT exp, level INTO v_current_exp, v_current_level
-    FROM units 
+    FROM units
     WHERE id = p_unit_id AND player_id = v_user_id;
-    
+
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Unit not found';
     END IF;
-    
+
     v_current_exp := v_current_exp + p_exp_gain;
     v_next_level_exp := v_current_level * 100;
-    
+
     WHILE v_current_exp >= v_next_level_exp LOOP
         v_current_exp := v_current_exp - v_next_level_exp;
         v_current_level := v_current_level + 1;
         v_next_level_exp := v_current_level * 100;
     END LOOP;
-    
-    UPDATE units 
-    SET exp = v_current_exp, 
+
+    UPDATE units
+    SET exp = v_current_exp,
         level = v_current_level
     WHERE id = p_unit_id AND player_id = v_user_id;
 END;
@@ -472,7 +472,7 @@ BEGIN
     SELECT current_job_id, jobs.skills_unlocked
     INTO v_job_id, v_current_skills
     FROM units
-    LEFT JOIN jobs ON jobs.id = units.current_job_id 
+    LEFT JOIN jobs ON jobs.id = units.current_job_id
         AND jobs.version = (SELECT version FROM game_configs WHERE is_active = true LIMIT 1)
     WHERE units.id = p_unit_id AND units.player_id = v_user_id;
 
@@ -484,9 +484,9 @@ BEGIN
         RAISE EXCEPTION 'Skill already learned';
     END IF;
 
-    UPDATE players SET currency = currency - v_skill_cost 
+    UPDATE players SET currency = currency - v_skill_cost
     WHERE id = v_user_id AND currency >= v_skill_cost;
-    
+
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Insufficient funds';
     END IF;
@@ -506,9 +506,9 @@ DECLARE
     v_max_skills INTEGER := 5;
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM inventory 
-        WHERE id = p_inventory_id 
-        AND player_id = v_user_id 
+        SELECT 1 FROM inventory
+        WHERE id = p_inventory_id
+        AND player_id = v_user_id
         AND item_type = 'skill'
     ) THEN
         RAISE EXCEPTION 'Skill not found in inventory';
@@ -519,14 +519,14 @@ BEGIN
     END IF;
 
     UPDATE units
-    SET equipped_skill_instance_ids = 
-        CASE 
-            WHEN array_length(equipped_skill_instance_ids, 1) >= v_max_skills 
+    SET equipped_skill_instance_ids =
+        CASE
+            WHEN array_length(equipped_skill_instance_ids, 1) >= v_max_skills
             THEN equipped_skill_instance_ids
             ELSE array_append(equipped_skill_instance_ids, p_inventory_id)
         END
     WHERE id = p_unit_id AND player_id = v_user_id;
-    
+
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Unit not found';
     END IF;
@@ -549,7 +549,7 @@ BEGIN
     SET currency = currency + GREATEST(0, p_currency_amount),
         premium_currency = premium_currency + GREATEST(0, p_premium_amount)
     WHERE id = v_user_id;
-    
+
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Player not found';
     END IF;
@@ -610,7 +610,7 @@ BEGIN
         UPDATE players
         SET exp = exp + p_reward_exp
         WHERE id = v_user_id;
-        
+
         -- Check for player level up
         -- (This is a simplified version, ideally we'd have a common function)
         UPDATE players
@@ -664,7 +664,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- =====================================================
 
 CREATE OR REPLACE VIEW unit_progress AS
-SELECT 
+SELECT
     u.id,
     u.player_id,
     u.name,
@@ -676,5 +676,3 @@ SELECT
 FROM units u;
 
 GRANT SELECT ON unit_progress TO authenticated;
--- =====================================================
-

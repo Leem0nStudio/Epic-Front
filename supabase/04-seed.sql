@@ -1,6 +1,6 @@
 -- Epic RPG Database Seed Data
 -- This file contains initial data for the game
--- Run this after schema.sql and functions.sql
+-- Run this AFTER 03-functions.sql
 
 -- =====================================================
 -- SECTION 1: GAME CONFIG
@@ -16,32 +16,32 @@ ON CONFLICT (version) DO UPDATE SET is_active = EXCLUDED.is_active;
 
 INSERT INTO jobs (id, version, name, tier, parent_job_id, stat_modifiers, allowed_weapons, skills_unlocked, passive_effects, evolution_requirements)
 VALUES
-('novice', '1.0.0', 'Novice', 0, NULL, 
- '{"hp": 1.0, "atk": 1.0, "def": 1.0, "matk": 1.0, "mdef": 1.0, "agi": 1.0}', 
- '{"dagger", "sword"}', 
- '[{"id": "basic_attack", "name": "Ataque Básico", "type": "active", "powerMod": 1.0, "cooldown": 0}, {"id": "first_aid", "name": "First Aid", "type": "active", "powerMod": 0.5, "cooldown": 2}]', 
- '{}', 
+('novice', '1.0.0', 'Novice', 0, NULL,
+ '{"hp": 1.0, "atk": 1.0, "def": 1.0, "matk": 1.0, "mdef": 1.0, "agi": 1.0}',
+ '{"dagger", "sword"}',
+ '[{"id": "basic_attack", "name": "Ataque Básico", "type": "active", "powerMod": 1.0, "cooldown": 0}, {"id": "first_aid", "name": "First Aid", "type": "active", "powerMod": 0.5, "cooldown": 2}]',
+ '{}',
  '{"minLevel": 1, "currencyCost": 0, "materials": []}'),
 
-('swordman', '1.0.0', 'Swordman', 1, 'novice', 
- '{"hp": 1.2, "atk": 1.15, "def": 1.1, "matk": 0.8, "mdef": 0.9, "agi": 1.0}', 
- '{"sword", "dagger"}', 
- '[{"id": "bash", "name": "Bash", "type": "active", "powerMod": 1.5, "cooldown": 1}, {"id": "taunt", "name": "Provocar", "type": "active", "powerMod": 0, "cooldown": 3}]', 
- '{"HP Recovery+10%"}', 
+('swordman', '1.0.0', 'Swordman', 1, 'novice',
+ '{"hp": 1.2, "atk": 1.15, "def": 1.1, "matk": 0.8, "mdef": 0.9, "agi": 1.0}',
+ '{"sword", "dagger"}',
+ '[{"id": "bash", "name": "Bash", "type": "active", "powerMod": 1.5, "cooldown": 1}, {"id": "taunt", "name": "Provocar", "type": "active", "powerMod": 0, "cooldown": 3}]',
+ '{"HP Recovery+10%"}',
  '{"minLevel": 10, "currencyCost": 1000, "materials": []}'),
 
-('knight', '1.0.0', 'Knight', 2, 'swordman', 
- '{"hp": 1.5, "atk": 1.3, "def": 1.4, "matk": 0.7, "mdef": 1.0, "agi": 0.9}', 
- '{"sword"}', 
- '[{"id": "bowling_bash", "name": "Bowling Bash", "type": "active", "powerMod": 3.0, "cooldown": 3}, {"id": "shield_bash", "name": "Shield Bash", "type": "active", "powerMod": 2.0, "cooldown": 2}]', 
- '{"Spear Mastery"}', 
+('knight', '1.0.0', 'Knight', 2, 'swordman',
+ '{"hp": 1.5, "atk": 1.3, "def": 1.4, "matk": 0.7, "mdef": 1.0, "agi": 0.9}',
+ '{"sword"}',
+ '[{"id": "bowling_bash", "name": "Bowling Bash", "type": "active", "powerMod": 3.0, "cooldown": 3}, {"id": "shield_bash", "name": "Shield Bash", "type": "active", "powerMod": 2.0, "cooldown": 2}]',
+ '{"Spear Mastery"}',
  '{"minLevel": 40, "currencyCost": 5000, "materials": [], "requiredJobCore": "core_knight"}'),
 
-('mage', '1.0.0', 'Mage', 1, 'novice', 
- '{"hp": 0.8, "atk": 0.7, "def": 0.8, "matk": 1.4, "mdef": 1.3, "agi": 0.9}', 
- '{"staff", "dagger"}', 
- '[{"id": "fire_bolt", "name": "Fire Bolt", "type": "active", "powerMod": 1.8, "cooldown": 1}, {"id": "ice_arrow", "name": "Ice Arrow", "type": "active", "powerMod": 1.5, "cooldown": 2}]', 
- '{}', 
+('mage', '1.0.0', 'Mage', 1, 'novice',
+ '{"hp": 0.8, "atk": 0.7, "def": 0.8, "matk": 1.4, "mdef": 1.3, "agi": 0.9}',
+ '{"staff", "dagger"}',
+ '[{"id": "fire_bolt", "name": "Fire Bolt", "type": "active", "powerMod": 1.8, "cooldown": 1}, {"id": "ice_arrow", "name": "Ice Arrow", "type": "active", "powerMod": 1.5, "cooldown": 2}]',
+ '{}',
  '{"minLevel": 10, "currencyCost": 1000, "materials": []}'),
 
 ('wizard', '1.0.0', 'Wizard', 2, 'mage',
