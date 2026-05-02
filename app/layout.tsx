@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import './globals.css'; // Global styles
+import './globals.css';
 import { ToastProvider } from '@/lib/contexts/ToastContext';
+import { NavigationProvider } from '@/lib/contexts/NavigationContext';
 
 export const metadata: Metadata = {
   title: 'Epic Frontier',
@@ -12,7 +13,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body suppressHydrationWarning>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <NavigationProvider>
+            {children}
+          </NavigationProvider>
+        </ToastProvider>
       </body>
     </html>
   );
