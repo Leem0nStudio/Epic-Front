@@ -746,6 +746,81 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =====================================================
+-- SECTION 10: INVENTORY RPC (v1.0.0 - 2024-05-02)
+-- =====================================================
+
+-- RPC to get inventory with all definitions in one call
+-- This eliminates N+1 query problem
+CREATE OR REPLACE FUNCTION rpc_get_inventory_with_details()
+RETURNS TABLE(
+    id UUID,
+    player_id UUID,
+    item_id TEXT,
+    item_type TEXT,
+    quantity INTEGER,
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE,
+    -- Enriched fields
+    def_name TEXT,
+    def_description TEXT,
+    def_rarity TEXT,
+    def_weapon_type TEXT,
+    def_stat_bonuses JSONB,
+    def_special_effects JSONB,
+    def_effect_type TEXT,
+    def_effect_value JSONB,
+    def_applicable_jobs TEXT[],
+    def_cooldown INTEGER,
+    def_effect JSONB,
+    def_scaling JSONB,
+    def_version TEXT
+) AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_item RECORD;
+    v_def RECORD;
+BEGIN
+    FOR v_item IN 
+        SELECT id, player_id, item_id, item_type, quantity, metadata, created_at
+        FROM inventory 
+        WHERE player_id = v_user_id
+        ORDER BY created_at DESC
+    LOOP
+        -- Reset variables
+        def_name := NULL;
+        def_description := NULL;
+        def_rarity := NULL;
+        
+        -- Lookup definition based on item_type
+        IF v_item.item_type = 'weapon' OR v_item.item_type = 'skill_scroll' THEN
+            SELECT name, rarity, weapon_type, stat_bonuses, special_effects, version
+            INTO def_name, def_rarity, def_weapon_type, def_stat_bonuses, def_special_effects, def_version
+            FROM weapons WHERE id = v_item.item_id;
+        ELSIF v_item.item_type = 'card' THEN
+            SELECT name, rarity, effect_type, effect_value, applicable_jobs, version
+            INTO def_name, def_rarity, def_effect_type, def_effect_value, def_applicable_jobs, def_version
+            FROM cards WHERE id = v_item.item_id;
+        ELSIF v_item.item_type = 'skill' THEN
+            SELECT name, description, rarity, cooldown, effect, scaling, version
+            INTO def_name, def_description, def_rarity, def_cooldown, def_effect, def_scaling, def_version
+            FROM skills WHERE id = v_item.item_id;
+        ELSIF v_item.item_type = 'material' THEN
+            SELECT name, description, rarity, version
+            INTO def_name, def_description, def_rarity, def_version
+            FROM materials WHERE id = v_item.item_id;
+        ELSIF v_item.item_type = 'job_core' THEN
+            SELECT name, rarity, version
+            INTO def_name, def_rarity, def_version
+            FROM job_cores WHERE id = v_item.item_id;
+        END IF;
+        
+        -- Return the row
+        RETURN NEXT;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
 -- VERIFICATION QUERY
 -- =====================================================
 

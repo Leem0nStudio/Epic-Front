@@ -9,6 +9,7 @@ import { ConfigService } from '@/lib/services/config-service';
 import { CampaignService } from '@/lib/services/campaign-service';
 import { TrainingService } from '@/lib/services/training-service';
 import { DailyRewardsService } from '@/lib/services/daily-rewards-service';
+import { InventoryService, InventoryItem } from '@/lib/services/inventory-service';
 import { Stage } from '@/lib/rpg-system/campaign-types';
 import { gameDebugger } from '@/lib/debug';
 
@@ -156,12 +157,11 @@ refreshState: async () => {
 
       await get().regenEnergy();
 
-      const [profRes, unitsRes, partyRes, recruitsRes, inventoryRes] = await Promise.all([
+      const [profRes, unitsRes, partyRes, recruitsRes] = await Promise.all([
         supabase.from('players').select('*').eq('id', user.id).single(),
         supabase.from('units').select('*'),
         supabase.from('party').select('*, unit:units(*)').eq('player_id', user.id).order('slot_index'),
         supabase.from('recruitment_queue').select('*').eq('player_id', user.id).eq('is_claimed', false),
-        supabase.from('inventory').select('*').eq('player_id', user.id) 
       ]);
   
       if (profRes.data) {
@@ -169,33 +169,40 @@ refreshState: async () => {
         set({ profile: profRes.data });
       }
       
-      gameDebugger.info('game-state', 'State loaded', { 
-        units: unitsRes.data?.length || 0,
-        party: partyRes.data?.length || 0,
-        recruits: recruitsRes.data?.length || 0,
-        inventory: inventoryRes.data?.length || 0
-      });
-      
       set({ roster: unitsRes.data || [] });
       set({ party: partyRes.data || [] });
       set({ tavernSlots: recruitsRes.data || [] });
       
-      // Auto-add starter items if inventory is empty
-      if (!inventoryRes.data || inventoryRes.data.length === 0) {
-        gameDebugger.warn('inventory', 'Inventory is empty, adding starter items');
-        try {
-          await supabase.rpc('rpc_add_starter_inventory');
-          // Reload inventory after adding starter items
-          const { data: newInventory } = await supabase.from('inventory').select('*').eq('player_id', user.id);
-          gameDebugger.info('inventory', 'Starter items added', { count: newInventory?.length || 0 });
-          set({ inventory: newInventory || [] });
-        } catch (e: any) {
-          gameDebugger.error('inventory', 'Failed to add starter items', e);
-          console.warn("Could not add starter inventory:", e);
-          set({ inventory: inventoryRes.data || [] });
+      // Use InventoryService for inventory (includes enrichment + cache)
+      try {
+        const inventory = await InventoryService.getInventory(user.id);
+        
+        // Auto-add starter items if inventory is empty
+        if (inventory.length === 0) {
+          gameDebugger.warn('inventory', 'Inventory is empty, adding starter items');
+          try {
+            await supabase.rpc('rpc_add_starter_inventory');
+            // Reload inventory after adding starter items
+            const newInventory = await InventoryService.refreshInventory(user.id);
+            gameDebugger.info('inventory', 'Starter items added', { count: newInventory.length });
+            set({ inventory: newInventory });
+          } catch (e: any) {
+            gameDebugger.error('inventory', 'Failed to add starter items', e);
+            set({ inventory: [] });
+          }
+        } else {
+          set({ inventory });
         }
-      } else {
-        set({ inventory: inventoryRes.data || [] });
+        
+        gameDebugger.info('game-state', 'State loaded', { 
+          units: unitsRes.data?.length || 0,
+          party: partyRes.data?.length || 0,
+          recruits: recruitsRes.data?.length || 0,
+          inventory: inventory.length
+        });
+      } catch (invError) {
+        gameDebugger.error('inventory', 'Failed to load inventory', invError);
+        set({ inventory: [] });
       }
     } catch (e) {
       gameDebugger.error('game-state', 'Critical error in refreshState', e);

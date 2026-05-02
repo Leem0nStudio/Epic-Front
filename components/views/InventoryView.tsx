@@ -4,6 +4,8 @@ import { RarityIcon } from '@/components/ui/RarityIcon';
 import { RarityBorder } from '@/components/ui/RarityBadge';
 import { ViewShell } from '@/components/ui/ViewShell';
 import { getRarityCode, RARITY_COLORS } from '@/lib/config/assets-config';
+import { InventoryService } from '@/lib/services/inventory-service';
+import { useGameStore } from '@/lib/stores/game-store';
 
 import React, { useState, useEffect } from 'react';
 import { Search, Zap, Sword, Shield, Sparkles, Package } from 'lucide-react';
@@ -40,54 +42,30 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
+  // Get inventory from store (already enriched with definitions)
+  const storeInventory = useGameStore(state => state.inventory);
+
+  // Use store inventory directly - already has definitions loaded
   useEffect(() => {
-    async function loadInventory() {
-      if (!supabase) return;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      
-      gameDebugger.info('inventory', 'Loading inventory...', { userId: user.id });
-      const { data, error } = await supabase.from('inventory').select('*').eq('player_id', user.id);
-      
-      if (error) {
-        gameDebugger.error('inventory', 'Error loading inventory', error);
-      }
-      
-      if (data) {
-        gameDebugger.info('inventory', 'Raw inventory items', { count: data.length, items: data });
-        
-        const enriched = await Promise.all(data.map(async (inv) => {
-          let table = 'cards';
-          if (inv.item_type === 'weapon') table = 'weapons';
-          if (inv.item_type === 'skill' || inv.item_type === 'skill_scroll') table = 'skills';
-          if (inv.item_type === 'material') table = 'materials';
-          if (inv.item_type === 'job_core') table = 'jobs';
-          
-          const { data: def, error: defError } = await supabase.from(table).select('*').eq('id', inv.item_id).single();
-          
-          if (defError) {
-            gameDebugger.warn('inventory', `Item not found in ${table}`, { itemId: inv.item_id, itemType: inv.item_type, error: defError });
-          }
-          
-          return { ...inv, def };
-        }));
-        
-        gameDebugger.info('inventory', 'Enriched inventory items', { count: enriched.length });
-        
-        let filtered = enriched;
-        if (targetSlot) {
-          filtered = enriched.filter(i => 
-            (targetSlot === 'weapon' && i.item_type === 'weapon') || 
-            (targetSlot === 'card' && i.item_type === 'card') || 
-            (targetSlot === 'skill' && (i.item_type === 'skill' || i.item_type === 'skill_scroll'))
-          );
-        }
-        setItems(filtered);
-      }
-      setLoading(false);
+    // Filter based on targetSlot if provided
+    let filtered = storeInventory;
+    
+    if (targetSlot) {
+      filtered = storeInventory.filter(i => 
+        (targetSlot === 'weapon' && i.item_type === 'weapon') || 
+        (targetSlot === 'card' && i.item_type === 'card') || 
+        (targetSlot === 'skill' && (i.item_type === 'skill' || i.item_type === 'skill_scroll'))
+      );
     }
-    loadInventory();
-  }, [targetSlot]);
+    
+    setItems(filtered);
+    setLoading(false);
+    
+    gameDebugger.info('inventory', 'Using store inventory', { 
+      count: storeInventory.length,
+      filtered: filtered.length 
+    });
+  }, [storeInventory, targetSlot]);
 
   const filteredItems = items.filter(item => {
     const matchesFilter = filter === 'all' || item.item_type === filter;
