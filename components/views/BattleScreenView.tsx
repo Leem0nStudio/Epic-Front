@@ -307,7 +307,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       </div>
 
       {/* FIELD: Battle View Area */}
-      <div className="flex-1 relative z-10 px-4 flex flex-col justify-center overflow-visible">
+      <div className="flex-1 relative z-10 px-4 flex flex-col justify-center overflow-hidden">
         {/* Enemies Section */}
         <div className="flex justify-center gap-12 -mt-16">
           {enemyUnits.map((enemy) => (
