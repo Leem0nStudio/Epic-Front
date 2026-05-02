@@ -69,7 +69,7 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
 
   const filteredItems = items.filter(item => {
     const matchesFilter = filter === 'all' || item.item_type === filter;
-    const matchesSearch = !search || item.def?.name?.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = !search || item.definition?.name?.toLowerCase().includes(search.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -113,10 +113,10 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
         ) : (
           <div className="grid grid-cols-4 gap-3">
             {filteredItems.map((item, idx) => {
-              const rarity = getRarityCode(item.def?.rarity);
+              const rarity = getRarityCode(item.definition?.rarity);
               return (
                 <motion.button key={item.id} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }} onClick={() => { if (item.item_type === 'card') setSelectedCard(item.item_id); else if (item.item_type === 'skill' || item.item_type === 'skill_scroll') setSelectedSkill(item.item_id); else onEquip(item); }}>
-                  <RarityBorder rarity={item.def?.rarity} className="transition-all hover:scale-105 active:scale-95">
+                  <RarityBorder rarity={item.definition?.rarity} className="transition-all hover:scale-105 active:scale-95">
                     <div className="w-full h-full rounded-lg bg-black/40 flex items-center justify-center relative overflow-hidden">
                       {item.item_type === 'card' && <img src={AssetService.getCardUrl(item.item_id)} alt="" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
                       {item.item_type === 'weapon' && <img src={AssetService.getWeaponIconUrl(item.item_id)} alt="" className="w-10 h-10 object-contain" />}

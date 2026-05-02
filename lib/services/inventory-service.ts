@@ -68,16 +68,20 @@ function invalidateCache(playerId: string) {
 export class InventoryService {
   /**
    * Get player inventory - returns cached if available
+   * Returns empty array if no player ID (graceful fallback)
    */
   static async getInventory(playerId?: string): Promise<InventoryItem[]> {
-    if (!supabase) throw new Error("Supabase not initialized");
+    if (!supabase) {
+      gameDebugger.warn('inventory', 'Supabase not initialized');
+      return [];
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
     const targetPlayerId = playerId || user?.id;
     
     if (!targetPlayerId) {
-      gameDebugger.error('inventory', 'No player ID provided');
-      throw new Error("No player ID");
+      gameDebugger.warn('inventory', 'No player ID, returning empty inventory');
+      return [];
     }
 
     // Check cache first
