@@ -11,7 +11,7 @@ import { TrainingService } from '@/lib/services/training-service';
 import { DailyRewardsService } from '@/lib/services/daily-rewards-service';
 import { Stage } from '@/lib/rpg-system/campaign-types';
 
-export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'quests' | 'stage_details' | 'training' | 'daily_rewards';
+export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'quests' | 'stage_details' | 'training' | 'daily_rewards' | 'arena' | 'tower' | 'guild';
 
 interface GameState {
   // Auth & Loading State

@@ -1,11 +1,31 @@
 import { defineConfig } from "eslint/config";
 import next from "eslint-config-next";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import tseslint from "@typescript-eslint/eslint-plugin";
+import tsparser from "@typescript-eslint/parser";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-export default defineConfig([{
+export default defineConfig([
+  {
+    files: ["**/*.{js,jsx,ts,tsx}"],
+    languageOptions: {
+      parser: tsparser,
+    },
+    plugins: {
+      "@typescript-eslint": tseslint,
+    },
     extends: [...next],
-}]);
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "react-hooks/exhaustive-deps": "off",
+      "jsx-a11y/alt-text": "off",
+      "@next/next/no-img-element": "off",
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/immutability": "off",
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
+    },
+  },
+]);

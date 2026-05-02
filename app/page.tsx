@@ -13,9 +13,12 @@ import { BattleScreenView } from '@/components/views/BattleScreenView';
 import { CampaignMapView } from '@/components/views/CampaignMapView';
 import { QuestLogView } from '@/components/views/QuestLogView';
 import { StageDetailsView } from '@/components/views/StageDetailsView';
-import { TrainingView } from '@/components/views/TrainingView';
 import { DailyRewardsView } from '@/components/views/DailyRewardsView';
+import { TrainingView } from '@/components/views/TrainingView';
 import { AuthView } from '@/components/views/AuthView';
+import { ArenaView } from '@/components/views/ArenaView';
+import { TowerView } from '@/components/views/TowerView';
+import { GuildView } from '@/components/views/GuildView';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -122,7 +125,20 @@ export default function Applet() {
       case 'daily_rewards':
         return <DailyRewardsView 
                   onBack={() => actions.navigateTo('home')}
-                  onUpdate={actions.refreshState}
+                />;
+      case 'arena':
+        return <ArenaView 
+                  onBack={() => actions.navigateTo('home')}
+                  playerPower={state.profile?.power || 5000}
+                />;
+      case 'tower':
+        return <TowerView 
+                  onBack={() => actions.navigateTo('home')}
+                  playerPower={state.profile?.power || 5000}
+                />;
+      case 'guild':
+        return <GuildView 
+                  onBack={() => actions.navigateTo('home')}
                 />;
       default:
         return (

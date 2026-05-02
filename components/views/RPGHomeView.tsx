@@ -19,12 +19,18 @@ import {
   Shield,
   Info,
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  Gift,
+  Trophy,
+  Crown,
+  Castle
 } from 'lucide-react';
 import { AssetService } from '@/lib/services/asset-service';
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { Button } from '@/components/ui/Button';
+import { LevelProgress } from '@/components/ui/LevelProgress';
+import { getExpForNextLevel, getUnlockForLevel } from '@/lib/config/level-curve';
 
 interface RPGHomeViewProps {
   saveData: any;
@@ -188,21 +194,19 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
               </div>
            </div>
            
-           <div className="flex flex-col gap-1">
-              <h2 className="text-white text-sm font-black tracking-widest uppercase italic drop-shadow-md">
-                {saveData.profile?.username || "Commander"}
-              </h2>
-              <div className="flex items-center gap-2">
-                 <div className="w-32 h-1.5 bg-black/60 rounded-full border border-white/5 overflow-hidden">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${expProgress}%` }}
-                      className="h-full bg-gradient-to-r from-[#F5C76B] to-[#FFD88F] shadow-[0_0_8px_rgba(245,199,107,0.5)]" 
-                    />
-                 </div>
-                 <span className="text-[8px] font-black text-white/40 uppercase tracking-tighter">{playerExp} / {nextLevelExp}</span>
-              </div>
-           </div>
+<div className="flex flex-col gap-1">
+               <h2 className="text-white text-sm font-black tracking-widest uppercase italic drop-shadow-md">
+                 {saveData.profile?.username || "Commander"}
+               </h2>
+               <div className="w-40">
+                 <LevelProgress 
+                   level={playerLevel} 
+                   currentExp={playerExp}
+                   showUnlocks={true}
+                   compact={true}
+                 />
+               </div>
+            </div>
         </div>
 
         {/* Right: Currencies */}
@@ -219,16 +223,27 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
                </button>
              </motion.div>
              
-             <motion.div 
-               whileHover={{ scale: 1.05 }}
-               className="bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-3 pl-3 pr-1 py-1 min-w-[110px] shadow-lg"
-             >
-               <Diamond size={14} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
-               <span className="text-[11px] font-black text-white font-stats flex-1 text-center">{displayGems.toLocaleString()}</span>
-               <button className="w-5 h-5 rounded-lg bg-cyan-400/20 text-cyan-400 flex items-center justify-center hover:bg-cyan-400/30 transition-colors">
-                 <span className="text-xs font-black">+</span>
-               </button>
-             </motion.div>
+<motion.div 
+                whileHover={{ scale: 1.05 }}
+                className="bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-3 pl-3 pr-1 py-1 min-w-[110px] shadow-lg"
+              >
+                <Diamond size={14} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
+                <span className="text-[11px] font-black text-white font-stats flex-1 text-center">{displayGems.toLocaleString()}</span>
+                <button className="w-5 h-5 rounded-lg bg-cyan-400/20 text-cyan-400 flex items-center justify-center hover:bg-cyan-400/30 transition-colors">
+                  <span className="text-xs font-black">+</span>
+                </button>
+              </motion.div>
+
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onNavigate('daily_rewards')}
+                className="relative p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl border border-purple-400 shadow-lg"
+                title="Daily Rewards"
+              >
+                <Gift size={20} className="text-white" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+              </motion.button>
           </div>
           
           <button className="p-3 bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl text-white/60 hover:text-white transition-all active:scale-90 relative shadow-xl">
@@ -409,6 +424,65 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
               ))}
             </div>
           </div>
+
+          {/* Contextual Feature Buttons - Unlock based on level */}
+          {playerLevel >= 15 && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="px-6 pb-4"
+            >
+              <div className="text-white/30 text-[9px] font-bold uppercase tracking-widest text-center mb-2">
+                Available Features
+              </div>
+              <div className="flex gap-2 justify-center">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onNavigate('guild')}
+                  className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-xl border border-indigo-500/30 flex flex-col items-center gap-1"
+                >
+                  <Users size={18} className="text-indigo-400" />
+                  <span className="text-[8px] font-bold text-indigo-300 uppercase">Guild</span>
+                </motion.button>
+
+                {playerLevel >= 30 && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => onNavigate('arena')}
+                    className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-xl border border-red-500/30 flex flex-col items-center gap-1"
+                  >
+                    <Trophy size={18} className="text-red-400" />
+                    <span className="text-[8px] font-bold text-red-300 uppercase">Arena PvP</span>
+                  </motion.button>
+                )}
+
+                {playerLevel >= 35 && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => onNavigate('tower')}
+                    className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-xl border border-amber-500/30 flex flex-col items-center gap-1"
+                  >
+                    <Castle size={18} className="text-amber-400" />
+                    <span className="text-[8px] font-bold text-amber-300 uppercase">Tower</span>
+                  </motion.button>
+                )}
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onNavigate('daily_rewards')}
+                  className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl border border-green-500/30 flex flex-col items-center gap-1"
+                >
+                  <Gift size={18} className="text-green-400" />
+                  <span className="text-[8px] font-bold text-green-300 uppercase">Daily</span>
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
       </div>
     </div>
   );

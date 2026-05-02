@@ -57,6 +57,7 @@ export interface CombatUnit {
   isTaunting: boolean;
   sprite_id?: string;
   icon_id?: string;
+  modifierIds?: string[];
 }
 
 export interface CombatState {

@@ -56,7 +56,8 @@ export class AssetService {
     'currency_gem': 'currency_gem_icon.png',
     'tab_party': 'tab_icon_party.png',
     'tab_guild': 'tab_icon_guild.png',
-    'world': 'world_button_base.png'
+    'world': 'world_button_base.png',
+    'logo': 'logo.png'
   };
 
   // Background mappings (follows naming convention: bg_[name]_1920.jpg)

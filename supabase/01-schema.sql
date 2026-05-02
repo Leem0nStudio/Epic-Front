@@ -1,6 +1,6 @@
--- Epic RPG Database Schema
--- This file contains all table definitions and Row Level Security policies
--- Run this first to initialize the database structure
+-- Epic RPG Database Schema - TABLES ONLY
+-- This file contains table definitions, constraints, and indexes
+-- Run this FIRST
 
 -- =====================================================
 -- SECTION 1: METADATA & CONFIG
@@ -70,6 +70,61 @@ CREATE TABLE IF NOT EXISTS job_cores (
 );
 
 -- =====================================================
+-- SECTION 2B: NEW SKILL SYSTEM (Modular/Combo)
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS tags (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS triggers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS effects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    type TEXT NOT NULL,
+    value NUMERIC,
+    duration INTEGER,
+    extra JSONB
+);
+
+CREATE TABLE IF NOT EXISTS skill_modules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    version TEXT REFERENCES game_configs(version),
+    name TEXT NOT NULL,
+    description TEXT,
+    base_power INTEGER NOT NULL,
+    cooldown INTEGER DEFAULT 0,
+    tags TEXT[] DEFAULT ARRAY[]::TEXT[],
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS skill_module_tags (
+    skill_id UUID REFERENCES skill_modules(id) ON DELETE CASCADE,
+    tag_id UUID REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (skill_id, tag_id)
+);
+
+CREATE TABLE IF NOT EXISTS skill_module_effects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    skill_id UUID REFERENCES skill_modules(id) ON DELETE CASCADE,
+    trigger_id UUID REFERENCES triggers(id) ON DELETE CASCADE,
+    effect_id UUID REFERENCES effects(id) ON DELETE CASCADE,
+    condition JSONB DEFAULT '{}',
+    order_index INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS job_skill_modules (
+    job_id TEXT REFERENCES jobs(id) ON DELETE CASCADE,
+    skill_module_id UUID REFERENCES skill_modules(id) ON DELETE CASCADE,
+    slot_index INTEGER DEFAULT 0,
+    PRIMARY KEY (job_id, skill_module_id)
+);
+
+-- =====================================================
 -- SECTION 3: PLAYER DATA TABLES
 -- =====================================================
 
@@ -114,10 +169,6 @@ CREATE TABLE IF NOT EXISTS units (
     icon_id TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- Foreign key: units.current_job_id must reference a valid job
-ALTER TABLE units ADD CONSTRAINT fk_units_current_job 
-    FOREIGN KEY (current_job_id) REFERENCES jobs(id);
 
 CREATE TABLE IF NOT EXISTS inventory (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -165,7 +216,36 @@ CREATE TABLE IF NOT EXISTS player_daily_rewards (
 );
 
 -- =====================================================
--- SECTION 4: ENABLE ROW LEVEL SECURITY
+-- SECTION 4: CHECK CONSTRAINTS
+-- =====================================================
+
+ALTER TABLE players ADD CONSTRAINT chk_players_energy CHECK (energy >= 0);
+ALTER TABLE players ADD CONSTRAINT chk_players_currency CHECK (currency >= 0);
+ALTER TABLE players ADD CONSTRAINT chk_players_level CHECK (level >= 1);
+ALTER TABLE players ADD CONSTRAINT chk_players_max_energy CHECK (max_energy >= 1);
+
+ALTER TABLE units ADD CONSTRAINT chk_units_level CHECK (level >= 1);
+ALTER TABLE units ADD CONSTRAINT chk_units_exp CHECK (exp >= 0);
+
+ALTER TABLE inventory ADD CONSTRAINT chk_inventory_quantity CHECK (quantity > 0);
+
+ALTER TABLE party ADD CONSTRAINT chk_party_slot CHECK (slot_index >= 0 AND slot_index <= 2);
+
+ALTER TABLE recruitment_queue ADD CONSTRAINT chk_recruitment_slot CHECK (slot_index >= 0 AND slot_index <= 2);
+
+-- =====================================================
+-- SECTION 5: INDEXES
+-- =====================================================
+
+CREATE INDEX IF NOT EXISTS idx_units_player_level ON units(player_id, level);
+CREATE INDEX IF NOT EXISTS idx_inventory_player_type ON inventory(player_id, item_type);
+CREATE INDEX IF NOT EXISTS idx_party_player ON party(player_id);
+CREATE INDEX IF NOT EXISTS idx_gacha_state_player ON gacha_state(player_id);
+CREATE INDEX IF NOT EXISTS idx_campaign_progress_player_stage ON campaign_progress(player_id, stage_id);
+CREATE INDEX IF NOT EXISTS idx_player_daily_rewards_player ON player_daily_rewards(player_id);
+
+-- =====================================================
+-- SECTION 6: ENABLE RLS
 -- =====================================================
 
 ALTER TABLE game_configs ENABLE ROW LEVEL SECURITY;
@@ -184,136 +264,116 @@ ALTER TABLE campaign_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE player_daily_rewards ENABLE ROW LEVEL SECURITY;
 
 -- =====================================================
--- SECTION 5: ROW LEVEL SECURITY POLICIES
+-- SECTION 7: RLS POLICIES - PLAYER DATA
 -- =====================================================
 
--- Players: Read own data
+-- Players
 CREATE POLICY "Allow authenticated players read own data" ON players
-    FOR SELECT TO authenticated
-    USING (auth.uid() = id);
+    FOR SELECT TO authenticated USING (auth.uid() = id);
 
--- Players: Insert own data
 CREATE POLICY "Allow authenticated players create own data" ON players
-    FOR INSERT TO authenticated
-    WITH CHECK (auth.uid() = id);
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
 
--- Players: Update own data
 CREATE POLICY "Allow authenticated players update own data" ON players
-    FOR UPDATE TO authenticated
-    USING (auth.uid() = id)
-    WITH CHECK (auth.uid() = id);
+    FOR UPDATE TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
--- Units: Read own units
+CREATE POLICY "Allow authenticated players delete own account" ON players
+    FOR DELETE TO authenticated USING (auth.uid() = id);
+
+-- Units
 CREATE POLICY "Allow authenticated players read own units" ON units
-    FOR SELECT TO authenticated
-    USING (auth.uid() = player_id);
+    FOR SELECT TO authenticated USING (auth.uid() = player_id);
 
--- Units: Insert own units
 CREATE POLICY "Allow authenticated players insert own units" ON units
-    FOR INSERT TO authenticated
-    WITH CHECK (auth.uid() = player_id);
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = player_id);
 
--- Units: Update own units
 CREATE POLICY "Allow authenticated players update own units" ON units
-    FOR UPDATE TO authenticated
-    USING (auth.uid() = player_id)
-    WITH CHECK (auth.uid() = player_id);
+    FOR UPDATE TO authenticated USING (auth.uid() = player_id) WITH CHECK (auth.uid() = player_id);
 
--- Inventory: Read own inventory
+CREATE POLICY "Allow authenticated players delete own units" ON units
+    FOR DELETE TO authenticated USING (auth.uid() = player_id);
+
+-- Inventory
 CREATE POLICY "Allow authenticated players read own inventory" ON inventory
-    FOR SELECT TO authenticated
-    USING (auth.uid() = player_id);
+    FOR SELECT TO authenticated USING (auth.uid() = player_id);
 
--- Inventory: Insert inventory
 CREATE POLICY "Allow authenticated players insert inventory" ON inventory
-    FOR INSERT TO authenticated
-    WITH CHECK (auth.uid() = player_id);
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = player_id);
 
--- Inventory: Update inventory
 CREATE POLICY "Allow authenticated players update inventory" ON inventory
-    FOR UPDATE TO authenticated
-    USING (auth.uid() = player_id)
-    WITH CHECK (auth.uid() = player_id);
+    FOR UPDATE TO authenticated USING (auth.uid() = player_id) WITH CHECK (auth.uid() = player_id);
 
--- Party: Read own party
+CREATE POLICY "Allow authenticated players delete own items" ON inventory
+    FOR DELETE TO authenticated USING (auth.uid() = player_id);
+
+-- Party
 CREATE POLICY "Allow authenticated players read own party" ON party
-    FOR SELECT TO authenticated
-    USING (auth.uid() = player_id);
+    FOR SELECT TO authenticated USING (auth.uid() = player_id);
 
--- Party: Insert party
 CREATE POLICY "Allow authenticated players insert party" ON party
-    FOR INSERT TO authenticated
-    WITH CHECK (auth.uid() = player_id);
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = player_id);
 
--- Party: Update party
 CREATE POLICY "Allow authenticated players update party" ON party
-    FOR UPDATE TO authenticated
-    USING (auth.uid() = player_id)
-    WITH CHECK (auth.uid() = player_id);
+    FOR UPDATE TO authenticated USING (auth.uid() = player_id) WITH CHECK (auth.uid() = player_id);
 
--- Recruitment Queue: Read own queue
+CREATE POLICY "Allow authenticated players delete own party" ON party
+    FOR DELETE TO authenticated USING (auth.uid() = player_id);
+
+-- Recruitment Queue
 CREATE POLICY "Allow authenticated players read own recruitment_queue" ON recruitment_queue
-    FOR SELECT TO authenticated
-    USING (auth.uid() = player_id);
+    FOR SELECT TO authenticated USING (auth.uid() = player_id);
 
--- Recruitment Queue: Insert queue entries
 CREATE POLICY "Allow authenticated players insert recruitment_queue" ON recruitment_queue
-    FOR INSERT TO authenticated
-    WITH CHECK (auth.uid() = player_id);
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = player_id);
 
--- Recruitment Queue: Update queue entries
 CREATE POLICY "Allow authenticated players update recruitment_queue" ON recruitment_queue
-    FOR UPDATE TO authenticated
-    USING (auth.uid() = player_id)
-    WITH CHECK (auth.uid() = player_id);
+    FOR UPDATE TO authenticated USING (auth.uid() = player_id) WITH CHECK (auth.uid() = player_id);
 
--- Gacha State: Read own gacha state
+CREATE POLICY "Allow authenticated players delete own recruitment" ON recruitment_queue
+    FOR DELETE TO authenticated USING (auth.uid() = player_id);
+
+-- Gacha State
 CREATE POLICY "Allow authenticated players read own gacha_state" ON gacha_state
-    FOR SELECT TO authenticated
-    USING (auth.uid() = player_id);
+    FOR SELECT TO authenticated USING (auth.uid() = player_id);
 
--- Gacha State: Insert gacha state
 CREATE POLICY "Allow authenticated players insert gacha_state" ON gacha_state
-    FOR INSERT TO authenticated
-    WITH CHECK (auth.uid() = player_id);
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = player_id);
 
--- Gacha State: Update gacha state
 CREATE POLICY "Allow authenticated players update gacha_state" ON gacha_state
-    FOR UPDATE TO authenticated
-    USING (auth.uid() = player_id)
-    WITH CHECK (auth.uid() = player_id);
+    FOR UPDATE TO authenticated USING (auth.uid() = player_id) WITH CHECK (auth.uid() = player_id);
 
--- Campaign Progress: Read own progress
+CREATE POLICY "Allow authenticated players delete own gacha" ON gacha_state
+    FOR DELETE TO authenticated USING (auth.uid() = player_id);
+
+-- Campaign Progress
 CREATE POLICY "Allow authenticated players read own campaign_progress" ON campaign_progress
-    FOR SELECT TO authenticated
-    USING (auth.uid() = player_id);
+    FOR SELECT TO authenticated USING (auth.uid() = player_id);
 
--- Campaign Progress: Insert progress
 CREATE POLICY "Allow authenticated players insert campaign_progress" ON campaign_progress
-    FOR INSERT TO authenticated
-    WITH CHECK (auth.uid() = player_id);
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = player_id);
 
--- Campaign Progress: Update progress
 CREATE POLICY "Allow authenticated players update campaign_progress" ON campaign_progress
-    FOR UPDATE TO authenticated
-    USING (auth.uid() = player_id)
-    WITH CHECK (auth.uid() = player_id);
+    FOR UPDATE TO authenticated USING (auth.uid() = player_id) WITH CHECK (auth.uid() = player_id);
 
--- Daily Rewards: Read own rewards
+CREATE POLICY "Allow authenticated players delete own campaign" ON campaign_progress
+    FOR DELETE TO authenticated USING (auth.uid() = player_id);
+
+-- Daily Rewards
 CREATE POLICY "Allow authenticated players read own daily_rewards" ON player_daily_rewards
-    FOR SELECT TO authenticated
-    USING (auth.uid() = player_id);
+    FOR SELECT TO authenticated USING (auth.uid() = player_id);
 
--- Daily Rewards: Update own rewards
 CREATE POLICY "Allow authenticated players update own daily_rewards" ON player_daily_rewards
-    FOR UPDATE TO authenticated
-    USING (auth.uid() = player_id)
-    WITH CHECK (auth.uid() = player_id);
+    FOR UPDATE TO authenticated USING (auth.uid() = player_id) WITH CHECK (auth.uid() = player_id);
 
--- Static Content: Read access for authenticated users (game configs, jobs, skills, cards, weapons, job_cores)
+CREATE POLICY "Allow authenticated players delete own daily_rewards" ON player_daily_rewards
+    FOR DELETE TO authenticated USING (auth.uid() = player_id);
+
+-- =====================================================
+-- SECTION 8: RLS POLICIES - STATIC CONTENT
+-- =====================================================
+
 CREATE POLICY "Allow authenticated read game_configs" ON game_configs
-    FOR SELECT TO authenticated
-    USING (true);
+    FOR SELECT TO authenticated USING (true);
 
 CREATE POLICY "Allow read skills" ON skills FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Allow read cards" ON cards FOR SELECT TO authenticated USING (true);
@@ -322,96 +382,7 @@ CREATE POLICY "Allow read jobs" ON jobs FOR SELECT TO authenticated USING (true)
 CREATE POLICY "Allow read job_cores" ON job_cores FOR SELECT TO authenticated USING (true);
 
 -- =====================================================
--- SECTION 5: RLS DELETE POLICIES
--- =====================================================
-
--- Players: Delete own account
-CREATE POLICY "Allow authenticated players delete own account" ON players
-    FOR DELETE TO authenticated
-    USING (auth.uid() = id);
-
--- Units: Delete own units
-CREATE POLICY "Allow authenticated players delete own units" ON units
-    FOR DELETE TO authenticated
-    USING (auth.uid() = player_id);
-
--- Inventory: Delete own items
-CREATE POLICY "Allow authenticated players delete own inventory" ON inventory
-    FOR DELETE TO authenticated
-    USING (auth.uid() = player_id);
-
--- Party: Delete own party slots
-CREATE POLICY "Allow authenticated players delete own party" ON party
-    FOR DELETE TO authenticated
-    USING (auth.uid() = player_id);
-
--- Recruitment: Delete own recruitment slots
-CREATE POLICY "Allow authenticated players delete own recruitment" ON recruitment_queue
-    FOR DELETE TO authenticated
-    USING (auth.uid() = player_id);
-
--- Gacha: Delete own gacha state
-CREATE POLICY "Allow authenticated players delete own gacha" ON gacha_state
-    FOR DELETE TO authenticated
-    USING (auth.uid() = player_id);
-
--- Campaign: Delete own progress
-CREATE POLICY "Allow authenticated players delete own campaign" ON campaign_progress
-    FOR DELETE TO authenticated
-    USING (auth.uid() = player_id);
-
--- Daily Rewards: Delete own rewards
-CREATE POLICY "Allow authenticated players delete own daily_rewards" ON player_daily_rewards
-    FOR DELETE TO authenticated
-    USING (auth.uid() = player_id);
-
--- =====================================================
--- SECTION 6: CHECK CONSTRAINTS
--- =====================================================
-
--- Players: ensure non-negative values and valid levels
-ALTER TABLE players ADD CONSTRAINT chk_players_energy CHECK (energy >= 0);
-ALTER TABLE players ADD CONSTRAINT chk_players_currency CHECK (currency >= 0);
-ALTER TABLE players ADD CONSTRAINT chk_players_level CHECK (level >= 1);
-ALTER TABLE players ADD CONSTRAINT chk_players_max_energy CHECK (max_energy >= 1);
-
--- Units: ensure non-negative exp and valid levels
-ALTER TABLE units ADD CONSTRAINT chk_units_level CHECK (level >= 1);
-ALTER TABLE units ADD CONSTRAINT chk_units_exp CHECK (exp >= 0);
-
--- Inventory: ensure positive quantity
-ALTER TABLE inventory ADD CONSTRAINT chk_inventory_quantity CHECK (quantity > 0);
-
--- Party: ensure valid slot index (0-2 for 3 slots)
-ALTER TABLE party ADD CONSTRAINT chk_party_slot CHECK (slot_index >= 0 AND slot_index <= 2);
-
--- Recruitment queue: ensure valid slot index
-ALTER TABLE recruitment_queue ADD CONSTRAINT chk_recruitment_slot CHECK (slot_index >= 0 AND slot_index <= 2);
-
--- =====================================================
--- SECTION 5B: COMPOSITE INDEXES FOR PERFORMANCE
--- =====================================================
-
--- Index for querying units by player with level filter (frequent in battle/party)
-CREATE INDEX IF NOT EXISTS idx_units_player_level ON units(player_id, level);
-
--- Index for querying inventory by player and item type (frequent filtering)
-CREATE INDEX IF NOT EXISTS idx_inventory_player_type ON inventory(player_id, item_type);
-
--- Index for party lookups by player (frequent in battle)
-CREATE INDEX IF NOT EXISTS idx_party_player ON party(player_id);
-
--- Index for gacha state by player (frequent in gacha view)
-CREATE INDEX IF NOT EXISTS idx_gacha_state_player ON gacha_state(player_id);
-
--- Index for campaign progress by player and stage (frequent in campaign)
-CREATE INDEX IF NOT EXISTS idx_campaign_progress_player_stage ON campaign_progress(player_id, stage_id);
-
--- Index for daily rewards by player (frequent in daily rewards view)
-CREATE INDEX IF NOT EXISTS idx_player_daily_rewards_player ON player_daily_rewards(player_id);
-
--- =====================================================
--- SECTION 6: GRANTS & PERMISSIONS
+-- SECTION 9: GRANTS
 -- =====================================================
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON players TO authenticated;
@@ -428,3 +399,29 @@ GRANT SELECT ON skills TO authenticated;
 GRANT SELECT ON cards TO authenticated;
 GRANT SELECT ON weapons TO authenticated;
 GRANT SELECT ON job_cores TO authenticated;
+
+-- New Skill System
+GRANT SELECT ON tags TO authenticated;
+GRANT SELECT ON triggers TO authenticated;
+GRANT SELECT ON effects TO authenticated;
+GRANT SELECT ON skill_modules TO authenticated;
+GRANT SELECT ON skill_module_tags TO authenticated;
+GRANT SELECT ON skill_module_effects TO authenticated;
+GRANT SELECT ON job_skill_modules TO authenticated;
+
+-- RLS for new tables
+ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE triggers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE effects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE skill_modules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE skill_module_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE skill_module_effects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE job_skill_modules ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow read tags" ON tags FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read triggers" ON triggers FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read effects" ON effects FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read skill_modules" ON skill_modules FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read skill_module_tags" ON skill_module_tags FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read skill_module_effects" ON skill_module_effects FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read job_skill_modules" ON job_skill_modules FOR SELECT TO authenticated USING (true);

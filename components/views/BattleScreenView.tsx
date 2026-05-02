@@ -673,8 +673,14 @@ function SkillButton({ skill, onUse, cooldown }: { skill: SkillDefinition, onUse
 
 function LoadingScreen() {
   return (
-    <div className="flex-1 flex items-center justify-center bg-[#020508]">
-      <LoadingSpinner text="Preparando escenario..." />
+    <div 
+      className="flex-1 flex items-center justify-center bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/assets/bg/loginbg.png')" }}
+    >
+      <div className="absolute inset-0 bg-black/60" />
+      <div className="relative z-10">
+        <LoadingSpinner text="Preparando escenario..." />
+      </div>
     </div>
   );
 }

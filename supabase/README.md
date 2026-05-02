@@ -1,98 +1,213 @@
-# Supabase Database Setup Guide
+# Supabase Database Setup
 
-## Overview
-The database schema for Epic RPG is organized into 3 main files for production use.
+## Prerequisites
 
-## Setup Instructions
+1. Tener un proyecto de Supabase creado
+2. Tener las credenciales del proyecto (URL y anon key)
+3. Haber configurado las variables de entorno en `.env.local`
 
-Execute files in this order in the Supabase SQL Editor:
+## Quick Setup (3 Steps)
 
-### 1. **schema.sql** (Tables & Policies)
-Creates all database tables, Row Level Security policies, constraints, and indexes.
-- Game configs, jobs, skills, cards, weapons, job cores
-- Player data tables (players, units, inventory, party, etc.)
-- RLS policies for data protection (SELECT, INSERT, UPDATE, DELETE)
-- CHECK constraints for data integrity (energy >= 0, level >= 1, etc.)
-- Composite indexes for query performance
-- Foreign key: units.current_job_id → jobs(id)
+### Step 1: Configurar entorno
 
-### 2. **functions.sql** (RPCs & Procedures)
-Creates all stored procedures and RPC functions.
-- Player initialization
-- Gacha system
-- Unit evolution
-- Energy system
-- Campaign & battle logic
-- Unit progression and skills
-- Currency management
+Crear archivo `.env.local` en la raíz del proyecto:
 
-### 3. **seed.sql** (Initial Data)
-Populates the database with initial game content.
-- Game config (v1.0.0)
-- 5 Jobs (Novice, Swordman, Knight, Mage, Wizard)
-- 10 Skills (spells, attacks, buffs)
-- 3 Cards (character boost cards)
-- 3 Weapons (sword, staff, etc.)
-- 10 Job Cores (unlockable job items)
-
-### 4. **cleanup.sql** (Reset Database)
-Drops all functions, views, and tables.
-Use only when you need to completely reset the database.
-
-## File Organization
-
-```
-supabase/
-├── 01-schema.sql       # Tables + RLS policies + constraints + indexes
-├── 02-functions.sql    # RPCs & stored procedures
-├── 03-seed.sql        # Initial game data
-├── 04-cleanup.sql     # Complete database reset
-└── README.md          # This file
+```env
+NEXT_PUBLIC_SUPABASE_URL=tu_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_supabase_anon_key
+GEMINI_API_KEY=tu_gemini_api_key
 ```
 
-## Deprecated Files (Do Not Use)
-The following files have been consolidated and should not be executed:
-- `add_daily_rewards.sql` → Moved to 01-schema.sql
-- `epic_schema.sql` → Split into 01-schema.sql & 02-functions.sql
-- `rls_policies.sql` → Moved to 01-schema.sql
-- `fix_resource_systems.sql` → Moved to 02-functions.sql
-- `epic_seed.sql` → Renamed to 03-seed.sql
-- `epic_cleanup.sql` → Renamed to 04-cleanup.sql
-- `schema-additions.sql` → Experimental (not required for base game)
+### Step 2: Abrir SQL Editor
 
-## Quick Start
+Ir a: **Supabase Dashboard** → **SQL Editor**
 
-1. Open Supabase SQL Editor
-2. Copy and run **01-schema.sql**
-3. Copy and run **02-functions.sql**
-4. Copy and run **03-seed.sql**
-5. Done! Your database is ready
+```
+https://supabase.com/dashboard/project/TU_PROYECTO/sql-editor
+```
 
-## RLS Policy Details
+### Step 3: Ejecutar los 3 archivos (en orden)
 
-All player-scoped tables are protected with RLS policies:
-- **players** - Users can only access their own player account
-- **units** - Users can only access their own units
-- **inventory** - Users can only access their own inventory
-- **party** - Users can only manage their own party
-- **gacha_state** - Users can only see their own gacha state
-- **campaign_progress** - Users can only see their own progress
-- **player_daily_rewards** - Users can only access their own daily rewards
-- **recruitment_queue** - Users can only manage their own recruitment slots
+Copiar y ejecutar cada archivo completo:
 
-Static content tables (jobs, skills, cards, weapons) are readable by all authenticated users.
+1. **01-schema.sql** → Click "New query" → Paste → Run (Ctrl+Enter)
+2. **03-functions.sql** → New query → Paste → Run
+3. **04-seed.sql** → New query → Paste → Run
 
-## Data Integrity Features
+## Verificar Setup
 
-- **CHECK constraints**: Prevents negative values (energy, currency, level, exp, quantity)
-- **Foreign keys**: Ensures units.current_job_id references valid jobs
-- **Composite indexes**: Optimizes frequent queries (player + level, player + item_type, etc.)
-- **DELETE policies**: Users can delete their own data
+```sql
+-- Ver tablas
+SELECT table_name FROM information_schema.tables 
+WHERE table_schema = 'public' ORDER BY table_name;
 
-## Important Notes
+-- Ver funciones RPC
+SELECT proname FROM pg_proc 
+WHERE pronamespace = 'public'::regnamespace;
 
-- All functions use `SECURITY DEFINER` to ensure proper data access
-- Energy regenerates every 6 minutes
-- Daily rewards track consecutive login streaks
-- Units level up through battle participation
-- Gacha system has pity mechanics (50 pulls = guaranteed legendary)
+-- Ver datos seed
+SELECT COUNT(*) as jobs FROM jobs;
+SELECT COUNT(*) as skills FROM skills;
+SELECT COUNT(*) as weapons FROM weapons;
+```
+
+## Expected Results
+
+- **13+ tables**: players, units, inventory, party, campaign_progress, etc.
+- **13+ functions**: rpc_initialize_player, rpc_pull_gacha, rpc_complete_stage, etc.
+- **Data**: 10+ jobs, 20+ skills, 15+ weapons
+
+#### 2.2 Ejecutar `03-functions.sql`
+- `rpc_initialize_player` - Inicializa jugador con 3 personajes
+- `rpc_pull_gacha` - Sistema de gacha
+- `rpc_evolve_unit` - Evolución de personajes
+- `rpc_regen_energy` - Regeneración de energía
+- `rpc_deduct_energy` - Deducir energía para batallas
+- `rpc_refill_energy_with_gems` - Comprar energía con gemas
+- `rpc_complete_stage` - Completar etapa
+- `rpc_award_unit_exp` - Dar EXP a personajes
+- `rpc_learn_skill` - Aprender habilidades
+- `rpc_equip_skill` - Equipar habilidades
+- `rpc_add_currency` - Añadir moneda
+- `rpc_claim_daily_reward` - Reclamar recompensas diarias
+- `rpc_train_unit` - Entrenar personajes
+
+#### 2.3 Ejecutar `04-seed.sql`
+- Configuración del juego (`game_configs`)
+- Jobs (Novice, Swordman, Knight, Mage, Wizard, etc.)
+- Habilidades base
+- Cartas
+- Armas
+- Job Cores
+
+### 3. Verificar instalación
+
+Ejecutar esta query en SQL Editor para verificar:
+
+```sql
+-- Ver tablas creadas
+SELECT table_name FROM information_schema.tables 
+WHERE table_schema = 'public' ORDER BY table_name;
+
+-- Ver funciones RPC
+SELECT proname FROM pg_proc 
+WHERE pronamespace = 'public'::regnamespace;
+
+-- Ver datos seed
+SELECT COUNT(*) as jobs_count FROM jobs;
+SELECT COUNT(*) as skills_count FROM skills;
+SELECT COUNT(*) as weapons_count FROM weapons;
+SELECT COUNT(*) as cards_count FROM cards;
+```
+
+Deberías ver:
+- 13+ tablas
+- 13+ funciones RPC
+- 10+ jobs
+- 20+ skills
+- 15+ armas
+- 20+ cartas
+
+## Uso en la App
+
+### Primer uso (Onboarding)
+
+1. El usuario se registra/inicia sesión
+2. El sistema detecta que no tiene perfil
+3. Ejecuta automáticamente `rpc_initialize_player`
+4. El jugador recibe:
+   - 3 personajes Novice (physical, ranged, magic)
+   - 1000 monedas
+   - 100 gemas
+   - 30 energía
+
+### Estructura de datos del jugador
+
+```
+players
+├── id (UUID) - linked to auth.users
+├── username
+├── currency (zeny)
+├── premium_currency (gemas)
+├── energy / max_energy
+├── level / exp
+
+units (personajes del jugador)
+├── player_id -> players.id
+├── name
+├── level / exp
+├── base_stats (HP, ATK, DEF, MATK, MDEF, AGI)
+├── growth_rates
+├── affinity (physical, magic, support, ranged)
+├── current_job_id
+├── equipped_*
+
+party (slots de equipo, 3 posiciones)
+├── player_id -> players.id
+├── slot_index (0, 1, 2)
+├── unit_id -> units.id
+
+inventory (obtenidos del gacha)
+├── player_id -> players.id
+├── item_id (referencia a skills/cards/weapons/job_cores)
+├── item_type
+
+campaign_progress
+├── player_id -> players.id
+├── stage_id
+├── stars
+├── best_turns
+├── clear_count
+```
+
+## Troubleshooting
+
+### "El servicio de inicialización no está disponible"
+
+**Causa**: La función `rpc_initialize_player` no está desplegada.
+
+**Solución**: Ejecutar `03-functions.sql` en el SQL Editor de Supabase.
+
+### No aparecen personajes
+
+**Causa**: El onboarding no se ejecutó correctamente.
+
+**Solución**: 
+1. Verificar que el usuario esté autenticado
+2. Llamar manualmente al onboarding desde la consola:
+```js
+import { OnboardingService } from '@/lib/services/onboarding-service';
+await OnboardingService.initializePlayer('TuNombre', 3);
+```
+
+### Sin energía para batalla
+
+**Causa**: La energía está en 0 y no se regenera.
+
+**Solución**: 
+1. Verificar que `rpc_regen_energy` existe
+2. Ejecutar manualmente:
+```sql
+SELECT rpc_regen_energy();
+-- o desde la app:
+await supabase.rpc('rpc_regen_energy');
+```
+
+### Error de permisos (RLS)
+
+**Causa**: Las políticas RLS bloquean el acceso.
+
+**Solución**: Verificar que las políticas están creadas (ejecutar `01-schema.sql` completo).
+
+## Scripts Adicionales
+
+Si necesitas restablecer la base de datos:
+
+```bash
+# Reset completo (cuidado: borra todo)
+# Ejecutar en SQL Editor:
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+```
+
+Luego volver a ejecutar `01-schema.sql`, `03-functions.sql`, `04-seed.sql`.

@@ -6,6 +6,7 @@ export interface EffectResult {
   value?: number;
   status?: StatusEffect;
   log: string;
+  isCrit?: boolean;
 }
 
 export class EffectEngine {

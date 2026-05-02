@@ -1,5 +1,15 @@
 import { CombatUnit, CombatState, SkillDefinition, TargetType } from '../types/combat';
-import { EffectEngine, EffectResult } from './effect-engine';
+import { EffectEngine } from './effect-engine';
+import { executeSkillWithModule, updateUnitStartTurnWithStatus, loadSkillModuleCached } from './skill-integration';
+import type { EffectResult } from './effect-engine';
+import { BattleService, BattleBet } from './battle-service';
+
+export type BetLevel = 'safe' | 'balanced' | 'all-in';
+
+export interface TurnBet {
+  bet: BattleBet;
+  energyCost: number;
+}
 
 export class BattleManager {
   /**
@@ -10,6 +20,14 @@ export class BattleManager {
     return [...units]
       .filter(u => !u.isDead)
       .sort((a, b) => b.stats.agi - a.stats.agi);
+  }
+
+  static getBetOptions(): { id: BetLevel; label: string; energyCost: number; damageMult: number; critChance: number; description: string }[] {
+    return [
+      { id: 'safe', label: '⚔️ Normal', energyCost: 0, damageMult: 1.0, critChance: 0, description: 'Daño estándar, sin riesgo' },
+      { id: 'balanced', label: '🔥 Apostar 1', energyCost: 1, damageMult: 1.3, critChance: 0.1, description: '+30% daño, 10% crit' },
+      { id: 'all-in', label: '💀 TODO 2', energyCost: 2, damageMult: 1.8, critChance: 0.25, description: '+80% daño, 25% crit' },
+    ];
   }
 
   /**
@@ -75,16 +93,20 @@ export class BattleManager {
   /**
    * Processes a full turn for a unit using a specific skill.
    * When isBurst is true, applies 1.5x damage multiplier and resets burst to 0.
+   * bet applies risk/reward: higher energy wager = more damage + crit chance
    */
   static executeTurn(
     actor: CombatUnit,
     skill: SkillDefinition,
     allUnits: CombatUnit[],
     manualTargetId?: string,
-    isBurst: boolean = false
-  ): { results: EffectResult[], updatedUnits: CombatUnit[] } {
+    isBurst: boolean = false,
+    bet?: BattleBet
+  ): { results: EffectResult[], updatedUnits: CombatUnit[], bonusExp: number } {
     const targets = this.getTargets(actor, skill, allUnits, manualTargetId);
     const results = EffectEngine.processSkill(skill, actor, targets);
+
+    const totalBonusExp = 0;
 
     // Create a new state of units based on results
     let updatedUnits = allUnits.map(u => ({
@@ -105,9 +127,23 @@ export class BattleManager {
       actorInState.burst = 0;
     }
 
+    let bonusExp = 0;
+
     for (const result of results) {
       const target = updatedUnits.find(u => u.id === result.targetId);
       if (!target) continue;
+
+      // Apply bet multiplier to damage (risk/reward system)
+      if (bet && result.type === 'damage' && result.value) {
+        result.value = Math.floor(result.value * bet.multiplier);
+
+        // Crit check for bet
+        if (Math.random() < bet.critChance) {
+          result.value *= 2;
+          result.isCrit = true;
+          bonusExp += Math.floor(result.value * 0.1);
+        }
+      }
 
       // Apply burst damage multiplier
       if (isBurst && result.type === 'damage' && result.value) {
@@ -116,7 +152,10 @@ export class BattleManager {
 
       if (result.type === 'damage' && result.value) {
         target.currentHp = Math.max(0, target.currentHp - result.value);
-        if (target.currentHp <= 0) target.isDead = true;
+        if (target.currentHp <= 0) {
+          target.isDead = true;
+          bonusExp += 20;
+        }
 
         // Burst Charging: Damage dealt adds 10%, damage taken adds 5%
         if (actorInState) actorInState.burst = Math.min(100, actorInState.burst + 10);
@@ -138,28 +177,38 @@ export class BattleManager {
     // Flat turn gain (only if not burst, burst already resets to 0)
     if (!isBurst && actorInState) actorInState.burst = Math.min(100, actorInState.burst + 5);
 
-    return { results, updatedUnits };
+    return { results, updatedUnits, bonusExp };
+  }
+
+/**
+    * Updates status effects and cooldowns for a unit.
+    */
+  static updateUnitStartTurn(unit: CombatUnit): CombatUnit {
+    return updateUnitStartTurnWithStatus(unit);
   }
 
   /**
-   * Updates status effects and cooldowns for a unit.
+   * Executes turn using the modular skill system (skill_modules).
+   * Falls back to legacy system if skill not found in DB.
    */
-  static updateUnitStartTurn(unit: CombatUnit): CombatUnit {
-    const nextStatus = unit.statusEffects
-      .map(s => ({ ...s, remainingTurns: s.remainingTurns - 1 }))
-      .filter(s => s.remainingTurns > 0);
+  static async executeTurnWithModules(
+    actor: CombatUnit,
+    skill: SkillDefinition,
+    allUnits: CombatUnit[],
+    manualTargetId?: string,
+    isBurst: boolean = false
+  ): Promise<{ results: EffectResult[], updatedUnits: CombatUnit[] }> {
+    const targets = this.getTargets(actor, skill, allUnits, manualTargetId);
 
-    const nextCooldowns = { ...unit.cooldowns };
-    Object.keys(nextCooldowns).forEach(id => {
-      nextCooldowns[id] = Math.max(0, nextCooldowns[id] - 1);
-      if (nextCooldowns[id] === 0) delete nextCooldowns[id];
-    });
+    const moduleData = await loadSkillModuleCached(skill.id);
+    if (moduleData) {
+      const result = await executeSkillWithModule(skill.id, actor, targets, allUnits, isBurst);
+      return { 
+        results: result.results as EffectResult[], 
+        updatedUnits: result.updatedUnits 
+      };
+    }
 
-    return {
-      ...unit,
-      statusEffects: nextStatus,
-      cooldowns: nextCooldowns,
-      isTaunting: nextStatus.some(s => s.id === 'taunt')
-    };
+    return this.executeTurn(actor, skill, allUnits, manualTargetId, isBurst);
   }
 }

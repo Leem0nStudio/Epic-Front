@@ -1,6 +1,6 @@
 -- Epic RPG Database Seed Data
 -- This file contains initial data for the game
--- Run this after schema.sql and functions.sql
+-- Run this AFTER 03-functions.sql
 
 -- =====================================================
 -- SECTION 1: GAME CONFIG
@@ -16,32 +16,32 @@ ON CONFLICT (version) DO UPDATE SET is_active = EXCLUDED.is_active;
 
 INSERT INTO jobs (id, version, name, tier, parent_job_id, stat_modifiers, allowed_weapons, skills_unlocked, passive_effects, evolution_requirements)
 VALUES
-('novice', '1.0.0', 'Novice', 0, NULL, 
- '{"hp": 1.0, "atk": 1.0, "def": 1.0, "matk": 1.0, "mdef": 1.0, "agi": 1.0}', 
- '{"dagger", "sword"}', 
- '[{"id": "basic_attack", "name": "Ataque Básico", "type": "active", "powerMod": 1.0, "cooldown": 0}, {"id": "first_aid", "name": "First Aid", "type": "active", "powerMod": 0.5, "cooldown": 2}]', 
- '{}', 
+('novice', '1.0.0', 'Novice', 0, NULL,
+ '{"hp": 1.0, "atk": 1.0, "def": 1.0, "matk": 1.0, "mdef": 1.0, "agi": 1.0}',
+ '{"dagger", "sword"}',
+ '[{"id": "basic_attack", "name": "Ataque Básico", "type": "active", "powerMod": 1.0, "cooldown": 0}, {"id": "first_aid", "name": "First Aid", "type": "active", "powerMod": 0.5, "cooldown": 2}]',
+ '{}',
  '{"minLevel": 1, "currencyCost": 0, "materials": []}'),
 
-('swordman', '1.0.0', 'Swordman', 1, 'novice', 
- '{"hp": 1.2, "atk": 1.15, "def": 1.1, "matk": 0.8, "mdef": 0.9, "agi": 1.0}', 
- '{"sword", "dagger"}', 
- '[{"id": "bash", "name": "Bash", "type": "active", "powerMod": 1.5, "cooldown": 1}, {"id": "taunt", "name": "Provocar", "type": "active", "powerMod": 0, "cooldown": 3}]', 
- '{"HP Recovery+10%"}', 
+('swordman', '1.0.0', 'Swordman', 1, 'novice',
+ '{"hp": 1.2, "atk": 1.15, "def": 1.1, "matk": 0.8, "mdef": 0.9, "agi": 1.0}',
+ '{"sword", "dagger"}',
+ '[{"id": "bash", "name": "Bash", "type": "active", "powerMod": 1.5, "cooldown": 1}, {"id": "taunt", "name": "Provocar", "type": "active", "powerMod": 0, "cooldown": 3}]',
+ '{"HP Recovery+10%"}',
  '{"minLevel": 10, "currencyCost": 1000, "materials": []}'),
 
-('knight', '1.0.0', 'Knight', 2, 'swordman', 
- '{"hp": 1.5, "atk": 1.3, "def": 1.4, "matk": 0.7, "mdef": 1.0, "agi": 0.9}', 
- '{"sword"}', 
- '[{"id": "bowling_bash", "name": "Bowling Bash", "type": "active", "powerMod": 3.0, "cooldown": 3}, {"id": "shield_bash", "name": "Shield Bash", "type": "active", "powerMod": 2.0, "cooldown": 2}]', 
- '{"Spear Mastery"}', 
+('knight', '1.0.0', 'Knight', 2, 'swordman',
+ '{"hp": 1.5, "atk": 1.3, "def": 1.4, "matk": 0.7, "mdef": 1.0, "agi": 0.9}',
+ '{"sword"}',
+ '[{"id": "bowling_bash", "name": "Bowling Bash", "type": "active", "powerMod": 3.0, "cooldown": 3}, {"id": "shield_bash", "name": "Shield Bash", "type": "active", "powerMod": 2.0, "cooldown": 2}]',
+ '{"Spear Mastery"}',
  '{"minLevel": 40, "currencyCost": 5000, "materials": [], "requiredJobCore": "core_knight"}'),
 
-('mage', '1.0.0', 'Mage', 1, 'novice', 
- '{"hp": 0.8, "atk": 0.7, "def": 0.8, "matk": 1.4, "mdef": 1.3, "agi": 0.9}', 
- '{"staff", "dagger"}', 
- '[{"id": "fire_bolt", "name": "Fire Bolt", "type": "active", "powerMod": 1.8, "cooldown": 1}, {"id": "ice_arrow", "name": "Ice Arrow", "type": "active", "powerMod": 1.5, "cooldown": 2}]', 
- '{}', 
+('mage', '1.0.0', 'Mage', 1, 'novice',
+ '{"hp": 0.8, "atk": 0.7, "def": 0.8, "matk": 1.4, "mdef": 1.3, "agi": 0.9}',
+ '{"staff", "dagger"}',
+ '[{"id": "fire_bolt", "name": "Fire Bolt", "type": "active", "powerMod": 1.8, "cooldown": 1}, {"id": "ice_arrow", "name": "Ice Arrow", "type": "active", "powerMod": 1.5, "cooldown": 2}]',
+ '{}',
  '{"minLevel": 10, "currencyCost": 1000, "materials": []}'),
 
 ('wizard', '1.0.0', 'Wizard', 2, 'mage',
@@ -148,3 +148,66 @@ VALUES
     -- Tier 4 Job Cores (Endgame)
     ('core_arch_paladin', '1.0.0', 'Arch Paladin Core', 'mythic', 'arch_paladin'),
     ('core_grand_archmage', '1.0.0', 'Grand Archmage Core', 'mythic', 'grand_archmage');
+
+-- =====================================================
+-- SECTION 7: NEW SKILL SYSTEM (Modular/Combo)
+-- =====================================================
+
+-- Tags
+INSERT INTO tags (name) VALUES
+    ('burn'), ('poison'), ('freeze'), ('stun'), ('sleep'),
+    ('crit'), ('aoe'), ('chain'), ('heal'), ('shield'),
+    ('buff'), ('debuff'), ('self_buff'), ('drain')
+ON CONFLICT (name) DO NOTHING;
+
+-- Triggers
+INSERT INTO triggers (name) VALUES
+    ('on_hit'), ('on_crit'), ('on_kill'), ('on_skill_use'), ('on_damage_taken'), ('on_death')
+ON CONFLICT (name) DO NOTHING;
+
+-- Effects
+INSERT INTO effects (type, value, duration, extra) VALUES
+    ('damage', 50, NULL, '{"scaling": "atk"}'::jsonb),
+    ('heal', 30, NULL, '{"scaling": "matk"}'::jsonb),
+    ('apply_status', NULL, 3, '{"status": "burn", "chance": 0.5}'::jsonb),
+    ('apply_status', NULL, 2, '{"status": "poison", "chance": 0.6}'::jsonb),
+    ('apply_status', NULL, 2, '{"status": "stun", "chance": 0.3}'::jsonb),
+    ('shield', 20, 2, NULL),
+    ('buff', NULL, 3, '{"stat": "atk", "multiplier": 1.3}'::jsonb),
+    ('debuff', NULL, 2, '{"stat": "def", "multiplier": 0.7}'::jsonb),
+    ('drain', 10, NULL, '{"heal_percent": 0.5}'::jsonb),
+    ('explode', 100, NULL, '{"radius": 2}'::jsonb),
+    ('reduce_cooldown', -1, NULL, NULL),
+    ('boost_crit', 50, 2, NULL)
+ON CONFLICT DO NOTHING;
+
+-- Skill Modules
+INSERT INTO skill_modules (version, name, description, base_power, cooldown, tags) VALUES
+    ('1.0.0', 'Basic Attack', 'Basic melee attack', 15, 0, ARRAY['crit']),
+    ('1.0.0', 'Fire Strike', 'Fire attack that applies burn', 25, 2, ARRAY['burn', 'aoe']),
+    ('1.0.0', 'Ice Spike', 'Ice attack that may freeze', 20, 2, ARRAY['freeze', 'aoe']),
+    ('1.0.0', 'Thunder', 'Lightning damage to all enemies', 30, 3, ARRAY['aoe']),
+    ('1.0.0', 'Poison Dagger', 'Poisoned blade', 15, 1, ARRAY['poison', 'debuff']),
+    ('1.0.0', 'Healing Light', 'Restore HP to ally', 35, 3, ARRAY['heal']),
+    ('1.0.0', 'Shield Bash', 'Stun with shield', 20, 2, ARRAY['stun', 'shield']),
+    ('1.0.0', 'Berserk', 'Boost attack, lower defense', 40, 4, ARRAY['buff', 'self_buff', 'debuff']),
+    ('1.0.0', 'Chain Lightning', 'Chain attack hits multiple targets', 25, 2, ARRAY['chain', 'aoe']),
+    ('1.0.0', 'Vampire Bite', 'Drain HP from enemy', 20, 2, ARRAY['drain', 'crit']),
+    ('1.0.0', 'Holy Smite', 'Holy damage, bonus vs evil', 35, 3, ARRAY['aoe']),
+    ('1.0.0', 'Focus Shot', 'High crit chance critical hit', 30, 2, ARRAY['crit', 'chain']);
+
+-- Job Skill Modules (skills available per job)
+INSERT INTO job_skill_modules (job_id, skill_module_id, slot_index)
+SELECT 'novice', sm.id, ROW_NUMBER() OVER () - 1
+FROM skill_modules sm WHERE sm.name = 'Basic Attack'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO job_skill_modules (job_id, skill_module_id, slot_index) VALUES
+    ('swordman', (SELECT id FROM skill_modules WHERE name = 'Shield Bash'), 0),
+    ('swordman', (SELECT id FROM skill_modules WHERE name = 'Fire Strike'), 1),
+    ('mage', (SELECT id FROM skill_modules WHERE name = 'Ice Spike'), 0),
+    ('mage', (SELECT id FROM skill_modules WHERE name = 'Thunder'), 1),
+    ('knight', (SELECT id FROM skill_modules WHERE name = 'Shield Bash'), 0),
+    ('knight', (SELECT id FROM skill_modules WHERE name = 'Holy Smite'), 1),
+    ('wizard', (SELECT id FROM skill_modules WHERE name = 'Fire Strike'), 0),
+    ('wizard', (SELECT id FROM skill_modules WHERE name = 'Chain Lightning'), 1);
