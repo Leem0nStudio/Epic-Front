@@ -202,25 +202,28 @@ INSERT INTO skill_modules (version, name, description, base_power, cooldown, tag
 -- =====================================================
 
 -- These are template items that players can obtain
--- For testing: add sample items that can be given to players
+-- Using ON CONFLICT DO NOTHING to handle existing data
 
 INSERT INTO weapons (id, version, name, weapon_type, rarity, stat_bonuses, special_effects)
 VALUES 
     ('weapon_wooden_sword', '1.0.0', 'Espada de Madera', 'sword', 'common', '{"atk": 5}', NULL),
     ('weapon_iron_sword', '1.0.0', 'Espada de Hierro', 'sword', 'rare', '{"atk": 15}', NULL),
-    ('weapon_staff_fire', '1.0.0', 'Bastón de Fuego', 'staff', 'rare', '{"matk": 20}', NULL);
+    ('weapon_staff_fire', '1.0.0', 'Bastón de Fuego', 'staff', 'rare', '{"matk": 20}', NULL)
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO cards (id, version, name, rarity, effect_type, effect_value, applicable_jobs)
 VALUES
     ('card_power_up', '1.0.0', 'Poderío', 'common', 'damage', '{"power": 1.2}', ARRAY['swordman', 'knight', 'warrior']),
     ('card_fire_shield', '1.0.0', 'Escudo de Fuego', 'rare', 'buff', '{"power": 1.5, "duration": 3}', ARRAY['mage', 'wizard']),
-    ('card_light_heal', '1.0.0', 'Luz Curativa', 'epic', 'heal', '{"power": 2.0, "chance": 0.3}', ARRAY['priest', 'acolyte']);
+    ('card_light_heal', '1.0.0', 'Luz Curativa', 'epic', 'heal', '{"power": 2.0, "chance": 0.3}', ARRAY['priest', 'acolyte'])
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO skills (id, version, name, description, cooldown, effect, scaling, rarity)
 VALUES
     ('skill_fireball', '1.0.0', 'Bola de Fuego', 'Lanza una bola de fuego al enemigo', 2, '{"type": "damage", "power": 1.5}', '{"stat": "matk", "mult": 1.5}', 'rare'),
     ('skill_heal', '1.0.0', 'Curación', 'Restaura HP a un aliado', 3, '{"type": "heal", "power": 1.0}', '{"stat": "mdef", "mult": 2.0}', 'rare'),
-    ('skill_power_strike', '1.0.0', 'Golpe Poderoso', 'Golpe devastador', 1, '{"type": "damage", "power": 2.0, "chance": 0.2}', '{"stat": "atk", "mult": 1.8}', 'epic');
+    ('skill_power_strike', '1.0.0', 'Golpe Poderoso', 'Golpe devastador', 1, '{"type": "damage", "power": 2.0, "chance": 0.2}', '{"stat": "atk", "mult": 1.8}', 'epic')
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO job_skill_modules (job_id, skill_module_id, slot_index)
 SELECT 'novice', sm.id, ROW_NUMBER() OVER () - 1
