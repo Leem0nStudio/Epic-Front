@@ -4,12 +4,13 @@ import { UIService } from '@/lib/services/ui-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { RarityIcon } from '@/components/ui/RarityIcon';
 import { Button } from '@/components/ui/Button';
+import { ViewShell } from '@/components/ui/ViewShell';
 
 import React, { useState } from 'react';
 import { ChevronLeft, Sparkles, Diamond, Coins, Star, Sword, Box, ScrollText } from 'lucide-react';
 import { GachaService } from '@/lib/services/gacha-service';
 import { motion, AnimatePresence } from 'motion/react';
-import { getRarityCode } from '@/lib/config/assets-config';
+import { getRarityCode, RARITY_COLORS } from '@/lib/config/assets-config';
 import { useToast } from '@/lib/contexts/ToastContext';
 
 interface GachaViewProps {
@@ -34,13 +35,14 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
     }
   };
 
-  const rarityColor = (rarity: string) => {
-    switch (rarity?.toLowerCase()) {
-      case 'legendary': return 'from-yellow-400 to-orange-600 shadow-orange-500/50';
-      case 'epic': return 'from-purple-400 to-indigo-600 shadow-purple-500/50';
-      case 'rare': return 'from-blue-400 to-cyan-600 shadow-blue-500/50';
-      default: return 'from-gray-400 to-gray-600 shadow-gray-500/50';
-    }
+  const getRarityGradient = (rarity: string) => {
+    const code = getRarityCode(rarity);
+    const color = RARITY_COLORS[code] || RARITY_COLORS.C;
+    return {
+      bg: `${color}20`,
+      border: color,
+      glow: color
+    };
   };
 
   // Get appropriate icon for item type
