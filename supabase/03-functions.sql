@@ -55,6 +55,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Add starter inventory items if empty
+CREATE OR REPLACE FUNCTION rpc_add_starter_inventory()
+RETURNS void AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+BEGIN
+    -- Only add if inventory is empty
+    IF NOT EXISTS (SELECT 1 FROM inventory WHERE player_id = v_user_id) THEN
+        INSERT INTO inventory (player_id, item_id, item_type, quantity)
+        VALUES 
+            (v_user_id, 'weapon_wooden_sword', 'weapon', 1),
+            (v_user_id, 'card_power_up', 'card', 2),
+            (v_user_id, 'skill_fireball', 'skill', 1),
+            (v_user_id, 'card_light_heal', 'card', 1);
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- =====================================================
 -- SECTION 2: GACHA SYSTEM
 -- =====================================================

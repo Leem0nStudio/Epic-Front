@@ -141,7 +141,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  refreshState: async () => {
+refreshState: async () => {
     if (!supabase) return;
     try {
       const { data: authData } = await supabase.auth.getUser();
@@ -157,12 +157,26 @@ export const useGameStore = create<GameState>((set, get) => ({
         supabase.from('recruitment_queue').select('*').eq('player_id', user.id).eq('is_claimed', false),
         supabase.from('inventory').select('*').eq('player_id', user.id) 
       ]);
- 
+  
       if (profRes.data) set({ profile: profRes.data });
       set({ roster: unitsRes.data || [] });
       set({ party: partyRes.data || [] });
       set({ tavernSlots: recruitsRes.data || [] });
-      set({ inventory: inventoryRes.data || [] }); 
+      
+      // Auto-add starter items if inventory is empty
+      if (!inventoryRes.data || inventoryRes.data.length === 0) {
+        try {
+          await supabase.rpc('rpc_add_starter_inventory');
+          // Reload inventory after adding starter items
+          const { data: newInventory } = await supabase.from('inventory').select('*').eq('player_id', user.id);
+          set({ inventory: newInventory || [] });
+        } catch (e) {
+          console.warn("Could not add starter inventory:", e);
+          set({ inventory: inventoryRes.data || [] });
+        }
+      } else {
+        set({ inventory: inventoryRes.data || [] });
+      }
     } catch (e) {
       console.error("Critical error in refreshState:", e);
     }
