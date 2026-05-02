@@ -520,6 +520,16 @@ BEGIN
     END IF;
 END $$;
 
+-- Add missing columns to campaign_progress
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'campaign_progress') THEN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'campaign_progress' AND column_name = 'cleared_at') THEN
+            ALTER TABLE campaign_progress ADD COLUMN cleared_at TIMESTAMP WITH TIME ZONE;
+        END IF;
+    END IF;
+END $$;
+
 INSERT INTO chapters (id, index_num, name, description) VALUES
 ('chapter_1', 1, 'Praderas del Destino', 'El comienzo de tu aventura.'),
 ('chapter_2', 2, 'Bosque Encantado', 'Un bosque misterioso lleno de magia.'),
