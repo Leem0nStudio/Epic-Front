@@ -89,6 +89,8 @@ export class InventoryService {
     if (cached) return cached;
 
     // Get basic inventory items
+    gameDebugger.info('inventory', 'Loading from DB', { playerId: targetPlayerId });
+    
     const { data: inventory, error } = await supabase
       .from('inventory')
       .select('*')
@@ -100,8 +102,28 @@ export class InventoryService {
       throw error;
     }
 
+    gameDebugger.info('inventory', 'Raw query result', { 
+      count: inventory?.length || 0, 
+      items: inventory 
+    });
+
     if (!inventory || inventory.length === 0) {
-      gameDebugger.info('inventory', 'Empty inventory');
+      gameDebugger.info('inventory', 'Empty inventory - trying to add starter items');
+      
+      // Try to add starter items
+      try {
+        const { error: insertError } = await supabase.rpc('rpc_add_starter_inventory');
+        if (insertError) {
+          gameDebugger.error('inventory', 'Failed to add starter items', insertError);
+        } else {
+          gameDebugger.info('inventory', 'Starter items added, reloading...');
+          // Reload
+          return this.getInventory(targetPlayerId);
+        }
+      } catch (e) {
+        gameDebugger.error('inventory', 'Error adding starter items', e);
+      }
+      
       return [];
     }
 
