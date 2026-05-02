@@ -58,12 +58,36 @@ export class CampaignService {
     }
 
     static async getStageById(stageId: string): Promise<Stage | null> {
-        const chapters = await this.getChapters();
-        for (const chapter of chapters) {
-            const stage = chapter.stages.find(s => s.id === stageId);
-            if (stage) return stage;
+        // Direct query instead of loading all chapters (fixes N+1)
+        try {
+            const { data: stage, error } = await supabase
+                .from('stages')
+                .select('*, chapters!inner(id, index_num, name, description, unlock_requirements)')
+                .eq('id', stageId)
+                .single();
+
+            if (error || !stage) {
+                gameDebugger.warn('game-state', 'Stage not found', { stageId });
+                return null;
+            }
+
+            return {
+                id: stage.id,
+                chapter_id: stage.chapters.id,
+                index: stage.index_num,
+                name: stage.name,
+                description: stage.description || '',
+                energy_cost: stage.energy_cost,
+                enemies: stage.enemies || [],
+                rewards: stage.rewards || { currency: 0, exp: 0, materials: [] },
+                first_clear_rewards: stage.first_clear_rewards,
+                star_conditions: stage.star_conditions || [],
+                unlock_requirements: stage.unlock_requirements || null
+            };
+        } catch (e) {
+            gameDebugger.error('game-state', 'Error loading stage', e);
+            return null;
         }
-        return null;
     }
 
     static async getPlayerProgress(): Promise<PlayerStageProgress[]> {
@@ -190,25 +214,31 @@ export class CampaignService {
          return Boolean(data);
      }
 
-     static async getUnitProgress(unitId: string): Promise<{ level: number, exp: number, nextLevelExp: number, expPercentage: number } | null> {
-         if (!supabase) return null;
+static async getUnitProgress(unitId: string): Promise<{ level: number, exp: number, nextLevelExp: number, expPercentage: number } | null> {
+        if (!supabase) return null;
 
-         const { data, error } = await supabase
-             .from('unit_progress')
-             .select('*')
-             .eq('id', unitId)
-             .single();
+        // Use units table directly instead of unit_progress VIEW
+        // to avoid dependency issues
+        const { data, error } = await supabase
+            .from('units')
+            .select('level, exp')
+            .eq('id', unitId)
+            .single();
 
-         if (error || !data) {
-             console.error('Failed to get unit progress:', error);
-             return null;
-         }
+        if (error || !data) {
+            gameDebugger.warn('game-state', 'Failed to get unit progress', { unitId, error });
+            return null;
+        }
 
-         return {
-             level: data.level,
-             exp: data.exp,
-             nextLevelExp: data.next_level_exp,
-             expPercentage: data.exp_percentage
-         };
-     }
+        // Calculate next level exp (simple formula)
+        const nextLevelExp = data.level * 100; // 100 exp per level
+        const expPercentage = Math.min(100, (data.exp / nextLevelExp) * 100);
+
+        return {
+            level: data.level,
+            exp: data.exp,
+            nextLevelExp,
+            expPercentage
+        };
+    }
 }
