@@ -14,17 +14,25 @@ DECLARE
     v_unit_id UUID;
     v_idx INTEGER := 0;
 BEGIN
-    INSERT INTO players (id, username, energy, max_energy)
-    VALUES (v_user_id, p_username, 20, 20)
-    ON CONFLICT (id) DO UPDATE SET username = EXCLUDED.username;
+    -- Insert player with starting energy (30 max)
+    INSERT INTO players (id, username, energy, max_energy, currency, premium_currency)
+    VALUES (v_user_id, p_username, 30, 30, 1000, 50)
+    ON CONFLICT (id) DO UPDATE SET 
+        username = EXCLUDED.username,
+        energy = EXCLUDED.energy,
+        max_energy = EXCLUDED.max_energy;
 
+    -- Initialize gacha pity counters
     INSERT INTO gacha_state (player_id)
     VALUES (v_user_id)
     ON CONFLICT (player_id) DO NOTHING;
 
+    -- Clear existing units and party
     DELETE FROM party WHERE player_id = v_user_id;
     DELETE FROM units WHERE player_id = v_user_id;
+    DELETE FROM inventory WHERE player_id = v_user_id;
 
+    -- Create starter units
     FOREACH v_novice IN ARRAY p_novices LOOP
         INSERT INTO units (player_id, name, base_stats, growth_rates, affinity, trait, current_job_id, sprite_id, icon_id)
         VALUES (v_user_id, v_novice->>'name', (v_novice->'baseStats'), (v_novice->'growthRates'),
@@ -36,6 +44,14 @@ BEGIN
 
         v_idx := v_idx + 1;
     END LOOP;
+
+    -- Add starter items to inventory
+    INSERT INTO inventory (player_id, item_id, item_type, quantity)
+    VALUES 
+        (v_user_id, 'weapon_wooden_sword', 'weapon', 1),
+        (v_user_id, 'card_power_up', 'card', 2),
+        (v_user_id, 'skill_fireball', 'skill', 1),
+        (v_user_id, 'card_light_heal', 'card', 1);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
