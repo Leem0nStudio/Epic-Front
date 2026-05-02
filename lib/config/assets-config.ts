@@ -188,39 +188,39 @@ export const NINE_SLICE_CONFIG = {
 
 /**
  * Rarity Configuration
- * Standard C/R/E/L/M rarity system for items, skills, and cards
+ * Per Art Bible v1.0 - C/R/SR/UR/MR system
+ * C=Common, R=Rare, SR=Super Rare, UR=Ultra Rare, MR=Mythic
  */
 export const RARITY_COLORS = {
-  C: '#9d9d9d', // Common - Gray
-  R: '#0070dd', // Rare - Blue
-  E: '#a335ee', // Epic - Purple
-  L: '#ff8000', // Legendary - Gold
-  M: '#ff0000', // Mythic - Red
+  C: '#9CA3AF',  // Common - Gray (matches art-bible)
+  R: '#3B82F6',  // Rare - Blue (matches art-bible)
+  SR: '#D946EF', // Super Rare - Fuchsia (matches art-bible)
+  UR: '#F59E0B', // Ultra Rare - Gold (matches art-bible)
+  MR: '#EF4444', // Mythic - Red (matches art-bible)
 } as const;
 
 export type RarityCode = keyof typeof RARITY_COLORS;
 
 /**
  * Maps human-readable rarity text to standard rarity codes
- * Handles legacy values like 'UR', 'SR', etc.
+ * Per Art Bible v1.0 - handles all variants
  */
 export const RARITY_TEXT_TO_CODE: Record<string, RarityCode> = {
-  // Standard text
+  // Standard text (from art bible)
   'common': 'C',
   'rare': 'R',
-  'epic': 'E',
-  'legendary': 'L',
-  'mythic': 'M',
+  'super_rare': 'SR',
+  'ultra_rare': 'UR',
+  'mythic': 'MR',
   // Legacy short codes
   'c': 'C',
   'r': 'R',
-  'e': 'E',
-  'l': 'L',
-  'm': 'M',
-  // Legacy long codes
-  'ur': 'L', // Ultra Rare → Legendary
-  'sr': 'E', // Super Rare → Epic
-  'ssr': 'M', // Super Super Rare → Mythic
+  'sr': 'SR',
+  'ur': 'UR',
+  'mr': 'MR',
+  // Legacy names (mapping to new system)
+  'epic': 'SR',      // Epic → Super Rare
+  'legendary': 'UR', // Legendary → Ultra Rare
 };
 
 /**
