@@ -27,6 +27,8 @@ import { Button } from '@/components/ui/Button';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { CardModal } from '@/components/ui/CardModal';
+import { SkillDetailView } from '@/components/views/SkillDetailView';
+import { CardDetailView } from '@/components/views/CardDetailView';
 
 export default function Applet() {
   const { showToast } = useToast();
@@ -121,6 +123,22 @@ export default function Applet() {
                   unitName={state.roster.find(u => u.id === state.selectedUnitId)?.name || 'Unit'}
                   onBack={() => actions.navigateTo('unit_details')}
                   onUpdate={actions.refreshState}
+                />;
+      case 'skill_detail':
+        return <SkillDetailView
+                  skillId={state.selectedSkillId!}
+                  itemId={state.selectedItemId!}
+                  onBack={() => actions.navigateTo('inventory')}
+                  onEquip={actions.handleEquipItem}
+                  onDiscard={actions.handleDiscardItem}
+                />;
+      case 'card_detail':
+        return <CardDetailView
+                  cardId={state.selectedCardId!}
+                  itemId={state.selectedItemId!}
+                  onBack={() => actions.navigateTo(state.selectedUnitId ? 'unit_details' : 'inventory')}
+                  onEquip={actions.handleEquipItem}
+                  onDiscard={actions.handleDiscardItem}
                 />;
       case 'daily_rewards':
         return <DailyRewardsView 

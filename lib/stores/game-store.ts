@@ -11,7 +11,7 @@ import { TrainingService } from '@/lib/services/training-service';
 import { DailyRewardsService } from '@/lib/services/daily-rewards-service';
 import { Stage } from '@/lib/rpg-system/campaign-types';
 
-export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'quests' | 'stage_details' | 'training' | 'daily_rewards' | 'arena' | 'tower' | 'guild';
+export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'quests' | 'stage_details' | 'training' | 'daily_rewards' | 'arena' | 'tower' | 'guild' | 'skill_detail' | 'card_detail';
 
 interface GameState {
   // Auth & Loading State
@@ -33,7 +33,9 @@ interface GameState {
   view: ViewType;
   selectedUnitId: string | null;
   selectedStage: Stage | null;
-  selectedCardId: string | null; // Added
+  selectedCardId: string | null;
+  selectedSkillId: string | null;
+  selectedItemId: string | null;
   targetSlot: 'weapon' | 'card' | 'skill' | null;
 
   // Computed Values
@@ -53,7 +55,9 @@ interface GameState {
   setView: (view: ViewType) => void;
   setSelectedUnitId: (id: string | null) => void;
   setSelectedStage: (stage: Stage | null) => void;
-  setSelectedCardId: (id: string | null) => void; // Added
+  setSelectedCardId: (id: string | null) => void;
+  setSelectedSkillId: (id: string | null) => void;
+  setSelectedItemId: (id: string | null) => void;
   setTargetSlot: (slot: 'weapon' | 'card' | 'skill' | null) => void;
 
   // Complex Actions
@@ -73,7 +77,9 @@ interface GameState {
   handleRefillEnergy: (gemCost: number, toast?: (message: string, type?: any) => void) => Promise<void>;
   handleOpenTraining: (unitId: string) => void;
   handleOpenDailyRewards: () => void;
-  handleOpenCardDetails: (cardId: string) => void; // Added
+  handleOpenCardDetails: (cardId: string, itemId: string) => void;
+  handleOpenSkillDetails: (skillId: string, itemId: string) => void;
+  handleDiscardItem: (itemId: string) => void;
 }
 
 const updateActivePartyUnits = (party: any[]) => {
@@ -100,6 +106,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   selectedUnitId: null,
   selectedStage: null,
   selectedCardId: null,
+  selectedSkillId: null,
+  selectedItemId: null,
   targetSlot: null,
 
   version: null,
@@ -119,6 +127,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   setSelectedUnitId: (id) => set({ selectedUnitId: id }),
   setSelectedStage: (stage) => set({ selectedStage: stage }),
   setSelectedCardId: (id) => set({ selectedCardId: id }),
+  setSelectedSkillId: (id) => set({ selectedSkillId: id }),
+  setSelectedItemId: (id) => set({ selectedItemId: id }),
   setTargetSlot: (slot) => set({ targetSlot: slot }),
 
   // Complex Actions
@@ -306,7 +316,15 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ view: 'daily_rewards' });
   },
 
-  handleOpenCardDetails: (cardId) => {
-    set({ selectedCardId: cardId });
+  handleOpenCardDetails: (cardId, itemId) => {
+    set({ selectedCardId: cardId, selectedItemId: itemId, view: 'card_detail' });
+  },
+
+  handleOpenSkillDetails: (skillId, itemId) => {
+    set({ selectedSkillId: skillId, selectedItemId: itemId, view: 'skill_detail' });
+  },
+
+  handleDiscardItem: (itemId) => {
+    console.log('Discard item:', itemId);
   },
 }));

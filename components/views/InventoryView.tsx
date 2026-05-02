@@ -19,7 +19,7 @@ interface InventoryViewProps {
   fromUnitDetails: boolean;
   onBack: () => void;
   onEquip: (item: any) => void;
-  onOpenCardDetails: (cardId: string) => void;
+  onOpenCardDetails: (cardId: string, itemId: string) => void;
 }
 
 export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, onOpenCardDetails }: InventoryViewProps) {
@@ -150,7 +150,7 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
                     } else if (item.item_type === 'skill' || item.item_type === 'skill_scroll') {
                       setSelectedSkill(item.item_id);
                     } else if (item.item_type === 'card') {
-                      onOpenCardDetails(item.id);
+                      onOpenCardDetails(item.item_id, item.id);
                     } else {
                       setSelectedItem(item);
                     }

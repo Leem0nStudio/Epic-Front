@@ -18,7 +18,7 @@ interface UnitDetailsViewProps {
   onNavigate: (view: any) => void;
   onUpdate: () => void;
   onOpenInventory: (type: 'card' | 'weapon' | 'skill') => void;
-  onOpenCardDetails: (cardId: string) => void;
+  onOpenCardDetails: (cardId: string, itemId: string) => void;
 }
 
 export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory, onOpenCardDetails }: UnitDetailsViewProps) {
@@ -239,7 +239,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory,
                   animate={{ scale: 1, opacity: 1 }} 
                   transition={{ delay: 0.3 + (i * 0.05) }} 
                   whileTap={{ scale: 0.9 }} 
-                  onClick={() => card ? onOpenCardDetails(card.id) : onOpenInventory('card')} 
+                  onClick={() => card ? onOpenCardDetails(card.item_id, card.id) : onOpenInventory('card')} 
                   className={`aspect-square flex items-center justify-center relative rounded-2xl border backdrop-blur-xl transition-all cursor-pointer group shadow-lg ${card ? 'glass-crystal frame-earthstone' : 'border-white/5 bg-white/5 hover:border-white/10 hover:bg-white/10'}`} 
                   style={card ? { borderColor: `${RARITY_COLORS[getRarityCode(card.rarity)]}66`, backgroundColor: `${RARITY_COLORS[getRarityCode(card.rarity)]}11` } : {}}
                 >
