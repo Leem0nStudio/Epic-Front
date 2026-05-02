@@ -26,7 +26,8 @@ export function useSupabase(): SupabaseClient {
 
   return useMemo(() => {
     const config = getSupabaseConfig();
-    const cacheKey = user?.id || 'anonymous';
+    const userId = user?.id;
+    const cacheKey = userId || 'anonymous';
 
     if (clientCache.has(cacheKey)) {
       return clientCache.get(cacheKey)!;
@@ -38,13 +39,13 @@ export function useSupabase(): SupabaseClient {
         autoRefreshToken: true,
       },
       global: {
-        headers: user?.id ? { 'X-User-ID': user.id } : {},
+        headers: userId ? { 'X-User-ID': userId } : {},
       },
     });
 
     clientCache.set(cacheKey, client);
     return client;
-  }, [user?.id]);
+  }, [user]);
 }
 
 // Función para limpiar cache (útil para logout)
