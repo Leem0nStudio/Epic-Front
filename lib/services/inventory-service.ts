@@ -254,7 +254,7 @@ export class InventoryService {
    * Add item to inventory
    */
   static async addItem(itemId: string, itemType: ItemType, quantity: number = 1): Promise<InventoryItem> {
-    if (!supabase) throw new Error("Supabase not initialized");
+    if (!supabase) throw new Error("Supabase client not initialized");
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
@@ -290,7 +290,7 @@ export class InventoryService {
    * Remove item from inventory (decrease quantity)
    */
   static async removeItem(itemId: string, quantity: number = 1): Promise<void> {
-    if (!supabase) throw new Error("Supabase not initialized");
+    if (!supabase) throw new Error("Supabase client not initialized");
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
@@ -343,7 +343,7 @@ export class InventoryService {
    * Discard item entirely from inventory
    */
   static async discardItem(inventoryItemId: string): Promise<void> {
-    if (!supabase) throw new Error("Supabase not initialized");
+    if (!supabase) throw new Error("Supabase client not initialized");
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
@@ -392,7 +392,7 @@ export class InventoryService {
    * Force refresh inventory (bypass cache)
    */
   static async refreshInventory(playerId?: string): Promise<InventoryItem[]> {
-    if (!supabase) throw new Error("Supabase not initialized");
+    if (!supabase) throw new Error("Supabase client not initialized");
 
     const { data: { user } } = await supabase.auth.getUser();
     const targetPlayerId = playerId || user?.id;
