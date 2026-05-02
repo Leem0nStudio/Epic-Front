@@ -30,7 +30,9 @@ import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { Button } from '@/components/ui/Button';
 import { LevelProgress } from '@/components/ui/LevelProgress';
+import { RarityBadge } from '@/components/ui/RarityBadge';
 import { getExpForNextLevel, getUnlockForLevel } from '@/lib/config/level-curve';
+import { RARITY_COLORS, getRarityCode } from '@/lib/config/assets-config';
 
 interface RPGHomeViewProps {
   saveData: any;
@@ -41,12 +43,8 @@ interface RPGHomeViewProps {
 }
 
 const rarityColor = (rarity: string) => {
-  switch (rarity?.toUpperCase()) {
-    case 'UR': return '#F59E0B';
-    case 'SR': return '#D946EF';
-    case 'R': return '#3B82F6';
-    default: return '#9CA3AF';
-  }
+  const code = getRarityCode(rarity);
+  return RARITY_COLORS[code] || RARITY_COLORS.C;
 };
 
 const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flipped = false }: any) => {
@@ -74,25 +72,15 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flippe
         />
       )}
 
-      {/* Rarity Badge above Character */}
+      {/* Rarity Badge above Character - Using centralized RarityBadge */}
       {unit && (
         <motion.div 
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.5, type: 'spring' }}
-          className="absolute top-0 left-1/2 -translate-x-1/2 flex flex-col items-center z-20"
+          className="absolute top-0 left-1/2 -translate-x-1/2 z-20"
         >
-          <div 
-            className="w-10 h-10 rounded-full flex flex-col items-center justify-center border-2 shadow-lg"
-            style={{ borderColor: color, backgroundColor: `${color}22`, color: color }}
-          >
-            <span className="text-lg font-black font-display leading-none drop-shadow-md text-white">{rarity}</span>
-          </div>
-          <div className="flex gap-0.5 mt-1">
-             {[...Array(rarity === 'UR' ? 5 : rarity === 'SR' ? 4 : 3)].map((_, i) => (
-                <Star key={i} size={8} className="fill-current" style={{ color }} />
-             ))}
-          </div>
+          <RarityBadge rarity={unit.rarity || rarity} size="sm" />
         </motion.div>
       )}
 
