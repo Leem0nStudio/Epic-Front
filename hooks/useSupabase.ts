@@ -1,54 +1,29 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { useMemo } from 'react';
+import { supabase } from '@/lib/supabase';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { gameDebugger } from '@/lib/debug';
+import { useMemo } from 'react';
 
-// Configuración centralizada y validada
-const getSupabaseConfig = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !key) {
-    throw new Error('Missing Supabase configuration. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY');
-  }
-
-  if (url === 'https://placeholder.supabase.co' || key === 'placeholder') {
-    throw new Error('Supabase configuration not properly set. Please configure your environment variables.');
-  }
-
-  return { url, key };
-};
-
-// Cache de clientes por usuario para evitar recreación
-const clientCache = new Map<string, SupabaseClient>();
-
+// Use the global supabase client - no separate instance needed
 export function useSupabase(): SupabaseClient {
   const { user } = useAuthStore();
 
-  return useMemo(() => {
-    const config = getSupabaseConfig();
-    const userId = user?.id;
-    const cacheKey = userId || 'anonymous';
-
-    if (clientCache.has(cacheKey)) {
-      return clientCache.get(cacheKey)!;
+  const client = useMemo(() => {
+    if (user) {
+      gameDebugger.info('supabase', 'User authenticated, returning client', { userId: user.id });
+    } else {
+      gameDebugger.info('supabase', 'No user, returning client');
     }
-
-    const client = createClient(config.url, config.key, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-      },
-      global: {
-        headers: userId ? { 'X-User-ID': userId } : {},
-      },
-    });
-
-    clientCache.set(cacheKey, client);
-    return client;
+    return supabase;
   }, [user]);
+
+  return client;
 }
+
+// Legacy export for compatibility
+export { supabase as defaultSupabase } from '@/lib/supabase';
 
 // Función para limpiar cache (útil para logout)
 export function clearSupabaseCache(): void {
-  clientCache.clear();
+  gameDebugger.info('auth', 'Clearing supabase cache');
 }

@@ -10,6 +10,7 @@ import { CampaignService } from '@/lib/services/campaign-service';
 import { TrainingService } from '@/lib/services/training-service';
 import { DailyRewardsService } from '@/lib/services/daily-rewards-service';
 import { Stage } from '@/lib/rpg-system/campaign-types';
+import { gameDebugger } from '@/lib/debug';
 
 export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'quests' | 'stage_details' | 'training' | 'daily_rewards' | 'arena' | 'tower' | 'guild' | 'skill_detail' | 'card_detail';
 
@@ -143,10 +144,15 @@ export const useGameStore = create<GameState>((set, get) => ({
 
 refreshState: async () => {
     if (!supabase) return;
+    
+    gameDebugger.info('game-state', 'Refreshing game state...');
     try {
       const { data: authData } = await supabase.auth.getUser();
       const user = authData?.user;
-      if (!user) return;
+      if (!user) {
+        gameDebugger.warn('game-state', 'No user in refreshState');
+        return;
+      }
 
       await get().regenEnergy();
 
@@ -158,19 +164,33 @@ refreshState: async () => {
         supabase.from('inventory').select('*').eq('player_id', user.id) 
       ]);
   
-      if (profRes.data) set({ profile: profRes.data });
+      if (profRes.data) {
+        gameDebugger.info('game-state', 'Profile refreshed', { currency: profRes.data.currency });
+        set({ profile: profRes.data });
+      }
+      
+      gameDebugger.info('game-state', 'State loaded', { 
+        units: unitsRes.data?.length || 0,
+        party: partyRes.data?.length || 0,
+        recruits: recruitsRes.data?.length || 0,
+        inventory: inventoryRes.data?.length || 0
+      });
+      
       set({ roster: unitsRes.data || [] });
       set({ party: partyRes.data || [] });
       set({ tavernSlots: recruitsRes.data || [] });
       
       // Auto-add starter items if inventory is empty
       if (!inventoryRes.data || inventoryRes.data.length === 0) {
+        gameDebugger.warn('inventory', 'Inventory is empty, adding starter items');
         try {
           await supabase.rpc('rpc_add_starter_inventory');
           // Reload inventory after adding starter items
           const { data: newInventory } = await supabase.from('inventory').select('*').eq('player_id', user.id);
+          gameDebugger.info('inventory', 'Starter items added', { count: newInventory?.length || 0 });
           set({ inventory: newInventory || [] });
-        } catch (e) {
+        } catch (e: any) {
+          gameDebugger.error('inventory', 'Failed to add starter items', e);
           console.warn("Could not add starter inventory:", e);
           set({ inventory: inventoryRes.data || [] });
         }
@@ -178,6 +198,7 @@ refreshState: async () => {
         set({ inventory: inventoryRes.data || [] });
       }
     } catch (e) {
+      gameDebugger.error('game-state', 'Critical error in refreshState', e);
       console.error("Critical error in refreshState:", e);
     }
   },
@@ -185,9 +206,15 @@ refreshState: async () => {
   initializeGame: async () => {
     if (!supabase) return;
 
+    gameDebugger.info('game-state', 'Initializing game...');
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        gameDebugger.warn('game-state', 'No user found during initialization');
+        return;
+      }
+
+      gameDebugger.info('auth', 'User found', { userId: user.id, email: user.email });
 
       await ConfigService.syncConfig();
       await get().regenEnergy();
@@ -195,17 +222,21 @@ refreshState: async () => {
       const { data: prof, error: profError } = await supabase.from('players').select('*').eq('id', user.id).single();
 
       if (profError && profError.code !== 'PGRST116') {
+        gameDebugger.error('game-state', 'Error loading profile', profError);
         set({ error: "Error al cargar perfil: " + profError.message });
         return;
       }
 
       if (!prof) {
+        gameDebugger.info('game-state', 'No profile found - running onboarding');
         try {
           await OnboardingService.initializePlayer(user.email?.split('@')[0] || "Héroe", 3);
           const { data: newProf } = await supabase.from('players').select('*').eq('id', user.id).single();
           if (!newProf) throw new Error("No se pudo crear el perfil.");
+          gameDebugger.info('game-state', 'Onboarding completed', newProf);
           set({ profile: newProf, needsOnboarding: false, error: null });
         } catch (initErr: any) {
+          gameDebugger.error('game-state', 'Onboarding failed', initErr);
           const friendlyMsg = initErr.message?.includes('no está disponible') || initErr.message?.includes('does not exist')
             ? 'El servicio de inicialización no está disponible. Por favor, contacta al soporte.'
             : 'No se pudo completar el registro. Intenta nuevamente.';
@@ -213,6 +244,7 @@ refreshState: async () => {
           return;
         }
       } else {
+        gameDebugger.info('game-state', 'Profile loaded', { profileId: prof.id, username: prof.username });
         set({ profile: prof, needsOnboarding: false });
       }
 

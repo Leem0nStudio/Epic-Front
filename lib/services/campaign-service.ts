@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { Stage, PlayerStageProgress, StageReward, Chapter } from '../rpg-system/campaign-types';
+import { gameDebugger } from '../debug';
 
 export class CampaignService {
     private static chaptersCache: Chapter[] | null = null;
@@ -7,10 +8,7 @@ export class CampaignService {
     static async getChapters(): Promise<Chapter[]> {
         if (this.chaptersCache) return this.chaptersCache;
         
-        if (!supabase) {
-            const { CAMPAIGN_CHAPTERS } = await import('../rpg-system/campaign-data');
-            return CAMPAIGN_CHAPTERS;
-        }
+        gameDebugger.info('game-state', 'Loading chapters from database');
 
         try {
             const { data: chapters, error } = await supabase
@@ -18,10 +16,16 @@ export class CampaignService {
                 .select('*, stages(*)')
                 .order('index_num');
 
-            if (error || !chapters || chapters.length === 0) {
-                console.warn("No chapters in DB, using fallback data");
-                const { CAMPAIGN_CHAPTERS } = await import('../rpg-system/campaign-data');
-                return CAMPAIGN_CHAPTERS;
+            if (error) {
+                gameDebugger.error('game-state', 'Database error loading chapters', error);
+                throw new Error(`Failed to load chapters: ${error.message}`);
+            }
+
+            if (!chapters || chapters.length === 0) {
+                gameDebugger.error('game-state', 'No chapters found in database - run 04-seed.sql', { 
+                    chaptersFound: chapters?.length 
+                });
+                throw new Error('No chapters found in database. Please run the SQL seed file (04-seed.sql) to populate campaign data.');
             }
 
             this.chaptersCache = chapters.map(ch => ({
@@ -45,11 +49,11 @@ export class CampaignService {
                 }))
             }));
 
+            gameDebugger.info('game-state', `Loaded ${this.chaptersCache.length} chapters from DB`);
             return this.chaptersCache;
-        } catch (e) {
-            console.error("Error loading chapters from DB:", e);
-            const { CAMPAIGN_CHAPTERS } = await import('../rpg-system/campaign-data');
-            return CAMPAIGN_CHAPTERS;
+        } catch (e: any) {
+            gameDebugger.error('game-state', 'Error loading chapters', e);
+            throw e;
         }
     }
 
