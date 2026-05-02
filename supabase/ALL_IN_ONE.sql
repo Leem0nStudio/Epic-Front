@@ -225,7 +225,16 @@ CREATE TABLE IF NOT EXISTS gacha_state (
 -- SECTION 5: CONSTRAINTS & INDEXES
 -- =====================================================
 
-ALTER TABLE inventory ADD CONSTRAINT chk_inventory_quantity CHECK (quantity > 0);
+-- Add constraint if not exists (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'chk_inventory_quantity'
+    ) THEN
+        ALTER TABLE inventory ADD CONSTRAINT chk_inventory_quantity CHECK (quantity > 0);
+    END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_units_player ON units(player_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_player_type ON inventory(player_id, item_type);
@@ -842,29 +851,27 @@ END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM information_schema.views WHERE table_name = 'unit_progress') THEN
-        EXECUTE $$
-            CREATE OR REPLACE VIEW unit_progress AS
-            SELECT 
-                id,
-                player_id,
-                name,
-                level,
-                exp,
-                CASE 
-                    WHEN level >= 99 THEN exp
-                    ELSE (level + 1) * 100 - exp
-                END as next_level_exp,
-                CASE 
-                    WHEN level >= 99 THEN 100
-                    ELSE ROUND((exp::numeric / NULLIF((level + 1) * 100, 0)) * 100, 2)
-                END as exp_percentage,
-                base_stats,
-                growth_rates,
-                affinity,
-                current_job_id
-            FROM units
-            WHERE player_id IS NOT NULL
-        $$;
+        CREATE OR REPLACE VIEW unit_progress AS
+        SELECT 
+            id,
+            player_id,
+            name,
+            level,
+            exp,
+            CASE 
+                WHEN level >= 99 THEN exp
+                ELSE (level + 1) * 100 - exp
+            END as next_level_exp,
+            CASE 
+                WHEN level >= 99 THEN 100
+                ELSE ROUND((exp::numeric / NULLIF((level + 1) * 100, 0)) * 100, 2)
+            END as exp_percentage,
+            base_stats,
+            growth_rates,
+            affinity,
+            current_job_id
+        FROM units
+        WHERE player_id IS NOT NULL;
         RAISE NOTICE 'Created unit_progress VIEW';
     END IF;
 END $$;
