@@ -12,10 +12,12 @@ import { ChevronLeft, Sparkles, Diamond, Coins, Sword, Box, ScrollText, Zap, Inf
 import { GachaService } from '@/lib/services/gacha-service';
 import { motion, AnimatePresence } from 'motion/react';
 import { useToast } from '@/lib/contexts/ToastContext';
+import { gameDebugger } from '@/lib/debug';
 
 interface GachaViewProps {
   profile: any;
   onNavigate: (view: any) => void;
+  onPullComplete?: () => void;
 }
 
 interface PullResult {
@@ -25,7 +27,7 @@ interface PullResult {
   item_type: string;
 }
 
-export function GachaView({ profile, onNavigate }: GachaViewProps) {
+export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProps) {
   const { showToast } = useToast();
   const [results, setResults] = useState<PullResult[]>([]);
   const [isPulling, setIsPulling] = useState(false);
@@ -36,8 +38,16 @@ export function GachaView({ profile, onNavigate }: GachaViewProps) {
     setSelectedReward(null);
     try {
       const items = await GachaService.pull(amount, currency);
+      gameDebugger.info('gacha', 'Pull completed', { count: items.length, items });
       setResults(items);
+      
+      // Refresh game state to update inventory
+      if (onPullComplete) {
+        gameDebugger.info('gacha', 'Calling onPullComplete callback');
+        onPullComplete();
+      }
     } catch (e: any) {
+      gameDebugger.error('gacha', 'Pull failed', e);
       showToast(e.message, 'error');
     } finally {
       setIsPulling(false);

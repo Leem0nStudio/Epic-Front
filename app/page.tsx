@@ -74,6 +74,7 @@ export default function Applet() {
         return <GachaView
                  profile={state.profile}
                  onNavigate={actions.navigateTo}
+                 onPullComplete={actions.refreshState}
                />;
       case 'unit_details':
         return <UnitDetailsView

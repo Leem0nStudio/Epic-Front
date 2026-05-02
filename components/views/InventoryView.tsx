@@ -12,6 +12,7 @@ import { motion } from 'motion/react';
 import { SkillDetailView } from './SkillDetailView';
 import { CardDetailView } from './CardDetailView';
 import { useToast } from '@/lib/contexts/ToastContext';
+import { gameDebugger } from '@/lib/debug';
 
 interface InventoryViewProps {
   targetSlot: 'weapon' | 'card' | 'skill' | null;
@@ -44,17 +45,34 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
       if (!supabase) return;
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from('inventory').select('*').eq('player_id', user.id);
+      
+      gameDebugger.info('inventory', 'Loading inventory...', { userId: user.id });
+      const { data, error } = await supabase.from('inventory').select('*').eq('player_id', user.id);
+      
+      if (error) {
+        gameDebugger.error('inventory', 'Error loading inventory', error);
+      }
+      
       if (data) {
+        gameDebugger.info('inventory', 'Raw inventory items', { count: data.length, items: data });
+        
         const enriched = await Promise.all(data.map(async (inv) => {
           let table = 'cards';
           if (inv.item_type === 'weapon') table = 'weapons';
           if (inv.item_type === 'skill' || inv.item_type === 'skill_scroll') table = 'skills';
           if (inv.item_type === 'material') table = 'materials';
           if (inv.item_type === 'job_core') table = 'jobs';
-          const { data: def } = await supabase.from(table).select('*').eq('id', inv.item_id).single();
+          
+          const { data: def, error: defError } = await supabase.from(table).select('*').eq('id', inv.item_id).single();
+          
+          if (defError) {
+            gameDebugger.warn('inventory', `Item not found in ${table}`, { itemId: inv.item_id, itemType: inv.item_type, error: defError });
+          }
+          
           return { ...inv, def };
         }));
+        
+        gameDebugger.info('inventory', 'Enriched inventory items', { count: enriched.length });
         
         let filtered = enriched;
         if (targetSlot) {
