@@ -51,6 +51,7 @@ export default function Applet() {
                  onNavigate={actions.navigateTo}
                  onOpenFullInventory={actions.openFullInventory}
                  onRefillEnergy={actions.handleRefillEnergy}
+                 onSelectUnit={actions.handleSelectUnit}
                />;
       case 'tavern':
         return <TavernView 
