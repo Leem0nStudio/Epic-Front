@@ -58,12 +58,21 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const [damageNumbers, setDamageNumbers] = useState<{ id: number, value: number, x: number, y: number, color: string, isCrit?: boolean }[]>([]);
   const [participatingUnits, setParticipatingUnits] = useState<Set<string>>(new Set());
   
-  // Combat feedback system
+  // INTENSE COMBAT FEEDBACK SYSTEM
   const [comboCount, setComboCount] = useState(0);
   const [comboChain, setComboChain] = useState<string[]>([]);
   const [lastHitType, setLastHitType] = useState<string>('');
   const [activeEffects, setActiveEffects] = useState<{ name: string, icon: string, color: string }[]>([]);
   const [combatLog, setCombatLog] = useState<{ text: string, type: string, time: number }[]>([]);
+  
+  // INTENSE VISUAL FEEDBACK STATES
+  const [screenFlash, setScreenFlash] = useState<'none' | 'crit' | 'combo' | 'chain'>('none');
+  const [screenShakeIntensity, setScreenShakeIntensity] = useState(0);
+  const [chainMultiplier, setChainMultiplier] = useState(1);
+  const [chainCount, setChainCount] = useState(0);
+  const [lastComboMilestone, setLastComboMilestone] = useState(0);
+  const [screenGlow, setScreenGlow] = useState<'none' | 'gold' | 'fire' | 'ice' | 'dark'>('none');
+  const [hitSequence, setHitSequence] = useState<{ id: number, value: number, time: number }[]>([]);
 
   const preferrsReducedMotion = usePrefersReducedMotion();
 
@@ -118,26 +127,70 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   }, [squad, stageId]);
 
   const addDamageNumber = useCallback((value: number, unitId: string, color: string = 'text-white', isCrit: boolean = false, hitType: string = '') => {
+    const now = Date.now();
+    const newId = now + Math.random();
+    
     setDamageNumbers(prev => {
-      const id = Date.now() + Math.random();
-      const xOffset = Math.random() * 60 - 30;
-      const yOffset = -50 - Math.random() * 20;
-      return [...prev, { id, value, x: xOffset, y: yOffset, color, isCrit }];
+      return [...prev, { id: newId, value, x: Math.random() * 60 - 30, y: -50 - Math.random() * 20, color, isCrit }];
     });
     
-    // Update combo system
-    if (hitType === 'damage' || isCrit) {
-      setComboCount(prev => prev + 1);
-      setLastHitType(isCrit ? 'CRITICAL' : hitType);
-      
-      // Add to combat log
-      const logText = isCrit ? `⚔️ CRÍTICO! ${value} dmg` : `💥 ${value} dmg`;
-      setCombatLog(prev => [...prev.slice(-4), { text: logText, type: isCrit ? 'crit' : 'hit', time: Date.now() }]);
+    // Add to hit sequence for chain detection
+    setHitSequence(prev => {
+      const newSeq = [...prev, { id: newId, value, time: now }];
+      // Keep only last 1.5 seconds of hits
+      return newSeq.filter(h => now - h.time < 1500);
+    });
+    
+    // Check for chains (rapid hits within 500ms)
+    const recentHits = hitSequence.filter(h => now - h.time < 500);
+    if (recentHits.length >= 2) {
+      const newChain = recentHits.length + 1;
+      setChainCount(newChain);
+      setChainMultiplier(Math.min(3, 1 + (newChain - 2) * 0.5)); // 1.5x, 2x, 2.5x, 3x
+      setScreenFlash('chain');
+      setTimeout(() => setScreenFlash('none'), 200);
     }
     
-    setTimeout(() => setDamageNumbers(prev => prev.filter(d => d.value === value && d.x !== 0)), 1200);
-    if (value > 10) triggerShake();
-  }, []);
+    // Update combo system with INTENSE effects
+    if (hitType === 'damage' || isCrit) {
+      const newCombo = comboCount + 1;
+      setComboCount(newCombo);
+      setLastHitType(isCrit ? 'CRITICAL' : hitType);
+      
+      // CRITICAL HIT - MASSIVE FLASH
+      if (isCrit) {
+        setScreenFlash('crit');
+        setScreenShakeIntensity(15);
+        setScreenGlow('fire');
+        // Add combat log with big text
+        setCombatLog(prev => [...prev.slice(-3), { text: `💥 CRÍTICO: ${value}!`, type: 'crit', time: now }]);
+        setTimeout(() => { setScreenGlow('none'); setScreenShakeIntensity(0); }, 400);
+      } 
+      // COMBO MILESTONES
+      else if (newCombo > 0 && newCombo % 5 === 0 && newCombo !== lastComboMilestone) {
+        setLastComboMilestone(newCombo);
+        setScreenFlash('combo');
+        setScreenShakeIntensity(10);
+        setScreenGlow('gold');
+        setCombatLog(prev => [...prev.slice(-3), { text: `🔥 COMBO x${newCombo}!`, type: 'combo', time: now }]);
+        setTimeout(() => { setScreenGlow('none'); setScreenShakeIntensity(0); }, 300);
+      }
+      // REGULAR HIT
+      else {
+        // Add to combat log
+        const logText = isCrit ? `⚔️ CRÍTICO! ${value} dmg` : `💥 ${value} dmg`;
+        setCombatLog(prev => [...prev.slice(-4), { text: logText, type: isCrit ? 'crit' : 'hit', time: now }]);
+      }
+      
+      // Screen shake based on damage
+      if (value > 20) {
+        setScreenShakeIntensity(Math.min(12, value / 3));
+        setTimeout(() => setScreenShakeIntensity(0), 200);
+      }
+    }
+    
+    setTimeout(() => setDamageNumbers(prev => prev.filter(d => d.id !== newId)), 1200);
+  }, [comboCount, hitSequence, lastComboMilestone]);
 
   const runTurn = (actor: CombatUnit, skill: SkillDefinition, manualTargetId?: string, isBurst: boolean = false) => {
     if (isBattleOver) return;
@@ -262,6 +315,9 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       animate={isShaking ? { x: [-5, 5, -5, 5, 0], y: [-5, 5, 5, -5, 0] } : {}}
       transition={{ duration: 0.1, repeat: 2 }}
       className="flex flex-col h-full bg-[#050A0F] overflow-hidden relative font-sans text-white select-none"
+        style={screenShakeIntensity > 0 ? {
+          animation: `shake ${screenShakeIntensity / 100}s ease-in-out`,
+        } : undefined}
     >
       {/* Background Layer */}
       <div className="absolute inset-0 z-0 overflow-hidden">
@@ -340,6 +396,57 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
           ))}
         </div>
 
+        {/* === SCREEN-WIDE INTENSE EFFECTS === */}
+        <AnimatePresence>
+          {/* CRITICAL FLASH */}
+          {screenFlash === 'crit' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.1 }}
+              className="absolute inset-0 bg-yellow-400/30 pointer-events-none z-[100] mix-blend-screen"
+            />
+          )}
+          
+          {/* COMBO MILESTONE FLASH */}
+          {screenFlash === 'combo' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1.5 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-orange-500/20 pointer-events-none z-[100] mix-blend-screen"
+            />
+          )}
+          
+          {/* CHAIN FLASH */}
+          {screenFlash === 'chain' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.8 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.1 }}
+              className="absolute inset-0 bg-cyan-400/20 pointer-events-none z-[100] mix-blend-screen"
+            />
+          )}
+          
+          {/* SCREEN GLOW OVERLAY */}
+          {screenGlow !== 'none' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className={`absolute inset-0 pointer-events-none z-[90] ${
+                screenGlow === 'gold' ? 'bg-gradient-to-t from-yellow-600/30 via-yellow-400/10 to-transparent' :
+                screenGlow === 'fire' ? 'bg-gradient-to-t from-red-600/40 via-orange-500/20 to-transparent' :
+                screenGlow === 'ice' ? 'bg-gradient-to-t from-cyan-600/30 via-blue-400/10 to-transparent' :
+                screenGlow === 'dark' ? 'bg-gradient-to-t from-purple-900/40 via-purple-700/20 to-transparent' : ''
+              }`}
+            />
+          )}
+        </AnimatePresence>
+
         {/* Damage Numbers Container */}
         <div className="absolute inset-0 pointer-events-none z-50">
           <AnimatePresence>
@@ -396,47 +503,115 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
 </AnimatePresence>
         </div>
 
-        {/* COMBAT FEEDBACK HUD */}
-        <div className="absolute top-2 right-2 flex flex-col gap-2 z-50 pointer-events-none">
-          {/* Combo Counter */}
+        {/* === INTENSE COMBAT FEEDBACK HUD === */}
+        <div className="absolute top-4 right-4 flex flex-col gap-3 z-50 pointer-events-none">
+          {/* COMBO COUNTER - MASSIVE AND INTENSE */}
           <AnimatePresence>
             {comboCount > 0 && (
               <motion.div
-                initial={{ scale: 0, rotate: -20 }}
-                animate={{ scale: 1, rotate: 0 }}
-                exit={{ scale: 0 }}
-                className="bg-gradient-to-r from-orange-500 to-red-600 px-4 py-2 rounded-xl shadow-lg border border-orange-400"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.5, opacity: 0 }}
+                className="relative"
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">🔥</span>
-                  <div className="flex flex-col">
-                    <span className="text-white font-black text-lg leading-none">{comboCount}</span>
-                    <span className="text-orange-200 text-[8px] uppercase tracking-wider">COMBO</span>
-                  </div>
-                  {lastHitType === 'CRITICAL' && (
+                {/* Glow effect behind */}
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500 via-red-500 to-yellow-500 blur-xl opacity-50 rounded-2xl" />
+                
+                <motion.div 
+                  animate={comboCount >= 5 ? { 
+                    scale: [1, 1.1, 1],
+                    boxShadow: ['0 0 20px rgba(255,100,0,0.5)', '0 0 40px rgba(255,100,0,0.8)', '0 0 20px rgba(255,100,0,0.5)']
+                  } : {}}
+                  transition={{ duration: 0.5, repeat: Infinity }}
+                  className="relative bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 px-6 py-3 rounded-2xl shadow-2xl border-2 border-orange-400"
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Animated fire icon */}
                     <motion.span 
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="text-yellow-300 text-xs font-black"
+                      animate={{ y: [0, -3, 0], scale: [1, 1.2, 1] }}
+                      transition={{ duration: 0.3, repeat: Infinity }}
+                      className="text-4xl filter drop-shadow-[0_0_10px_orange]"
                     >
-                      CRIT!
+                      🔥
                     </motion.span>
-                  )}
-                </div>
+                    
+                    <div className="flex flex-col">
+                      <motion.span 
+                        key={comboCount}
+                        initial={{ scale: 1.5, y: -10 }}
+                        animate={{ scale: 1, y: 0 }}
+                        className="text-white font-black text-3xl leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+                      >
+                        {comboCount}
+                      </motion.span>
+                      <span className="text-orange-200 text-[8px] font-bold uppercase tracking-[0.2em]">COMBO</span>
+                    </div>
+                    
+                    {/* CRITICAL indicator */}
+                    {lastHitType === 'CRITICAL' && (
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        className="bg-yellow-400 px-2 py-1 rounded-lg"
+                      >
+                        <span className="text-red-600 text-xs font-black tracking-wider">CRIT!</span>
+                      </motion.div>
+                    )}
+                    
+                    {/* Chain multiplier */}
+                    {chainCount >= 3 && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="bg-cyan-500 px-2 py-1 rounded-lg border border-cyan-300"
+                      >
+                        <span className="text-white text-xs font-black">x{chainMultiplier.toFixed(1)}</span>
+                      </motion.div>
+                    )}
+                  </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Combat Log */}
-          <div className="bg-black/70 backdrop-blur-sm rounded-lg p-2 max-w-[180px] border border-white/10">
+          {/* CHAIN COMBO POPUP */}
+          <AnimatePresence>
+            {chainCount >= 3 && (
+              <motion.div
+                initial={{ scale: 0, y: -20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0, opacity: 0 }}
+                className="self-center"
+              >
+                <motion.div
+                  animate={{ 
+                    boxShadow: ['0 0 20px cyan', '0 0 40px cyan', '0 0 20px cyan']
+                  }}
+                  transition={{ duration: 0.3, repeat: Infinity }}
+                  className="bg-cyan-500/80 backdrop-blur px-4 py-2 rounded-xl border border-cyan-300"
+                >
+                  <span className="text-white font-black text-sm">
+                    ⚡ CHAIN x{chainCount}! ⚡
+                  </span>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Combat Log - More visible */}
+          <div className="bg-black/80 backdrop-blur-md rounded-xl p-3 max-w-[200px] border-2 border-white/20 shadow-2xl">
+            <div className="text-white/50 text-[8px] font-bold uppercase tracking-wider mb-1">Combat Log</div>
             <AnimatePresence>
               {combatLog.slice().reverse().map((log, idx) => (
                 <motion.div
                   key={log.time}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0 }}
-                  className={`text-[10px] font-bold py-0.5 ${log.type === 'crit' ? 'text-yellow-300' : 'text-white/80'}`}
+                  className={`text-xs font-bold py-1 border-b border-white/10 last:border-0 ${
+                    log.type === 'crit' ? 'text-yellow-400' : 
+                    log.type === 'combo' ? 'text-orange-400' :
+                    'text-white/70'
+                  }`}
                 >
                   {log.text}
                 </motion.div>
@@ -445,16 +620,19 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
           </div>
         </div>
 
-        {/* Active Effects Indicator */}
+        {/* Active Effects Indicator - Left side */}
         {activeEffects.length > 0 && (
-          <div className="absolute top-2 left-2 flex gap-1 z-50">
+          <div className="absolute top-4 left-4 flex gap-2 z-50">
             {activeEffects.map((effect, idx) => (
               <motion.div
                 key={idx}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-lg ${effect.color}`}
-                style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+                initial={{ scale: 0, x: -20 }}
+                animate={{ scale: 1, x: 0 }}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl border-2"
+                style={{ 
+                  backgroundColor: 'rgba(0,0,0,0.8)',
+                  borderColor: effect.color === 'text-red-500' ? '#ef4444' : '#3b82f6'
+                }}
                 title={effect.name}
               >
                 {effect.icon}
