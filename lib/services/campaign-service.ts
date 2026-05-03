@@ -117,7 +117,7 @@ export class CampaignService {
         if (!supabase) return;
         
         // Validation: ensure stageId is a valid stage identifier (not enemy ID)
-        if (stageId && stageId.includes('slime') || stageId.includes('bat') || stageId.includes('goblin')) {
+        if (stageId && (stageId.includes('slime') || stageId.includes('bat') || stageId.includes('goblin') || stageId.includes('skeleton') || stageId.includes('wolf'))) {
             gameDebugger.warn('campaign', 'Invalid stage ID detected (appears to be enemy ID)', { stageId });
             throw new Error("Invalid stage ID - please restart the battle");
         }

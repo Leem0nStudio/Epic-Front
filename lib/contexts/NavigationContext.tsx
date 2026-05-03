@@ -29,7 +29,8 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
         if (params.itemId) setSelectedItemId(params.itemId);
       }
       if (params.stageId) {
-        setSelectedStage(params as any);
+        // Only set the stage property, not the entire params object
+        setSelectedStage({ id: params.stageId } as any);
       }
     }
     navigateTo(view);
