@@ -78,7 +78,7 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flippe
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.5, type: 'spring' }}
-          className="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-full z-20"
+          className="absolute top-[20%] left-1/2 -translate-x-1/2 -translate-y-full z-20"
         >
           <RarityBadge rarity={unit.rarity || rarity} size="sm" />
         </motion.div>
