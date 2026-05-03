@@ -1,511 +1,551 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import {
-  Users,
-  Coins,
-  Diamond,
-  Calendar,
-  Bell,
-  Mail,
-  Zap,
-  Sparkles,
-  UserPlus,
-  Sword,
-  Star,
-  BookOpen,
-  Heart,
-  Shield,
-  Info,
-  ChevronRight,
-  TrendingUp,
-  Gift,
-  Trophy,
-  Crown,
-  Castle
+  Sword, Users, UserPlus, Sparkles, Trophy,
+  Settings, Bell, Gift, Target, ChevronRight,
+  Shield, Zap, Coins, Diamond, Info, Star,
+  Flame, Wind, Droplets, Mountain, Sun,
+  Castle, Map as MapIcon, ScrollText
 } from 'lucide-react';
-import { AssetService } from '@/lib/services/asset-service';
-import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
-import { Button } from '@/components/ui/Button';
-import { LevelProgress } from '@/components/ui/LevelProgress';
-import { getExpForNextLevel, getUnlockForLevel } from '@/lib/config/level-curve';
+import { AssetService } from '@/lib/services/asset-service';
 
 interface RPGHomeViewProps {
   saveData: any;
   activePartyUnits: any[];
   onNavigate: (view: any) => void;
   onOpenFullInventory: () => void;
-  onRefillEnergy?: () => void;
+  onRefillEnergy: () => void;
+  onSelectUnit?: (unitId: string) => void;
 }
 
-const rarityColor = (rarity: string) => {
-  switch (rarity?.toUpperCase()) {
-    case 'UR': return '#F59E0B';
-    case 'SR': return '#D946EF';
-    case 'R': return '#3B82F6';
-    default: return '#9CA3AF';
-  }
-};
+/**
+ * RPGHomeView - Redesigned Immersive Home Screen
+ * Aesthetic: Ragnarok / Hearthstone (Epic, Ornate, Stone/Gold)
+ */
+export function RPGHomeView({
+  saveData,
+  activePartyUnits,
+  onNavigate,
+  onOpenFullInventory,
+  onRefillEnergy,
+  onSelectUnit
+}: RPGHomeViewProps) {
+  const { profile } = saveData;
+  const playerLevel = profile?.level || 1;
+  const energy = profile?.energy || 0;
+  const maxEnergy = profile?.max_energy || 20;
+  const currency = profile?.currency || 0;
+  const gems = profile?.premium_currency || 0;
 
-const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flipped = false }: any) => {
-  const sprite = unit ? AssetService.getSpriteUrl(unit.sprite_id || 
-    (unit.name && unit.name.toLowerCase().includes('kael') ? AssetService.getJobSpriteId('archer') :
-     unit.name && unit.name.toLowerCase().includes('garran') ? AssetService.getJobSpriteId('swordman') :
-     'novice')
-  ) : undefined;
-  
-  const rarity = unit?.rarity || (emphasized ? 'UR' : 'R');
-  const color = rarityColor(rarity);
+  // Mouse Parallax Logic
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`relative flex flex-col items-center justify-end h-full w-full ${emphasized ? 'z-20' : 'z-10'}`}
-      style={{ scale: scale * 1.25 }} // Increased size by ~25%
-    >
-      {/* Rarity Aura / Glow behind character */}
-      {unit && (
-        <div 
-          className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-32 h-32 blur-3xl opacity-20 pointer-events-none rounded-full"
-          style={{ backgroundColor: color }}
-        />
-      )}
-
-      {/* Rarity Badge above Character */}
-      {unit && (
-        <motion.div 
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.5, type: 'spring' }}
-          className="absolute top-0 left-1/2 -translate-x-1/2 flex flex-col items-center z-20"
-        >
-          <div 
-            className="w-10 h-10 rounded-full flex flex-col items-center justify-center border-2 shadow-lg"
-            style={{ borderColor: color, backgroundColor: `${color}22`, color: color }}
-          >
-            <span className="text-lg font-black font-display leading-none drop-shadow-md text-white">{rarity}</span>
-          </div>
-          <div className="flex gap-0.5 mt-1">
-             {[...Array(rarity === 'UR' ? 5 : rarity === 'SR' ? 4 : 3)].map((_, i) => (
-                <Star key={i} size={8} className="fill-current" style={{ color }} />
-             ))}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Character Sprite */}
-      <div className="relative w-full h-[70%] flex items-end justify-center mb-2">
-        {unit ? (
-          <>
-            {/* Feet Shadow */}
-            <div className="absolute bottom-0 w-20 h-4 bg-black/40 blur-md rounded-full -z-10" />
-            
-            <motion.div
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: emphasized ? 0 : 1 }}
-              className={`w-[180%] max-w-[200px] h-auto object-contain origin-bottom ${flipped ? 'scale-x-[-1]' : ''}`}
-            >
-              <ImageWithFallback
-                src={sprite || ''}
-                alt={unit.name}
-                className="w-full h-auto object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.9)]"
-                fallbackSrc={AssetService.getSpriteUrl('novice_idle.png')}
-              />
-            </motion.div>
-          </>
-        ) : (
-           <div className="w-16 h-16 rounded-full bg-black/30 border-2 border-dashed border-white/10 flex items-center justify-center mb-8">
-             <Users size={24} className="text-white/20" />
-           </div>
-        )}
-      </div>
-
-      {/* Stat Panel Below - More compact and premium */}
-      {unit && (
-        <NineSlicePanel
-          type="border"
-          variant="default"
-          className="w-[120%] p-3 glass-frosted frame-earthstone relative overflow-hidden group hover:border-white/20 transition-all"
-          style={{ borderColor: `${color}44` }}
-        >
-          <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-[#0B1A2A] border border-white/10 px-3 py-0.5 rounded-full shadow-lg z-10">
-             <span className="text-[10px] font-black text-white uppercase tracking-tighter">LV.{unit.level || 60}</span>
-          </div>
-          <h4 className="text-center text-white text-[11px] font-black tracking-widest uppercase truncate mb-2 mt-1 drop-shadow-md">{unit.name}</h4>
-          
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[9px] font-stats font-bold">
-             <div className="flex items-center justify-between border-b border-white/5 pb-0.5">
-                <span className="text-pink-400/80 uppercase">HP</span>
-                <span className="text-white">{(unit.base_stats?.hp || unit.baseStats?.hp || 300)}</span>
-             </div>
-             <div className="flex items-center justify-between border-b border-white/5 pb-0.5">
-                <span className="text-orange-400/80 uppercase">ATK</span>
-                <span className="text-white">{(unit.base_stats?.atk || unit.baseStats?.atk || 250)}</span>
-             </div>
-          </div>
-        </NineSlicePanel>
-      )}
-    </motion.div>
-  );
-};
-
-export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFullInventory, onRefillEnergy }: RPGHomeViewProps) {
-  const primaryUnit = activePartyUnits[0];
-  const leftUnit = activePartyUnits[1];
-  const rightUnit = activePartyUnits[2];
-
-  const [displayCurrency, setDisplayCurrency] = useState<number>(saveData.profile?.currency || 0);
-  const [displayGems, setDisplayGems] = useState<number>(saveData.profile?.premium_currency || 0);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (displayCurrency < (saveData.profile?.currency || 0)) setDisplayCurrency(prev => Math.min(saveData.profile?.currency || 0, prev + 100));
-      if (displayGems < (saveData.profile?.premium_currency || 0)) setDisplayGems(prev => Math.min(saveData.profile?.premium_currency || 0, prev + 10));
-    }, 30);
-      return () => clearTimeout(timer);
-  }, [saveData.profile?.currency, saveData.profile?.premium_currency, displayCurrency, displayGems]);
-
-  const playerLevel = saveData.profile?.level || 1;
-  const playerExp = saveData.profile?.exp || 0;
-  const nextLevelExp = playerLevel * 100;
-  const expProgress = Math.min((playerExp / nextLevelExp) * 100, 100);
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const { clientX, clientY } = e;
+    const moveX = (clientX - window.innerWidth / 2) / 40;
+    const moveY = (clientY - window.innerHeight / 2) / 40;
+    mouseX.set(moveX);
+    mouseY.set(moveY);
+  };
 
   return (
     <div
-      className="w-full h-full flex flex-col relative bg-[#0B1A2A] bg-cover bg-center bg-no-repeat overflow-hidden font-sans"
-      style={{ backgroundImage: `url('${AssetService.getBgUrl('home')}')` }}
+      className="relative w-full h-full overflow-hidden bg-black font-stats select-none"
+      onMouseMove={handleMouseMove}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2A]/40 via-transparent to-[#020508]/95 pointer-events-none" />
+      {/* Background Layer with Parallax */}
+      <motion.div
+        style={{
+          x: useTransform(mouseX, [ -20, 20 ], [ 10, -10 ]),
+          y: useTransform(mouseY, [ -20, 20 ], [ 10, -10 ]),
+          scale: 1.1
+        }}
+        className="absolute inset-0 z-0"
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90 z-10" />
+        <img
+          src={AssetService.getBgUrl('home')}
+          alt="Home Background"
+          className="w-full h-full object-cover"
+        />
+      </motion.div>
 
-      {/* Top Bar - 8px Grid Spacing */}
-      <div className="w-full shrink-0 flex items-center justify-between px-6 z-30 pt-8 gap-4">
-        {/* Left: Player Profile */}
-        <div className="relative flex items-center gap-4">
-           <div className="relative group cursor-pointer" onClick={() => onNavigate('profile')}>
-              <div className="absolute inset-0 bg-[#F5C76B] blur-md opacity-20 group-hover:opacity-40 transition-opacity rounded-full" />
-              <div className="w-14 h-14 rounded-full border-2 border-[#F5C76B]/60 bg-gradient-to-b from-[#2a3b5c] to-[#1a253a] flex items-center justify-center shadow-2xl relative overflow-hidden">
-                <span className="text-xl font-black text-white italic">{saveData.profile?.username?.charAt(0).toUpperCase() || 'A'}</span>
-              </div>
-              <div className="absolute -bottom-1 -right-1 bg-[#F5C76B] text-[#0B1A2A] text-[9px] font-black px-1.5 py-0.5 rounded-md border border-[#0B1A2A] shadow-md">
-                {playerLevel}
-              </div>
-           </div>
-           
-<div className="flex flex-col gap-1">
-               <h2 className="text-white text-sm font-black tracking-widest uppercase italic drop-shadow-md">
-                 {saveData.profile?.username || "Commander"}
-               </h2>
-               <div className="w-40">
-                 <LevelProgress 
-                   level={playerLevel} 
-                   currentExp={playerExp}
-                   showUnlocks={true}
-                   compact={true}
-                 />
-               </div>
+      {/* Main Layout Containers */}
+      <div className="relative z-20 w-full h-full flex flex-col justify-between p-6 pb-4">
+
+        <HeaderStats
+          level={playerLevel}
+          energy={energy}
+          maxEnergy={maxEnergy}
+          currency={currency}
+          gems={gems}
+          onRefill={onRefillEnergy}
+          username={profile?.username}
+        />
+
+        <div className="flex-1 flex items-center justify-center relative">
+           <CharacterStage
+             units={activePartyUnits}
+             mouseX={mouseX}
+             mouseY={mouseY}
+             onSelectUnit={onSelectUnit}
+           />
+
+           {/* Floating Objective Plaque */}
+           <CurrentObjective onNavigate={() => onNavigate('campaign')} />
+        </div>
+
+        <div className="flex flex-col items-center gap-6 mb-2">
+           <NotificationCenter onNavigate={onNavigate} />
+           <StoneDock
+             onNavigate={onNavigate}
+             onOpenInventory={onOpenFullInventory}
+             playerLevel={playerLevel}
+           />
+        </div>
+      </div>
+
+      {/* Immersive Framing Vignette */}
+      <div className="absolute inset-0 pointer-events-none z-40 shadow-[inset_0_0_150px_rgba(0,0,0,0.9)]" />
+
+      {/* Decorative Ornate Corners */}
+      <OrnateCorners />
+    </div>
+  );
+}
+
+/**
+ * Top Header with Ornate Stone/Gold Style
+ */
+function HeaderStats({ level, energy, maxEnergy, currency, gems, onRefill, username }: any) {
+  return (
+    <motion.div
+      initial={{ y: -50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="w-full flex items-center justify-between gap-6 pointer-events-auto"
+    >
+      {/* Player Identity Plate */}
+      <div className="flex items-center gap-4">
+        <div className="relative w-20 h-20 group cursor-pointer">
+          <NineSlicePanel type="border" variant="fancy" className="absolute inset-0 z-10 p-1 group-hover:scale-105 transition-transform duration-300">
+            <div className="w-full h-full bg-[#0B1A2A] rounded-lg overflow-hidden flex items-center justify-center border border-[#F5C76B]/20">
+              <span className="text-3xl font-black text-[#F5C76B] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-display">{level}</span>
             </div>
+          </NineSlicePanel>
+          {/* Level Badge Ornament */}
+          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 bg-gradient-to-b from-[#F5C76B] to-[#B8860B] px-4 py-1 rounded-full shadow-[0_4px_10px_rgba(0,0,0,0.5)] border border-black/60">
+            <span className="text-[10px] font-black text-black uppercase tracking-widest font-stats leading-none">LVL</span>
+          </div>
+          {/* Decorative Wings */}
+          <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-6 h-10 border-l-2 border-y-2 border-[#F5C76B]/40 rounded-l-full -z-10" />
+          <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-6 h-10 border-r-2 border-y-2 border-[#F5C76B]/40 rounded-r-full -z-10" />
         </div>
 
-        {/* Right: Currencies */}
-        <div className="flex items-center gap-3">
-          <div className="flex flex-col gap-2">
-             <motion.div 
-               whileHover={{ scale: 1.05 }}
-               className="bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-3 pl-3 pr-1 py-1 min-w-[110px] shadow-lg"
-             >
-               <Coins size={14} className="text-[#F5C76B] drop-shadow-[0_0_5px_rgba(245,199,107,0.5)]" />
-               <span className="text-[11px] font-black text-white font-stats flex-1 text-center">{displayCurrency.toLocaleString()}</span>
-               <button className="w-5 h-5 rounded-lg bg-[#F5C76B]/20 text-[#F5C76B] flex items-center justify-center hover:bg-[#F5C76B]/30 transition-colors">
-                 <span className="text-xs font-black">+</span>
-               </button>
-             </motion.div>
-             
-<motion.div 
-                whileHover={{ scale: 1.05 }}
-                className="bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-3 pl-3 pr-1 py-1 min-w-[110px] shadow-lg"
-              >
-                <Diamond size={14} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
-                <span className="text-[11px] font-black text-white font-stats flex-1 text-center">{displayGems.toLocaleString()}</span>
-                <button className="w-5 h-5 rounded-lg bg-cyan-400/20 text-cyan-400 flex items-center justify-center hover:bg-cyan-400/30 transition-colors">
-                  <span className="text-xs font-black">+</span>
-                </button>
-              </motion.div>
-
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => onNavigate('daily_rewards')}
-                className="relative p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl border border-purple-400 shadow-lg"
-                title="Daily Rewards"
-              >
-                <Gift size={20} className="text-white" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse" />
-              </motion.button>
-          </div>
-          
-          <button className="p-3 bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl text-white/60 hover:text-white transition-all active:scale-90 relative shadow-xl">
-            <Bell size={20} />
-            <div className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#0B1A2A]" />
-          </button>
+        <div className="flex flex-col">
+           <span className="text-[10px] font-black text-[#F5C76B] uppercase tracking-[0.3em] opacity-80">Adventurer</span>
+           <span className="text-lg font-black text-white uppercase tracking-wider drop-shadow-md">{username || 'Adventurer'}</span>
         </div>
       </div>
 
-      {/* Battle CTA - Main Focus */}
-      <div className="w-full flex flex-col items-center mt-12 z-40">
-        <div className="relative group">
-          {/* Pulse Glow Effect */}
-          <motion.div 
-            animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute inset-0 bg-cyan-400 blur-2xl rounded-full opacity-40 pointer-events-none"
-          />
-          
-          <motion.button 
-            onClick={() => onNavigate('campaign')}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            className="btn-premium-blue px-16 py-5 text-2xl font-black font-display tracking-[0.2em] uppercase z-10 flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(79,172,254,0.4)]"
+      {/* Resource Center */}
+      <div className="flex items-center gap-4 h-14 bg-black/40 backdrop-blur-xl px-6 py-2 rounded-2xl border border-white/5 shadow-2xl">
+        {/* Energy Bar Ornate */}
+        <div className="flex items-center gap-4 h-full group cursor-pointer min-w-[220px]" onClick={onRefill}>
+          <div className="relative">
+            <Zap className="w-5 h-5 text-[#A855F7] drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
+            <motion.div
+              animate={{ opacity: [0.4, 1, 0.4] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute inset-0 bg-[#A855F7] blur-lg rounded-full -z-10"
+            />
+          </div>
+          <div className="flex-1 flex flex-col gap-1">
+             <div className="flex justify-between text-[9px] font-black text-white/40 uppercase tracking-widest">
+                <span>Energy</span>
+                <span className="text-white/80">{energy} / {maxEnergy}</span>
+             </div>
+             <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(energy / maxEnergy) * 100}%` }}
+                  className="h-full bg-gradient-to-r from-[#A855F7] via-[#D946EF] to-[#A855F7] bg-[length:200%_100%] animate-gradient-x rounded-full"
+                />
+             </div>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#A855F7]/20 transition-colors">
+             <UserPlus className="w-4 h-4 text-white/40" />
+          </div>
+        </div>
+
+        <div className="w-[1px] h-8 bg-white/10" />
+
+        {/* Currency Plate */}
+        <div className="flex items-center gap-3 px-2 group cursor-help">
+          <Coins className="w-5 h-5 text-[#F5C76B] drop-shadow-[0_0_5px_rgba(245,199,107,0.5)] group-hover:scale-110 transition-transform" />
+          <span className="text-sm font-black text-white tabular-nums drop-shadow-md">{currency.toLocaleString()}</span>
+        </div>
+
+        <div className="w-[1px] h-8 bg-white/10" />
+
+        {/* Gems Plate */}
+        <div className="flex items-center gap-3 px-2 group cursor-help">
+          <Diamond className="w-5 h-5 text-[#22D3EE] drop-shadow-[0_0_5px_rgba(34,211,238,0.5)] group-hover:scale-110 transition-transform" />
+          <span className="text-sm font-black text-white tabular-nums drop-shadow-md">{gems.toLocaleString()}</span>
+        </div>
+      </div>
+
+      {/* Global Actions */}
+      <div className="flex items-center gap-2">
+        <button className="w-12 h-12 flex items-center justify-center bg-black/60 border border-white/10 rounded-xl hover:border-[#F5C76B]/40 hover:bg-white/5 transition-all group">
+          <Settings className="w-5 h-5 text-white/40 group-hover:text-white group-hover:rotate-45 transition-all" />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+/**
+ * Unit Display for the Stage - Separated to follow Rules of Hooks
+ */
+function UnitDisplay({ unit, idx, mouseX, mouseY, onSelectUnit }: any) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Call useTransform at the top level of this component
+  const x = useTransform(mouseX, [ -20, 20 ], [ idx * 4, -idx * 4 ]);
+  const y = useTransform(mouseY, [ -20, 20 ], [ idx * 2, -idx * 2 ]);
+
+  if (!unit) return (
+    <div className="w-64 h-[60%] border-2 border-dashed border-[#F5C76B]/10 rounded-3xl flex items-center justify-center bg-black/20">
+       <UserPlus className="w-8 h-8 text-[#F5C76B]/20" />
+    </div>
+  );
+
+  const spriteUrl = AssetService.getSpriteUrl(unit.sprite_id || 'novice_idle.png');
+
+  return (
+    <div
+      className="relative w-64 h-[70%] flex flex-col items-center justify-end group pointer-events-auto cursor-help"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={() => onSelectUnit && onSelectUnit(unit.id)}
+    >
+      {/* Contextual Info Panel (Hover) - Hearthstone Style Card */}
+      <AnimatePresence>
+        {isHovered && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9, rotateX: 30 }}
+            animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9, rotateX: 30 }}
+            className="absolute -top-40 w-64 z-50 perspective-1000"
           >
-            <Sword size={24} className="animate-pulse" />
-            BATTLE
-          </motion.button>
-          
-          {/* Star decorations */}
-          <div className="absolute -right-6 -top-4 flex flex-col gap-1 z-20">
-            {[1,2,3].map(i => (
-              <motion.div
-                key={i}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 10 + i * 2, repeat: Infinity, ease: "linear" }}
-              >
-                <Star size={12 + i * 2} className="text-yellow-400 fill-current drop-shadow-[0_2px_10px_rgba(245,199,107,0.8)]" />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Display Area (Characters) - Fixed spacing */}
-      <div className="flex-1 relative flex items-center justify-center px-4 -mt-12 overflow-visible">
-        {/* Background Magic Elements */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[160%] aspect-square bg-blue-900/10 blur-[150px] rounded-full pointer-events-none animate-pulse" />
-        
-        <div className="w-full h-full max-w-2xl flex items-end justify-center relative pb-32 gap-0 overflow-visible">
-          <div className="w-[28%] h-[80%] flex items-end -mr-4">
-            <CharacterSlot unit={leftUnit} scale={0.9} zIndex={10} flipped />
-          </div>
-          <div className="w-[36%] h-[90%] flex items-end z-20">
-            <CharacterSlot unit={primaryUnit} scale={1.15} zIndex={30} emphasized />
-          </div>
-          <div className="w-[28%] h-[80%] flex items-end -ml-4">
-            <CharacterSlot unit={rightUnit} scale={0.9} zIndex={10} />
-          </div>
-        </div>
-
-        {/* Floating Sidebar Actions */}
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-6 z-50">
-          {[
-            { icon: Calendar, label: 'DAILY', badge: saveData.canClaimDaily ? '!' : null, view: 'daily_rewards', color: 'text-yellow-400' },
-            { icon: BookOpen, label: 'TRAIN', badge: null, view: 'training', color: 'text-cyan-400' },
-            { icon: Mail, label: 'NOTIFS', badge: '1', view: 'quests', color: 'text-white' }
-          ].map((btn, i) => (
-            <motion.div 
-              key={i} 
-              whileHover={{ scale: 1.1, x: -5 }}
-              className="flex flex-col items-center gap-1.5 group cursor-pointer relative"
-              onClick={() => onNavigate(btn.view as any)}
-            >
-              <NineSlicePanel 
-                type="border" 
-                variant="fancy"
-                className="w-14 h-14 flex flex-col items-center justify-center glass-frosted frame-earthstone group-hover:border-[#F5C76B] transition-all shadow-2xl"
-              >
-                <btn.icon size={20} className={`${btn.color} mb-0.5 drop-shadow-[0_0_5px_currentColor]`} />
-                <span className="text-[7px] font-black text-white/90 uppercase tracking-[0.2em] font-stats">{btn.label}</span>
-                {btn.badge && (
-                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full border-2 border-[#0B1A2A] flex items-center justify-center text-[10px] font-black text-white shadow-lg animate-bounce">
-                    {btn.badge}
-                  </div>
-                )}
-              </NineSlicePanel>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* Bottom Area: Objective & Nav */}
-      <div className="absolute bottom-0 left-0 right-0 z-40 flex flex-col items-center pb-8 pt-20 pointer-events-none bg-gradient-to-t from-black via-black/80 to-transparent">
-          
-          {/* Objective Panel - Using NineSlicePanel with Fancy Border */}
-          <motion.div 
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="w-[92%] max-w-md mb-8 relative pointer-events-auto"
-          >
-            <NineSlicePanel 
-              type="border" 
-              variant="fancy"
-              className="p-6 pb-8 text-center glass-frosted frame-earthstone shadow-[0_0_50px_rgba(0,0,0,0.8)] group transition-all hover:border-[#F5C76B]/40"
-            >
-               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0B1A2A] border border-[#F5C76B]/30 px-6 py-1.5 rounded-full shadow-2xl flex items-center gap-3">
-                 <span className="text-[10px] text-[#F5C76B] font-black uppercase tracking-[0.3em] font-stats flex items-center gap-2 italic">
-                   <Target className="w-3 h-3" />
-                   Current Objective
-                 </span>
-               </div>
-               
-               <div className="mt-4 space-y-1">
-                  <div className="flex items-center justify-center gap-2 text-white/40 mb-1">
-                     <span className="h-[1px] w-8 bg-current opacity-20" />
-                     <p className="text-[10px] font-black uppercase tracking-[0.2em]">Chapter 18</p>
-                     <span className="h-[1px] w-8 bg-current opacity-20" />
-                  </div>
-                  <h3 className="text-xl font-black font-display uppercase tracking-[0.1em] text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] italic">
-                    The Sunken Temple
-                  </h3>
-                  <div className="flex items-center justify-center gap-2 mt-4 text-[#F5C76B]/60 group-hover:text-[#F5C76B] transition-colors cursor-pointer">
-                    <span className="text-[9px] font-black uppercase tracking-widest font-stats">Details</span>
-                    <ChevronRight size={12} className="group-hover:translate-x-1 transition-transform" />
-                  </div>
-               </div>
+            <NineSlicePanel type="panel" variant="gold" className="p-5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] border-2 border-[#F5C76B]/40">
+              <div className="absolute -top-4 -left-4 w-12 h-12 bg-black border-2 border-[#F5C76B] rounded-full flex items-center justify-center z-10">
+                 <span className="text-sm font-black text-[#F5C76B]">{unit.level || 1}</span>
+              </div>
+              <div className="text-center mb-4 border-b border-white/10 pb-2">
+                <h4 className="text-sm font-black text-white uppercase tracking-widest font-display">{unit.name}</h4>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  <p className="text-[10px] text-[#F5C76B] font-bold uppercase tracking-tighter">{unit.current_job_id || 'Novice'}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <StatItem label="ATK" value={unit.base_stats?.atk} color="text-red-400" />
+                <StatItem label="DEF" value={unit.base_stats?.def} color="text-blue-400" />
+                <StatItem label="MATK" value={unit.base_stats?.matk} color="text-purple-400" />
+                <StatItem label="AGI" value={unit.base_stats?.agi} color="text-green-400" />
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-center gap-4">
+                 <Shield className="w-4 h-4 text-white/20" />
+                 <Sword className="w-4 h-4 text-white/20" />
+                 <Sparkles className="w-4 h-4 text-white/20" />
+              </div>
             </NineSlicePanel>
           </motion.div>
+        )}
+      </AnimatePresence>
 
-          {/* Bottom Dock Navigation */}
-          <div className="w-full px-6 flex justify-center pointer-events-auto">
-            <div className="flex max-w-xl w-full justify-between gap-3 bg-black/40 backdrop-blur-2xl p-2 rounded-[2rem] border border-white/5 shadow-2xl">
-              {[
-                { id: 'party', icon: Users, label: 'PARTY', active: true },
-                { id: 'tavern', icon: UserPlus, label: 'RECRUIT', badge: 'new' },
-                { id: 'gacha', icon: Sparkles, label: 'GACHA', badge: '1', activeGlow: true },
-                { id: 'inventory', icon: Sword, label: 'EQUIP', action: 'inventory' }
-              ].map((btn) => (
-                <motion.button
-                  key={btn.id}
-                  onClick={() => btn.action === 'inventory' ? onOpenFullInventory() : onNavigate(btn.id as any)}
-                  whileHover={{ y: -5 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`flex-1 h-20 flex flex-col items-center justify-center gap-1.5 relative rounded-2xl transition-all border ${
-                    btn.active 
-                      ? 'bg-gradient-to-b from-[#2a3b5c] to-[#1a253a] border-[#F5C76B]/60 shadow-[0_0_20px_rgba(245,199,107,0.15)]' 
-                      : 'bg-white/5 border-transparent hover:bg-white/10'
-                  }`}
-                >
-                  <div className={`relative ${btn.active ? 'scale-110' : ''} transition-transform`}>
-                    <btn.icon size={24} className={btn.active ? 'text-[#F5C76B]' : 'text-white/40'} />
-                    {btn.activeGlow && (
-                      <motion.div 
-                        animate={{ opacity: [0.2, 0.5, 0.2] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="absolute inset-0 bg-cyan-400 blur-md rounded-full -z-10" 
-                      />
-                    )}
-                  </div>
-                  <span className={`text-[9px] font-black tracking-widest uppercase font-stats ${btn.active ? 'text-[#F5C76B]' : 'text-white/30'}`}>
-                    {btn.label}
-                  </span>
-                  
-                  {btn.badge && (
-                    <div className={`absolute -top-1 -right-1 ${btn.badge === 'new' ? 'bg-orange-500 rounded px-1.5 py-0.5' : 'w-5 h-5 bg-red-500 rounded-full flex items-center justify-center'} border-2 border-[#0B1A2A] text-[8px] font-black text-white uppercase tracking-tighter shadow-lg`}>
-                      {btn.badge}
-                    </div>
-                  )}
-                  
-                  {btn.active && (
-                    <motion.div 
-                      layoutId="active-indicator"
-                      className="absolute -bottom-1 w-8 h-1 bg-[#F5C76B] rounded-full shadow-[0_0_10px_#F5C76B]"
-                    />
-                  )}
-                </motion.button>
-              ))}
-            </div>
-          </div>
+      {/* Character Visual with Heavy Shadows & Glowing FX */}
+      <motion.div
+        style={{ x, y }}
+        animate={{
+          y: [0, -12, 0],
+        }}
+        transition={{
+          duration: 5,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: idx * 0.7
+        }}
+        className="relative z-20 group-hover:scale-105 transition-transform duration-500"
+      >
+        {/* Magic Circle Underlay for Elite/High Level Units */}
+        {(unit.level > 20 || idx === 0) && (
+          <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 -z-10 scale-150 opacity-20 pointer-events-none"
+          >
+             <svg viewBox="0 0 100 100" className="w-full h-full text-[#F5C76B]">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="5,5" />
+                <path d="M50 5 L95 50 L50 95 L5 50 Z" fill="none" stroke="currentColor" strokeWidth="0.5" />
+             </svg>
+          </motion.div>
+        )}
 
-          {/* Contextual Feature Buttons - Unlock based on level */}
-          {playerLevel >= 15 && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="px-6 pb-4"
-            >
-              <div className="text-white/30 text-[9px] font-bold uppercase tracking-widest text-center mb-2">
-                Available Features
-              </div>
-              <div className="flex gap-2 justify-center">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => onNavigate('guild')}
-                  className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-xl border border-indigo-500/30 flex flex-col items-center gap-1"
-                >
-                  <Users size={18} className="text-indigo-400" />
-                  <span className="text-[8px] font-bold text-indigo-300 uppercase">Guild</span>
-                </motion.button>
+        <img
+          src={spriteUrl}
+          alt={unit.name}
+          className="w-56 h-56 object-contain pixel-art filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] group-hover:brightness-125 transition-all"
+        />
 
-                {playerLevel >= 30 && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => onNavigate('arena')}
-                    className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-xl border border-red-500/30 flex flex-col items-center gap-1"
-                  >
-                    <Trophy size={18} className="text-red-400" />
-                    <span className="text-[8px] font-bold text-red-300 uppercase">Arena PvP</span>
-                  </motion.button>
-                )}
+        {/* Affinity Tag */}
+        <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+           <div className="bg-[#0B1A2A] border border-[#F5C76B]/40 px-3 py-1 rounded-md shadow-xl flex items-center gap-2">
+              <AffinityIcon affinity={unit.affinity} size={12} />
+              <span className="text-[9px] font-black text-white uppercase tracking-widest">{unit.affinity}</span>
+           </div>
+        </div>
+      </motion.div>
 
-                {playerLevel >= 35 && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => onNavigate('tower')}
-                    className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-xl border border-amber-500/30 flex flex-col items-center gap-1"
-                  >
-                    <Castle size={18} className="text-amber-400" />
-                    <span className="text-[8px] font-bold text-amber-300 uppercase">Tower</span>
-                  </motion.button>
-                )}
+      {/* Shadow Base (Perspective) */}
+      <div className="absolute bottom-6 w-40 h-8 bg-black/60 blur-xl rounded-[100%] scale-x-150 -z-10" />
 
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => onNavigate('daily_rewards')}
-                  className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl border border-green-500/30 flex flex-col items-center gap-1"
-                >
-                  <Gift size={18} className="text-green-400" />
-                  <span className="text-[8px] font-bold text-green-300 uppercase">Daily</span>
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
+      {/* Floor Name Plate */}
+      <div className="mt-6 relative px-8 py-1 overflow-hidden group">
+         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F5C76B]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+         <span className="text-xs font-black text-white/40 group-hover:text-[#F5C76B] uppercase tracking-[0.4em] transition-colors relative z-10 drop-shadow-lg">
+           {unit.name}
+         </span>
+         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#F5C76B]/40 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
       </div>
     </div>
   );
 }
 
-// Helper icons for objective panel
-function Target(props: any) {
+/**
+ * Character Display Stage with Interactive Overlays
+ */
+function CharacterStage({ units, mouseX, mouseY, onSelectUnit }: any) {
   return (
-    <svg 
-      {...props}
-      xmlns="http://www.w3.org/2000/svg" 
-      width="24" 
-      height="24" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
+    <div className="w-full max-w-5xl h-full flex items-end justify-center gap-12 px-12 pointer-events-none">
+      {units.slice(0, 3).map((unit: any, idx: number) => (
+        <UnitDisplay
+          key={unit?.id || `empty-${idx}`}
+          unit={unit}
+          idx={idx}
+          mouseX={mouseX}
+          mouseY={mouseY}
+          onSelectUnit={onSelectUnit}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Objective Plaque (Sunken Temple Style)
+ */
+function CurrentObjective({ onNavigate }: any) {
+  return (
+    <motion.div
+      initial={{ x: 100, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      className="absolute top-1/2 right-12 -translate-y-1/2 w-72 pointer-events-auto"
     >
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="12" r="6" />
-      <circle cx="12" cy="12" r="2" />
-    </svg>
+       <NineSlicePanel type="border" variant="fancy" className="p-6 bg-black/60 backdrop-blur-xl border-[#F5C76B]/20 group cursor-pointer hover:border-[#F5C76B]/60 transition-all shadow-2xl" onClick={onNavigate}>
+          <div className="absolute -top-3 left-6 bg-[#0B1A2A] border border-[#F5C76B]/40 px-4 py-1 rounded-full shadow-lg flex items-center gap-2">
+             <Target className="w-3 h-3 text-[#F5C76B]" />
+             <span className="text-[9px] font-black text-[#F5C76B] uppercase tracking-[0.2em]">Current Objective</span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+             <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-[#F5C76B]/10 border border-[#F5C76B]/20 flex items-center justify-center">
+                   <Castle className="w-5 h-5 text-[#F5C76B]" />
+                </div>
+                <div>
+                   <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Chapter 18</p>
+                   <h3 className="text-lg font-black text-white uppercase font-display leading-tight">The Sunken Temple</h3>
+                </div>
+             </div>
+
+             <div className="bg-white/5 rounded-lg p-3 border border-white/5 group-hover:bg-white/10 transition-colors">
+                <p className="text-[10px] text-white/60 leading-relaxed font-stats">
+                  Infiltrate the depths of the temple and recover the Ancient Relic before the Shadow Cult arrives.
+                </p>
+             </div>
+
+             <div className="flex items-center justify-end gap-2 text-[#F5C76B]/60 group-hover:text-[#F5C76B] transition-colors">
+                <span className="text-[9px] font-black uppercase tracking-widest">Enter Region</span>
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+             </div>
+          </div>
+       </NineSlicePanel>
+    </motion.div>
+  );
+}
+
+/**
+ * Functional Badges & Alerts (Notification Center)
+ */
+function NotificationCenter({ onNavigate }: any) {
+  return (
+    <div className="flex items-center gap-4 w-full max-w-2xl px-4">
+       <button
+         className="flex-1 h-14 relative group overflow-hidden"
+         onClick={() => onNavigate('daily_rewards')}
+       >
+          <NineSlicePanel type="border" variant="fancy" className="w-full h-full bg-[#0B1A2A]/80 backdrop-blur-xl flex items-center px-6 gap-4 hover:border-[#F5C76B]/40 transition-all">
+             <div className="relative">
+                <Bell className="w-5 h-5 text-orange-400 group-hover:animate-swing" />
+                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping" />
+             </div>
+             <div className="flex-1 flex flex-col items-start overflow-hidden">
+                <span className="text-[10px] font-black text-[#F5C76B] uppercase tracking-widest opacity-80">World Event</span>
+                <span className="text-xs font-black text-white uppercase tracking-tight truncate w-full">The Crimson Eclipse has begun! Collect rewards.</span>
+             </div>
+             <div className="w-8 h-8 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center">
+                <span className="text-xs font-black text-red-500">1</span>
+             </div>
+          </NineSlicePanel>
+          {/* Animated Glow Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+       </button>
+
+       <button className="w-14 h-14 bg-[#0B1A2A]/80 border border-white/10 rounded-2xl flex items-center justify-center hover:border-green-500/40 hover:bg-green-500/5 transition-all group relative">
+          <Gift className="w-6 h-6 text-green-400 group-hover:scale-110 transition-transform" />
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-[#0B1A2A] flex items-center justify-center shadow-lg">
+             <Star className="w-3 h-3 text-white fill-white" />
+          </div>
+       </button>
+    </div>
+  );
+}
+
+/**
+ * Bottom Dock Navigation with Stone Plate Aesthetics
+ */
+function StoneDock({ onNavigate, onOpenInventory, playerLevel }: any) {
+  const buttons = [
+    { id: 'campaign', icon: MapIcon, label: 'QUESTS', color: 'text-amber-400', glow: 'shadow-[0_0_20px_rgba(251,191,36,0.1)]' },
+    { id: 'party', icon: Users, label: 'ROSTER', color: 'text-blue-400', glow: 'shadow-[0_0_20px_rgba(59,130,246,0.1)]' },
+    { id: 'tavern', icon: UserPlus, label: 'INN', color: 'text-emerald-400', badge: '!', glow: 'shadow-[0_0_20px_rgba(16,185,129,0.1)]' },
+    { id: 'gacha', icon: Sparkles, label: 'RELICS', color: 'text-purple-400', badge: 'NEW', glow: 'shadow-[0_0_30px_rgba(168,85,247,0.2)]' },
+    { id: 'inventory', icon: Sword, label: 'EQUIP', color: 'text-white/60', action: 'inventory', glow: 'shadow-[0_0_20px_rgba(255,255,255,0.05)]' }
+  ];
+
+  return (
+    <div className="w-full max-w-3xl px-4">
+      <div className="flex items-center justify-between gap-4">
+        {buttons.map((btn) => (
+          <motion.button
+            key={btn.id}
+            whileHover={{ y: -10, scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => btn.action === 'inventory' ? onOpenInventory() : onNavigate(btn.id as any)}
+            className="flex-1 group relative h-28"
+          >
+            {/* Background Plate (Stone) */}
+            <div className={`absolute inset-0 bg-[#1A1A1A] border-2 border-white/5 rounded-2xl ${btn.glow} group-hover:border-[#F5C76B]/30 group-hover:bg-[#222] transition-all duration-300 overflow-hidden`}>
+               {/* Rock Texture Effect */}
+               <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] pointer-events-none" />
+               {/* Bevel Effect */}
+               <div className="absolute inset-0 border-t-2 border-white/10 rounded-2xl pointer-events-none" />
+               <div className="absolute inset-x-0 bottom-0 h-1 bg-black/40 rounded-b-2xl pointer-events-none" />
+            </div>
+
+            <div className="relative z-10 w-full h-full flex flex-col items-center justify-center gap-3">
+              <div className="p-3 rounded-2xl bg-white/5 group-hover:bg-[#F5C76B]/10 transition-colors shadow-inner">
+                <btn.icon size={28} className={`${btn.color} group-hover:text-[#F5C76B] group-hover:drop-shadow-[0_0_10px_currentColor] transition-all duration-300`} />
+              </div>
+              <span className="text-[10px] font-black text-white/30 group-hover:text-white transition-colors tracking-[0.2em] uppercase font-stats">
+                {btn.label}
+              </span>
+            </div>
+
+            {/* Badge Functional Badge */}
+            {btn.badge && (
+              <div className="absolute -top-2 -right-1 z-20">
+                 <div className="bg-red-600 px-2 py-1 rounded-md border-2 border-[#1A1A1A] shadow-[0_4px_10px_rgba(220,38,38,0.4)] animate-bounce-subtle">
+                   <span className="text-[9px] font-black text-white drop-shadow-sm">{btn.badge}</span>
+                 </div>
+              </div>
+            )}
+
+            {/* Active Indicator Hover Line */}
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-8 h-[2px] bg-[#F5C76B] scale-x-0 group-hover:scale-x-100 transition-transform duration-500 shadow-[0_0_8px_#F5C76B]" />
+          </motion.button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Ornate Corners (Frame Decoration)
+ */
+function OrnateCorners() {
+  return (
+    <>
+      {/* Top Left */}
+      <div className="absolute top-0 left-0 w-48 h-48 pointer-events-none z-50 overflow-hidden">
+        <div className="absolute top-6 left-6 w-full h-full border-t-2 border-l-2 border-[#F5C76B]/30 rounded-tl-[40px]">
+           <div className="absolute -top-1 -left-1 w-6 h-6 bg-[#F5C76B] rounded-full blur-[2px] opacity-20" />
+           <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-[#F5C76B] rounded-tl-xl" />
+        </div>
+        <div className="absolute top-10 left-10 w-4 h-4 bg-[#F5C76B]/10 rotate-45 border border-[#F5C76B]/20" />
+      </div>
+
+      {/* Top Right */}
+      <div className="absolute top-0 right-0 w-48 h-48 pointer-events-none z-50 overflow-hidden">
+        <div className="absolute top-6 right-6 w-full h-full border-t-2 border-r-2 border-[#F5C76B]/30 rounded-tr-[40px]">
+           <div className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-[#F5C76B] rounded-tr-xl" />
+        </div>
+        <div className="absolute top-10 right-10 w-4 h-4 bg-[#F5C76B]/10 rotate-45 border border-[#F5C76B]/20" />
+      </div>
+
+      {/* Bottom Decoration Vine Effect */}
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black to-transparent z-30 pointer-events-none opacity-60" />
+    </>
+  );
+}
+
+// Internal Helpers
+function StatItem({ label, value, color }: any) {
+  return (
+    <div className="flex items-center justify-between gap-1 group/stat">
+      <span className="text-[9px] font-bold text-white/40 uppercase tracking-tighter">{label}</span>
+      <div className="flex items-center gap-1.5">
+         <span className={`text-[10px] font-black ${color} tabular-nums`}>{value || 0}</span>
+         <div className="w-1 h-3 bg-white/5 rounded-full overflow-hidden">
+            <motion.div
+               initial={{ height: 0 }}
+               animate={{ height: `${Math.min(100, (value / 500) * 100)}%` }}
+               className={`w-full ${color.replace('text-', 'bg-')} opacity-60`}
+            />
+         </div>
+      </div>
+    </div>
+  );
+}
+
+function AffinityIcon({ affinity, size = 16 }: { affinity: string, size?: number }) {
+  const icons: any = {
+    physical: { icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+    magic: { icon: Droplets, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    ranged: { icon: Wind, color: 'text-green-500', bg: 'bg-green-500/10' },
+    support: { icon: Sun, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
+    tank: { icon: Mountain, color: 'text-amber-800', bg: 'bg-amber-800/10' }
+  };
+
+  const Config = icons[affinity?.toLowerCase()] || icons.physical;
+
+  return (
+    <div className={`flex items-center justify-center ${Config.color}`}>
+      <Config.icon size={size} />
+    </div>
   );
 }
