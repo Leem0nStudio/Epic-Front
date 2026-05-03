@@ -72,13 +72,13 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flippe
         />
       )}
 
-      {/* Rarity Badge above Character - Using centralized RarityBadge */}
+      {/* Rarity Badge above Character head - positioned closer to sprite */}
       {unit && (
         <motion.div 
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.5, type: 'spring' }}
-          className="absolute top-0 left-1/2 -translate-x-1/2 z-20"
+          className="absolute top-[55%] left-1/2 -translate-x-1/2 -translate-y-full z-20"
         >
           <RarityBadge rarity={unit.rarity || rarity} size="sm" />
         </motion.div>
@@ -292,15 +292,15 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
         {/* Background Magic Elements */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[160%] aspect-square bg-blue-900/10 blur-[150px] rounded-full pointer-events-none animate-pulse" />
         
-        <div className="w-full h-full max-w-2xl flex items-end justify-center relative pb-16 gap-0 overflow-hidden">
-          <div className="w-[28%] h-[80%] flex items-end -mr-4">
-            <CharacterSlot unit={leftUnit} scale={0.9} zIndex={10} flipped />
+        <div className="w-full h-full max-w-2xl flex items-end justify-center relative pb-8 gap-0 overflow-hidden">
+          <div className="w-[28%] h-[75%] flex items-end -mr-4">
+            <CharacterSlot unit={leftUnit} scale={0.85} zIndex={10} flipped />
           </div>
-          <div className="w-[36%] h-[90%] flex items-end z-20">
-            <CharacterSlot unit={primaryUnit} scale={1.15} zIndex={30} emphasized />
+          <div className="w-[36%] h-[85%] flex items-end z-20">
+            <CharacterSlot unit={primaryUnit} scale={1.1} zIndex={30} emphasized />
           </div>
-          <div className="w-[28%] h-[80%] flex items-end -ml-4">
-            <CharacterSlot unit={rightUnit} scale={0.9} zIndex={10} />
+          <div className="w-[28%] h-[75%] flex items-end -ml-4">
+            <CharacterSlot unit={rightUnit} scale={0.85} zIndex={10} />
           </div>
         </div>
 
@@ -338,26 +338,6 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
       {/* Bottom Area: Objective & Nav */}
       <div className="absolute bottom-0 left-0 right-0 z-40 flex flex-col items-center pb-8 pt-20 pointer-events-none bg-gradient-to-t from-black via-black/80 to-transparent">
           
-          {/* Objective Panel - Using NineSlicePanel with Fancy Border */}
-          <motion.div 
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="w-[92%] max-w-md mb-8 relative pointer-events-auto"
-          >
-            <NineSlicePanel 
-              type="border" 
-              variant="fancy"
-              className="p-6 pb-8 text-center glass-frosted frame-earthstone shadow-[0_0_50px_rgba(0,0,0,0.8)] group transition-all hover:border-[#F5C76B]/40"
-            >
-               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0B1A2A] border border-[#F5C76B]/30 px-6 py-1.5 rounded-full shadow-2xl flex items-center gap-3">
-                 <span className="text-[10px] text-[#F5C76B] font-black uppercase tracking-[0.3em] font-stats flex items-center gap-2 italic">
-                   <Target className="w-3 h-3" />
-                   Current Objective
-</span>
-                </div>
-            </NineSlicePanel>
-          </motion.div>
-
           {/* Bottom Dock Navigation */}
           <div className="w-full px-6 flex justify-center pointer-events-auto">
             <div className="flex max-w-xl w-full justify-between gap-3 bg-black/40 backdrop-blur-2xl p-2 rounded-[2rem] border border-white/5 shadow-2xl">
