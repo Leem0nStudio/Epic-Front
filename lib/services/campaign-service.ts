@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { Stage, PlayerStageProgress, StageReward, Chapter } from '../rpg-system/campaign-types';
+import { gameDebugger } from '../debug';
 
 export class CampaignService {
     private static chaptersCache: Chapter[] | null = null;
@@ -7,10 +8,7 @@ export class CampaignService {
     static async getChapters(): Promise<Chapter[]> {
         if (this.chaptersCache) return this.chaptersCache;
         
-        if (!supabase) {
-            const { CAMPAIGN_CHAPTERS } = await import('../rpg-system/campaign-data');
-            return CAMPAIGN_CHAPTERS;
-        }
+        gameDebugger.info('game-state', 'Loading chapters from database');
 
         try {
             const { data: chapters, error } = await supabase
@@ -18,10 +16,16 @@ export class CampaignService {
                 .select('*, stages(*)')
                 .order('index_num');
 
-            if (error || !chapters || chapters.length === 0) {
-                console.warn("No chapters in DB, using fallback data");
-                const { CAMPAIGN_CHAPTERS } = await import('../rpg-system/campaign-data');
-                return CAMPAIGN_CHAPTERS;
+            if (error) {
+                gameDebugger.error('game-state', 'Database error loading chapters', error);
+                throw new Error(`Failed to load chapters: ${error.message}`);
+            }
+
+            if (!chapters || chapters.length === 0) {
+                gameDebugger.error('game-state', 'No chapters found in database - run 04-seed.sql', { 
+                    chaptersFound: chapters?.length 
+                });
+                throw new Error('No chapters found in database. Please run the SQL seed file (04-seed.sql) to populate campaign data.');
             }
 
             this.chaptersCache = chapters.map(ch => ({
@@ -45,21 +49,45 @@ export class CampaignService {
                 }))
             }));
 
+            gameDebugger.info('game-state', `Loaded ${this.chaptersCache.length} chapters from DB`);
             return this.chaptersCache;
-        } catch (e) {
-            console.error("Error loading chapters from DB:", e);
-            const { CAMPAIGN_CHAPTERS } = await import('../rpg-system/campaign-data');
-            return CAMPAIGN_CHAPTERS;
+        } catch (e: any) {
+            gameDebugger.error('game-state', 'Error loading chapters', e);
+            throw e;
         }
     }
 
     static async getStageById(stageId: string): Promise<Stage | null> {
-        const chapters = await this.getChapters();
-        for (const chapter of chapters) {
-            const stage = chapter.stages.find(s => s.id === stageId);
-            if (stage) return stage;
+        // Direct query instead of loading all chapters (fixes N+1)
+        try {
+            const { data: stage, error } = await supabase
+                .from('stages')
+                .select('*, chapters!inner(id, index_num, name, description, unlock_requirements)')
+                .eq('id', stageId)
+                .single();
+
+            if (error || !stage) {
+                gameDebugger.warn('game-state', 'Stage not found', { stageId });
+                return null;
+            }
+
+            return {
+                id: stage.id,
+                chapter_id: stage.chapters.id,
+                index: stage.index_num,
+                name: stage.name,
+                description: stage.description || '',
+                energy_cost: stage.energy_cost,
+                enemies: stage.enemies || [],
+                rewards: stage.rewards || { currency: 0, exp: 0, materials: [] },
+                first_clear_rewards: stage.first_clear_rewards,
+                star_conditions: stage.star_conditions || [],
+                unlock_requirements: stage.unlock_requirements || null
+            };
+        } catch (e) {
+            gameDebugger.error('game-state', 'Error loading stage', e);
+            return null;
         }
-        return null;
     }
 
     static async getPlayerProgress(): Promise<PlayerStageProgress[]> {
@@ -87,6 +115,13 @@ export class CampaignService {
 
     static async completeStage(stageId: string, stats: { turns: number, deaths: number }, participatingUnitIds?: string[]) {
         if (!supabase) return;
+        
+        // Validation: ensure stageId is a valid stage identifier (not enemy ID)
+        if (stageId && (stageId.includes('slime') || stageId.includes('bat') || stageId.includes('goblin') || stageId.includes('skeleton') || stageId.includes('wolf'))) {
+            gameDebugger.warn('campaign', 'Invalid stage ID detected (appears to be enemy ID)', { stageId });
+            throw new Error("Invalid stage ID - please restart the battle");
+        }
+        
         const stage = await this.getStageById(stageId);
         if (!stage) throw new Error("Stage not found");
 
@@ -186,25 +221,31 @@ export class CampaignService {
          return Boolean(data);
      }
 
-     static async getUnitProgress(unitId: string): Promise<{ level: number, exp: number, nextLevelExp: number, expPercentage: number } | null> {
-         if (!supabase) return null;
+static async getUnitProgress(unitId: string): Promise<{ level: number, exp: number, nextLevelExp: number, expPercentage: number } | null> {
+        if (!supabase) return null;
 
-         const { data, error } = await supabase
-             .from('unit_progress')
-             .select('*')
-             .eq('id', unitId)
-             .single();
+        // Use units table directly instead of unit_progress VIEW
+        // to avoid dependency issues
+        const { data, error } = await supabase
+            .from('units')
+            .select('level, exp')
+            .eq('id', unitId)
+            .single();
 
-         if (error || !data) {
-             console.error('Failed to get unit progress:', error);
-             return null;
-         }
+        if (error || !data) {
+            gameDebugger.warn('game-state', 'Failed to get unit progress', { unitId, error });
+            return null;
+        }
 
-         return {
-             level: data.level,
-             exp: data.exp,
-             nextLevelExp: data.next_level_exp,
-             expPercentage: data.exp_percentage
-         };
-     }
+        // Calculate next level exp (simple formula)
+        const nextLevelExp = data.level * 100; // 100 exp per level
+        const expPercentage = Math.min(100, (data.exp / nextLevelExp) * 100);
+
+        return {
+            level: data.level,
+            exp: data.exp,
+            nextLevelExp,
+            expPercentage
+        };
+    }
 }

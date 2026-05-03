@@ -18,7 +18,7 @@ interface UnitDetailsViewProps {
   onNavigate: (view: any) => void;
   onUpdate: () => void;
   onOpenInventory: (type: 'card' | 'weapon' | 'skill') => void;
-  onOpenCardDetails: (cardId: string) => void;
+  onOpenCardDetails: (cardId: string, itemId: string) => void;
 }
 
 export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory, onOpenCardDetails }: UnitDetailsViewProps) {
@@ -239,7 +239,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory,
                   animate={{ scale: 1, opacity: 1 }} 
                   transition={{ delay: 0.3 + (i * 0.05) }} 
                   whileTap={{ scale: 0.9 }} 
-                  onClick={() => card ? onOpenCardDetails(card.id) : onOpenInventory('card')} 
+                  onClick={() => card ? onOpenCardDetails(card.item_id, card.id) : onOpenInventory('card')} 
                   className={`aspect-square flex items-center justify-center relative rounded-2xl border backdrop-blur-xl transition-all cursor-pointer group shadow-lg ${card ? 'glass-crystal frame-earthstone' : 'border-white/5 bg-white/5 hover:border-white/10 hover:bg-white/10'}`} 
                   style={card ? { borderColor: `${RARITY_COLORS[getRarityCode(card.rarity)]}66`, backgroundColor: `${RARITY_COLORS[getRarityCode(card.rarity)]}11` } : {}}
                 >
@@ -247,7 +247,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory,
                     <>
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.2),transparent_70%)]" />
                       <RarityIcon rarity={getRarityCode(card.rarity)} size="sm" glass={true}>
-                        <img src={AssetService.getCardUrl(card.item_id)} className="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]" alt="card" />
+                        <img src={AssetService.getCardUrl(card.item_id)} className="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]" alt="card" onError={(e) => { e.currentTarget.src = AssetService.getCardUrlFallback(card.item_id); }} />
                       </RarityIcon>
                       <button onClick={(e) => { e.stopPropagation(); handleUnequip(card.id, 'card'); }} className="absolute -top-1.5 -right-1.5 bg-red-500 rounded-full p-1 border border-white/20 shadow-lg text-white z-20 hover:scale-110 transition-transform">
                         <X size={10} strokeWidth={3} />

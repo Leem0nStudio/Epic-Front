@@ -27,6 +27,8 @@ import { Button } from '@/components/ui/Button';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { CardModal } from '@/components/ui/CardModal';
+import { SkillDetailView } from '@/components/views/SkillDetailView';
+import { CardDetailView } from '@/components/views/CardDetailView';
 
 export default function Applet() {
   const { showToast } = useToast();
@@ -55,7 +57,6 @@ export default function Applet() {
                />;
       case 'tavern':
         return <TavernView 
-                 saveData={state as any}
                  onNavigate={actions.navigateTo}
                  onClaim={actions.handleClaimRecruit}
                  onDiscard={() => {}}
@@ -73,6 +74,7 @@ export default function Applet() {
         return <GachaView
                  profile={state.profile}
                  onNavigate={actions.navigateTo}
+                 onPullComplete={actions.refreshState}
                />;
       case 'unit_details':
         return <UnitDetailsView
@@ -122,6 +124,22 @@ export default function Applet() {
                   unitName={state.roster.find(u => u.id === state.selectedUnitId)?.name || 'Unit'}
                   onBack={() => actions.navigateTo('unit_details')}
                   onUpdate={actions.refreshState}
+                />;
+      case 'skill_detail':
+        return <SkillDetailView
+                  skillId={state.selectedSkillId!}
+                  itemId={state.selectedItemId!}
+                  onBack={() => actions.navigateTo('inventory')}
+                  onEquip={actions.handleEquipItem}
+                  onDiscard={actions.handleDiscardItem}
+                />;
+      case 'card_detail':
+        return <CardDetailView
+                  cardId={state.selectedCardId!}
+                  itemId={state.selectedItemId!}
+                  onBack={() => actions.navigateTo(state.selectedUnitId ? 'unit_details' : 'inventory')}
+                  onEquip={actions.handleEquipItem}
+                  onDiscard={actions.handleDiscardItem}
                 />;
       case 'daily_rewards':
         return <DailyRewardsView 
@@ -185,7 +203,7 @@ export default function Applet() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] aspect-square bg-purple-600/10 blur-[120px] rounded-full" />
       </div>
 
-      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg bg-[#0B1A2A] h-[100dvh] sm:h-[850px] shadow-[0_0_80px_rgba(0,0,0,0.9)] sm:rounded-[40px] overflow-hidden relative border-white/5 flex flex-col items-center sm:border">
+      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl bg-[#0B1A2A] h-[100dvh] sm:h-[85vh] sm:max-h-[850px] shadow-[0_0_80px_rgba(0,0,0,0.9)] sm:rounded-[40px] overflow-hidden relative border-white/5 flex flex-col items-center sm:border">
       <div className="w-full h-full relative overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
@@ -194,7 +212,7 @@ export default function Applet() {
               animate={{ opacity: 1 }}
               exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
               transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.3 }}
-              className="absolute inset-0 flex flex-col overflow-hidden"
+              className="absolute inset-0 flex flex-col overflow-x-hidden overflow-y-auto"
             >
               {renderView()}
             </motion.div>

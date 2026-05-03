@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { GachaState } from '../rpg-system/gacha-types';
+import { gameDebugger } from '../debug';
 
 export class GachaService {
     /**
@@ -10,15 +11,20 @@ export class GachaService {
     static async pull(amount: number = 1, currencyType: 'soft' | 'premium' = 'soft') {
         if (!supabase) throw new Error("Supabase client not initialized");
 
+        gameDebugger.info('gacha', `Starting pull: ${amount}x ${currencyType}`);
+
         const { data, error } = await supabase.rpc('rpc_pull_gacha', {
             p_amount: amount,
             p_currency_type: currencyType
         });
 
         if (error) {
+            gameDebugger.error('gacha', 'RPC error', error);
             console.error("Gacha RPC Error:", error);
             throw error;
         }
+
+        gameDebugger.info('gacha', `Pull completed, got ${(data || []).length} items`, data);
 
         return (data || []).map((item: any) => ({
             item_id: item.res_item_id,

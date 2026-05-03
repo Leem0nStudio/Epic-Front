@@ -28,10 +28,10 @@ https://supabase.com/dashboard/project/TU_PROYECTO/sql-editor
 
 ### Step 3: Ejecutar los 3 archivos (en orden)
 
-Copiar y ejecutar cada archivo completo:
+Copiar y ejecutar cada archivo completo (EN ORDEN):
 
 1. **01-schema.sql** → Click "New query" → Paste → Run (Ctrl+Enter)
-2. **03-functions.sql** → New query → Paste → Run
+2. **02-functions.sql** → New query → Paste → Run
 3. **04-seed.sql** → New query → Paste → Run
 
 ## Verificar Setup

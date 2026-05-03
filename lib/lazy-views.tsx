@@ -67,6 +67,11 @@ export const LazyViews = {
     () => import('@/components/views/SkillDetailView').then((m) => ({ default: m.SkillDetailView })),
     { loading: () => <div>Cargando detalles de skill...</div> }
   ),
+
+  CardDetailView: dynamic(
+    () => import('@/components/views/CardDetailView').then((m) => ({ default: m.CardDetailView })),
+    { loading: () => <div>Cargando detalles de carta...</div> }
+  ),
 };
 
 export function preloadCriticalViews(): void {

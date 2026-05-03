@@ -283,7 +283,7 @@ function UnitDisplay({ unit, idx, mouseX, mouseY, onSelectUnit }: any) {
       >
         {/* Magic Circle Underlay for Elite/High Level Units */}
         {(unit.level > 20 || idx === 0) && (
-          <motion.div 
+          <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
             className="absolute inset-0 -z-10 scale-150 opacity-20 pointer-events-none"

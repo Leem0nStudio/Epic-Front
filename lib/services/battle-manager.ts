@@ -26,7 +26,7 @@ export class BattleManager {
     return [
       { id: 'safe', label: '⚔️ Normal', energyCost: 0, damageMult: 1.0, critChance: 0, description: 'Daño estándar, sin riesgo' },
       { id: 'balanced', label: '🔥 Apostar 1', energyCost: 1, damageMult: 1.3, critChance: 0.1, description: '+30% daño, 10% crit' },
-      { id: 'all-in', label: '💀 TODO 2', energyCost: 2, damageMult: 1.8, critChance: 0.25, description: '+80% daño, 25% crit' },
+      { id: 'all-in', label: '💀 Todo o Nada', energyCost: 2, damageMult: 1.8, critChance: 0.25, description: '+80% daño, 25% crit' },
     ];
   }
 

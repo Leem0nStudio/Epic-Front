@@ -1,3 +1,5 @@
+'use client';
+
 import { motion } from 'motion/react';
 import { ReactNode } from 'react';
 
@@ -10,13 +12,22 @@ interface ButtonProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'game';
   whileHover?: any;
   whileTap?: any;
+  type?: 'button' | 'submit' | 'reset';
 }
 
+/**
+ * Button variants per Art Bible v1.0 - Section 5.3
+ */
 const variantClasses = {
-  primary: 'bg-[#F5C76B] text-[#0B1A2A] border-[#F5C76B] hover:brightness-110',
-  secondary: 'bg-white/5 border-white/10 text-white hover:bg-white/10',
-  ghost: 'bg-transparent text-white/70 hover:text-white hover:bg-white/5',
-  danger: 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20',
+  // Main CTAs - Battle, Continue (gold gradient)
+  primary: 'btn-primary',
+  // Navigation, back buttons (dark panel)
+  secondary: 'btn-secondary',
+  // Icon buttons, tertiary actions (transparent)
+  ghost: 'btn-ghost',
+  // Destructive actions
+  danger: 'btn-danger',
+  // In-battle skill buttons
   action: 'btn-action',
 };
 
@@ -37,18 +48,20 @@ export function Button({
   size = 'md',
   whileHover,
   whileTap,
+  type = 'button',
 }: ButtonProps) {
   return (
     <motion.button
-      whileHover={!disabled ? (whileHover || { scale: 1.05 }) : undefined}
-      whileTap={!disabled ? (whileTap || { scale: 0.95 }) : undefined}
+      type={type}
+      whileHover={!disabled ? (whileHover || { scale: 1.02 }) : undefined}
+      whileTap={!disabled ? (whileTap || { scale: 0.98 }) : undefined}
       onClick={onClick}
       disabled={disabled}
       className={`
         relative font-black tracking-widest uppercase rounded-xl border-2 transition-all
         ${variantClasses[variant]}
         ${sizeClasses[size]}
-        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+        ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
         ${className}
       `}
     >

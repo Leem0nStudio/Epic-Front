@@ -38,8 +38,9 @@ export class PartyService {
             .eq('id', user.id)
             .single();
 
-        if (player && slotIndex >= player.party_size_limit) {
-            throw new Error(`Espacio ${slotIndex + 1} bloqueado. Límite: ${player.party_size_limit}`);
+        const limit = player?.party_size_limit ?? 3;
+        if (slotIndex >= limit) {
+            throw new Error(`Espacio ${slotIndex + 1} bloqueado. Límite: ${limit}`);
         }
 
         const { error } = await supabase

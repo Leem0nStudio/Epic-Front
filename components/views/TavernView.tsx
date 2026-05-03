@@ -3,6 +3,7 @@ import { AssetService } from '@/lib/services/asset-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
 import { Button } from '@/components/ui/Button';
+import { useGameStore } from '@/lib/stores/game-store';
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, UserPlus, Clock, Star, Sword, Heart, Zap, Trash2 } from 'lucide-react';
@@ -17,8 +18,9 @@ interface TavernViewProps {
   onDiscard: (slotId: string) => void;
 }
 
-export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
+export function TavernView({ onNavigate, onClaim }: Omit<TavernViewProps, 'saveData'>) {
   const { confirm } = useToast();
+  const tavernSlots = useGameStore(state => state.tavernSlots);
   const [now, setNow] = useState<number>(() => Date.now());
 
   useEffect(() => {
@@ -76,9 +78,15 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
         <h1 className="view-title">Gremio de Reclutamiento</h1>
       </div>
 
-       <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar z-10">
-         {saveData.tavernSlots.map((slot: any) => {
-           const unit = slot.unit_data;
+<div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar z-10">
+        {tavernSlots.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-32 text-white/40">
+              <UserPlus size={48} className="mb-2 opacity-30" />
+              <p className="text-sm font-stats">No hay reclutas disponibles</p>
+            </div>
+          ) : (
+            tavernSlots.map((slot: any) => {
+              const unit = slot.unit_data;
            const availableAt = new Date(slot.available_at).getTime();
            const isReady = currentTime >= availableAt;
            const timeLeft = Math.max(0, Math.floor((availableAt - currentTime) / 1000));
@@ -88,7 +96,7 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
            const secs = timeLeft % 60;
 
            return (
-<NineSlicePanel
+              <NineSlicePanel
                 key={slot.id}
                 type="border"
                 variant="default"
@@ -119,7 +127,7 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
                  <div className="flex-1 flex flex-col justify-center">
 <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
-                          <h3 className="font-display text-white text-lg">{unit.name}</h3>
+                        <h3 className="font-display text-white text-lg">{unit.name}</h3>
                           <div className="flex items-center gap-1 bg-[#F5C76B]/10 px-1.5 py-0.5 rounded border border-[#F5C76B]/20">
                             <img src={AssetService.getIconUrl(unit.iconId)} className="w-3 h-3 object-contain" alt="" />
                             <span className="text-[10px] font-bold text-[#F5C76B] italic">NOVICE</span>
@@ -130,9 +138,9 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
                              <Trash2 size={16} />
                          </button>
                      )}
-                   </div>
+                    </div>
 
-<div className="flex gap-4 mt-2 font-stats">
+                    <div className="flex gap-4 mt-2 font-stats">
                       <div className="flex flex-col">
                         <span className="text-[8px] text-white/40 uppercase tracking-tighter">Afinidad</span>
                         <span className="text-[10px] text-white uppercase">{unit.affinity}</span>
@@ -150,7 +158,7 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
                         <span className="text-[10px] text-cyan-400"><Zap size={10} className="inline mr-1" />{unit.baseStats.spd}</span>
                       </div>
                     </div>
-                 </div>
+                  </div>
 
                  {isReady && (
                     <div className="flex items-center">
@@ -166,14 +174,9 @@ export function TavernView({ saveData, onNavigate, onClaim }: TavernViewProps) {
                </div>
              </NineSlicePanel>
            );
-         })}
+         })
+          )}
 
-{saveData.tavernSlots.length === 0 && (
-          <div className="glass-crystal frame-earthstone flex-1 flex flex-col items-center justify-center py-20 text-center gap-4">
-              <UserPlus size={48} className="text-white/40" />
-              <p className="font-stats text-white/60">No hay candidatos esperando...</p>
-          </div>
-        )}
       </div>
     </div>
   );
