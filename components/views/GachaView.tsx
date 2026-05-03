@@ -56,7 +56,7 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
 
   const getItemIcon = (item: PullResult) => {
     if (item.item_type === 'weapon') return <Sword size={24} className="text-white/80" />;
-    if (item.item_type === 'card') return <img src={AssetService.getCardUrl(item.item_id)} className="w-10 h-10 object-contain" alt={item.item_name} />;
+    if (item.item_type === 'card') return <img src={AssetService.getCardUrl(item.item_id)} className="w-10 h-10 object-contain" alt={item.item_name} onError={(e) => { e.currentTarget.src = AssetService.getCardUrlFallback(item.item_id); }} />;
     if (item.item_type === 'skill') return <ScrollText size={24} className="text-white/80" />;
     return <Box size={24} className="text-white/80" />;
   };
@@ -213,7 +213,7 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
                 >
                   <div className="w-full h-full rounded-lg bg-black/40 flex items-center justify-center relative overflow-hidden">
                     {item.item_type === 'card' && (
-                      <img src={AssetService.getCardUrl(item.item_id)} alt="" className="w-full h-full object-contain" />
+                      <img src={AssetService.getCardUrl(item.item_id)} alt="" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.src = AssetService.getCardUrlFallback(item.item_id); }} />
                     )}
                     {item.item_type === 'weapon' && (
                       <img src={AssetService.getWeaponIconUrl(item.item_id)} alt="" className="w-8 h-8 object-contain" />

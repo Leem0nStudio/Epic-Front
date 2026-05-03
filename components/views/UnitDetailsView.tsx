@@ -247,7 +247,7 @@ export function UnitDetailsView({ unitId, onNavigate, onUpdate, onOpenInventory,
                     <>
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.2),transparent_70%)]" />
                       <RarityIcon rarity={getRarityCode(card.rarity)} size="sm" glass={true}>
-                        <img src={AssetService.getCardUrl(card.item_id)} className="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]" alt="card" />
+                        <img src={AssetService.getCardUrl(card.item_id)} className="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]" alt="card" onError={(e) => { e.currentTarget.src = AssetService.getCardUrlFallback(card.item_id); }} />
                       </RarityIcon>
                       <button onClick={(e) => { e.stopPropagation(); handleUnequip(card.id, 'card'); }} className="absolute -top-1.5 -right-1.5 bg-red-500 rounded-full p-1 border border-white/20 shadow-lg text-white z-20 hover:scale-110 transition-transform">
                         <X size={10} strokeWidth={3} />

@@ -95,8 +95,7 @@ export function CardModal({ card, onClose, onEquip, isEquipped }: CardModalProps
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = '/assets/ui/ui_card_placeholder_256.png';
-                      target.style.opacity = '0.3';
+                      target.src = AssetService.getCardUrlFallback(card.item_id || card.id);
                     }}
                   />
                   

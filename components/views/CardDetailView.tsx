@@ -53,7 +53,7 @@ export function CardDetailView({ cardId, itemId, onBack, onEquip, onDiscard }: C
           <div className="relative">
             <div className="w-48 h-64 rounded-2xl border-2 p-1 shadow-2xl" style={{ borderColor: `${rarityCode}`, backgroundColor: `${rarityCode}11`, boxShadow: `0 0 30px ${rarityCode}40, inset 0 0 20px ${rarityCode}20` }}>
               <div className="w-full h-full rounded-xl overflow-hidden bg-black/40">
-                <img src={AssetService.getCardUrl(card?.id || '')} alt={card?.name} className="w-full h-full object-contain" onError={(e) => { e.currentTarget.src = AssetService.getUIUrl('world'); }} />
+                <img src={AssetService.getCardUrl(card?.id || '')} alt={card?.name} className="w-full h-full object-contain" onError={(e) => { e.currentTarget.src = AssetService.getCardUrlFallback(card?.id || ''); }} />
               </div>
             </div>
             <div className="absolute -top-2 left-1/2 -translate-x-1/2">

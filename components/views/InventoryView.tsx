@@ -126,7 +126,7 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
                 <motion.button key={item.id} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }} onClick={() => { if (item.item_type === 'card') setSelectedCard(item.item_id); else if (item.item_type === 'skill' || item.item_type === 'skill_scroll') setSelectedSkill(item.item_id); else onEquip(item); }}>
                   <RarityBorder rarity={item.definition?.rarity} className="transition-all hover:scale-105 active:scale-95">
                     <div className="w-full h-full rounded-lg bg-black/40 flex items-center justify-center relative overflow-hidden">
-                      {item.item_type === 'card' && <img src={AssetService.getCardUrl(item.item_id)} alt="" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
+                      {item.item_type === 'card' && <img src={AssetService.getCardUrl(item.item_id)} alt="" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.src = AssetService.getCardUrlFallback(item.item_id); }} />}
                       {item.item_type === 'weapon' && <img src={AssetService.getWeaponIconUrl(item.item_id)} alt="" className="w-10 h-10 object-contain" />}
                       {item.item_type === 'skill' || item.item_type === 'skill_scroll' ? <Zap size={24} className="text-[#F5C76B] drop-shadow-[0_0_10px_rgba(245,199,107,0.5)]" /> : null}
                       {item.item_type === 'job_core' && <Shield size={24} className="text-green-400" />}
