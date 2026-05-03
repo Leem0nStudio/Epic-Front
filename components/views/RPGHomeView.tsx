@@ -141,9 +141,18 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flippe
 };
 
 export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFullInventory, onRefillEnergy }: RPGHomeViewProps) {
-  const primaryUnit = activePartyUnits[0];
-  const leftUnit = activePartyUnits[1];
-  const rightUnit = activePartyUnits[2];
+  // Sort units by rarity for visual distribution (highest rarity in center/foreground)
+  const rarityOrder = { 'SSR': 4, 'UR': 3, 'SR': 2, 'R': 1, 'N': 0 };
+  const sortedUnits = [...(activePartyUnits || [])].sort((a, b) => {
+    const rarityA = (a.rarity || 'N').toUpperCase();
+    const rarityB = (b.rarity || 'N').toUpperCase();
+    return (rarityOrder[rarityB as keyof typeof rarityOrder] || 0) - (rarityOrder[rarityA as keyof typeof rarityOrder] || 0);
+  });
+  
+  // Distribute: highest rarity center, others flanking
+  const primaryUnit = sortedUnits[0] || activePartyUnits[0];
+  const leftUnit = sortedUnits[1] || activePartyUnits[1];
+  const rightUnit = sortedUnits[2] || activePartyUnits[2];
 
   const [displayCurrency, setDisplayCurrency] = useState<number>(saveData.profile?.currency || 0);
   const [displayGems, setDisplayGems] = useState<number>(saveData.profile?.premium_currency || 0);
@@ -281,7 +290,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
         {/* Background Magic Elements */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[160%] aspect-square bg-blue-900/10 blur-[150px] rounded-full pointer-events-none animate-pulse" />
         
-        <div className="w-full h-full max-w-2xl flex items-end justify-center relative pb-32 gap-0 overflow-hidden">
+        <div className="w-full h-full max-w-2xl flex items-end justify-center relative pb-16 gap-0 overflow-hidden">
           <div className="w-[28%] h-[80%] flex items-end -mr-4">
             <CharacterSlot unit={leftUnit} scale={0.9} zIndex={10} flipped />
           </div>
@@ -342,23 +351,8 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
                  <span className="text-[10px] text-[#F5C76B] font-black uppercase tracking-[0.3em] font-stats flex items-center gap-2 italic">
                    <Target className="w-3 h-3" />
                    Current Objective
-                 </span>
-               </div>
-               
-               <div className="mt-4 space-y-1">
-                  <div className="flex items-center justify-center gap-2 text-white/40 mb-1">
-                     <span className="h-[1px] w-8 bg-current opacity-20" />
-                     <p className="text-[10px] font-black uppercase tracking-[0.2em]">Chapter 18</p>
-                     <span className="h-[1px] w-8 bg-current opacity-20" />
-                  </div>
-                  <h3 className="text-xl font-black font-display uppercase tracking-[0.1em] text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] italic">
-                    The Sunken Temple
-                  </h3>
-                  <div className="flex items-center justify-center gap-2 mt-4 text-[#F5C76B]/60 group-hover:text-[#F5C76B] transition-colors cursor-pointer">
-                    <span className="text-[9px] font-black uppercase tracking-widest font-stats">Details</span>
-                    <ChevronRight size={12} className="group-hover:translate-x-1 transition-transform" />
-                  </div>
-               </div>
+</span>
+                </div>
             </NineSlicePanel>
           </motion.div>
 

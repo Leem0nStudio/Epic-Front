@@ -57,6 +57,13 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const [isBurstActive, setIsBurstActive] = useState(false);
   const [damageNumbers, setDamageNumbers] = useState<{ id: number, value: number, x: number, y: number, color: string, isCrit?: boolean }[]>([]);
   const [participatingUnits, setParticipatingUnits] = useState<Set<string>>(new Set());
+  
+  // Combat feedback system
+  const [comboCount, setComboCount] = useState(0);
+  const [comboChain, setComboChain] = useState<string[]>([]);
+  const [lastHitType, setLastHitType] = useState<string>('');
+  const [activeEffects, setActiveEffects] = useState<{ name: string, icon: string, color: string }[]>([]);
+  const [combatLog, setCombatLog] = useState<{ text: string, type: string, time: number }[]>([]);
 
   const preferrsReducedMotion = usePrefersReducedMotion();
 
@@ -110,13 +117,24 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     initBattle();
   }, [squad, stageId]);
 
-  const addDamageNumber = useCallback((value: number, unitId: string, color: string = 'text-white', isCrit: boolean = false) => {
+  const addDamageNumber = useCallback((value: number, unitId: string, color: string = 'text-white', isCrit: boolean = false, hitType: string = '') => {
     setDamageNumbers(prev => {
       const id = Date.now() + Math.random();
       const xOffset = Math.random() * 60 - 30;
       const yOffset = -50 - Math.random() * 20;
       return [...prev, { id, value, x: xOffset, y: yOffset, color, isCrit }];
     });
+    
+    // Update combo system
+    if (hitType === 'damage' || isCrit) {
+      setComboCount(prev => prev + 1);
+      setLastHitType(isCrit ? 'CRITICAL' : hitType);
+      
+      // Add to combat log
+      const logText = isCrit ? `⚔️ CRÍTICO! ${value} dmg` : `💥 ${value} dmg`;
+      setCombatLog(prev => [...prev.slice(-4), { text: logText, type: isCrit ? 'crit' : 'hit', time: Date.now() }]);
+    }
+    
     setTimeout(() => setDamageNumbers(prev => prev.filter(d => d.value === value && d.x !== 0)), 1200);
     if (value > 10) triggerShake();
   }, []);
@@ -375,8 +393,75 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
                </div>
              </div>
            ))}
-         </AnimatePresence>
-       </div>
+</AnimatePresence>
+        </div>
+
+        {/* COMBAT FEEDBACK HUD */}
+        <div className="absolute top-2 right-2 flex flex-col gap-2 z-50 pointer-events-none">
+          {/* Combo Counter */}
+          <AnimatePresence>
+            {comboCount > 0 && (
+              <motion.div
+                initial={{ scale: 0, rotate: -20 }}
+                animate={{ scale: 1, rotate: 0 }}
+                exit={{ scale: 0 }}
+                className="bg-gradient-to-r from-orange-500 to-red-600 px-4 py-2 rounded-xl shadow-lg border border-orange-400"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🔥</span>
+                  <div className="flex flex-col">
+                    <span className="text-white font-black text-lg leading-none">{comboCount}</span>
+                    <span className="text-orange-200 text-[8px] uppercase tracking-wider">COMBO</span>
+                  </div>
+                  {lastHitType === 'CRITICAL' && (
+                    <motion.span 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="text-yellow-300 text-xs font-black"
+                    >
+                      CRIT!
+                    </motion.span>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Combat Log */}
+          <div className="bg-black/70 backdrop-blur-sm rounded-lg p-2 max-w-[180px] border border-white/10">
+            <AnimatePresence>
+              {combatLog.slice().reverse().map((log, idx) => (
+                <motion.div
+                  key={log.time}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0 }}
+                  className={`text-[10px] font-bold py-0.5 ${log.type === 'crit' ? 'text-yellow-300' : 'text-white/80'}`}
+                >
+                  {log.text}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Active Effects Indicator */}
+        {activeEffects.length > 0 && (
+          <div className="absolute top-2 left-2 flex gap-1 z-50">
+            {activeEffects.map((effect, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-lg ${effect.color}`}
+                style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+                title={effect.name}
+              >
+                {effect.icon}
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
        {/* BOTTOM: Unit Cards & Skill Bar */}
