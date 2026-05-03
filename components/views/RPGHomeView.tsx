@@ -62,7 +62,7 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flippe
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       className={`relative flex flex-col items-center justify-end h-full w-full ${emphasized ? 'z-20' : 'z-10'}`}
-      style={{ scale: scale * 1.25 }} // Increased size by ~25%
+      style={{ scale: scale * 1.45 }} // Increased size by ~45%
     >
       {/* Rarity Aura / Glow behind character */}
       {unit && (
@@ -294,13 +294,13 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
         
         <div className="w-full h-full max-w-2xl flex items-end justify-center relative pb-0 gap-0 overflow-hidden">
           <div className="w-[28%] h-[75%] flex items-end -mr-4">
-            <CharacterSlot unit={leftUnit} scale={0.85} zIndex={10} flipped />
+            <CharacterSlot unit={leftUnit} scale={0.95} zIndex={10} flipped />
           </div>
           <div className="w-[36%] h-[85%] flex items-end z-20">
             <CharacterSlot unit={primaryUnit} scale={1.1} zIndex={30} emphasized />
           </div>
           <div className="w-[28%] h-[75%] flex items-end -ml-4">
-            <CharacterSlot unit={rightUnit} scale={0.85} zIndex={10} />
+            <CharacterSlot unit={rightUnit} scale={0.95} zIndex={10} />
           </div>
         </div>
 
