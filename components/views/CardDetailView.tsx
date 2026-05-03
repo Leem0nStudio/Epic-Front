@@ -41,6 +41,10 @@ export function CardDetailView({ cardId, itemId, onBack, onEquip, onDiscard }: C
     return <ViewShell title="Detalles" subtitle="Carta" onBack={onBack} loading />;
   }
 
+  if (!card) {
+    return <ViewShell title="Detalles" subtitle="Carta" onBack={onBack} emptyMessage="Carta no encontrada" />;
+  }
+
   const effectValue = card?.effect_value ? (typeof card.effect_value === 'string' ? JSON.parse(card.effect_value) : card.effect_value) : {};
   const applicableJobs = card?.applicable_jobs || [];
   const rarityCode = getRarityCode(card?.rarity);
