@@ -248,7 +248,9 @@ export class AssetService {
     if (id.includes('banshee')) return `${this.UI_PATH}/ui_card_banshee_256.png`;
     if (id.includes('lamia')) return `${this.UI_PATH}/ui_card_lamia_queen_256.png`;
 
-    return `${this.ITEMS_PATH}/card_${cardId}.png`;
+    // Remove 'card_' prefix if present to avoid 'card_card_xxx'
+    const cleanId = id.replace(/^card_/, '');
+    return `${this.ITEMS_PATH}/card_${cleanId}.png`;
   }
 
   static getArmorIconUrl(armorId: string): string {
