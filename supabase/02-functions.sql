@@ -1,6 +1,6 @@
 -- Epic RPG Database Functions & RPCs
 -- This file contains all stored procedures and functions
--- Run this AFTER 01-schema.sql (use 02-functions.sql instead)
+-- Run this AFTER 01-schema.sql
 
 -- =====================================================
 -- SECTION 1: PLAYER INITIALIZATION
