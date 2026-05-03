@@ -548,3 +548,67 @@ a:focus-visible,
 .animate-slide-out {
   animation: slide-out 0.3s ease-out;
 }
+
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .animate-bounce-subtle {
+    animation: bounce-subtle 3s infinite ease-in-out;
+  }
+
+  @keyframes bounce-subtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+
+  .animate-gradient-x {
+    background-size: 200% 100%;
+    animation: gradient-x 3s linear infinite;
+  }
+
+  @keyframes gradient-x {
+    0% { background-position: 100% 0%; }
+    100% { background-position: -100% 0%; }
+  }
+
+  .animate-swing {
+    animation: swing 2s infinite ease-in-out;
+    transform-origin: top center;
+  }
+
+  @keyframes swing {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(15deg); }
+    75% { transform: rotate(-15deg); }
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+}
+
+@layer components {
+  .frame-earthstone {
+    border-image: url('/assets/ui/panel-border-029.png') 32 round;
+    border-width: 16px;
+    border-style: solid;
+    filter: drop-shadow(0 0 10px rgba(245, 199, 107, 0.2));
+  }
+
+  .glass-frosted {
+    background: rgba(11, 26, 42, 0.7);
+    backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+.pixel-art {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.font-display {
+  font-family: 'MedievalSharp', cursive;
+}
