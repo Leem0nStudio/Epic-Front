@@ -292,7 +292,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFull
         {/* Background Magic Elements */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[160%] aspect-square bg-blue-900/10 blur-[150px] rounded-full pointer-events-none animate-pulse" />
         
-        <div className="w-full h-full max-w-2xl flex items-end justify-center relative pb-8 gap-0 overflow-hidden">
+        <div className="w-full h-full max-w-2xl flex items-end justify-center relative pb-4 gap-0 overflow-hidden">
           <div className="w-[28%] h-[75%] flex items-end -mr-4">
             <CharacterSlot unit={leftUnit} scale={0.85} zIndex={10} flipped />
           </div>
