@@ -56,7 +56,6 @@ export default function Applet() {
                />;
       case 'tavern':
         return <TavernView 
-                 saveData={state as any}
                  onNavigate={actions.navigateTo}
                  onClaim={actions.handleClaimRecruit}
                  onDiscard={() => {}}
