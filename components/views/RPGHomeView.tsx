@@ -207,126 +207,140 @@ function HeaderStats({ level, energy, maxEnergy, currency, gems, onRefill, usern
 }
 
 /**
+ * Unit Display for the Stage - Separated to follow Rules of Hooks
+ */
+function UnitDisplay({ unit, idx, mouseX, mouseY, onSelectUnit }: any) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Call useTransform at the top level of this component
+  const x = useTransform(mouseX, [ -20, 20 ], [ idx * 4, -idx * 4 ]);
+  const y = useTransform(mouseY, [ -20, 20 ], [ idx * 2, -idx * 2 ]);
+
+  if (!unit) return (
+    <div className="w-64 h-[60%] border-2 border-dashed border-[#F5C76B]/10 rounded-3xl flex items-center justify-center bg-black/20">
+       <UserPlus className="w-8 h-8 text-[#F5C76B]/20" />
+    </div>
+  );
+
+  const spriteUrl = AssetService.getSpriteUrl(unit.sprite_id || 'novice_idle.png');
+
+  return (
+    <div
+      className="relative w-64 h-[70%] flex flex-col items-center justify-end group pointer-events-auto cursor-help"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={() => onSelectUnit && onSelectUnit(unit.id)}
+    >
+      {/* Contextual Info Panel (Hover) - Hearthstone Style Card */}
+      <AnimatePresence>
+        {isHovered && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9, rotateX: 30 }}
+            animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9, rotateX: 30 }}
+            className="absolute -top-40 w-64 z-50 perspective-1000"
+          >
+            <NineSlicePanel type="panel" variant="gold" className="p-5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] border-2 border-[#F5C76B]/40">
+              <div className="absolute -top-4 -left-4 w-12 h-12 bg-black border-2 border-[#F5C76B] rounded-full flex items-center justify-center z-10">
+                 <span className="text-sm font-black text-[#F5C76B]">{unit.level || 1}</span>
+              </div>
+              <div className="text-center mb-4 border-b border-white/10 pb-2">
+                <h4 className="text-sm font-black text-white uppercase tracking-widest font-display">{unit.name}</h4>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  <p className="text-[10px] text-[#F5C76B] font-bold uppercase tracking-tighter">{unit.current_job_id || 'Novice'}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <StatItem label="ATK" value={unit.base_stats?.atk} color="text-red-400" />
+                <StatItem label="DEF" value={unit.base_stats?.def} color="text-blue-400" />
+                <StatItem label="MATK" value={unit.base_stats?.matk} color="text-purple-400" />
+                <StatItem label="AGI" value={unit.base_stats?.agi} color="text-green-400" />
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-center gap-4">
+                 <Shield className="w-4 h-4 text-white/20" />
+                 <Sword className="w-4 h-4 text-white/20" />
+                 <Sparkles className="w-4 h-4 text-white/20" />
+              </div>
+            </NineSlicePanel>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Character Visual with Heavy Shadows & Glowing FX */}
+      <motion.div
+        style={{ x, y }}
+        animate={{
+          y: [0, -12, 0],
+        }}
+        transition={{
+          duration: 5,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: idx * 0.7
+        }}
+        className="relative z-20 group-hover:scale-105 transition-transform duration-500"
+      >
+        {/* Magic Circle Underlay for Elite/High Level Units */}
+        {(unit.level > 20 || idx === 0) && (
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 -z-10 scale-150 opacity-20 pointer-events-none"
+          >
+             <svg viewBox="0 0 100 100" className="w-full h-full text-[#F5C76B]">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="5,5" />
+                <path d="M50 5 L95 50 L50 95 L5 50 Z" fill="none" stroke="currentColor" strokeWidth="0.5" />
+             </svg>
+          </motion.div>
+        )}
+
+        <img
+          src={spriteUrl}
+          alt={unit.name}
+          className="w-56 h-56 object-contain pixel-art filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] group-hover:brightness-125 transition-all"
+        />
+
+        {/* Affinity Tag */}
+        <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+           <div className="bg-[#0B1A2A] border border-[#F5C76B]/40 px-3 py-1 rounded-md shadow-xl flex items-center gap-2">
+              <AffinityIcon affinity={unit.affinity} size={12} />
+              <span className="text-[9px] font-black text-white uppercase tracking-widest">{unit.affinity}</span>
+           </div>
+        </div>
+      </motion.div>
+
+      {/* Shadow Base (Perspective) */}
+      <div className="absolute bottom-6 w-40 h-8 bg-black/60 blur-xl rounded-[100%] scale-x-150 -z-10" />
+
+      {/* Floor Name Plate */}
+      <div className="mt-6 relative px-8 py-1 overflow-hidden group">
+         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F5C76B]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+         <span className="text-xs font-black text-white/40 group-hover:text-[#F5C76B] uppercase tracking-[0.4em] transition-colors relative z-10 drop-shadow-lg">
+           {unit.name}
+         </span>
+         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#F5C76B]/40 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
+      </div>
+    </div>
+  );
+}
+
+/**
  * Character Display Stage with Interactive Overlays
  */
 function CharacterStage({ units, mouseX, mouseY, onSelectUnit }: any) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-
   return (
     <div className="w-full max-w-5xl h-full flex items-end justify-center gap-12 px-12 pointer-events-none">
-      {units.slice(0, 3).map((unit: any, idx: number) => {
-        if (!unit) return (
-          <div key={idx} className="w-64 h-[60%] border-2 border-dashed border-[#F5C76B]/10 rounded-3xl flex items-center justify-center bg-black/20">
-             <UserPlus className="w-8 h-8 text-[#F5C76B]/20" />
-          </div>
-        );
-
-        const spriteUrl = AssetService.getSpriteUrl(unit.sprite_id || 'novice_idle.png');
-
-        return (
-          <div
-            key={unit.id}
-            className="relative w-64 h-[70%] flex flex-col items-center justify-end group pointer-events-auto cursor-help"
-            onMouseEnter={() => setHoveredIndex(idx)}
-            onMouseLeave={() => setHoveredIndex(null)}
-            onClick={() => onSelectUnit && onSelectUnit(unit.id)}
-          >
-            {/* Contextual Info Panel (Hover) - Hearthstone Style Card */}
-            <AnimatePresence>
-              {hoveredIndex === idx && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20, scale: 0.9, rotateX: 30 }}
-                  animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.9, rotateX: 30 }}
-                  className="absolute -top-40 w-64 z-50 perspective-1000"
-                >
-                  <NineSlicePanel type="panel" variant="gold" className="p-5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] border-2 border-[#F5C76B]/40">
-                    <div className="absolute -top-4 -left-4 w-12 h-12 bg-black border-2 border-[#F5C76B] rounded-full flex items-center justify-center z-10">
-                       <span className="text-sm font-black text-[#F5C76B]">{unit.level || 1}</span>
-                    </div>
-                    <div className="text-center mb-4 border-b border-white/10 pb-2">
-                      <h4 className="text-sm font-black text-white uppercase tracking-widest font-display">{unit.name}</h4>
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                        <p className="text-[10px] text-[#F5C76B] font-bold uppercase tracking-tighter">{unit.current_job_id || 'Novice'}</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <StatItem label="ATK" value={unit.base_stats?.atk} color="text-red-400" />
-                      <StatItem label="DEF" value={unit.base_stats?.def} color="text-blue-400" />
-                      <StatItem label="MATK" value={unit.base_stats?.matk} color="text-purple-400" />
-                      <StatItem label="AGI" value={unit.base_stats?.agi} color="text-green-400" />
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-center gap-4">
-                       <Shield className="w-4 h-4 text-white/20" />
-                       <Sword className="w-4 h-4 text-white/20" />
-                       <Sparkles className="w-4 h-4 text-white/20" />
-                    </div>
-                  </NineSlicePanel>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Character Visual with Heavy Shadows & Glowing FX */}
-            <motion.div 
-              style={{
-                x: useTransform(mouseX, [ -20, 20 ], [ idx * 4, -idx * 4 ]),
-                y: useTransform(mouseY, [ -20, 20 ], [ idx * 2, -idx * 2 ])
-              }}
-              animate={{
-                y: [0, -12, 0],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: idx * 0.7
-              }}
-              className="relative z-20 group-hover:scale-105 transition-transform duration-500"
-            >
-              {/* Magic Circle Underlay for Elite/High Level Units */}
-              {(unit.level > 20 || idx === 0) && (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                  className="absolute inset-0 -z-10 scale-150 opacity-20 pointer-events-none"
-                >
-                   <svg viewBox="0 0 100 100" className="w-full h-full text-[#F5C76B]">
-                      <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="5,5" />
-                      <path d="M50 5 L95 50 L50 95 L5 50 Z" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                   </svg>
-                </motion.div>
-              )}
-
-              <img
-                src={spriteUrl}
-                alt={unit.name}
-                className="w-56 h-56 object-contain pixel-art filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] group-hover:brightness-125 transition-all"
-              />
-
-              {/* Affinity Tag */}
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                 <div className="bg-[#0B1A2A] border border-[#F5C76B]/40 px-3 py-1 rounded-md shadow-xl flex items-center gap-2">
-                    <AffinityIcon affinity={unit.affinity} size={12} />
-                    <span className="text-[9px] font-black text-white uppercase tracking-widest">{unit.affinity}</span>
-                 </div>
-              </div>
-            </motion.div>
-
-            {/* Shadow Base (Perspective) */}
-            <div className="absolute bottom-6 w-40 h-8 bg-black/60 blur-xl rounded-[100%] scale-x-150 -z-10" />
-
-            {/* Floor Name Plate */}
-            <div className="mt-6 relative px-8 py-1 overflow-hidden group">
-               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F5C76B]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-               <span className="text-xs font-black text-white/40 group-hover:text-[#F5C76B] uppercase tracking-[0.4em] transition-colors relative z-10 drop-shadow-lg">
-                 {unit.name}
-               </span>
-               <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#F5C76B]/40 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
-            </div>
-          </div>
-        );
-      })}
+      {units.slice(0, 3).map((unit: any, idx: number) => (
+        <UnitDisplay
+          key={unit?.id || `empty-${idx}`}
+          unit={unit}
+          idx={idx}
+          mouseX={mouseX}
+          mouseY={mouseY}
+          onSelectUnit={onSelectUnit}
+        />
+      ))}
     </div>
   );
 }
