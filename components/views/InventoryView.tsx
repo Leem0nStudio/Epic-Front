@@ -44,6 +44,14 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
 
   // Get inventory from store (already enriched with definitions)
   const storeInventory = useGameStore(state => state.inventory);
+  
+  // Debug: log inventory changes
+  useEffect(() => {
+    gameDebugger.info('inventory', 'Store inventory changed', { 
+      count: storeInventory.length,
+      firstItems: storeInventory.slice(0, 2).map(i => ({ id: i.id, type: i.item_type, itemId: i.item_id }))
+    });
+  }, [storeInventory]);
 
   // Use store inventory directly - already has definitions loaded
   useEffect(() => {

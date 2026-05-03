@@ -32,8 +32,14 @@ Run these in Supabase SQL Editor in order:
 2. `supabase/02-functions.sql` — RPCs & procedures
 3. `supabase/03-seed.sql` — Initial game data
 
+Alternatively, use `supabase/ALL_IN_ONE.sql` which consolidates all sections with version markers.
+
 See `supabase/README.md` for detailed setup instructions.
 
 ## Known Issues
 - Onboarding fails if `rpc_initialize_player` RPC not deployed
 - HMR disabled when `DISABLE_HMR=true` (AI Studio agent-edit mode, next.config.ts:27)
+
+## Debugging
+- `lib/debug.ts` exports `gameDebugger` for detailed game state logging
+- Enable via: `gameDebugger.enable()` or use browser console with prefix `[GAME-STATE]`, `[INVENTORY]`, `[GACHA]`, etc.

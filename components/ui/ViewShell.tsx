@@ -61,7 +61,10 @@ export function ViewShell({
     );
   }
 
-  if (emptyMessage !== undefined) {
+  // Only show empty message if no children AND emptyMessage is provided
+  const hasChildren = Boolean(children);
+  
+  if (!hasChildren && emptyMessage) {
     return (
       <div className="flex flex-col h-full relative" style={{ backgroundImage: `url('${bgUrl}')`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
         <div className="absolute inset-0 bg-[#0B1A2A]/90" />
