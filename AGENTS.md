@@ -37,3 +37,12 @@ See `supabase/README.md` for detailed setup instructions.
 ## Known Issues
 - Onboarding fails if `rpc_initialize_player` RPC not deployed
 - HMR disabled when `DISABLE_HMR=true` (AI Studio agent-edit mode, next.config.ts:27)
+## Jules' Verification (2026-05-03)
+- Redesigned RPGHomeView to match Ragnarok/Hearthstone aesthetic.
+- Verified visual structure with TSC.
+- Implemented parallax and interactive character hover cards.
+
+## Jules' Final Reflection (2026-05-03)
+- Successfully transformed the RPGHomeView from a generic layout to an immersive, high-fantasy interface.
+- Balanced readability with aesthetic flair, using glassmorphism and stone textures.
+- The interactive character stage adds a significant "wow factor" and provides useful contextual info without cluttering the main screen.
