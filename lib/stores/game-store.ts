@@ -9,9 +9,11 @@ import { ConfigService } from '@/lib/services/config-service';
 import { CampaignService } from '@/lib/services/campaign-service';
 import { TrainingService } from '@/lib/services/training-service';
 import { DailyRewardsService } from '@/lib/services/daily-rewards-service';
+import { InventoryService, InventoryItem } from '@/lib/services/inventory-service';
 import { Stage } from '@/lib/rpg-system/campaign-types';
+import { gameDebugger } from '@/lib/debug';
 
-export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'quests' | 'stage_details' | 'training' | 'daily_rewards' | 'arena' | 'tower' | 'guild';
+export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'quests' | 'stage_details' | 'training' | 'daily_rewards' | 'arena' | 'tower' | 'guild' | 'skill_detail' | 'card_detail';
 
 interface GameState {
   // Auth & Loading State
@@ -33,7 +35,9 @@ interface GameState {
   view: ViewType;
   selectedUnitId: string | null;
   selectedStage: Stage | null;
-  selectedCardId: string | null; // Added
+  selectedCardId: string | null;
+  selectedSkillId: string | null;
+  selectedItemId: string | null;
   targetSlot: 'weapon' | 'card' | 'skill' | null;
 
   // Computed Values
@@ -53,7 +57,9 @@ interface GameState {
   setView: (view: ViewType) => void;
   setSelectedUnitId: (id: string | null) => void;
   setSelectedStage: (stage: Stage | null) => void;
-  setSelectedCardId: (id: string | null) => void; // Added
+  setSelectedCardId: (id: string | null) => void;
+  setSelectedSkillId: (id: string | null) => void;
+  setSelectedItemId: (id: string | null) => void;
   setTargetSlot: (slot: 'weapon' | 'card' | 'skill' | null) => void;
 
   // Complex Actions
@@ -73,7 +79,9 @@ interface GameState {
   handleRefillEnergy: (gemCost: number, toast?: (message: string, type?: any) => void) => Promise<void>;
   handleOpenTraining: (unitId: string) => void;
   handleOpenDailyRewards: () => void;
-  handleOpenCardDetails: (cardId: string) => void; // Added
+  handleOpenCardDetails: (cardId: string, itemId: string) => void;
+  handleOpenSkillDetails: (skillId: string, itemId: string) => void;
+  handleDiscardItem: (itemId: string) => void;
 }
 
 const updateActivePartyUnits = (party: any[]) => {
@@ -100,6 +108,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   selectedUnitId: null,
   selectedStage: null,
   selectedCardId: null,
+  selectedSkillId: null,
+  selectedItemId: null,
   targetSlot: null,
 
   version: null,
@@ -119,6 +129,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   setSelectedUnitId: (id) => set({ selectedUnitId: id }),
   setSelectedStage: (stage) => set({ selectedStage: stage }),
   setSelectedCardId: (id) => set({ selectedCardId: id }),
+  setSelectedSkillId: (id) => set({ selectedSkillId: id }),
+  setSelectedItemId: (id) => set({ selectedItemId: id }),
   setTargetSlot: (slot) => set({ targetSlot: slot }),
 
   // Complex Actions
@@ -131,29 +143,69 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  refreshState: async () => {
+refreshState: async () => {
     if (!supabase) return;
+    
+    gameDebugger.info('game-state', 'Refreshing game state...');
     try {
       const { data: authData } = await supabase.auth.getUser();
       const user = authData?.user;
-      if (!user) return;
+      if (!user) {
+        gameDebugger.warn('game-state', 'No user in refreshState');
+        return;
+      }
 
       await get().regenEnergy();
 
-      const [profRes, unitsRes, partyRes, recruitsRes, inventoryRes] = await Promise.all([
+      const [profRes, unitsRes, partyRes, recruitsRes] = await Promise.all([
         supabase.from('players').select('*').eq('id', user.id).single(),
         supabase.from('units').select('*'),
         supabase.from('party').select('*, unit:units(*)').eq('player_id', user.id).order('slot_index'),
         supabase.from('recruitment_queue').select('*').eq('player_id', user.id).eq('is_claimed', false),
-        supabase.from('inventory').select('*').eq('player_id', user.id) 
       ]);
- 
-      if (profRes.data) set({ profile: profRes.data });
+  
+      if (profRes.data) {
+        gameDebugger.info('game-state', 'Profile refreshed', { currency: profRes.data.currency });
+        set({ profile: profRes.data });
+      }
+      
       set({ roster: unitsRes.data || [] });
       set({ party: partyRes.data || [] });
       set({ tavernSlots: recruitsRes.data || [] });
-      set({ inventory: inventoryRes.data || [] }); 
+      
+      // Use InventoryService for inventory (includes enrichment + cache)
+      try {
+        const inventory = await InventoryService.getInventory(user.id);
+        
+        // Auto-add starter items if inventory is empty
+        if (inventory.length === 0) {
+          gameDebugger.warn('inventory', 'Inventory is empty, adding starter items');
+          try {
+            await supabase.rpc('rpc_add_starter_inventory');
+            // Reload inventory after adding starter items
+            const newInventory = await InventoryService.refreshInventory(user.id);
+            gameDebugger.info('inventory', 'Starter items added', { count: newInventory.length });
+            set({ inventory: newInventory });
+          } catch (e: any) {
+            gameDebugger.error('inventory', 'Failed to add starter items', e);
+            set({ inventory: [] });
+          }
+        } else {
+          set({ inventory });
+        }
+        
+        gameDebugger.info('game-state', 'State loaded', { 
+          units: unitsRes.data?.length || 0,
+          party: partyRes.data?.length || 0,
+          recruits: recruitsRes.data?.length || 0,
+          inventory: inventory.length
+        });
+      } catch (invError) {
+        gameDebugger.error('inventory', 'Failed to load inventory', invError);
+        set({ inventory: [] });
+      }
     } catch (e) {
+      gameDebugger.error('game-state', 'Critical error in refreshState', e);
       console.error("Critical error in refreshState:", e);
     }
   },
@@ -161,9 +213,15 @@ export const useGameStore = create<GameState>((set, get) => ({
   initializeGame: async () => {
     if (!supabase) return;
 
+    gameDebugger.info('game-state', 'Initializing game...');
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        gameDebugger.warn('game-state', 'No user found during initialization');
+        return;
+      }
+
+      gameDebugger.info('auth', 'User found', { userId: user.id, email: user.email });
 
       await ConfigService.syncConfig();
       await get().regenEnergy();
@@ -171,17 +229,21 @@ export const useGameStore = create<GameState>((set, get) => ({
       const { data: prof, error: profError } = await supabase.from('players').select('*').eq('id', user.id).single();
 
       if (profError && profError.code !== 'PGRST116') {
+        gameDebugger.error('game-state', 'Error loading profile', profError);
         set({ error: "Error al cargar perfil: " + profError.message });
         return;
       }
 
       if (!prof) {
+        gameDebugger.info('game-state', 'No profile found - running onboarding');
         try {
           await OnboardingService.initializePlayer(user.email?.split('@')[0] || "Héroe", 3);
           const { data: newProf } = await supabase.from('players').select('*').eq('id', user.id).single();
           if (!newProf) throw new Error("No se pudo crear el perfil.");
+          gameDebugger.info('game-state', 'Onboarding completed', newProf);
           set({ profile: newProf, needsOnboarding: false, error: null });
         } catch (initErr: any) {
+          gameDebugger.error('game-state', 'Onboarding failed', initErr);
           const friendlyMsg = initErr.message?.includes('no está disponible') || initErr.message?.includes('does not exist')
             ? 'El servicio de inicialización no está disponible. Por favor, contacta al soporte.'
             : 'No se pudo completar el registro. Intenta nuevamente.';
@@ -189,6 +251,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           return;
         }
       } else {
+        gameDebugger.info('game-state', 'Profile loaded', { profileId: prof.id, username: prof.username });
         set({ profile: prof, needsOnboarding: false });
       }
 
@@ -306,7 +369,15 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ view: 'daily_rewards' });
   },
 
-  handleOpenCardDetails: (cardId) => {
-    set({ selectedCardId: cardId });
+  handleOpenCardDetails: (cardId, itemId) => {
+    set({ selectedCardId: cardId, selectedItemId: itemId, view: 'card_detail' });
+  },
+
+  handleOpenSkillDetails: (skillId, itemId) => {
+    set({ selectedSkillId: skillId, selectedItemId: itemId, view: 'skill_detail' });
+  },
+
+  handleDiscardItem: (itemId) => {
+    console.log('Discard item:', itemId);
   },
 }));

@@ -27,10 +27,12 @@ Create `.env.local` (see `.env.example`):
 - **main** — primary branch (no `experimental` branch exists)
 
 ## Database
-Run these in Supabase SQL Editor in order:
-1. `supabase/01-schema.sql` — Tables & RLS policies
-2. `supabase/02-functions.sql` — RPCs & procedures
-3. `supabase/03-seed.sql` — Initial game data
+Run these in Supabase SQL Editor in order (after clearing existing tables):
+1. `supabase/01-schema.sql` — Tables, constraints, indexes
+2. `supabase/02-functions.sql` — RPCs & stored procedures
+3. `supabase/04-seed.sql` — Initial game data
+
+Use `supabase/00-cleanup.sql` for full reset before reinstalling.
 
 See `supabase/README.md` for detailed setup instructions.
 

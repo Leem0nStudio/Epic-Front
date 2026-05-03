@@ -248,7 +248,24 @@ export class AssetService {
     if (id.includes('banshee')) return `${this.UI_PATH}/ui_card_banshee_256.png`;
     if (id.includes('lamia')) return `${this.UI_PATH}/ui_card_lamia_queen_256.png`;
 
-    return `${this.ITEMS_PATH}/card_${cardId}.png`;
+    // Remove 'card_' prefix if present to avoid 'card_card_xxx'
+    const cleanId = id.replace(/^card_/, '');
+    return `${this.ITEMS_PATH}/card_${cleanId}.png`;
+  }
+
+  // Get fallback PNG URL for any card
+  static getCardUrlFallback(cardId: string): string {
+    const id = cardId.toLowerCase();
+    
+    // Check for specific UI card assets - use PNG
+    if (id.includes('goblin')) return `${this.UI_PATH}/ui_card_goblin_256.png`;
+    if (id.includes('zombie')) return `${this.UI_PATH}/ui_card_zombie_256.png`;
+    if (id.includes('baphomet')) return `${this.UI_PATH}/ui_baphomet_256.png`;
+    if (id.includes('banshee')) return `${this.UI_PATH}/ui_card_banshee_256.png`;
+    if (id.includes('lamia')) return `${this.UI_PATH}/ui_card_lamia_queen_256.png`;
+    
+    const cleanId = id.replace(/^card_/, '');
+    return `${this.ITEMS_PATH}/card_${cleanId}.png`;
   }
 
   static getArmorIconUrl(armorId: string): string {
