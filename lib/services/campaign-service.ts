@@ -115,6 +115,13 @@ export class CampaignService {
 
     static async completeStage(stageId: string, stats: { turns: number, deaths: number }, participatingUnitIds?: string[]) {
         if (!supabase) return;
+        
+        // Validation: ensure stageId is a valid stage identifier (not enemy ID)
+        if (stageId && stageId.includes('slime') || stageId.includes('bat') || stageId.includes('goblin')) {
+            gameDebugger.warn('campaign', 'Invalid stage ID detected (appears to be enemy ID)', { stageId });
+            throw new Error("Invalid stage ID - please restart the battle");
+        }
+        
         const stage = await this.getStageById(stageId);
         if (!stage) throw new Error("Stage not found");
 
