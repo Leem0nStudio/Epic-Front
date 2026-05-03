@@ -143,16 +143,18 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flippe
 export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onOpenFullInventory, onRefillEnergy }: RPGHomeViewProps) {
   // Sort units by rarity for visual distribution (highest rarity in center/foreground)
   const rarityOrder = { 'SSR': 4, 'UR': 3, 'SR': 2, 'R': 1, 'N': 0 };
-  const sortedUnits = [...(activePartyUnits || [])].sort((a, b) => {
+  const sortedUnits = [...(activePartyUnits || [])].filter(Boolean).sort((a, b) => {
+    if (!a || !b) return 0;
     const rarityA = (a.rarity || 'N').toUpperCase();
     const rarityB = (b.rarity || 'N').toUpperCase();
     return (rarityOrder[rarityB as keyof typeof rarityOrder] || 0) - (rarityOrder[rarityA as keyof typeof rarityOrder] || 0);
   });
   
   // Distribute: highest rarity center, others flanking
-  const primaryUnit = sortedUnits[0] || activePartyUnits[0];
-  const leftUnit = sortedUnits[1] || activePartyUnits[1];
-  const rightUnit = sortedUnits[2] || activePartyUnits[2];
+  const validUnits = activePartyUnits?.filter(Boolean) || [];
+  const primaryUnit = sortedUnits[0] || validUnits[0] || null;
+  const leftUnit = sortedUnits[1] || validUnits[1] || null;
+  const rightUnit = sortedUnits[2] || validUnits[2] || null;
 
   const [displayCurrency, setDisplayCurrency] = useState<number>(saveData.profile?.currency || 0);
   const [displayGems, setDisplayGems] = useState<number>(saveData.profile?.premium_currency || 0);
