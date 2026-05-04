@@ -45,11 +45,25 @@ VALUES
  '{"minLevel": 10, "currencyCost": 1000, "materials": []}'),
 
 ('wizard', '1.0.0', 'Wizard', 2, 'mage',
-  '{"hp": 0.7, "atk": 0.6, "def": 0.7, "matk": 1.8, "mdef": 1.5, "agi": 0.8}',
-  '{"staff"}',
-  '[{"id": "meteor", "name": "Meteor", "type": "active", "powerMod": 4.0, "cooldown": 5}]',
-  '{"SP Recovery+10%"}',
-  '{"minLevel": 40, "currencyCost": 5000, "materials": [], "requiredJobCore": "core_wizard"}'),
+   '{"hp": 0.7, "atk": 0.6, "def": 0.7, "matk": 1.8, "mdef": 1.5, "agi": 0.8}',
+   '{"staff"}',
+   '[{"id": "meteor", "name": "Meteor", "type": "active", "powerMod": 4.0, "cooldown": 5}]',
+   '{"SP Recovery+10%"}',
+   '{"minLevel": 40, "currencyCost": 5000, "materials": [], "requiredJobCore": "core_wizard"}'),
+
+('acolyte', '1.0.0', 'Acolyte', 1, 'novice',
+   '{"hp": 0.9, "atk": 0.6, "def": 1.0, "matk": 1.3, "mdef": 1.5, "agi": 1.0}',
+   '{"staff", "mace"}',
+   '[{"id": "holy_bolt", "name": "Holy Bolt", "type": "active", "powerMod": 1.5, "cooldown": 2}, {"id": "aqua", "name": "Aqua", "type": "active", "powerMod": 1.2, "cooldown": 1}]',
+   '{}',
+   '{"minLevel": 10, "currencyCost": 1000, "materials": []}'),
+
+('priest', '1.0.0', 'Priest', 2, 'acolyte',
+   '{"hp": 0.8, "atk": 0.5, "def": 1.0, "matk": 1.6, "mdef": 1.8, "agi": 0.9}',
+   '{"staff", "mace"}',
+   '[{"id": "heal", "name": "Heal", "type": "active", "powerMod": 2.5, "cooldown": 3}, {"id": "meditation", "name": "Meditation", "type": "active", "powerMod": 0, "cooldown": 4}]',
+   '{"MDEF+15%"}',
+   '{"minLevel": 40, "currencyCost": 5000, "materials": [], "requiredJobCore": "core_priest"}'),
 
 -- Tier 3 Jobs (Level 70+)
 ('paladin', '1.0.0', 'Paladin', 3, 'knight',
@@ -89,11 +103,18 @@ VALUES
   '{"minLevel": 90, "currencyCost": 50000, "materials": [], "requiredJobCore": "core_arch_paladin"}'),
 
 ('grand_archmage', '1.0.0', 'Grand Archmage', 4, 'sage',
-  '{"hp": 0.7, "atk": 0.4, "def": 0.5, "matk": 3.0, "mdef": 2.0, "agi": 1.1}',
-  '{"staff", "book"}',
-  '[{"id": "meteor_storm", "name": "Meteor Storm", "type": "active", "powerMod": 7.0, "cooldown": 8}, {"id": "magic_mastery", "name": "Magic Mastery", "type": "passive", "powerMod": 0, "cooldown": 0}]',
-  '{"All Magic Damage+20%", "SP Recovery+15%"}',
-  '{"minLevel": 90, "currencyCost": 50000, "materials": [], "requiredJobCore": "core_grand_archmage"}');
+   '{"hp": 0.7, "atk": 0.4, "def": 0.5, "matk": 3.0, "mdef": 2.0, "agi": 1.1}',
+   '{"staff", "book"}',
+   '[{"id": "meteor_storm", "name": "Meteor Storm", "type": "active", "powerMod": 7.0, "cooldown": 8}, {"id": "magic_mastery", "name": "Magic Mastery", "type": "passive", "powerMod": 0, "cooldown": 0}]',
+   '{"All Magic Damage+20%", "SP Recovery+15%"}',
+   '{"minLevel": 90, "currencyCost": 50000, "materials": [], "requiredJobCore": "core_grand_archmage"}'),
+
+('high_priest', '1.0.0', 'High Priest', 4, 'priest',
+   '{"hp": 1.0, "atk": 0.6, "def": 1.2, "matk": 2.0, "mdef": 2.2, "agi": 0.8}',
+   '{"staff", "mace"}',
+   '[{"id": "resurrection", "name": "Resurrection", "type": "active", "powerMod": 5.0, "cooldown": 10}, {"id": "bishop_heal", "name": "Bishop Heal", "type": "active", "powerMod": 4.0, "cooldown": 5}]',
+   '{"MDEF+25%", "Heal Bonus+30%"}',
+   '{"minLevel": 90, "currencyCost": 50000, "materials": [], "requiredJobCore": "core_high_priest"}');
 
 -- =====================================================
 -- SECTION 3: SKILLS
@@ -140,6 +161,9 @@ INSERT INTO job_cores (id, version, name, rarity, unlocks_job_id)
 VALUES
     ('core_knight', '1.0.0', 'Knight Core', 'epic', 'knight'),
     ('core_wizard', '1.0.0', 'Wizard Core', 'epic', 'wizard'),
+    ('core_acolyte', '1.0.0', 'Acolyte Core', 'epic', 'acolyte'),
+    -- Tier 2 Job Cores
+    ('core_priest', '1.0.0', 'Priest Core', 'epic', 'priest'),
     -- Tier 3 Job Cores
     ('core_paladin', '1.0.0', 'Paladin Core', 'legendary', 'paladin'),
     ('core_crusader', '1.0.0', 'Crusader Core', 'legendary', 'crusader'),
@@ -147,7 +171,8 @@ VALUES
     ('core_archmage', '1.0.0', 'Archmage Core', 'legendary', 'archmage'),
     -- Tier 4 Job Cores (Endgame)
     ('core_arch_paladin', '1.0.0', 'Arch Paladin Core', 'mythic', 'arch_paladin'),
-    ('core_grand_archmage', '1.0.0', 'Grand Archmage Core', 'mythic', 'grand_archmage');
+    ('core_grand_archmage', '1.0.0', 'Grand Archmage Core', 'mythic', 'grand_archmage'),
+    ('core_high_priest', '1.0.0', 'High Priest Core', 'mythic', 'high_priest');
 
 -- =====================================================
 -- SECTION 7: NEW SKILL SYSTEM (Modular/Combo)
