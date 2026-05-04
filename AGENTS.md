@@ -48,3 +48,16 @@ See `supabase/README.md` for detailed setup instructions.
 - Successfully transformed the RPGHomeView from a generic layout to an immersive, high-fantasy interface.
 - Balanced readability with aesthetic flair, using glassmorphism and stone textures.
 - The interactive character stage adds a significant "wow factor" and provides useful contextual info without cluttering the main screen.
+
+## Jules' Redesign Update (2026-05-03)
+- Implemented Global Header and Navigation components for persistent UI.
+- Redesigned GachaView with an immersive summoning focal point and reward modals.
+- Redesigned TavernView with detailed mercenary cards and recruitment timers.
+- Integrated tactile feedback (scale/glow) into the base Button component.
+- Standardized Spanish localization for all primary UI labels.
+
+## Redesign Learnings (2026-05-03)
+- **Centralized Layout**: Moving common UI elements (Header, Nav) to `app/page.tsx` ensures a single source of truth for the app's frame and state-driven navigation.
+- **ViewShell Pattern**: Using a `ViewShell` component for all sub-views ensures consistent backgrounds, headers, and padding without repeating code.
+- **Visual Feedback**: Small touches like scale-on-hover and glow-on-active significantly improve the "feel" of a game-like UI.
+- **Localization**: Centralizing Spanish strings in the view components ensures the RPG theme remains immersive for the target audience.

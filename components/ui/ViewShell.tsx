@@ -4,7 +4,6 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { ChevronLeft, Package } from 'lucide-react';
 import { AssetService } from '@/lib/services/asset-service';
-import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { Button } from '@/components/ui/Button';
 
 interface ViewShellProps {
@@ -15,7 +14,7 @@ interface ViewShellProps {
   loading?: boolean;
   error?: string | null;
   emptyMessage?: string;
-  background?: 'home' | 'battle' | 'party' | 'gacha';
+  background?: 'home' | 'battle' | 'party' | 'gacha' | 'tavern' | 'campaign' | 'inventory';
 }
 
 export function ViewShell({ 
@@ -32,11 +31,10 @@ export function ViewShell({
 
   if (loading) {
     return (
-      <div className="flex flex-col h-full relative" style={{ backgroundImage: `url('${bgUrl}')`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div className="absolute inset-0 bg-[#0B1A2A]/90" />
+      <div className="flex flex-col h-full relative bg-[#020508]">
         <div className="relative z-10 flex flex-col items-center justify-center h-full">
           <div className="w-10 h-10 border-2 border-t-[#F5C76B] border-white/5 rounded-full animate-spin" />
-          <p className="text-white/40 text-sm mt-4 font-stats">Cargando...</p>
+          <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em] mt-6">Cargando...</p>
         </div>
       </div>
     );
@@ -44,36 +42,15 @@ export function ViewShell({
 
   if (error) {
     return (
-      <div className="flex flex-col h-full relative" style={{ backgroundImage: `url('${bgUrl}')`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div className="absolute inset-0 bg-[#0B1A2A]/90" />
+      <div className="flex flex-col h-full relative bg-[#020508]">
         <div className="relative z-10 flex flex-col items-center justify-center h-full p-8 text-center">
-          <div className="w-16 h-16 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center mb-4">
-            <span className="text-red-400 text-2xl">!</span>
+          <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6">
+            <span className="text-red-400 text-2xl font-black">!</span>
           </div>
-          <p className="text-white/80 font-stats text-sm mb-4">{error}</p>
+          <p className="text-white/80 font-stats text-sm mb-6">{error}</p>
           {onBack && (
             <Button onClick={onBack} variant="secondary" size="sm">
-              Volver
-            </Button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Only show empty message if no children AND emptyMessage is provided
-  const hasChildren = Boolean(children);
-  
-  if (!hasChildren && emptyMessage) {
-    return (
-      <div className="flex flex-col h-full relative" style={{ backgroundImage: `url('${bgUrl}')`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div className="absolute inset-0 bg-[#0B1A2A]/90" />
-        <div className="relative z-10 flex flex-col items-center justify-center h-full p-8 text-center">
-          <Package size={48} className="text-white/20 mb-4" />
-          <p className="text-white/40 font-stats text-sm">{emptyMessage}</p>
-          {onBack && (
-            <Button onClick={onBack} variant="secondary" size="sm" className="mt-4">
-              Volver
+              VOLVER
             </Button>
           )}
         </div>
@@ -82,27 +59,49 @@ export function ViewShell({
   }
 
   return (
-    <div className="flex flex-col h-full relative" style={{ backgroundImage: `url('${bgUrl}')`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2A]/80 via-transparent to-[#0B1A2A]/95 pointer-events-none" />
+    <div className="flex flex-col h-full relative bg-[#020508]">
+      {/* Background with Overlays */}
+      {bgUrl && (
+        <div className="absolute inset-0 z-0">
+          <img src={bgUrl} className="w-full h-full object-cover opacity-30" alt="" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#020508] via-transparent to-[#020508]" />
+        </div>
+      )}
       
-      {/* Header */}
+      {/* View Header */}
       {title && (
-        <div className="relative z-10 flex items-center justify-between p-4">
-          <button onClick={onBack} className="p-2.5 bg-black/40 border border-white/10 rounded-xl text-white/60 hover:text-white transition-all hover:bg-white/10 btn-back">
-            <ChevronLeft size={24} />
-          </button>
-          <div className="text-center">
-            <h1 className="text-lg font-black text-white tracking-widest uppercase font-display">{title}</h1>
-            {subtitle && <span className="text-[9px] font-black text-white/40 uppercase tracking-widest font-stats">{subtitle}</span>}
+        <div className="relative z-10 flex items-center justify-between p-6 pb-2">
+          <div className="flex items-center gap-4">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <ChevronLeft size={20} />
+              </button>
+            )}
+            <div>
+              <h1 className="text-2xl font-black text-white uppercase font-display tracking-tight leading-none">{title}</h1>
+              {subtitle && <span className="text-[10px] font-black text-[#F5C76B] uppercase tracking-[0.3em] opacity-60">{subtitle}</span>}
+            </div>
           </div>
-          <div className="w-10" />
         </div>
       )}
 
       {/* Content */}
       <div className="relative z-10 flex-1 overflow-hidden">
-        {children}
+        {!children && emptyMessage ? (
+          <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+            <Package size={48} className="text-white/10 mb-4" />
+            <p className="text-white/40 font-black text-[10px] uppercase tracking-widest">{emptyMessage}</p>
+          </div>
+        ) : (
+          children
+        )}
       </div>
+
+      {/* Aesthetic Vignette */}
+      <div className="absolute inset-0 pointer-events-none z-20 shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]" />
     </div>
   );
 }

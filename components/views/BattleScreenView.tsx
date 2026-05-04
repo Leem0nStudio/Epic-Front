@@ -744,7 +744,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
            </div>
          </div>
 
-      {/* Victory/Defeat Overlay */}
+      {/* VICTORIA/Defeat Overlay */}
       <AnimatePresence>
         {isBattleOver && <BattleResult winner={winner} completionData={completionData} isRecording={isRecordingResult} onConfirm={() => { onRefresh(); onBack(); }} />}
       </AnimatePresence>
@@ -986,7 +986,7 @@ function BattleResult({ winner, completionData, isRecording, onConfirm }: any) {
         transition={{ delay: 0.3 }}
         className="text-5xl font-black text-white tracking-[0.3em] uppercase italic drop-shadow-2xl"
       >
-        {winner === 'player' ? 'Victory' : 'Defeated'}
+        {winner === 'player' ? 'VICTORIA' : 'DERROTA'}
       </motion.h2>
 
       <motion.div 
@@ -1025,7 +1025,7 @@ function BattleResult({ winner, completionData, isRecording, onConfirm }: any) {
              <div className="flex items-center justify-center gap-3 mb-6 text-[#F5C76B]">
                 <div className="h-px w-8 bg-[#F5C76B]/40" />
                 <Gift size={18} />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em]">Rewards</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em]">RECOMPENSAS</span>
                 <div className="h-px w-8 bg-[#F5C76B]/40" />
              </div>
 
@@ -1062,7 +1062,7 @@ function BattleResult({ winner, completionData, isRecording, onConfirm }: any) {
             className="flex items-center gap-2"
           >
              <Terminal size={12} className="text-[#F5C76B]" />
-             <span className="text-[9px] font-black text-[#F5C76B] uppercase tracking-[0.5em]">Synchronizing Records</span>
+             <span className="text-[9px] font-black text-[#F5C76B] uppercase tracking-[0.5em]">SINCRONIZANDO DATOS</span>
           </motion.div>
         )}
         
@@ -1072,7 +1072,7 @@ function BattleResult({ winner, completionData, isRecording, onConfirm }: any) {
           onClick={onConfirm} 
           className="bg-white text-black font-black py-4 px-20 rounded-full tracking-[0.3em] uppercase text-[10px] shadow-2xl hover:bg-[#F5C76B] transition-colors"
         >
-          Continue Expedition
+          CONTINUAR
         </motion.button>
       </div>
     </motion.div>

@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ChevronLeft, Gift, Coins, Diamond, Zap } from 'lucide-react';
+import { Gift, Coins, Diamond, Zap, CheckCircle2 } from 'lucide-react';
 import { AssetService } from '@/lib/services/asset-service';
 import { Button } from '@/components/ui/Button';
-import { DailyBonusDisplay } from '@/components/ui/DailyBonus';
+import { ViewShell } from '@/components/ui/ViewShell';
 import { supabase } from '@/lib/supabase';
 
 interface DailyRewardsViewProps {
@@ -16,202 +16,109 @@ export function DailyRewardsView({ onBack }: DailyRewardsViewProps) {
   const [streak, setStreak] = useState(1);
   const [lastClaimDate, setLastClaimDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
-  const loadDailyRewardsState = async () => {
-    if (!supabase) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data } = await supabase
-      .from('player_daily_rewards')
-      .select('*')
-      .eq('player_id', user.id)
-      .single();
-
-    if (data) {
-      setStreak(data.streak || 1);
-      setLastClaimDate(data.last_claim_date);
-    }
-  };
+  const [claimedToday, setClaimedToday] = useState(false);
 
   useEffect(() => {
-    loadDailyRewardsState();
+    async function loadData() {
+      if (!supabase) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: player } = await supabase
+        .from('players')
+        .select('last_login_bonus_at, login_streak')
+        .eq('id', user.id)
+        .single();
+
+      if (player) {
+        setStreak(player.login_streak || 1);
+        setLastClaimDate(player.last_login_bonus_at);
+
+        if (player.last_login_bonus_at) {
+          const lastDate = new Date(player.last_login_bonus_at).toDateString();
+          const today = new Date().toDateString();
+          setClaimedToday(lastDate === today);
+        }
+      }
+    }
+    loadData();
   }, []);
 
   const handleClaim = async () => {
-    if (!supabase) return;
     setIsLoading(true);
-    setMessage(null);
-
     try {
-      const rewards = [
-        { day: 1, currency: 100, premium: 0 },
-        { day: 2, currency: 150, premium: 5 },
-        { day: 3, currency: 200, premium: 10 },
-        { day: 4, currency: 250, premium: 10 },
-        { day: 5, currency: 300, premium: 15 },
-        { day: 6, currency: 350, premium: 20 },
-        { day: 7, currency: 500, premium: 50 },
-      ];
-      
-      const currentReward = rewards[(streak - 1) % 7];
-      
-      const { error } = await supabase.rpc('rpc_claim_daily_reward', {
-        p_reward_currency: currentReward.currency,
-        p_reward_premium: currentReward.premium,
-        p_reward_exp: streak * 50
-      });
-
+      if (!supabase) return;
+      const { error } = await supabase.rpc('rpc_claim_daily_bonus');
       if (error) throw error;
-
-      setStreak(prev => prev + 1);
-      setLastClaimDate(new Date().toISOString().split('T')[0]);
-      setMessage({ 
-        type: 'success', 
-        text: `+${currentReward.currency} 🪙 +${currentReward.premium} 💎` 
-      });
-
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Error al reclamar' });
+      setClaimedToday(true);
+    } catch (e: any) {
+      alert(e.message);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const days = [1, 2, 3, 4, 5, 6, 7];
+
   return (
-    <div 
-      className="w-full h-full flex flex-col relative bg-[#0B1A2A] bg-cover bg-center bg-no-repeat overflow-hidden"
-      style={{ backgroundImage: `url('${AssetService.getBgUrl('home')}')` }}
-    >
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2A]/80 via-[#0B1A2A]/60 to-[#020508]/95 pointer-events-none" />
+    <ViewShell title="RECOMPENSAS" subtitle="Bonos Diarios" onBack={onBack}>
+      <div className="flex-1 flex flex-col p-6 space-y-8">
 
-      {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-6 py-4">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onBack}
-          className="p-3 bg-black/40 backdrop-blur-md rounded-xl border border-white/10"
-        >
-          <ChevronLeft className="text-white" size={24} />
-        </motion.button>
-
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-xl border border-purple-500/40">
-            <Gift className="text-purple-400" size={24} />
-          </div>
-          <div>
-            <h1 className="text-white font-bold text-lg">Recompensas Diarias</h1>
-            <p className="text-white/40 text-xs">¡No olvides reclamar cada día!</p>
-          </div>
+        {/* Streak Hero */}
+        <div className="bg-gradient-to-br from-[#F5C76B]/20 to-amber-900/40 border border-[#F5C76B]/30 rounded-[32px] p-8 text-center relative overflow-hidden">
+           <div className="relative z-10">
+              <div className="w-20 h-20 bg-[#F5C76B] rounded-full flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_#F5C76B66]">
+                 <Gift size={40} className="text-[#0B1A2A]" />
+              </div>
+              <h2 className="text-3xl font-black text-white uppercase font-display">Racha de {streak} Días</h2>
+              <p className="text-[10px] text-[#F5C76B] font-black uppercase tracking-[0.3em] mt-2">Continúa regresando para mejores premios</p>
+           </div>
+           <div className="absolute inset-0 bg-[url('/assets/ui/pattern.png')] opacity-10" />
         </div>
 
-        <div className="w-12" />
-      </div>
+        {/* Days Grid */}
+        <div className="grid grid-cols-4 gap-3">
+          {days.map((day) => {
+            const isCompleted = day < streak || (day === streak && claimedToday);
+            const isCurrent = day === streak && !claimedToday;
 
-      {/* Content */}
-      <div className="relative z-10 flex-1 overflow-y-auto px-6 py-4">
-        <div className="max-w-md mx-auto space-y-6">
-          
-          {/* Streak Info */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-6 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 rounded-2xl border border-amber-500/30"
-          >
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <div className="text-6xl">🔥</div>
-              <div>
-                <div className="text-4xl font-black text-white">{streak}</div>
-                <div className="text-amber-400 text-sm font-medium">Días de Racha</div>
-              </div>
-            </div>
-
-            {message && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className={`text-center p-3 rounded-lg mb-4 ${
-                  message.type === 'success' 
-                    ? 'bg-green-500/20 border border-green-500/40 text-green-400' 
-                    : 'bg-red-500/20 border border-red-500/40 text-red-400'
+            return (
+              <div
+                key={day}
+                className={`relative rounded-2xl border p-3 flex flex-col items-center gap-2 transition-all ${
+                  isCompleted ? 'bg-[#F5C76B]/10 border-[#F5C76B]/40' :
+                  isCurrent ? 'bg-white/10 border-white/40 scale-105 shadow-xl' :
+                  'bg-black/40 border-white/5 opacity-40'
                 }`}
               >
-                {message.text}
-              </motion.div>
-            )}
-          </motion.div>
+                <span className="text-[8px] font-black text-white/40 uppercase">Día {day}</span>
+                {day % 7 === 0 ? <Diamond size={16} className="text-cyan-400" /> : <Coins size={16} className="text-[#F5C76B]" />}
+                {isCompleted && (
+                  <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
+                     <CheckCircle2 size={10} className="text-white" />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
 
-          {/* Daily Bonus Component */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="p-4 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10"
-          >
-            <DailyBonusDisplay
-              streak={streak}
-              lastClaimDate={lastClaimDate}
-              onClaim={handleClaim}
-              isLoading={isLoading}
-            />
-          </motion.div>
-
-          {/* Info Box */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20"
-          >
-            <div className="text-blue-300 text-sm font-medium mb-2">💡 ¿Cómo funciona?</div>
-            <ul className="text-white/60 text-xs space-y-1">
-              <li>• Reclama tu recompensa diaria para mantener tu racha</li>
-              <li>• Cada 7 días el ciclo se reinicia con bonus especial</li>
-              <li>• Si te saltas un día, la racha se reinicia</li>
-              <li>• Las recompensas aumentan con tu racha</li>
-            </ul>
-          </motion.div>
-
-          {/* Rewards Preview */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="p-4 bg-black/30 rounded-xl border border-white/5"
-          >
-            <div className="text-white/50 text-xs font-medium mb-3">PRÓXIMAS RECOMPENSAS</div>
-            <div className="grid grid-cols-7 gap-2">
-              {[
-                { day: 1, c: 100, g: 0 },
-                { day: 2, c: 150, g: 5 },
-                { day: 3, c: 200, g: 10 },
-                { day: 4, c: 250, g: 10 },
-                { day: 5, c: 300, g: 15 },
-                { day: 6, c: 350, g: 20 },
-                { day: 7, c: 500, g: 50 },
-              ].map((r, i) => (
-                <div 
-                  key={r.day}
-                  className={`text-center p-2 rounded-lg ${
-                    i < (streak - 1) % 7 
-                      ? 'bg-green-500/20 border border-green-500/30' 
-                      : i === (streak - 1) % 7 
-                        ? 'bg-yellow-500/20 border-2 border-yellow-400 animate-pulse'
-                        : 'bg-white/5'
-                  }`}
-                >
-                  <div className="text-[10px] text-white/40">Día {r.day}</div>
-                  <div className="text-xs">🪙{r.c}</div>
-                  <div className="text-[10px] text-cyan-400">💎{r.g}</div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
+        {/* Action */}
+        <div className="mt-auto">
+           <Button
+             variant="primary"
+             size="game"
+             className="w-full h-20"
+             onClick={handleClaim}
+             disabled={claimedToday || isLoading}
+           >
+              {claimedToday ? 'RECLAMADO' : 'RECLAMAR PREMIO'}
+           </Button>
+           {claimedToday && (
+             <p className="text-center text-white/40 text-[10px] font-black uppercase mt-4 tracking-widest">Vuelve mañana para tu siguiente bono</p>
+           )}
         </div>
       </div>
-    </div>
+    </ViewShell>
   );
 }

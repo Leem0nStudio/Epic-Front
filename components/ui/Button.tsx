@@ -15,19 +15,11 @@ interface ButtonProps {
   type?: 'button' | 'submit' | 'reset';
 }
 
-/**
- * Button variants per Art Bible v1.0 - Section 5.3
- */
 const variantClasses = {
-  // Main CTAs - Battle, Continue (gold gradient)
   primary: 'btn-primary',
-  // Navigation, back buttons (dark panel)
   secondary: 'btn-secondary',
-  // Icon buttons, tertiary actions (transparent)
   ghost: 'btn-ghost',
-  // Destructive actions
   danger: 'btn-danger',
-  // In-battle skill buttons
   action: 'btn-action',
 };
 
@@ -53,8 +45,8 @@ export function Button({
   return (
     <motion.button
       type={type}
-      whileHover={!disabled ? (whileHover || { scale: 1.02 }) : undefined}
-      whileTap={!disabled ? (whileTap || { scale: 0.98 }) : undefined}
+      whileHover={!disabled ? (whileHover || { scale: 1.05, y: -2, boxShadow: "0 10px 20px rgba(0,0,0,0.3)" }) : undefined}
+      whileTap={!disabled ? (whileTap || { scale: 0.95, y: 1 }) : undefined}
       onClick={onClick}
       disabled={disabled}
       className={`
@@ -65,6 +57,12 @@ export function Button({
         ${className}
       `}
     >
+      {/* Haptic/Tactile visual feedback layer */}
+      <motion.div
+        className="absolute inset-0 bg-white/5 opacity-0 rounded-lg"
+        whileTap={{ opacity: 1 }}
+      />
+
       {children}
     </motion.button>
   );
