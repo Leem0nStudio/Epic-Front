@@ -346,6 +346,7 @@ RETURNS JSONB AS $$
 DECLARE
     v_user_id UUID := auth.uid();
     v_material RECORD;
+    v_fragment RECORD;
     v_exp_gain INTEGER;
     v_player_exp INTEGER;
     v_player_level INTEGER;
@@ -441,7 +442,9 @@ BEGIN
 
     -- 5. Apply Skill Fragment Rewards (lower chance than materials)
     IF v_final_rewards->'skill_fragments' IS NOT NULL AND jsonb_array_length(v_final_rewards->'skill_fragments') > 0 THEN
-        FOR v_fragment IN SELECT * FROM jsonb_to_recordset(v_final_rewards->'skill_fragments') AS x("itemId" TEXT, amount INTEGER) LOOP
+        FOR v_fragment IN 
+            SELECT * FROM jsonb_to_recordset(v_final_rewards->'skill_fragments') AS x("itemId" TEXT, amount INTEGER)
+        LOOP
             -- Only 20% chance to drop skill fragments
             IF random() > 0.2 THEN
                 CONTINUE;
