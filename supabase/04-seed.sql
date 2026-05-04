@@ -222,7 +222,9 @@ INSERT INTO skill_modules (version, name, description, base_power, cooldown, tag
     ('1.0.0', 'Chain Lightning', 'Chain attack hits multiple targets', 25, 2, ARRAY['chain', 'aoe']),
     ('1.0.0', 'Vampire Bite', 'Drain HP from enemy', 20, 2, ARRAY['drain', 'crit']),
     ('1.0.0', 'Holy Smite', 'Holy damage, bonus vs evil', 35, 3, ARRAY['aoe']),
-    ('1.0.0', 'Focus Shot', 'High crit chance critical hit', 30, 2, ARRAY['crit', 'chain']);
+    ('1.0.0', 'Focus Shot', 'High crit chance critical hit', 30, 2, ARRAY['crit', 'chain']),
+    ('1.0.0', 'Meteor', 'Massive fire damage', 50, 4, ARRAY['burn', 'aoe']),
+    ('1.0.0', 'Assassinate', 'Deadly critical strike', 45, 3, ARRAY['crit', 'drain']);
 
 -- Job Skill Modules (skills available per job)
 -- =====================================================
