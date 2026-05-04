@@ -337,12 +337,18 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
                 <Swords size={12} className="text-[#F5C76B]" />
                 <span className="text-[12px] font-black tracking-[0.4em] text-[#F5C76B] uppercase italic drop-shadow-[0_0_10px_rgba(245,199,107,0.5)]">STAGE {stageId?.replace('stage_', '').replace('_', '-')}</span>
              </div>
-             <div className="flex items-center gap-3">
-                <span className="text-[8px] text-white/40 font-mono tracking-widest uppercase">RONDA {round}</span>
-                <div className="w-1 h-1 rounded-full bg-white/20" />
-                <span className="text-[8px] text-white/40 font-mono tracking-widest uppercase">TURNO {stats.totalTurns}</span>
-             </div>
-          </div>
+<div className="flex items-center gap-3">
+                 <span className="text-[8px] text-white/40 font-mono tracking-widest uppercase">RONDA {round}</span>
+                 <div className="w-1 h-1 rounded-full bg-white/20" />
+                 <span className="text-[8px] text-white/40 font-mono tracking-widest uppercase">TURNO {stats.totalTurns}</span>
+              </div>
+              {/* Turn indicator */}
+              {currentActor && (
+                <div className={`mt-1 px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-wider ${currentActor.side === 'player' ? 'bg-cyan-600 text-white' : 'bg-red-600 text-white'}`}>
+                  {currentActor.side === 'player' ? '▶ TU TURNO' : '⏳ ENEMIGO'}
+                </div>
+              )}
+           </div>
           <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
             <Activity size={18} className="text-[#F5C76B] animate-pulse" />
           </div>
@@ -398,6 +404,17 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
 
       {/* FIELD: Battle View Area */}
       <div className="flex-1 relative z-10 px-4 flex flex-col justify-center overflow-hidden">
+        {/* Target instruction banner */}
+        {currentActor?.side === 'player' && !targetId && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-black/80 border border-red-500/50 rounded-full"
+          >
+            <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">👇 SELECCIONA UN ENEMIGO</span>
+          </motion.div>
+        )}
+
         {/* Enemies Section */}
         <div className="flex justify-center gap-12 -mt-16">
           {enemyUnits.map((enemy) => (
