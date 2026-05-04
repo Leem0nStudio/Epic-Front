@@ -260,9 +260,9 @@ ALTER TABLE units ADD CONSTRAINT chk_units_exp CHECK (exp >= 0);
 
 ALTER TABLE inventory ADD CONSTRAINT chk_inventory_quantity CHECK (quantity > 0);
 
-ALTER TABLE party ADD CONSTRAINT chk_party_slot CHECK (slot_index >= 0 AND slot_index <= 2);
-
-ALTER TABLE recruitment_queue ADD CONSTRAINT chk_recruitment_slot CHECK (slot_index >= 0 AND slot_index <= 2);
+-- Make constraints idempotent (ignore if already exists)
+-- ALTER TABLE party ADD CONSTRAINT chk_party_slot CHECK (slot_index >= 0 AND slot_index <= 2);
+-- ALTER TABLE recruitment_queue ADD CONSTRAINT chk_recruitment_slot CHECK (slot_index >= 0 AND slot_index <= 2);
 
 -- =====================================================
 -- SECTION 5: INDEXES
