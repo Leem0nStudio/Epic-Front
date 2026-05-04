@@ -116,7 +116,7 @@ VALUES
    '{"All Magic Damage+20%", "SP Recovery+15%"}',
    '{"minLevel": 90, "currencyCost": 50000, "materials": [], "requiredJobCore": "core_grand_archmage"}'),
 
-('high_priest', '1.0.0', 'High Priest', 5, 'arch_bishop',
+('high_priest', '1.0.0', 'High Priest', 4, 'arch_bishop',
    '{"hp": 1.0, "atk": 0.6, "def": 1.2, "matk": 2.0, "mdef": 2.2, "agi": 0.8}',
    '{"staff", "mace"}',
    '[{"id": "resurrection", "name": "Resurrection", "type": "active", "powerMod": 5.0, "cooldown": 10}, {"id": "bishop_heal", "name": "Bishop Heal", "type": "active", "powerMod": 4.0, "cooldown": 5}]',
