@@ -65,6 +65,13 @@ VALUES
    '{"MDEF+15%"}',
    '{"minLevel": 40, "currencyCost": 5000, "materials": [], "requiredJobCore": "core_priest"}'),
 
+('arch_bishop', '1.0.0', 'Arch Bishop', 3, 'priest',
+   '{"hp": 0.9, "atk": 0.6, "def": 1.2, "matk": 1.8, "mdef": 2.0, "agi": 0.8}',
+   '{"staff", "mace"}',
+   '[{"id": "bishop_wrath", "name": "Bishop Wrath", "type": "active", "powerMod": 3.5, "cooldown": 4}, {"id": "blessed", "name": "Blessed", "type": "passive", "powerMod": 0.2, "cooldown": 0}]',
+   '{"MDEF+20%", "Heal Bonus+20%"}',
+   '{"minLevel": 70, "currencyCost": 15000, "materials": [], "requiredJobCore": "core_arch_bishop"}'),
+
 -- Tier 3 Jobs (Level 70+)
 ('paladin', '1.0.0', 'Paladin', 3, 'knight',
   '{"hp": 1.8, "atk": 1.2, "def": 1.6, "matk": 0.9, "mdef": 1.3, "agi": 0.8}',
@@ -109,7 +116,7 @@ VALUES
    '{"All Magic Damage+20%", "SP Recovery+15%"}',
    '{"minLevel": 90, "currencyCost": 50000, "materials": [], "requiredJobCore": "core_grand_archmage"}'),
 
-('high_priest', '1.0.0', 'High Priest', 4, 'priest',
+('high_priest', '1.0.0', 'High Priest', 5, 'arch_bishop',
    '{"hp": 1.0, "atk": 0.6, "def": 1.2, "matk": 2.0, "mdef": 2.2, "agi": 0.8}',
    '{"staff", "mace"}',
    '[{"id": "resurrection", "name": "Resurrection", "type": "active", "powerMod": 5.0, "cooldown": 10}, {"id": "bishop_heal", "name": "Bishop Heal", "type": "active", "powerMod": 4.0, "cooldown": 5}]',
@@ -169,6 +176,7 @@ VALUES
     ('core_crusader', '1.0.0', 'Crusader Core', 'legendary', 'crusader'),
     ('core_sage', '1.0.0', 'Sage Core', 'legendary', 'sage'),
     ('core_archmage', '1.0.0', 'Archmage Core', 'legendary', 'archmage'),
+    ('core_arch_bishop', '1.0.0', 'Arch Bishop Core', 'legendary', 'arch_bishop'),
     -- Tier 4 Job Cores (Endgame)
     ('core_arch_paladin', '1.0.0', 'Arch Paladin Core', 'mythic', 'arch_paladin'),
     ('core_grand_archmage', '1.0.0', 'Grand Archmage Core', 'mythic', 'grand_archmage'),
