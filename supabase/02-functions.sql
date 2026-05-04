@@ -728,7 +728,7 @@ GRANT SELECT ON unit_progress TO authenticated;
 -- CRAFTING SYSTEM: Skill Fragments
 -- =====================================================
 
-CREATE OR REPLACE FUNCTION rpc_craft_skill(p_player_id TEXT, p_fragment_id TEXT)
+CREATE OR REPLACE FUNCTION rpc_craft_skill(p_player_id UUID, p_fragment_id TEXT)
 RETURNS UUID AS $$
 DECLARE
     v_user_id UUID := auth.uid();
@@ -737,7 +737,7 @@ DECLARE
     v_skill_module_id UUID;
     v_learned_skill_id UUID;
 BEGIN
-    IF p_player_id != v_user_id::TEXT THEN
+    IF p_player_id != v_user_id THEN
         RAISE EXCEPTION 'No autorizado';
     END IF;
 
@@ -776,12 +776,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION rpc_add_skill_fragment(p_player_id TEXT, p_fragment_id TEXT, p_amount INTEGER DEFAULT 1)
+CREATE OR REPLACE FUNCTION rpc_add_skill_fragment(p_player_id UUID, p_fragment_id TEXT, p_amount INTEGER DEFAULT 1)
 RETURNS void AS $$
 DECLARE
     v_user_id UUID := auth.uid();
 BEGIN
-    IF p_player_id != v_user_id::TEXT THEN
+    IF p_player_id != v_user_id THEN
         RAISE EXCEPTION 'No autorizado';
     END IF;
 
@@ -792,7 +792,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION rpc_get_player_fragments(p_player_id TEXT)
+CREATE OR REPLACE FUNCTION rpc_get_player_fragments(p_player_id UUID)
 RETURNS TABLE(fragment_id TEXT, name TEXT, description TEXT, piece_count INTEGER, rarity TEXT, current_quantity INTEGER) AS $$
 BEGIN
     RETURN QUERY
@@ -816,7 +816,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION rpc_get_player_learned_skills(p_player_id TEXT)
+CREATE OR REPLACE FUNCTION rpc_get_player_learned_skills(p_player_id UUID)
 RETURNS TABLE(skill_module_id UUID, skill_name TEXT, skill_description TEXT, learned_at TIMESTAMP WITH TIME ZONE) AS $$
 BEGIN
     RETURN QUERY
@@ -827,6 +827,10 @@ BEGIN
         pls.learned_at
     FROM player_learned_skills pls
     JOIN skill_modules sm ON sm.id = pls.skill_module_id
+    WHERE pls.player_id = p_player_id
+    ORDER BY pls.learned_at DESC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
     WHERE pls.player_id = p_player_id
     ORDER BY pls.learned_at DESC;
 END;

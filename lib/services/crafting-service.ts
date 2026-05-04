@@ -61,7 +61,7 @@ export class CraftingService {
     playerId: string,
     fragmentId: string
   ): Promise<CraftResult> {
-    const fragment = GACHA_DATABASE[fragmentId as keyof typeof GACHA_DATABASE];
+    const fragment = GACHA_DATABASE[fragmentId] as SkillFragmentItem | undefined;
     if (!fragment || fragment.type !== 'skill_fragment') {
       return { success: false, error: 'Fragmento no encontrado' };
     }

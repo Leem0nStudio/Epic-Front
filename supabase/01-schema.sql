@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS skill_fragments (
 
 CREATE TABLE IF NOT EXISTS player_skill_fragments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id TEXT REFERENCES players(id) ON DELETE CASCADE,
+    player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
     fragment_id TEXT REFERENCES skill_fragments(id) ON DELETE CASCADE,
     quantity INTEGER NOT NULL DEFAULT 0,
     UNIQUE(player_id, fragment_id)
@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS player_skill_fragments (
 
 CREATE TABLE IF NOT EXISTS player_learned_skills (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id TEXT REFERENCES players(id) ON DELETE CASCADE,
+    player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
     skill_module_id UUID REFERENCES skill_modules(id) ON DELETE CASCADE,
     learned_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(player_id, skill_module_id)
