@@ -174,6 +174,14 @@ CREATE TABLE IF NOT EXISTS player_learned_skills (
     UNIQUE(player_id, skill_module_id)
 );
 
+-- Gacha pity system
+CREATE TABLE IF NOT EXISTS gacha_state (
+    player_id UUID PRIMARY KEY REFERENCES players(id) ON DELETE CASCADE,
+    pulls_since_epic INTEGER DEFAULT 0,
+    pulls_since_legendary INTEGER DEFAULT 0,
+    last_pull_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS units (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
