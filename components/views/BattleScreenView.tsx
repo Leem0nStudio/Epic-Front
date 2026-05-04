@@ -307,6 +307,8 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const enemyUnits = units.filter(u => u.side === 'enemy' && !u.isDead);
   const currentActor = units.find(u => u.id === activeUnitId);
   
+  const totalPlayerHp = playerUnits.reduce((acc, u) => acc + u.currentHp, 0);
+  const maxPlayerHp = playerUnits.reduce((acc, u) => acc + u.maxHp, 0);
   const totalEnemyHp = enemyUnits.reduce((acc, u) => acc + u.currentHp, 0);
   const maxEnemyHp = enemyUnits.reduce((acc, u) => acc + u.maxHp, 0);
 
@@ -361,6 +363,20 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
           </motion.div>
           <div className="absolute inset-0 flex items-center justify-center text-[11px] font-black tracking-[0.2em] drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] italic">
             {totalEnemyHp.toLocaleString()} <span className="mx-1 text-white/40">/</span> {maxEnemyHp.toLocaleString()}
+          </div>
+        </div>
+
+        {/* Player HP Bar */}
+        <div className="relative h-5 bg-black/80 rounded-sm border-x-4 border-[#4ade80] overflow-hidden mt-2">
+          <motion.div 
+            initial={{ width: '100%' }}
+            animate={{ width: `${Math.min((totalPlayerHp / maxPlayerHp) * 100, 100)}%` }}
+            className="h-full bg-[linear-gradient(90deg,#166534_0%,#4ade80_50%,#86efac_100%)] relative"
+          >
+             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.3)_0%,transparent_50%,rgba(0,0,0,0.3)_100%)" />
+          </motion.div>
+          <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black tracking-[0.2em] drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] italic">
+            {totalPlayerHp.toLocaleString()} <span className="mx-1 text-white/40">/</span> {maxPlayerHp.toLocaleString()}
           </div>
         </div>
 
