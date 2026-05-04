@@ -831,7 +831,3 @@ BEGIN
     ORDER BY pls.learned_at DESC;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-    WHERE pls.player_id = p_player_id
-    ORDER BY pls.learned_at DESC;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
