@@ -57,6 +57,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const [isBurstActive, setIsBurstActive] = useState(false);
   const [damageNumbers, setDamageNumbers] = useState<{ id: number, value: number, x: number, y: number, color: string, isCrit?: boolean }[]>([]);
   const [participatingUnits, setParticipatingUnits] = useState<Set<string>>(new Set());
+  const [autoBattle, setAutoBattle] = useState(false);
   
   // INTENSE COMBAT FEEDBACK SYSTEM
   const [comboCount, setComboCount] = useState(0);
@@ -298,7 +299,16 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       const timer = setTimeout(() => runTurn(currentActor, skill), 1000);
       return () => clearTimeout(timer);
     }
-  }, [units, turn, isInitializing, isBattleOver, initError]);
+
+    // Auto-battle: if player's turn and auto-battle is on
+    if (autoBattle && currentActor.side === 'player' && enemyUnits.length > 0) {
+      const autoTargetId = enemyUnits[0].id;
+      setTargetId(autoTargetId);
+      const skill = currentActor.skills[0] || { id: 'attack', name: 'Attack', type: 'basic', cooldown: 0, effects: [] };
+      const timer = setTimeout(() => runTurn(currentActor, skill, autoTargetId), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [units, turn, isInitializing, isBattleOver, initError, autoBattle]);
 
   if (isInitializing) return <LoadingScreen />;
   if (initError) return <ErrorScreen error={initError} onBack={onBack} />;
@@ -332,6 +342,13 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       <div className="relative z-20 px-6 pt-12 pb-4">
         <div className="flex justify-between items-center mb-3 px-1">
           <button onClick={onBack} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-90"><ChevronLeft size={20} /></button>
+          <button 
+            onClick={() => setAutoBattle(!autoBattle)} 
+            className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all active:scale-90 ${autoBattle ? 'bg-green-600 border-green-500 text-white' : 'bg-white/5 border-white/10 text-white/40 hover:text-white'}`}
+            title="Auto-battle"
+          >
+            <Zap size={18} className={autoBattle ? 'animate-pulse' : ''} />
+          </button>
           <div className="flex flex-col items-center">
              <div className="flex items-center gap-2 mb-1">
                 <Swords size={12} className="text-[#F5C76B]" />
@@ -405,7 +422,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       {/* FIELD: Battle View Area */}
       <div className="flex-1 relative z-10 px-4 flex flex-col justify-center overflow-hidden">
         {/* Target instruction banner */}
-        {currentActor?.side === 'player' && !targetId && (
+        {currentActor?.side === 'player' && !targetId && !autoBattle && (
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
