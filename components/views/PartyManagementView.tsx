@@ -100,11 +100,14 @@ export function PartyManagementView({
                   ) : unit ? (
                     <>
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                      <img 
+                      <div className="absolute bottom-0 w-full h-8 bg-gradient-to-t from-black/50 to-transparent" />
+                      <motion.img 
                         src={AssetService.getSpriteUrl(unit.sprite_id)} 
                         alt={unit.name}
-                        className="w-[160%] sm:w-[180%] transform translate-y-2 sm:translate-y-3"
+                        className="w-[160%] sm:w-[180%] absolute bottom-2 left-1/2 -translate-x-1/2"
                         style={{ imageRendering: 'pixelated' }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
                       />
                       <div className="absolute bottom-0 inset-x-0 glass-crystal py-1.5 border-t border-[#F5C76B]/20">
                         <span className="text-[8px] font-bold text-center block text-white/80 tracking-wider font-stats">LV.{unit.level}</span>
@@ -180,13 +183,16 @@ export function PartyManagementView({
                       as={motion.div}
                       whileHover={{ x: 6, transition: { duration: 0.2 } }}
                     >
-                      <RarityIcon
+<RarityIcon
                         rarity={getRarityCode(unit?.rarity || 'C')}
                         size="sm"
                         className="shrink-0"
                         glass={true}
                       >
-<img src={AssetService.getSpriteUrl(unit.sprite_id)} className="w-[160%] transform translate-y-2 brightness-110" style={{imageRendering: 'pixelated'}} alt="" />
+                        <div className="relative">
+                          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-3 bg-black/50 blur-md rounded-full" />
+                          <img src={AssetService.getSpriteUrl(unit.sprite_id)} className="w-[160%] relative" style={{imageRendering: 'pixelated'}} alt="" />
+                        </div>
                       </RarityIcon>
                       <div className="flex-1 flex flex-col min-w-0">
                         <div className="flex items-center gap-2">
@@ -249,7 +255,10 @@ export function PartyManagementView({
                       className="shrink-0"
                       glass={true}
                     >
-                      <img src={AssetService.getSpriteUrl(unit.sprite_id)} className="w-[160%] transform translate-y-2 brightness-110" style={{imageRendering: 'pixelated'}} />
+                      <div className="relative">
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-3 bg-black/60 blur-md rounded-full" />
+                        <img src={AssetService.getSpriteUrl(unit.sprite_id)} className="w-[160%] relative" style={{imageRendering: 'pixelated'}} />
+                      </div>
                     </RarityIcon>
 
                     <div className="flex-1 flex flex-col min-w-0">

@@ -59,15 +59,16 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flippe
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6, type: "spring", damping: 12 }}
       className={`relative flex flex-col items-center justify-end h-full w-full ${emphasized ? 'z-20' : 'z-10'}`}
-      style={{ scale: scale * 1.45 }} // Increased size by ~45%
+      style={{ scale: scale * 1.45 }}
     >
       {/* Rarity Aura / Glow behind character */}
       {unit && (
         <div 
-          className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-32 h-32 blur-3xl opacity-20 pointer-events-none rounded-full"
+          className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-32 h-32 blur-3xl opacity-30 pointer-events-none rounded-full"
           style={{ backgroundColor: color }}
         />
       )}
@@ -75,26 +76,26 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flippe
       {/* Rarity Badge above Character head - positioned closer to sprite */}
       {unit && (
         <motion.div 
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.5, type: 'spring' }}
+          initial={{ scale: 0, y: 10 }}
+          animate={{ scale: 1, y: 0 }}
+          transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
           className="absolute top-[8%] left-1/2 -translate-x-1/2 -translate-y-full z-20"
         >
           <RarityBadge rarity={unit.rarity || rarity} size="sm" />
         </motion.div>
       )}
 
-      {/* Character Sprite */}
+{/* Character Sprite */}
       <div className="relative w-full h-[70%] flex items-center justify-center mb-2">
         {unit ? (
           <>
-            {/* Feet Shadow */}
-            <div className="absolute bottom-0 w-20 h-4 bg-black/40 blur-md rounded-full -z-10" />
+            {/* Ground Shadow - more prominent */}
+            <div className="absolute bottom-1 w-24 h-5 bg-black/50 blur-xl rounded-full -z-10" />
             
             <motion.div
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: emphasized ? 0 : 1 }}
-              className={`w-[180%] max-w-[200px] h-auto object-contain origin-bottom ${flipped ? 'scale-x-[-1]' : ''}`}
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 3 + (emphasized ? 0 : 1), repeat: Infinity, ease: "easeInOut", delay: emphasized ? 0 : 0.5 }}
+              className={`w-[180%] max-w-[200px] h-auto object-contain origin-bottom relative ${flipped ? 'scale-x-[-1]' : ''}`}
             >
               <ImageWithFallback
                 src={sprite || ''}
