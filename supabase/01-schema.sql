@@ -125,7 +125,10 @@ CREATE TABLE IF NOT EXISTS job_skill_modules (
 );
 
 -- =====================================================
--- SECTION 3: SKILL FRAGMENTS (Crafting System)
+-- SECTION 3: PLAYER DATA TABLES
+-- =====================================================
+
+-- SECTION 4: PLAYER SKILL DATA (Crafting) - must be after players table
 -- =====================================================
 
 CREATE TABLE IF NOT EXISTS skill_fragments (
@@ -153,32 +156,6 @@ CREATE TABLE IF NOT EXISTS player_learned_skills (
     skill_module_id UUID REFERENCES skill_modules(id) ON DELETE CASCADE,
     learned_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(player_id, skill_module_id)
-);
-
--- =====================================================
--- SECTION 3: PLAYER DATA TABLES
--- =====================================================
-
-CREATE TABLE IF NOT EXISTS players (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    username TEXT,
-    currency BIGINT DEFAULT 1000,
-    premium_currency BIGINT DEFAULT 100,
-    energy INTEGER DEFAULT 30,
-    max_energy INTEGER DEFAULT 30,
-    level INTEGER DEFAULT 1,
-    exp INTEGER DEFAULT 0,
-    last_energy_regen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    party_size_limit INTEGER DEFAULT 3,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS gacha_state (
-    player_id UUID PRIMARY KEY REFERENCES players(id) ON DELETE CASCADE,
-    pulls_since_epic INTEGER DEFAULT 0,
-    pulls_since_legendary INTEGER DEFAULT 0,
-    last_pull_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS units (
