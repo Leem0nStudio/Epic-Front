@@ -299,19 +299,45 @@ refreshState: async () => {
   },
 
   handleEquipItem: async (item, toast) => {
-    const { targetSlot, selectedUnitId } = get();
-    if (!targetSlot) return;
+    const { targetSlot, selectedUnitId, inventory } = get();
+    if (!targetSlot) {
+      if (toast) toast('Selecciona una ranura de equipo primero', 'warning');
+      return;
+    }
     if (!selectedUnitId) {
       if (toast) toast('Selecciona una unidad para equipar objetos', 'warning');
       return;
     }
+    if (!item?.id) {
+      if (toast) toast('Objeto inválido', 'error');
+      return;
+    }
+    const itemType = item.item_type || inventory.find(i => i.id === item.id)?.item_type;
+    if (!itemType) {
+      if (toast) toast('No se pudo determinar el tipo de objeto', 'error');
+      return;
+    }
+    if (targetSlot === 'weapon' && itemType !== 'weapon') {
+      if (toast) toast('Selecciona un arma para esta ranura', 'warning');
+      return;
+    }
+    if (targetSlot === 'card' && itemType !== 'card') {
+      if (toast) toast('Selecciona una carta para esta ranura', 'warning');
+      return;
+    }
+    if (targetSlot === 'skill' && itemType !== 'skill') {
+      if (toast) toast('Selecciona una skill para esta ranura', 'warning');
+      return;
+    }
+    gameDebugger.info('game-state', 'Equipping item', { unitId: selectedUnitId, itemId: item.id, slot: targetSlot, itemType });
     try {
       await EquipmentService.equipItem(selectedUnitId, item.id, targetSlot);
       await get().refreshState();
       set({ view: 'unit_details' });
       if (toast) toast('Objeto equipado', 'success');
     } catch (e: any) {
-      if (toast) toast(e.message, 'error');
+      gameDebugger.error('game-state', 'Failed to equip item', e);
+      if (toast) toast(e.message || 'Error al equipar', 'error');
     }
   },
 

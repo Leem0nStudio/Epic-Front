@@ -165,7 +165,7 @@ export function SkillDetailView({ skillId, itemId, onBack, onEquip, onDiscard }:
         <button onClick={() => onDiscard(itemId)} className="flex-1 py-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all">
           Descartar
         </button>
-        <button onClick={() => onEquip({ id: itemId, item_id: skillId, item_type: 'skill_scroll' })} className="flex-[2] py-3.5 bg-gradient-to-r from-[#F5C76B] to-[#b88c3a] rounded-xl text-black text-[10px] font-black uppercase tracking-widest hover:shadow-[0_0_25px_rgba(245,199,107,0.4)] transition-all">
+        <button onClick={() => onEquip({ id: itemId, item_id: skillId, item_type: 'skill' })} className="flex-[2] py-3.5 bg-gradient-to-r from-[#F5C76B] to-[#b88c3a] rounded-xl text-black text-[10px] font-black uppercase tracking-widest hover:shadow-[0_0_25px_rgba(245,199,107,0.4)] transition-all">
           Equipar
         </button>
       </motion.div>

@@ -143,9 +143,9 @@ export class InventoryService {
   private static async enrichInventory(inventory: any[]): Promise<InventoryItem[]> {
     // Group by type for batch queries
     const itemsByType = {
-      weapon: inventory.filter(i => i.item_type === 'weapon' || i.item_type === 'skill_scroll'),
+      weapon: inventory.filter(i => i.item_type === 'weapon'),
       card: inventory.filter(i => i.item_type === 'card'),
-      skill: inventory.filter(i => i.item_type === 'skill'),
+      skill: inventory.filter(i => i.item_type === 'skill' || i.item_type === 'skill_scroll'),
       material: inventory.filter(i => i.item_type === 'material'),
       job_core: inventory.filter(i => i.item_type === 'job_core'),
     };
