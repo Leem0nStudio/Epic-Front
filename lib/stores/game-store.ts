@@ -157,16 +157,26 @@ refreshState: async () => {
 
       await get().regenEnergy();
 
-      const [profRes, unitsRes, partyRes, recruitsRes] = await Promise.all([
+const [profRes, unitsRes, partyRes, recruitsRes] = await Promise.all([
         supabase.from('players').select('*').eq('id', user.id).single(),
         supabase.from('units').select('*'),
         supabase.from('party').select('*, unit:units(*)').eq('player_id', user.id).order('slot_index'),
         supabase.from('recruitment_queue').select('*').eq('player_id', user.id).eq('is_claimed', false),
       ]);
-  
+   
       if (profRes.data) {
         gameDebugger.info('game-state', 'Profile refreshed', { currency: profRes.data.currency });
         set({ profile: profRes.data });
+      } else {
+        // Player doesn't exist - create new player automatically
+        gameDebugger.warn('game-state', 'Player not found, creating new player');
+        const { OnboardingService } = await import('@/lib/services/onboarding-service');
+        await OnboardingService.initializePlayer(user.email?.split('@')[0] || 'Player');
+        // Retry fetch after creation
+        const newProfRes = await supabase.from('players').select('*').eq('id', user.id).single();
+        if (newProfRes.data) {
+          set({ profile: newProfRes.data });
+        }
       }
       
       set({ roster: unitsRes.data || [] });
@@ -370,7 +380,7 @@ refreshState: async () => {
       return;
     }
     await get().refreshState();
-    set({ view: 'battle' });
+    set({ selectedStage: stage, view: 'battle' });
   },
 
   handleRefillEnergy: async (gemCost, toast) => {
