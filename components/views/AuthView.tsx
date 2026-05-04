@@ -23,6 +23,12 @@ export function AuthView() {
     setError(null);
 
     try {
+      // Clear any existing session first to avoid stale token issues
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        await supabase.auth.signOut();
+      }
+
       if (isRegistering) {
         const { error: signUpError } = await supabase.auth.signUp({
           email,
@@ -35,7 +41,16 @@ export function AuthView() {
           email,
           password,
         });
-        if (signInError) throw signInError;
+        if (signInError) {
+          // Handle specific auth errors
+          if (signInError.message.includes('Invalid login') || signInError.message.includes('invalid')) {
+            throw new Error('Email o contraseña incorrectos');
+          }
+          if (signInError.message.includes('403') || signInError.message.includes('Forbidden')) {
+            throw new Error('Error de autenticación. Por favor, intenta de nuevo.');
+          }
+          throw signInError;
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Ocurrió un error inesperado');
@@ -191,6 +206,7 @@ export function AuthView() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
+                        autoComplete="email"
                         className="w-full bg-black/40 border border-white/5 rounded-2xl px-10 sm:px-12 py-3 sm:py-4 text-sm text-white placeholder-white/10 focus:border-[#F5C76B]/40 focus:outline-none transition-all font-bold tracking-wider"
                         placeholder="usuario@epicfrontier.app"
                       />
@@ -208,6 +224,7 @@ export function AuthView() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        autoComplete="current-password"
                         className="w-full bg-black/40 border border-white/5 rounded-2xl px-10 sm:px-12 py-3 sm:py-4 text-sm text-white placeholder-white/10 focus:border-[#F5C76B]/40 focus:outline-none transition-all font-bold tracking-wider"
                         placeholder="••••••••"
                       />
