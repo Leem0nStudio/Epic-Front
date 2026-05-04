@@ -124,21 +124,16 @@ VALUES
    '{"minLevel": 90, "currencyCost": 50000, "materials": [], "requiredJobCore": "core_high_priest"}');
 
 -- =====================================================
--- SECTION 3: SKILLS
+-- SECTION 3: SKILLS (DEPRECATED - Use skill_modules instead)
 -- =====================================================
 
-INSERT INTO skills (id, version, name, description, cooldown, effect, scaling, rarity)
-VALUES
-('skill_heal', '1.0.0', 'Curar', 'Restaura HP', 2, '{"heal": 2.5}', '{"stat": "matk", "mult": 2.5}', 'rare'),
-('skill_meteor', '1.0.0', 'Meteoro', 'Daño masivo', 4, '{"damage": 4.0}', '{"stat": "matk", "mult": 4.0}', 'epic'),
-('skill_fire_bolt', '1.0.0', 'Fire Bolt', 'Daño de fuego', 1, '{"damage": 2.0, "scaling": "matk"}', '{"stat": "matk", "mult": 2.0}', 'common'),
-('skill_ice_spike', '1.0.0', 'Ice Spike', 'Daño de hielo + lento', 3, '{"damage": 2.5, "scaling": "matk", "status": "slow", "chance": 0.5}', '{"stat": "matk", "mult": 2.5}', 'rare'),
-('skill_shadow_strike', '1.0.0', 'Shadow Strike', 'Daño oscuro crítico', 3, '{"damage": 3.5, "scaling": "atk"}', '{"stat": "atk", "mult": 3.5}', 'epic'),
-('skill_thunder', '1.0.0', 'Thunder', 'Daño de rayo a todos', 5, '{"damage": 2.0, "scaling": "matk", "target": "all_enemies"}', '{"stat": "matk", "mult": 2.0}', 'epic'),
-('skill_poison_blast', '1.0.0', 'Poison Blast', 'Daño poison', 2, '{"damage": 1.5, "scaling": "matk", "status": "poison", "chance": 0.7}', '{"stat": "matk", "mult": 1.5}', 'rare'),
-('skill_shield_bash', '1.0.0', 'Shield Bash', 'Daño + aturdir', 3, '{"damage": 2.0, "scaling": "atk", "status": "stun", "chance": 0.3}', '{"stat": "atk", "mult": 2.0}', 'rare'),
-('skill_blessing', '1.0.0', 'Blessing', 'Buff de ataque', 4, '{"buff": "atk", "multiplier": 1.3, "duration": 3}', '{"stat": "matk", "mult": 0}', 'rare'),
-('skill_rejuvenate', '1.0.0', 'Rejuvenate', 'Cura continua', 5, '{"dot": "heal", "power": 1.0, "duration": 3, "scaling": "matk"}', '{"stat": "matk", "mult": 1.0}', 'epic');
+-- Legacy skills table - keeping for reference but not populating
+-- Skills now come from skill_modules system only
+
+-- INSERT INTO skills (id, version, name, description, cooldown, effect, scaling, rarity)
+-- VALUES
+-- ('skill_heal', '1.0.0', 'Curar', 'Restaura HP', 2, '{"heal": 2.5}', '{"stat": "matk", "mult": 2.5}', 'rare'),
+-- (... legacy skills removed ...);
 
 -- =====================================================
 -- SECTION 4: CARDS
@@ -251,12 +246,14 @@ VALUES
     ('card_light_heal', '1.0.0', 'Luz Curativa', 'epic', 'heal', '{"power": 2.0, "chance": 0.3}', ARRAY['priest', 'acolyte'])
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO skills (id, version, name, description, cooldown, effect, scaling, rarity)
-VALUES
-    ('skill_fireball', '1.0.0', 'Bola de Fuego', 'Lanza una bola de fuego al enemigo', 2, '{"type": "damage", "power": 1.5}', '{"stat": "matk", "mult": 1.5}', 'rare'),
-    ('skill_heal', '1.0.0', 'Curación', 'Restaura HP a un aliado', 3, '{"type": "heal", "power": 1.0}', '{"stat": "mdef", "mult": 2.0}', 'rare'),
-    ('skill_power_strike', '1.0.0', 'Golpe Poderoso', 'Golpe devastador', 1, '{"type": "damage", "power": 2.0, "chance": 0.2}', '{"stat": "atk", "mult": 1.8}', 'epic')
-ON CONFLICT (id) DO NOTHING;
+-- Starter skills removed - now using skill_modules only
+
+-- INSERT INTO skills (id, version, name, description, cooldown, effect, scaling, rarity)
+-- VALUES
+--     ('skill_fireball', '1.0.0', 'Bola de Fuego', ...),
+--     ('skill_heal', '1.0.0', 'Curación', ...),
+--     ('skill_power_strike', '1.0.0', 'Golpe Poderoso', ...)
+-- ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO job_skill_modules (job_id, skill_module_id, slot_index)
 SELECT 'novice', sm.id, ROW_NUMBER() OVER () - 1
@@ -292,3 +289,27 @@ INSERT INTO job_skill_modules (job_id, skill_module_id, slot_index) VALUES
     ('grand_archmage', (SELECT id FROM skill_modules WHERE name = 'Meteor'), 1),
     ('high_priest', (SELECT id FROM skill_modules WHERE name = 'Healing Light'), 0),
     ('high_priest', (SELECT id FROM skill_modules WHERE name = 'Focus Shot'), 1);
+
+-- =====================================================
+-- SECTION 6: SKILL FRAGMENTS FOR CRAFTING
+-- =====================================================
+-- Piece count based on rarity: common=3, rare=5, epic=8, legendary=12
+INSERT INTO skill_fragments (id, skill_module_id, name, description, piece_count, rarity, version) VALUES
+-- Common skills (3 pieces)
+    ('frag_basic_attack', (SELECT id FROM skill_modules WHERE name = 'Basic Attack'), 'Fragmento: Ataque Básico', 'Piezas para crear Ataque Básico', 3, 'common', '1.0.0'),
+-- Rare skills (5 pieces)
+    ('frag_shield_bash', (SELECT id FROM skill_modules WHERE name = 'Shield Bash'), 'Fragmento: Escudo Triturador', 'Piezas para crear Escudo Triturador', 5, 'rare', '1.0.0'),
+    ('frag_fire_strike', (SELECT id FROM skill_modules WHERE name = 'Fire Strike'), 'Fragmento: Golpe de Fuego', 'Piezas para crear Golpe de Fuego', 5, 'rare', '1.0.0'),
+    ('frag_healing_light', (SELECT id FROM skill_modules WHERE name = 'Healing Light'), 'Fragmento: Luz Curativa', 'Piezas para crear Luz Curativa', 5, 'rare', '1.0.0'),
+    ('frag_ice_spike', (SELECT id FROM skill_modules WHERE name = 'Ice Spike'), 'Fragmento: Espada de Hielo', 'Piezas para crear Espada de Hielo', 5, 'rare', '1.0.0'),
+-- Epic skills (8 pieces)
+    ('frag_holy_smite', (SELECT id FROM skill_modules WHERE name = 'Holy Smite'), 'Fragmento: Santuario', 'Piezas para crear Santuario', 8, 'epic', '1.0.0'),
+    ('frag_thunder', (SELECT id FROM skill_modules WHERE name = 'Thunder'), 'Fragmento: Trueno', 'Piezas para crear Trueno', 8, 'epic', '1.0.0'),
+    ('frag_chain_lightning', (SELECT id FROM skill_modules WHERE name = 'Chain Lightning'), 'Fragmento: Cadena de Rayos', 'Piezas para crear Cadena de Rayos', 8, 'epic', '1.0.0'),
+    ('frag_berserk', (SELECT id FROM skill_modules WHERE name = 'Berserk'), 'Fragmento: Berserker', 'Piezas para crear Berserker', 8, 'epic', '1.0.0'),
+    ('frag_vampire_bite', (SELECT id FROM skill_modules WHERE name = 'Vampire Bite'), 'Fragmento: Mordida de Vampiro', 'Piezas para crear Mordida de Vampiro', 8, 'epic', '1.0.0'),
+-- Legendary skills (12 pieces)
+    ('frag_meteor', (SELECT id FROM skill_modules WHERE name = 'Meteor'), 'Fragmento: Meteorito', 'Piezas para crear Meteorito', 12, 'legendary', '1.0.0'),
+    ('frag_focus_shot', (SELECT id FROM skill_modules WHERE name = 'Focus Shot'), 'Fragmento: Tiro Focus', 'Piezas para crear Tiro Focus', 12, 'legendary', '1.0.0'),
+    ('frag_assassinate', (SELECT id FROM skill_modules WHERE name = 'Assassinate'), 'Fragmento: Asesina', 'Piezas para crear Asesina', 12, 'legendary', '1.0.0')
+ON CONFLICT (id) DO NOTHING;

@@ -125,6 +125,37 @@ CREATE TABLE IF NOT EXISTS job_skill_modules (
 );
 
 -- =====================================================
+-- SECTION 3: SKILL FRAGMENTS (Crafting System)
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS skill_fragments (
+    id TEXT PRIMARY KEY,
+    skill_module_id UUID REFERENCES skill_modules(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    piece_count INTEGER NOT NULL DEFAULT 1,
+    rarity TEXT NOT NULL CHECK (rarity IN ('common', 'rare', 'epic', 'legendary')),
+    version TEXT REFERENCES game_configs(version),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS player_skill_fragments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    player_id TEXT REFERENCES players(id) ON DELETE CASCADE,
+    fragment_id TEXT REFERENCES skill_fragments(id) ON DELETE CASCADE,
+    quantity INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(player_id, fragment_id)
+);
+
+CREATE TABLE IF NOT EXISTS player_learned_skills (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    player_id TEXT REFERENCES players(id) ON DELETE CASCADE,
+    skill_module_id UUID REFERENCES skill_modules(id) ON DELETE CASCADE,
+    learned_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(player_id, skill_module_id)
+);
+
+-- =====================================================
 -- SECTION 3: PLAYER DATA TABLES
 -- =====================================================
 
@@ -425,3 +456,16 @@ CREATE POLICY "Allow read skill_modules" ON skill_modules FOR SELECT TO authenti
 CREATE POLICY "Allow read skill_module_tags" ON skill_module_tags FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Allow read skill_module_effects" ON skill_module_effects FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Allow read job_skill_modules" ON job_skill_modules FOR SELECT TO authenticated USING (true);
+
+-- Skill Fragments & Crafting System
+GRANT SELECT ON skill_fragments TO authenticated;
+GRANT SELECT ON player_skill_fragments TO authenticated;
+GRANT SELECT ON player_learned_skills TO authenticated;
+
+ALTER TABLE skill_fragments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE player_skill_fragments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE player_learned_skills ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow read skill_fragments" ON skill_fragments FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read player_skill_fragments" ON player_skill_fragments FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read player_learned_skills" ON player_learned_skills FOR SELECT TO authenticated USING (true);
