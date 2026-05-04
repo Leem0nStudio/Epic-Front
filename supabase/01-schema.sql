@@ -128,6 +128,22 @@ CREATE TABLE IF NOT EXISTS job_skill_modules (
 -- SECTION 3: PLAYER DATA TABLES
 -- =====================================================
 
+-- Players table - may already exist in DB
+CREATE TABLE IF NOT EXISTS players (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    username TEXT,
+    currency BIGINT DEFAULT 1000,
+    premium_currency BIGINT DEFAULT 100,
+    energy INTEGER DEFAULT 30,
+    max_energy INTEGER DEFAULT 30,
+    level INTEGER DEFAULT 1,
+    exp INTEGER DEFAULT 0,
+    last_energy_regen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    party_size_limit INTEGER DEFAULT 3,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- SECTION 4: PLAYER SKILL DATA (Crafting) - must be after players table
 -- =====================================================
 
