@@ -1,6 +1,6 @@
 'use client';
-
-export const dynamic = 'force-dynamic';
+import { GlobalHeader } from '@/components/layout/GlobalHeader';
+import { GlobalNavigation } from '@/components/layout/GlobalNavigation';
 
 import { useGameState } from '@/hooks/useGameState';
 import { RPGHomeView } from '@/components/views/RPGHomeView';
@@ -51,15 +51,11 @@ export default function Applet() {
                  saveData={state as any}
                  activePartyUnits={state.activePartyUnits}
                  onNavigate={actions.navigateTo}
-                 onOpenFullInventory={actions.openFullInventory}
-                 onRefillEnergy={actions.handleRefillEnergy}
                  onSelectUnit={actions.handleSelectUnit}
                />;
       case 'tavern':
         return <TavernView 
-                 onNavigate={actions.navigateTo}
                  onClaim={actions.handleClaimRecruit}
-                 onDiscard={() => {}}
                />;
       case 'party':
         return <PartyManagementView 
@@ -171,7 +167,6 @@ export default function Applet() {
     }
   };
 
-  // Global keyboard navigation handler
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!state.isAuthenticated || state.error) return;
 
@@ -204,13 +199,17 @@ export default function Applet() {
       </div>
 
       <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl bg-[#0B1A2A] h-[100dvh] sm:h-[85vh] sm:max-h-[850px] shadow-[0_0_80px_rgba(0,0,0,0.9)] sm:rounded-[40px] overflow-hidden relative border-white/5 flex flex-col items-center sm:border">
-      <div className="w-full h-full relative overflow-hidden">
+
+        {/* Persistent Header */}
+        {!["battle", "auth"].includes(state.view) && <GlobalHeader profile={state.profile} onNavigate={actions.navigateTo} />}
+
+        <div className="w-full h-full relative overflow-hidden flex-1">
           <AnimatePresence mode="wait">
             <motion.div
               key={state.view}
-              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+              initial={prefersReducedMotion ? { opacity: 1, x: 20 } : { opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={prefersReducedMotion ? { opacity: 1, x: -20 } : { opacity: 0, x: -20 }}
               transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.3 }}
               className="absolute inset-0 flex flex-col overflow-x-hidden overflow-y-auto"
             >
@@ -218,9 +217,11 @@ export default function Applet() {
             </motion.div>
           </AnimatePresence>
         </div>
+
+        {/* Persistent Navigation */}
+        <GlobalNavigation currentView={state.view} onNavigate={actions.navigateTo} />
       </div>
 
-      {/* Global Card Details Modal */}
       {state.selectedCardId && (
         <CardModal 
           card={state.inventory.find(i => i.id === state.selectedCardId)}

@@ -1,18 +1,11 @@
 'use client';
-
+import { AssetService } from '@/lib/services/asset-service';
 import React from 'react';
 import { motion } from 'motion/react';
-import {
-  ChevronLeft,
-  Sword,
-  Zap,
-  Star,
-  Info,
-  Gift,
-  Users
-} from 'lucide-react';
+import { Sword, Zap, Star, Gift, Users } from 'lucide-react';
 import { Stage } from '@/lib/rpg-system/campaign-types';
 import { Button } from '@/components/ui/Button';
+import { ViewShell } from '@/components/ui/ViewShell';
 
 interface StageDetailsViewProps {
   stage: Stage;
@@ -22,106 +15,76 @@ interface StageDetailsViewProps {
 }
 
 export function StageDetailsView({ stage, playerEnergy, onBack, onStartBattle }: StageDetailsViewProps) {
-  const canAfford = playerEnergy >= stage.energy_cost;
+  const canAfford = playerEnergy >= (stage.energy_cost || 5);
 
   return (
-    <div className="flex flex-col h-full bg-[#020508] overflow-hidden relative">
-      {/* Header */}
-       <div className="p-6 flex items-center justify-between border-b border-white/5 bg-[#0B1A2A] z-10 shadow-2xl shrink-0">
-         <button onClick={onBack} className="text-white/40 hover:text-white flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors"><ChevronLeft size={16} /> Mapa</button>
-         <span className="text-[10px] text-[#F5C76B] font-black uppercase tracking-[0.4em] italic font-display">Detalles de Misión</span>
-         <div className="w-16"></div>
-       </div>
+    <ViewShell title="DETALLES STAGE" subtitle={stage.name} onBack={onBack}>
+      <div className="flex-1 flex flex-col p-6 space-y-6">
 
-      <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8 pb-32">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#F5C76B]/5 via-transparent to-transparent pointer-events-none" />
+        {/* Stage Hero Card */}
+        <div className="relative aspect-video rounded-[32px] overflow-hidden border border-white/10">
+           <img
+             src={AssetService.getBgUrl('battle') || '/assets/bg/battlebg.png'}
+             className="w-full h-full object-cover"
+             alt=""
+           />
+           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+           <div className="absolute bottom-6 left-6">
+              <span className="text-[10px] font-black text-[#F5C76B] uppercase tracking-[0.4em]">REGIÓN</span>
+              <h2 className="text-2xl font-black text-white uppercase font-display tracking-tight">{stage.name}</h2>
+           </div>
+        </div>
 
-         {/* Stage Hero Section */}
-         <div className="text-center">
-           <div className="w-20 h-20 bg-black/40 border border-[#F5C76B]/20 rounded-3xl mx-auto mb-4 flex items-center justify-center shadow-2xl relative group overflow-hidden glass-crystal frame-earthstone">
-              <div className="absolute inset-0 bg-[#F5C76B]/5" />
-              <Sword size={32} className="text-[#F5C76B]" />
+        {/* Info Grid */}
+        <div className="grid grid-cols-2 gap-4">
+           <div className="bg-black/40 border border-white/5 p-4 rounded-2xl flex items-center gap-3">
+              <Zap size={20} className="text-blue-400" />
+              <div>
+                 <p className="text-[9px] font-black text-white/20 uppercase">COSTO ENERGÍA</p>
+                 <p className="text-lg font-black text-white">{stage.energy_cost || 5}</p>
+              </div>
            </div>
-           <h2 className="text-2xl font-black text-white tracking-widest uppercase italic font-display">{stage.name}</h2>
-           <p className="text-[10px] text-white/30 uppercase tracking-wider mt-2 leading-relaxed font-stats">{stage.description}</p>
-         </div>
+           <div className="bg-black/40 border border-white/5 p-4 rounded-2xl flex items-center gap-3">
+              <Users size={20} className="text-emerald-400" />
+              <div>
+                 <p className="text-[9px] font-black text-white/20 uppercase">ENEMIGOS</p>
+                 <p className="text-lg font-black text-white">{stage.enemies?.length || 1} OLEADAS</p>
+              </div>
+           </div>
+        </div>
 
-         {/* Main Stats */}
-         <div className="grid grid-cols-2 gap-4">
-           <div className="bg-white/5 border border-white/10 p-4 rounded-3xl flex flex-col items-center gap-2 glass-frosted frame-earthstone">
-             <Zap size={16} className="text-[#F5C76B]" />
-             <span className="text-[10px] font-black text-white/40 uppercase font-stats">Costo Energía</span>
-             <span className="text-lg font-black text-white font-stats">{stage.energy_cost}</span>
+        {/* Rewards Section */}
+        <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+           <div className="flex items-center gap-2 mb-4">
+              <Gift size={16} className="text-[#F5C76B]" />
+              <h3 className="text-[10px] font-black text-white uppercase tracking-widest">RECOMPENSAS POSIBLES</h3>
            </div>
-           <div className="bg-white/5 border border-white/10 p-4 rounded-3xl flex flex-col items-center gap-2 glass-frosted frame-earthstone">
-             <Users size={16} className="text-[#F5C76B]" />
-             <span className="text-[10px] font-black text-white/40 uppercase font-stats">Enemigos</span>
-             <span className="text-lg font-black text-white font-stats">{stage.enemies.length}</span>
-           </div>
-         </div>
-
-         {/* Star Conditions */}
-         <div className="space-y-4">
-           <div className="flex items-center gap-2">
-             <Star size={14} className="text-[#F5C76B]" />
-             <span className="text-[10px] font-black text-white/60 uppercase tracking-widest font-stats">Objetivos de Estrellas</span>
-           </div>
-           <div className="bg-black/20 rounded-3xl border border-white/5 overflow-hidden glass-frosted">
-             {stage.star_conditions.map((cond, i) => (
-               <div key={i} className="flex items-center gap-4 p-4 border-b border-white/5 last:border-0">
-                 <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center">
-                   <Star size={10} className="text-[#F5C76B]/40" />
-                 </div>
-                 <span className="text-[9px] font-black text-white/80 uppercase tracking-wider font-stats">{cond.description}</span>
-               </div>
-             ))}
-           </div>
-         </div>
-
-         {/* Rewards Preview */}
-         <div className="space-y-4">
-           <div className="flex items-center gap-2">
-             <Gift size={14} className="text-[#F5C76B]" />
-             <span className="text-[10px] font-black text-white/60 uppercase tracking-widest font-stats">Recompensas Posibles</span>
-           </div>
-           <div className="flex flex-wrap gap-2">
-              <RewardTag label="Gold" value={stage.rewards.currency} icon="zeny" />
-              <RewardTag label="Exp" value={stage.rewards.exp} icon="exp" />
-              {stage.rewards.materials.map((mat, i) => (
-                <div key={i} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-full flex items-center gap-2 glass-frosted frame-earthstone">
-                  <div className="w-4 h-4 bg-purple-500/20 rounded-sm" />
-                  <span className="text-[9px] font-black text-white/60 uppercase font-stats">{mat.itemId}</span>
+           <div className="flex gap-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="w-12 h-12 rounded-xl bg-black/40 border border-white/5 flex items-center justify-center">
+                   <Star size={16} className="text-white/10" />
                 </div>
               ))}
            </div>
-         </div>
-      </div>
+        </div>
 
-      {/* Start Button */}
-      <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-[#020508] via-[#020508] to-transparent">
-        <motion.button 
-          onClick={() => onStartBattle(stage)}
-          disabled={!canAfford}
-          whileHover={canAfford ? { scale: 1.05 } : undefined}
-          whileTap={canAfford ? { scale: 0.95 } : undefined}
-          className={`btn-premium-blue px-14 py-3.5 text-xl font-black font-display tracking-widest uppercase z-10 flex items-center justify-center gap-2 w-full ${!canAfford ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-        >
-          <Sword size={20} />
-          <span>COMENZAR INCURSIÓN</span>
-          {!canAfford && <span className="text-[10px] opacity-60 ml-2">(ENERGÍA INSUFICIENTE)</span>}
-        </motion.button>
+        {/* Action */}
+        <div className="mt-auto">
+           <Button
+             variant="primary"
+             size="game"
+             className="w-full h-20"
+             onClick={() => onStartBattle(stage)}
+             disabled={!canAfford}
+           >
+              <Sword size={24} className="mr-4" />
+              COMENZAR BATALLA
+           </Button>
+           {!canAfford && (
+             <p className="text-center text-red-500 text-[10px] font-black uppercase mt-3 tracking-widest">ENERGÍA INSUFICIENTE</p>
+           )}
+        </div>
       </div>
-    </div>
-  );
-}
-
-function RewardTag({ label, value, icon }: { label: string, value: number, icon: string }) {
-  return (
-    <div className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-full flex items-center gap-2">
-       {icon === 'zeny' && <Gift size={12} className="text-[#F5C76B]" />}
-       {icon === 'exp' && <Zap size={12} className="text-yellow-400" />}
-       <span className="text-[9px] font-black text-[#F5C76B] uppercase">{label}</span>
-       <span className="text-[10px] font-black text-white">{value}</span>
-    </div>
+    </ViewShell>
   );
 }

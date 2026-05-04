@@ -1,0 +1,85 @@
+'use client';
+
+import React from 'react';
+import { motion } from 'motion/react';
+import { MapIcon, Users, UserPlus, Sparkles, Sword } from 'lucide-react';
+
+interface GlobalNavigationProps {
+  currentView: string;
+  onNavigate: (view: any) => void;
+}
+
+export function GlobalNavigation({ currentView, onNavigate }: GlobalNavigationProps) {
+  const tabs = [
+    { id: 'campaign', icon: MapIcon, label: 'AVENTURA' },
+    { id: 'party', icon: Users, label: 'EQUIPO' },
+    { id: 'home', icon: Sword, label: 'INICIO' },
+    { id: 'tavern', icon: UserPlus, label: 'TABERNA' },
+    { id: 'gacha', icon: Sparkles, label: 'INVOCAR' },
+  ];
+
+  const getActiveTab = () => {
+    if (['campaign', 'stage_details', 'quests'].includes(currentView)) return 'campaign';
+    if (['party', 'unit_details', 'training'].includes(currentView)) return 'party';
+    if (['tavern'].includes(currentView)) return 'tavern';
+    if (['gacha'].includes(currentView)) return 'gacha';
+    // Default to home for other views like inventory, rewards, etc.
+    return 'home';
+  };
+
+  const activeTab = getActiveTab();
+
+  // Only show in main views
+  const hiddenViews = ['battle', 'auth'];
+  if (hiddenViews.includes(currentView)) return null;
+
+  return (
+    <nav className="w-full px-4 pb-6 pt-2 z-50">
+      <div className="bg-[#1A1A1A]/80 backdrop-blur-2xl border border-white/10 rounded-[24px] p-1.5 flex items-center justify-between shadow-2xl">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          const isRealActive = currentView === tab.id;
+
+          return (
+            <motion.button
+              key={tab.id}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.9, y: 2 }}
+              onClick={() => onNavigate(tab.id as any)}
+              className="relative flex-1 flex flex-col items-center justify-center py-2 gap-1 group"
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute inset-0 bg-white/5 rounded-2xl border border-white/10"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+
+              <div className="relative">
+                <tab.icon
+                  size={isActive ? 22 : 20}
+                  className={`${isActive ? 'text-[#F5C76B]' : 'text-white/40'} group-hover:text-white transition-colors`}
+                />
+                {isActive && (
+                  <div className="absolute -inset-2 bg-[#F5C76B]/20 blur-lg rounded-full" />
+                )}
+              </div>
+
+              <span className={`text-[8px] font-black tracking-widest uppercase ${isActive ? 'text-white' : 'text-white/20'}`}>
+                {tab.label}
+              </span>
+
+              {isActive && (
+                <motion.div
+                  layoutId="activeIndicator"
+                  className="absolute -bottom-1 w-1 h-1 bg-[#F5C76B] rounded-full shadow-[0_0_8px_#F5C76B]"
+                />
+              )}
+            </motion.button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}

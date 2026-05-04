@@ -1,18 +1,14 @@
 'use client';
 import { AssetService } from '@/lib/services/asset-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
-import { RarityIcon } from '@/components/ui/RarityIcon';
-import { RarityBadge } from '@/components/ui/RarityBadge';
 import { Button } from '@/components/ui/Button';
-import { ViewShell } from '@/components/ui/ViewShell';
 import { getRarityCode, RARITY_COLORS } from '@/lib/config/assets-config';
 
 import React, { useState } from 'react';
-import { ChevronLeft, Sparkles, Diamond, Coins, Sword, Box, ScrollText, Zap, Info } from 'lucide-react';
+import { Sparkles, Diamond, Coins, Box, ScrollText, Zap, Info, Star } from 'lucide-react';
 import { GachaService } from '@/lib/services/gacha-service';
 import { motion, AnimatePresence } from 'motion/react';
 import { useToast } from '@/lib/contexts/ToastContext';
-import { gameDebugger } from '@/lib/debug';
 
 interface GachaViewProps {
   profile: any;
@@ -38,34 +34,13 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
     setSelectedReward(null);
     try {
       const items = await GachaService.pull(amount, currency);
-      gameDebugger.info('gacha', 'Pull completed', { count: items.length, items });
       setResults(items);
-      
-      // Refresh game state to update inventory
-      if (onPullComplete) {
-        gameDebugger.info('gacha', 'Calling onPullComplete callback');
-        onPullComplete();
-      }
+      if (onPullComplete) onPullComplete();
     } catch (e: any) {
-      gameDebugger.error('gacha', 'Pull failed', e);
       showToast(e.message, 'error');
     } finally {
       setIsPulling(false);
     }
-  };
-
-  const getItemIcon = (item: PullResult) => {
-    if (item.item_type === 'weapon') return <Sword size={24} className="text-white/80" />;
-    if (item.item_type === 'card') return <img src={AssetService.getCardUrl(item.item_id)} className="w-10 h-10 object-contain" alt={item.item_name} onError={(e) => { e.currentTarget.src = AssetService.getCardUrlFallback(item.item_id); }} />;
-    if (item.item_type === 'skill') return <ScrollText size={24} className="text-white/80" />;
-    return <Box size={24} className="text-white/80" />;
-  };
-
-  const getItemImage = (item: PullResult) => {
-    if (item.item_type === 'weapon') return AssetService.getWeaponIconUrl(item.item_id);
-    if (item.item_type === 'card') return AssetService.getCardUrl(item.item_id);
-    if (item.item_type === 'skill') return null;
-    return null;
   };
 
   const getRarityColor = (rarity: string) => {
@@ -73,288 +48,204 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
     return RARITY_COLORS[code] || RARITY_COLORS.C;
   };
 
-  // Reward Detail Modal
   if (selectedReward) {
     const rarityColor = getRarityColor(selectedReward.item_rarity);
-    const itemImage = getItemImage(selectedReward);
-    
     return (
-      <ViewShell title="Invocación" subtitle="Premio" onBack={() => setSelectedReward(null)}>
+      <div className="flex-1 flex flex-col items-center justify-center p-6 bg-black/60 backdrop-blur-3xl z-50">
         <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex-1 flex flex-col items-center justify-center p-6"
+          initial={{ opacity: 0, scale: 0.8, rotateY: 180 }}
+          animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+          className="relative w-64 h-80 rounded-[32px] border-2 p-1 shadow-2xl overflow-hidden"
+          style={{ borderColor: rarityColor, background: `linear-gradient(135deg, ${rarityColor}33, #0B1A2A)` }}
         >
-          {/* Large Card Reveal */}
-          <motion.div 
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="relative mb-6"
-          >
-            <div 
-              className="w-48 h-64 rounded-2xl border-2 p-1 shadow-2xl"
-              style={{ 
-                background: `linear-gradient(135deg, ${rarityColor}22 0%, ${rarityColor}11 100%)`,
-                borderColor: rarityColor,
-                boxShadow: `0 0 40px ${rarityColor}66, inset 0 0 30px ${rarityColor}22`
-              }}
-            >
-              <div className="w-full h-full rounded-xl bg-black/40 overflow-hidden flex items-center justify-center">
-                {itemImage ? (
-                  <img src={itemImage} alt={selectedReward.item_name} className="w-full h-full object-contain" />
+          <div className="w-full h-full bg-[#0B1A2A]/40 flex flex-col items-center justify-between p-6">
+             <div className="w-full flex justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/5 border border-white/10" style={{ color: rarityColor }}>
+                   {selectedReward.item_rarity}
+                </span>
+                <Star size={14} style={{ color: rarityColor }} />
+             </div>
+
+             <div className="flex-1 flex items-center justify-center">
+                {selectedReward.item_type === 'card' ? (
+                  <img src={AssetService.getCardUrl(selectedReward.item_id)} className="w-40 h-40 object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]" alt=""
+                       onError={(e) => { e.currentTarget.src = AssetService.getCardUrlFallback(selectedReward.item_id); }} />
                 ) : (
-                  <Sparkles size={64} className="text-white/30" />
+                  <div className="w-32 h-32 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                     <Sparkles size={48} style={{ color: rarityColor }} />
+                  </div>
                 )}
-              </div>
-            </div>
-            
-            {/* Glow Effect */}
-            <div 
-              className="absolute inset-0 blur-3xl -z-10 opacity-30"
-              style={{ backgroundColor: rarityColor }}
-            />
-          </motion.div>
+             </div>
 
-          {/* Rarity Badge */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <RarityBadge rarity={selectedReward.item_rarity} size="lg" />
-          </motion.div>
-
-          {/* Item Name */}
-          <motion.h2 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-2xl font-black text-white uppercase tracking-wider mt-3 drop-shadow-lg"
-          >
-            {selectedReward.item_name}
-          </motion.h2>
-
-          {/* Item Type */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="flex items-center gap-2 mt-2 text-white/50"
-          >
-            <span className="text-xs font-stats uppercase">
-              {selectedReward.item_type === 'weapon' ? 'Arma' : 
-               selectedReward.item_type === 'card' ? 'Carta' : 
-               selectedReward.item_type === 'skill' ? 'Habilidad' : 'Objeto'}
-            </span>
-          </motion.div>
-
-          {/* Info Panel */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="mt-6 w-full"
-          >
-            <NineSlicePanel type="border" variant="default" className="w-full p-4 glass-frosted frame-earthstone">
-              <div className="flex items-center gap-2 mb-2">
-                <Info size={14} className="text-white/40" />
-                <span className="text-[10px] font-black text-white/60 uppercase tracking-wider">Detalles</span>
-              </div>
-              <p className="text-white/70 text-sm font-stats text-center">
-                Este{selectedReward.item_type === 'weapon' ? ' arma' : 
-                  selectedReward.item_type === 'card' ? ' carta' : 
-                  selectedReward.item_type === 'skill' ? ' habilidad' : ' objeto'} 
-                  ha sido añadido a tu inventario.
-              </p>
-            </NineSlicePanel>
-          </motion.div>
-
-          {/* Actions */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="flex gap-3 mt-6 w-full max-w-xs"
-          >
-            <Button variant="secondary" className="flex-1" onClick={() => setSelectedReward(null)}>
-              Seguir Invocando
-            </Button>
-            <Button variant="primary" className="flex-1" onClick={() => { setResults([]); setSelectedReward(null); }}>
-              Ver Inventario
-            </Button>
-          </motion.div>
+             <div className="text-center">
+                <h3 className="text-xl font-black text-white uppercase tracking-tight">{selectedReward.item_name}</h3>
+                <p className="text-[10px] text-white/40 uppercase tracking-[0.2em] mt-1">{selectedReward.item_type}</p>
+             </div>
+          </div>
         </motion.div>
-      </ViewShell>
+
+        <div className="mt-8 flex gap-3 w-full max-w-xs">
+          <Button variant="secondary" className="flex-1" onClick={() => setSelectedReward(null)}>ACEPTAR</Button>
+        </div>
+      </div>
     );
   }
 
-  // Results Grid with detail view
   if (results.length > 0) {
     return (
-      <ViewShell title="Invocación" subtitle={`${results.length} items`} onBack={() => { setResults([]); onNavigate('home'); }}>
-        <div className="flex-1 flex flex-col p-4">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="grid grid-cols-5 gap-3"
-          >
-            {results.map((item, i) => {
-              const rarityColor = getRarityColor(item.item_rarity);
-              return (
-                <motion.button
-                  key={`${item.item_id}_${i}`}
-                  initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
-                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                  transition={{ delay: i * 0.1, type: 'spring', damping: 12 }}
-                  onClick={() => setSelectedReward(item)}
-                  className="aspect-square rounded-xl border-2 p-1 transition-all hover:scale-110 active:scale-95"
-                  style={{ 
-                    borderColor: rarityColor,
-                    backgroundColor: `${rarityColor}22`,
-                    boxShadow: `0 0 20px ${rarityColor}44`
-                  }}
-                >
-                  <div className="w-full h-full rounded-lg bg-black/40 flex items-center justify-center relative overflow-hidden">
-                    {item.item_type === 'card' && (
-                      <img src={AssetService.getCardUrl(item.item_id)} alt="" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.src = AssetService.getCardUrlFallback(item.item_id); }} />
-                    )}
-                    {item.item_type === 'weapon' && (
-                      <img src={AssetService.getWeaponIconUrl(item.item_id)} alt="" className="w-8 h-8 object-contain" />
-                    )}
-                    {item.item_type === 'skill' && (
-                      <Zap size={20} className="text-[#F5C76B]" />
-                    )}
-                  </div>
-                </motion.button>
-              );
-            })}
-          </motion.div>
-
-          <div className="mt-4 text-center">
-            <p className="text-[10px] text-white/40 font-stats">Toca un elemento para ver detalles</p>
-          </div>
-
-          <div className="flex gap-3 mt-auto">
-            <Button variant="secondary" className="flex-1" onClick={() => setResults([])}>
-              Continuar
-            </Button>
-            <Button variant="primary" className="flex-1" onClick={() => handlePull(1, 'soft')} disabled={isPulling}>
-              x1 Más
-            </Button>
-          </div>
+      <div className="flex-1 flex flex-col p-6">
+        <div className="flex items-center justify-between mb-8">
+           <div>
+              <h2 className="text-2xl font-black text-white uppercase font-display tracking-tight">RESULTADOS</h2>
+              <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Has invocado {results.length} objetos</p>
+           </div>
+           <button onClick={() => setResults([])} className="p-2 text-white/40 hover:text-white transition-colors uppercase text-[10px] font-black tracking-widest border border-white/5 rounded-lg bg-white/5">CERRAR</button>
         </div>
-      </ViewShell>
+
+        <div className="grid grid-cols-4 gap-4 overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar">
+          {results.map((item, i) => {
+            const rarityColor = getRarityColor(item.item_rarity);
+            return (
+              <motion.button
+                key={`${item.item_id}_${i}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                onClick={() => setSelectedReward(item)}
+                className="aspect-[3/4] rounded-2xl border-2 p-0.5 transition-all hover:scale-105"
+                style={{ borderColor: `${rarityColor}44`, background: `${rarityColor}11` }}
+              >
+                <div className="w-full h-full bg-[#0B1A2A]/60 rounded-xl flex items-center justify-center overflow-hidden">
+                   {item.item_type === 'card' ? (
+                     <img src={AssetService.getCardUrl(item.item_id)} className="w-full h-full object-cover scale-110" alt=""
+                          onError={(e) => { e.currentTarget.src = AssetService.getCardUrlFallback(item.item_id); }} />
+                   ) : (
+                     <Box size={24} style={{ color: rarityColor }} />
+                   )}
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+
+        <div className="mt-auto pt-8 flex gap-4">
+           <Button variant="secondary" className="flex-1" onClick={() => setResults([])}>CONTINUAR</Button>
+           <Button variant="primary" className="flex-1" onClick={() => handlePull(10, 'premium')} disabled={isPulling}>OTRA VEZ (x10)</Button>
+        </div>
+      </div>
     );
   }
 
-  // Main Gacha Screen
   return (
-    <ViewShell title="Invocación" onBack={() => onNavigate('home')}>
-      {/* Currency */}
-      <div className="flex gap-3 px-4 py-2">
-        <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full border border-white/10">
-          <Coins size={14} className="text-[#F5C76B]" />
-          <span className="text-sm font-bold text-white">{profile.currency}</span>
-        </div>
-        <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full border border-white/10">
-          <Diamond size={14} className="text-cyan-400" />
-          <span className="text-sm font-bold text-white">{profile.premium_currency}</span>
-        </div>
+    <div className="flex-1 flex flex-col p-6 relative">
+      <div className="mb-12">
+         <h1 className="text-3xl font-black text-white uppercase font-display tracking-tight leading-none">INVOCACIÓN</h1>
+         <p className="text-[11px] text-[#F5C76B] font-black uppercase tracking-[0.3em] mt-2 opacity-80">Gremio de Alquimistas</p>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
-        {/* Gacha Machine Animation */}
-        <motion.div
-          animate={isPulling ? {
-            scale: [1, 1.1, 1],
-            rotate: [0, 5, -5, 0]
-          } : {}}
-          transition={{ duration: 2, repeat: isPulling ? Infinity : 0 }}
-          className="relative mb-8"
-        >
-          <div className="w-40 h-40 rounded-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20 flex items-center justify-center border-2 border-white/10">
-            <Sparkles size={64} className="text-white/50" />
-          </div>
-          {/* Animated rings */}
-          {[...Array(3)].map((_, i) => (
+      <div className="flex-1 flex flex-col items-center justify-center relative">
+         {/* Focal Point - Summoning Circle */}
+         <div className="relative w-64 h-64 mb-12 flex items-center justify-center">
             <motion.div
-              key={i}
-              animate={isPulling ? {
-                scale: [1 + i * 0.3, 1.5 + i * 0.3, 1 + i * 0.3],
-                opacity: [0.3, 0.1, 0.3]
-              } : {}}
-              transition={{ duration: 2, repeat: isPulling ? Infinity : 0, delay: i * 0.2 }}
-              className="absolute inset-0 rounded-full border border-white/20"
-              style={{ scale: 1 + i * 0.3 }}
+               animate={{ rotate: 360 }}
+               transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+               className="absolute inset-0 border-2 border-dashed border-[#F5C76B]/20 rounded-full"
             />
-          ))}
-        </motion.div>
+            <motion.div
+               animate={{ rotate: -360 }}
+               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+               className="absolute inset-4 border border-[#F5C76B]/10 rounded-full"
+            />
 
-        {/* Pull Options */}
-        <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handlePull(1, 'soft')}
-            disabled={isPulling}
-            className="p-6 rounded-2xl border-2 border-white/10 bg-black/40 hover:border-[#F5C76B]/50 transition-all"
-          >
-            <Coins size={24} className="text-[#F5C76B] mb-2 mx-auto" />
-            <p className="text-xl font-black text-white text-center">x1</p>
-            <p className="text-[10px] text-white/40 text-center mt-1">100 Oro</p>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handlePull(10, 'soft')}
-            disabled={isPulling}
-            className="p-6 rounded-2xl border-2 border-white/10 bg-black/40 hover:border-purple-500/50 transition-all"
-          >
-            <div className="relative">
-              <Coins size={24} className="text-purple-400 mb-2 mx-auto" />
-              <span className="absolute -top-1 -right-4 text-[8px] bg-purple-500 text-white px-1.5 py-0.5 rounded font-black">x10</span>
+            <div className="z-10 w-40 h-40 rounded-full bg-gradient-to-br from-[#F5C76B]/10 to-transparent flex items-center justify-center border border-[#F5C76B]/30 backdrop-blur-xl">
+               <Sparkles size={64} className="text-[#F5C76B] drop-shadow-[0_0_20px_#F5C76B]" />
             </div>
-            <p className="text-xl font-black text-white text-center">x10</p>
-            <p className="text-[10px] text-white/40 text-center mt-1">900 Oro</p>
-          </motion.button>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handlePull(1, 'premium')}
-            disabled={isPulling}
-            className="p-6 rounded-2xl border-2 border-white/10 bg-black/40 hover:border-cyan-500/50 transition-all"
-          >
-            <Diamond size={24} className="text-cyan-400 mb-2 mx-auto" />
-            <p className="text-xl font-black text-white text-center">x1</p>
-            <p className="text-[10px] text-white/40 text-center mt-1">50 Gemas</p>
-          </motion.button>
+            {/* Pulsing Glow */}
+            <motion.div
+              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 4, repeat: Infinity }}
+              className="absolute inset-0 bg-[#F5C76B]/5 blur-3xl rounded-full"
+            />
+         </div>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handlePull(10, 'premium')}
-            disabled={isPulling}
-            className="p-6 rounded-2xl border-2 border-white/10 bg-black/40 hover:border-yellow-500/50 transition-all"
-          >
-            <div className="relative">
-              <Diamond size={24} className="text-yellow-400 mb-2 mx-auto" />
-              <span className="absolute -top-1 -right-4 text-[8px] bg-yellow-500 text-black px-1.5 py-0.5 rounded font-black">x10</span>
-            </div>
-            <p className="text-xl font-black text-white text-center">x10</p>
-            <p className="text-[10px] text-white/40 text-center mt-1">450 Gemas</p>
-          </motion.button>
-        </div>
-
-        {isPulling && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="mt-6"
-          >
-            <div className="w-8 h-8 border-2 border-t-[#F5C76B] border-white/5 rounded-full animate-spin mx-auto" />
-            <p className="text-white/40 text-sm mt-2">Invocando...</p>
-          </motion.div>
-        )}
+         {/* Pull Options Cards */}
+         <div className="grid grid-cols-2 gap-4 w-full">
+            <PullCard
+              type="soft"
+              amount={1}
+              cost={100}
+              icon={Coins}
+              color="#F5C76B"
+              onClick={() => handlePull(1, 'soft')}
+              disabled={isPulling}
+            />
+            <PullCard
+              type="premium"
+              amount={1}
+              cost={50}
+              icon={Diamond}
+              color="#22D3EE"
+              onClick={() => handlePull(1, 'premium')}
+              disabled={isPulling}
+            />
+            <PullCard
+              type="soft"
+              amount={10}
+              cost={900}
+              icon={Coins}
+              color="#F5C76B"
+              onClick={() => handlePull(10, 'soft')}
+              disabled={isPulling}
+              discount
+            />
+            <PullCard
+              type="premium"
+              amount={10}
+              cost={450}
+              icon={Diamond}
+              color="#F5C76B"
+              onClick={() => handlePull(10, 'premium')}
+              disabled={isPulling}
+              discount
+            />
+         </div>
       </div>
-    </ViewShell>
+
+      {isPulling && (
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex flex-col items-center justify-center">
+           <motion.div
+             animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+             transition={{ duration: 2, repeat: Infinity }}
+             className="w-12 h-12 border-4 border-t-[#F5C76B] border-white/10 rounded-full"
+           />
+           <p className="text-[#F5C76B] text-[11px] font-black uppercase tracking-[0.4em] mt-6 animate-pulse">INVOCANDO ALMAS...</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PullCard({ type, amount, cost, icon: Icon, color, onClick, disabled, discount }: any) {
+  return (
+    <motion.button
+      whileHover={{ y: -4, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      disabled={disabled}
+      className="bg-black/40 backdrop-blur-xl border border-white/5 p-5 rounded-2xl flex flex-col items-center gap-3 hover:border-white/20 transition-all relative overflow-hidden group"
+    >
+      {discount && (
+        <div className="absolute top-2 right-2 bg-red-600 text-[8px] font-black text-white px-2 py-0.5 rounded uppercase tracking-tighter shadow-lg">DTO</div>
+      )}
+      <Icon size={20} style={{ color }} className="group-hover:drop-shadow-[0_0_10px_currentColor]" />
+      <div className="text-center">
+         <p className="text-xl font-black text-white leading-none tracking-tight">x{amount}</p>
+         <div className="flex items-center gap-1.5 mt-2 opacity-40 group-hover:opacity-100 transition-opacity">
+            <Icon size={10} style={{ color }} />
+            <span className="text-[10px] font-black text-white tabular-nums">{cost}</span>
+         </div>
+      </div>
+    </motion.button>
   );
 }
