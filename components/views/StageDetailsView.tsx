@@ -54,7 +54,7 @@ export function StageDetailsView({ stage, playerEnergy, onBack, onStartBattle }:
               <div className="flex items-center gap-2">
                  <Users size={14} className="text-[#F5C76B]" />
                  <span className="text-lg font-black text-white font-stats">
-                    {stage.recommended_level || 5}
+                    {stage.enemies[0]?.level || 5}
                  </span>
               </div>
            </NineSlicePanel>
