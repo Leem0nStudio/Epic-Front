@@ -20,9 +20,10 @@ interface TavernViewProps {
 export function TavernView({ onClaim, onBack }: TavernViewProps) {
   const { confirm } = useToast();
   const tavernSlots = useGameStore(state => state.tavernSlots);
-  const [now, setNow] = useState<number>(Date.now());
+  const [now, setNow] = useState<number>(0);
 
   useEffect(() => {
+    setNow(Date.now());
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
