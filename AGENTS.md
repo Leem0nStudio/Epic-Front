@@ -36,6 +36,10 @@ Use `supabase/00-cleanup.sql` for full reset before reinstalling.
 
 See `supabase/README.md` for detailed setup instructions.
 
+## 2025-05-15 - [Form Accessibility and Reusable Components]
+##-**Learning:** Standard accessibility pattern for forms in this project requires linking `label` elements to `input` fields using `htmlFor` and `id` attributes. Using reusable UI components like `Button` ensures consistent UX patterns (like loading states) across the application.
+-**Action:** Always check if a reusable component exists before implementing custom buttons for core flows, and ensure form fields are properly labeled for screen readers.
+
 ## Known Issues
 - Onboarding fails if `rpc_initialize_player` RPC not deployed
 - HMR disabled when `DISABLE_HMR=true` (AI Studio agent-edit mode, next.config.ts:27)
