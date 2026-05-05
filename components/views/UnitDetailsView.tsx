@@ -275,7 +275,14 @@ export function UnitDetailsView({
                         try {
                            const { error } = await supabase.rpc('rpc_learn_skill', {
                              p_unit_id: unitId,
-                             p_skill_id: skill.id
+                             p_skill_id: skill.id,
+                             p_skill_data: {
+                               id: skill.id,
+                               name: skill.name,
+                               type: 'active',
+                               cooldown: skill.cooldown || 2,
+                               description: skill.description || ''
+                             }
                            });
                            if (error) throw error;
                            loadData();

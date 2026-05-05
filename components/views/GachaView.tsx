@@ -26,7 +26,7 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
   const [results, setResults] = useState<PullResult[]>([]);
   const [selectedReward, setSelectedReward] = useState<PullResult | null>(null);
 
-  const handlePull = async (amount: number, currency: 'free' | 'premium') => {
+  const handlePull = async (amount: number, currency: 'soft' | 'premium') => {
     if (isPulling) return;
 
     setIsPulling(true);
@@ -89,9 +89,9 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
           <PullButton
             amount={1}
             price={100}
-            currency="free"
+            currency="soft"
             disabled={isPulling}
-            onClick={() => handlePull(1, 'free')}
+            onClick={() => handlePull(1, 'soft')}
           />
           <PullButton
             amount={10}
@@ -216,8 +216,8 @@ function CurrencyCard({ icon: Icon, value, label, color }: any) {
 }
 
 function PullButton({ amount, price, currency, onClick, disabled, highlight }: any) {
-  const Icon = currency === 'free' ? Coins : Diamond;
-  const color = currency === 'free' ? 'text-[#F5C76B]' : 'text-cyan-400';
+  const Icon = currency === 'soft' ? Coins : Diamond;
+  const color = currency === 'soft' ? 'text-[#F5C76B]' : 'text-cyan-400';
 
   return (
     <motion.button
