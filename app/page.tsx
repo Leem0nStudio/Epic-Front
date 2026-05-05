@@ -140,21 +140,21 @@ export default function Applet() {
                 />;
       case 'daily_rewards':
         return <DailyRewardsView 
-                  onNavigate={actions.navigateTo}
+                  onBack={() => actions.navigateTo('home')}
                 />;
       case 'arena':
         return <ArenaView 
-                  onNavigate={actions.navigateTo}
+                  onBack={() => actions.navigateTo('home')}
                   playerPower={state.profile?.power || 5000}
                 />;
       case 'tower':
         return <TowerView 
-                  onNavigate={actions.navigateTo}
+                  onBack={() => actions.navigateTo('home')}
                   playerPower={state.profile?.power || 5000}
                 />;
       case 'guild':
         return <GuildView 
-                  onNavigate={actions.navigateTo}
+                  onBack={() => actions.navigateTo('home')}
                 />;
       default:
         return (
