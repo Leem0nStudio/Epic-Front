@@ -43,7 +43,7 @@ export function TavernView({ onClaim, onBack }: TavernViewProps) {
       background="tavern"
       emptyMessage={tavernSlots.length === 0 ? "No hay aventureros buscando grupo" : undefined}
     >
-      <div className="flex-1 overflow-y-auto space-y-4 p-6 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto space-y-4 p-4 sm:p-6 custom-scrollbar">
         {tavernSlots.map((slot: any) => (
           <RecruitCard
             key={slot.id}
@@ -86,7 +86,7 @@ function RecruitCard({ slot, now, onClaim, onDiscard }: any) {
         </div>
       )}
 
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="w-24 h-28 bg-gradient-to-b from-white/10 to-transparent rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden shrink-0 relative group">
           <ImageWithFallback
             src={AssetService.getSpriteUrl(unit.spriteId)}
@@ -127,7 +127,7 @@ function RecruitCard({ slot, now, onClaim, onDiscard }: any) {
               onClick={() => onClaim(slot.id)}
               variant="primary"
               size="sm"
-              className="rounded-xl h-full w-16 !p-0 flex flex-col items-center justify-center gap-2"
+              className="rounded-xl h-full w-full sm:w-16 !p-0 flex flex-col items-center justify-center gap-2"
             >
               <UserPlus size={18} />
               <span className="text-[8px] font-black">RECLUTAR</span>

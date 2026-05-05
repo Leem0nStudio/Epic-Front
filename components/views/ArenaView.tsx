@@ -48,7 +48,7 @@ export function ArenaView({ onBack, playerPower = 5000 }: ArenaViewProps) {
       background="battle"
       loading={isLoading}
     >
-      <div className="flex-1 flex flex-col p-6 space-y-6 overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 sm:p-6 space-y-6 overflow-hidden">
 
         {/* Player Stats Bar */}
         <NineSlicePanel type="border" variant="default" className="p-4 flex items-center justify-between glass-frosted frame-earthstone shrink-0">

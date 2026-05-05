@@ -120,7 +120,7 @@ export function UnitDetailsView({
       onBack={() => onNavigate('home')}
       background="party"
     >
-      <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 sm:space-y-8 custom-scrollbar">
 
         {/* Character Visual */}
         <div className="relative flex flex-col items-center py-8">

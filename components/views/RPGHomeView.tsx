@@ -113,7 +113,7 @@ function UnitDisplay({ unit, idx, mouseX, mouseY, onSelectUnit }: any) {
       initial={{ opacity: 0, scale: 0.9, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ delay: idx * 0.1 }}
-      className="relative w-48 h-[65%] flex flex-col items-center justify-end group pointer-events-auto cursor-pointer"
+      className="relative w-32 sm:w-48 h-[65%] flex flex-col items-center justify-end group pointer-events-auto cursor-pointer"
       onClick={() => onSelectUnit && onSelectUnit(unit.id)}
     >
       {/* Sprite Container */}
@@ -125,7 +125,7 @@ function UnitDisplay({ unit, idx, mouseX, mouseY, onSelectUnit }: any) {
         <img
           src={spriteUrl}
           alt={unit.name}
-          className="w-48 h-48 object-contain pixel-art filter drop-shadow-[0_20px_30px_rgba(0,0,0,0.8)] group-hover:brightness-125 transition-all"
+          className="w-full max-w-[192px] aspect-square object-contain pixel-art filter drop-shadow-[0_20px_30px_rgba(0,0,0,0.8)] group-hover:brightness-125 transition-all"
         />
 
         {/* Glow Effect */}

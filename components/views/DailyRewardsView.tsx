@@ -67,10 +67,10 @@ export function DailyRewardsView({ onBack }: DailyRewardsViewProps) {
       onBack={onBack}
       background="gacha"
     >
-      <div className="flex-1 flex flex-col p-6 space-y-6 overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 sm:p-6 space-y-6 overflow-hidden">
 
         {/* Banner */}
-        <NineSlicePanel type="border" variant="fancy" className="p-6 glass-frosted frame-earthstone relative overflow-hidden shrink-0">
+        <NineSlicePanel type="border" variant="fancy" className="p-4 sm:p-6 glass-frosted frame-earthstone relative overflow-hidden shrink-0">
            <div className="relative z-10 flex flex-col items-center text-center">
               <Gift size={48} className="text-[#F5C76B] mb-4 animate-bounce" />
               <h3 className="text-xl font-black text-white uppercase font-display">Senda del Destino</h3>

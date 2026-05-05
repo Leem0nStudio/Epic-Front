@@ -88,7 +88,7 @@ export function AuthView() {
           {/* Floating decorative elements */}
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-24 h-24 bg-[#F5C76B]/5 blur-3xl rounded-full animate-pulse" />
 
-          <div className="p-6 sm:p-10 text-center relative z-10">
+          <div className="p-6 sm:p-6 sm:p-10 text-center relative z-10">
             {/* Icon section - logo bigger, no frame, with glow only */}
             <motion.div
               initial={{ y: -20, opacity: 0 }}
@@ -207,7 +207,7 @@ export function AuthView() {
                         onChange={(e) => setEmail(e.target.value)}
                         required
                         autoComplete="email"
-                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-10 sm:px-12 py-3 sm:py-4 text-sm text-white placeholder-white/10 focus:border-[#F5C76B]/40 focus:outline-none transition-all font-bold tracking-wider"
+                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-8 sm:px-12 py-2 sm:py-4 text-sm text-white placeholder-white/10 focus:border-[#F5C76B]/40 focus:outline-none transition-all font-bold tracking-wider"
                         placeholder="usuario@epicfrontier.app"
                       />
                     </div>
@@ -225,7 +225,7 @@ export function AuthView() {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         autoComplete="current-password"
-                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-10 sm:px-12 py-3 sm:py-4 text-sm text-white placeholder-white/10 focus:border-[#F5C76B]/40 focus:outline-none transition-all font-bold tracking-wider"
+                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-8 sm:px-12 py-2 sm:py-4 text-sm text-white placeholder-white/10 focus:border-[#F5C76B]/40 focus:outline-none transition-all font-bold tracking-wider"
                         placeholder="••••••••"
                       />
                     </div>

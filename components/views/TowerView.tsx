@@ -41,7 +41,7 @@ export function TowerView({ onBack, playerPower = 5000 }: TowerViewProps) {
       onBack={onBack}
       background="battle"
     >
-      <div className="flex-1 flex flex-col p-6 space-y-6 overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 sm:p-6 space-y-6 overflow-hidden">
 
         {/* Tower Info Bar */}
         <NineSlicePanel type="border" variant="default" className="p-4 flex items-center justify-between glass-frosted frame-earthstone shrink-0">

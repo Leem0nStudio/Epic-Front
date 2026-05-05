@@ -25,7 +25,7 @@ export function StageDetailsView({ stage, playerEnergy, onBack, onStartBattle }:
       onBack={onBack}
       background="campaign"
     >
-      <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-8 custom-scrollbar">
 
         {/* Stage Hero Section */}
         <div className="text-center py-4">
@@ -66,7 +66,7 @@ export function StageDetailsView({ stage, playerEnergy, onBack, onStartBattle }:
               <Gift size={14} className="text-[#F5C76B]" />
               <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">POSIBLES RECOMPENSAS</h3>
            </div>
-           <div className="grid grid-cols-3 gap-3">
+           <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {[1, 2, 3].map(i => (
                 <NineSlicePanel key={i} type="border" variant="default" className="aspect-square flex items-center justify-center bg-black/40 opacity-40">
                    <Star size={16} className="text-white/10" />

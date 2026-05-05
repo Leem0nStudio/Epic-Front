@@ -339,7 +339,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       </div>
 
       {/* TOP: Boss HP Bar & Elements */}
-      <div className="relative z-20 px-6 pt-12 pb-4">
+      <div className="relative z-20 px-4 pt-10 pb-4">
         <div className="flex justify-between items-center mb-3 px-1">
           <button onClick={onBack} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-90"><ChevronLeft size={20} /></button>
           <button
@@ -404,7 +404,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
         </div>
 
         {/* Elemental Orbs Row - Now interactive-looking */}
-        <div className="flex justify-center gap-5 mt-4">
+        <div className="flex justify-center gap-2 sm:gap-5 mt-4">
           {['#4ade80', '#60a5fa', '#f87171', '#fbbf24', '#c084fc'].map((color, i) => (
             <motion.div 
               key={i} 
@@ -433,7 +433,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
         )}
 
         {/* Enemies Section */}
-        <div className="flex justify-center gap-12 -mt-16">
+        <div className="flex justify-center gap-4 sm:gap-12 -mt-8 sm:-mt-16">
           {enemyUnits.map((enemy) => (
             <EnemySprite key={enemy.id} enemy={enemy} isTargeted={targetId === enemy.id} onTarget={() => setTargetId(enemy.id)} />
           ))}

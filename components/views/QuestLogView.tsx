@@ -60,7 +60,7 @@ export function QuestLogView({ playerEnergy, onNavigate, onOpenQuest }: QuestLog
                 }`}
               >
                 <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-3">
+                   <div className="flex items-center gap-1 sm:gap-3">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
                         quest.status === 'completed' ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-[#F5C76B]/10 border-[#F5C76B]/20 text-[#F5C76B]'
                       }`}>
@@ -85,7 +85,7 @@ export function QuestLogView({ playerEnergy, onNavigate, onOpenQuest }: QuestLog
                 </p>
 
                 <div className="flex items-center justify-between mt-2 pt-4 border-t border-white/5">
-                   <div className="flex items-center gap-3">
+                   <div className="flex items-center gap-1 sm:gap-3">
                       <Gift size={14} className="text-[#F5C76B]" />
                       <div className="flex gap-2">
                          <div className="px-2 py-0.5 bg-white/5 rounded border border-white/5 flex items-center gap-1">

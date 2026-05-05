@@ -57,7 +57,7 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
 
   return (
     <ViewShell title="INVOCACIÓN" subtitle="Adquiere Equipo Legendario" onBack={() => onNavigate('home')} background="gacha">
-      <div className="flex-1 flex flex-col p-6 space-y-6 overflow-hidden relative">
+      <div className="flex-1 flex flex-col p-4 sm:p-6 space-y-6 overflow-hidden relative">
 
         {/* Banner Display */}
         <NineSlicePanel type="border" variant="fancy" className="aspect-[16/9] glass-frosted frame-earthstone relative overflow-hidden group shrink-0">
@@ -110,10 +110,10 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-50 bg-[#0B1A2A]/98 backdrop-blur-2xl flex flex-col p-6"
+              className="absolute inset-0 z-50 bg-[#0B1A2A]/98 backdrop-blur-2xl flex flex-col p-4 sm:p-6"
             >
               {isPulling ? (
-                <div className="flex-1 flex flex-col items-center justify-center gap-6">
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 sm:p-6">
                   <div className="relative">
                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className="w-24 h-24 border-2 border-dashed border-[#F5C76B]/40 rounded-full" />
                      <Sparkles size={40} className="absolute inset-0 m-auto text-[#F5C76B] animate-pulse" />
@@ -127,7 +127,7 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
                     <div className="w-24 h-1 bg-[#F5C76B] mx-auto mt-2 shadow-[0_0_10px_#F5C76B]" />
                   </div>
 
-                  <div className="flex-1 overflow-y-auto grid grid-cols-5 gap-3 pr-2 custom-scrollbar content-start">
+                  <div className="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3 pr-2 custom-scrollbar content-start">
                     {results.map((item, idx) => (
                       <motion.div
                         key={idx}

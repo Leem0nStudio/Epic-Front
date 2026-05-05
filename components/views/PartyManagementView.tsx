@@ -36,7 +36,7 @@ export function PartyManagementView({
       onBack={() => onNavigate('home')}
       background="party"
     >
-      <div className="flex-1 flex flex-col p-6 space-y-6 overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 sm:p-6 space-y-6 overflow-hidden">
         {/* Active Party Grid */}
         <div className="grid grid-cols-3 gap-3 shrink-0">
           {Array.from({ length: partySizeLimit }).map((_, idx) => {
@@ -192,7 +192,7 @@ export function PartyManagementView({
                   >
                     <RarityIcon
                       rarity={getRarityCode(unit?.rarity || 'C')}
-                      size="md"
+                      size="sm" sm:size="md"
                       className="shrink-0"
                       glass={true}
                     >
