@@ -292,7 +292,7 @@ export function UnitDetailsView({
                     >
                       <div className="flex items-center justify-between mb-2">
                          <span className="font-display text-white">{skill.name}</span>
-                         <RarityIcon rarity={getRarityCode(skill.rarity)} size="sm" />
+                         <RarityIcon rarity={getRarityCode(skill.rarity)} size="sm"><Sparkles size={12} /></RarityIcon>
                       </div>
                       <p className="text-[10px] text-white/40 leading-relaxed italic">{skill.description}</p>
                     </NineSlicePanel>
