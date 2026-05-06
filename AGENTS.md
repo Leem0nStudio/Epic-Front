@@ -41,7 +41,7 @@ See `supabase/README.md` for detailed setup instructions.
 -**Action:** Always check if a reusable component exists before implementing custom buttons for core flows, and ensure form fields are properly labeled for screen readers.
 
 ## Known Issues
-- Onboarding fails if `rpc_initialize_player` RPC not deployed
+- Onboarding falls back to demo mode if `rpc_initialize_player` RPC not deployed
 - HMR disabled when `DISABLE_HMR=true` (AI Studio agent-edit mode, next.config.ts:27)
 
 ## Debugging

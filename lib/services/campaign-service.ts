@@ -1,12 +1,20 @@
 import { supabase } from '@/lib/supabase';
 import { Stage, PlayerStageProgress, StageReward, Chapter } from '../rpg-system/campaign-types';
 import { gameDebugger } from '../debug';
+import { CAMPAIGN_CHAPTERS } from '../rpg-system/campaign-data';
+import { OnboardingService } from './onboarding-service';
 
 export class CampaignService {
     private static chaptersCache: Chapter[] | null = null;
 
     static async getChapters(): Promise<Chapter[]> {
         if (this.chaptersCache) return this.chaptersCache;
+
+        if (!supabase || OnboardingService.checkDemoMode()) {
+            gameDebugger.info('game-state', 'Using demo campaign data');
+            this.chaptersCache = CAMPAIGN_CHAPTERS;
+            return this.chaptersCache;
+        }
         
         gameDebugger.info('game-state', 'Loading chapters from database');
 
@@ -16,16 +24,10 @@ export class CampaignService {
                 .select('*, stages(*)')
                 .order('index_num');
 
-            if (error) {
-                gameDebugger.error('game-state', 'Database error loading chapters', error);
-                throw new Error(`Failed to load chapters: ${error.message}`);
-            }
-
-            if (!chapters || chapters.length === 0) {
-                gameDebugger.error('game-state', 'No chapters found in database - run 04-seed.sql', { 
-                    chaptersFound: chapters?.length 
-                });
-                throw new Error('No chapters found in database. Please run the SQL seed file (04-seed.sql) to populate campaign data.');
+            if (error || !chapters || chapters.length === 0) {
+                gameDebugger.warn('game-state', 'No DB chapters, using fallback', error);
+                this.chaptersCache = CAMPAIGN_CHAPTERS;
+                return this.chaptersCache;
             }
 
             this.chaptersCache = chapters.map(ch => ({
@@ -52,8 +54,9 @@ export class CampaignService {
             gameDebugger.info('game-state', `Loaded ${this.chaptersCache.length} chapters from DB`);
             return this.chaptersCache;
         } catch (e: any) {
-            gameDebugger.error('game-state', 'Error loading chapters', e);
-            throw e;
+            gameDebugger.warn('game-state', 'Error loading chapters, using fallback', e);
+            this.chaptersCache = CAMPAIGN_CHAPTERS;
+            return this.chaptersCache;
         }
     }
 
@@ -168,11 +171,22 @@ export class CampaignService {
             rpcParams.p_participating_units = participatingUnitIds;
         }
 
+        if (!supabase || OnboardingService.checkDemoMode()) {
+            gameDebugger.info('game-state', 'Demo mode: completing stage without RPC');
+            return {
+                stars,
+                rewards: finalRewards,
+                isFirstClear: true,
+                firstClearBonus: stage.first_clear_rewards || {},
+                currencyGained: finalRewards.currency || 0,
+                expGained: finalRewards.exp || 0
+            };
+        }
+
         const { data, error } = await supabase.rpc('rpc_complete_stage', rpcParams);
 
         if (error) throw error;
 
-        // Handle the JSON return from the updated RPC
         const rewardResults = data || {};
 
         return {
@@ -186,7 +200,10 @@ export class CampaignService {
     }
 
     static async deductEnergy(amount: number) {
-        if (!supabase) return false;
+        if (!supabase || OnboardingService.checkDemoMode()) {
+            gameDebugger.info('game-state', 'Demo mode: energy check skipped');
+            return true;
+        }
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return false;
 
@@ -206,20 +223,23 @@ export class CampaignService {
          this.chaptersCache = null;
      }
 
-     static async refillEnergyWithGems(gemCost: number = 50): Promise<boolean> {
-         if (!supabase) return false;
-         
-         const { data, error } = await supabase.rpc('rpc_refill_energy_with_gems', {
-             p_gem_cost: gemCost
-         });
+static async refillEnergyWithGems(gemCost: number = 50): Promise<boolean> {
+          if (!supabase || OnboardingService.checkDemoMode()) {
+              gameDebugger.info('game-state', 'Demo mode: energy refill free');
+              return true;
+          }
+          
+          const { data, error } = await supabase.rpc('rpc_refill_energy_with_gems', {
+              p_gem_cost: gemCost
+          });
 
-         if (error) {
-             console.error('Energy refill failed:', error);
-             return false;
-         }
+          if (error) {
+              console.error('Energy refill failed:', error);
+              return false;
+          }
 
-         return Boolean(data);
-     }
+          return Boolean(data);
+      }
 
 static async getUnitProgress(unitId: string): Promise<{ level: number, exp: number, nextLevelExp: number, expPercentage: number } | null> {
         if (!supabase) return null;

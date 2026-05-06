@@ -22,6 +22,7 @@ interface GameState {
   isAuthenticated: boolean;
   error: string | null;
   needsOnboarding: boolean;
+  isDemoMode: boolean;
 
   // Player Data
   profile: any | null;
@@ -49,6 +50,7 @@ interface GameState {
   setIsAuthenticated: (value: boolean) => void;
   setError: (error: string | null) => void;
   setNeedsOnboarding: (value: boolean) => void;
+  setIsDemoMode: (value: boolean) => void;
   setProfile: (profile: any | null) => void;
   setRoster: (roster: any[]) => void;
   setParty: (party: any[]) => void;
@@ -57,14 +59,15 @@ interface GameState {
   setView: (view: ViewType) => void;
   setSelectedUnitId: (id: string | null) => void;
   setSelectedStage: (stage: Stage | null) => void;
-  setSelectedCardId: (id: string | null) => void;
-  setSelectedSkillId: (id: string | null) => void;
-  setSelectedItemId: (id: string | null) => void;
+  setSelectedCardId: (cardId: string | null) => void;
+  setSelectedSkillId: (skillId: string | null) => void;
+  setSelectedItemId: (itemId: string | null) => void;
   setTargetSlot: (slot: 'weapon' | 'card' | 'skill' | null) => void;
 
   // Complex Actions
   regenEnergy: () => Promise<void>;
   refreshState: () => Promise<void>;
+  refreshDemoState: () => Promise<void>;
   initializeGame: () => Promise<void>;
   retryOnboarding: () => Promise<void>;
   navigateTo: (newView: ViewType) => void;
@@ -96,6 +99,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   isAuthenticated: false,
   error: null,
   needsOnboarding: false,
+  isDemoMode: OnboardingService.checkDemoMode(),
 
   profile: null,
   roster: [],
@@ -120,6 +124,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   setIsAuthenticated: (value) => set({ isAuthenticated: value }),
   setError: (error) => set({ error }),
   setNeedsOnboarding: (value) => set({ needsOnboarding: value }),
+  setIsDemoMode: (value) => set({ isDemoMode: value }),
   setProfile: (profile) => set({ profile }),
   setRoster: (roster) => set({ roster }),
   setParty: (party) => set({ party, activePartyUnits: updateActivePartyUnits(party) }),
@@ -128,9 +133,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   setView: (view) => set({ view }),
   setSelectedUnitId: (id) => set({ selectedUnitId: id }),
   setSelectedStage: (stage) => set({ selectedStage: stage }),
-  setSelectedCardId: (id) => set({ selectedCardId: id }),
-  setSelectedSkillId: (id) => set({ selectedSkillId: id }),
-  setSelectedItemId: (id) => set({ selectedItemId: id }),
+  setSelectedCardId: (cardId) => set({ selectedCardId: cardId }),
+  setSelectedSkillId: (skillId) => set({ selectedSkillId: skillId }),
+  setSelectedItemId: (itemId) => set({ selectedItemId: itemId }),
   setTargetSlot: (slot) => set({ targetSlot: slot }),
 
   // Complex Actions
@@ -220,8 +225,61 @@ const [profRes, unitsRes, partyRes, recruitsRes] = await Promise.all([
     }
   },
 
+  refreshDemoState: async () => {
+    const { generateNovice } = await import('@/lib/rpg-system/recruitment');
+    
+    const novices = [
+      { ...generateNovice('physical'), id: 'unit_1', player_id: 'demo_player', level: 1, current_job_id: 'novice', unlocked_jobs: ['novice'] },
+      { ...generateNovice('ranged'), id: 'unit_2', player_id: 'demo_player', level: 1, current_job_id: 'novice', unlocked_jobs: ['novice'] },
+      { ...generateNovice('magic'), id: 'unit_3', player_id: 'demo_player', level: 1, current_job_id: 'novice', unlocked_jobs: ['novice'] }
+    ];
+
+    const demoProfile = {
+      id: 'demo_player',
+      username: 'Héroe',
+      currency: 1000,
+      gems: 100,
+      energy: 50,
+      max_energy: 50,
+      level: 1
+    };
+
+    const demoParty = novices.map((unit, idx) => ({
+      id: `party_slot_${idx}`,
+      player_id: 'demo_player',
+      unit_id: unit.id,
+      slot_index: idx,
+      unit: unit
+    }));
+
+    set({
+      profile: demoProfile,
+      roster: novices,
+      party: demoParty,
+      activePartyUnits: novices,
+      tavernSlots: [],
+      inventory: [
+        { id: 'item_1', item_type: 'weapon', name: 'Espada de madera', rarity: 'common', stats: { atk: 5 } },
+        { id: 'item_2', item_type: 'weapon', name: 'Arco simple', rarity: 'common', stats: { atk: 4 } },
+        { id: 'item_3', item_type: 'weapon', name: 'Bastón mágica', rarity: 'common', stats: { matk: 5 } }
+      ]
+    });
+
+    gameDebugger.info('game-state', 'Demo state loaded', { 
+      units: novices.length,
+      party: demoParty.length 
+    });
+  },
+
   initializeGame: async () => {
-    if (!supabase) return;
+    const isDemo = OnboardingService.checkDemoMode();
+    
+    if (isDemo || !supabase) {
+      set({ isDemoMode: true, needsOnboarding: false });
+      await get().refreshDemoState();
+      set({ isLoaded: true, version: '1.0.0-demo' });
+      return;
+    }
 
     gameDebugger.info('game-state', 'Initializing game...');
     try {
@@ -247,17 +305,24 @@ const [profRes, unitsRes, partyRes, recruitsRes] = await Promise.all([
       if (!prof) {
         gameDebugger.info('game-state', 'No profile found - running onboarding');
         try {
-          await OnboardingService.initializePlayer(user.email?.split('@')[0] || "Héroe", 3);
+          const result = await OnboardingService.initializePlayer(user.email?.split('@')[0] || "Héroe", 3);
+          
+          if (result.isDemoMode) {
+            set({ isDemoMode: true, needsOnboarding: false });
+            await get().refreshDemoState();
+            set({ isLoaded: true, version: '1.0.0-demo' });
+            return;
+          }
+
           const { data: newProf } = await supabase.from('players').select('*').eq('id', user.id).single();
           if (!newProf) throw new Error("No se pudo crear el perfil.");
           gameDebugger.info('game-state', 'Onboarding completed', newProf);
           set({ profile: newProf, needsOnboarding: false, error: null });
         } catch (initErr: any) {
           gameDebugger.error('game-state', 'Onboarding failed', initErr);
-          const friendlyMsg = initErr.message?.includes('no está disponible') || initErr.message?.includes('does not exist')
-            ? 'El servicio de inicialización no está disponible. Por favor, contacta al soporte.'
-            : 'No se pudo completar el registro. Intenta nuevamente.';
-          set({ error: friendlyMsg, needsOnboarding: true });
+          set({ isDemoMode: true, needsOnboarding: false });
+          await get().refreshDemoState();
+          set({ isLoaded: true, version: '1.0.0-demo', error: 'Modo demo activado' });
           return;
         }
       } else {
@@ -269,28 +334,51 @@ const [profRes, unitsRes, partyRes, recruitsRes] = await Promise.all([
       set({ isLoaded: true, version: ConfigService.getActiveVersion() });
     } catch (e: any) {
       console.error("Initialization error:", e);
-      set({ error: "Error inesperado: " + (e.message || "Desconocido") });
+      set({ isDemoMode: true, needsOnboarding: false });
+      await get().refreshDemoState();
+      set({ isLoaded: true, version: '1.0.0-demo', error: 'Modo demo activado' });
     }
   },
 
   retryOnboarding: async () => {
-    if (!supabase) return;
+    set({ error: null });
+    
+    if (OnboardingService.checkDemoMode()) {
+      set({ isDemoMode: true, needsOnboarding: false });
+      await get().refreshDemoState();
+      set({ isLoaded: true, version: '1.0.0-demo' });
+      return;
+    }
+
+    if (!supabase) {
+      set({ isDemoMode: true, needsOnboarding: false });
+      await get().refreshDemoState();
+      set({ isLoaded: true, version: '1.0.0-demo' });
+      return;
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    set({ error: null });
     try {
-      await OnboardingService.initializePlayer(user.email?.split('@')[0] || "Héroe", 3);
+      const result = await OnboardingService.initializePlayer(user.email?.split('@')[0] || "Héroe", 3);
+      
+      if (result.isDemoMode) {
+        set({ isDemoMode: true, needsOnboarding: false });
+        await get().refreshDemoState();
+        set({ isLoaded: true, version: '1.0.0-demo' });
+        return;
+      }
+
       const { data: newProf } = await supabase.from('players').select('*').eq('id', user.id).single();
       if (!newProf) throw new Error("No se pudo crear el perfil.");
       set({ profile: newProf, needsOnboarding: false, error: null });
       await get().refreshState();
       set({ isLoaded: true });
     } catch (e: any) {
-      const friendlyMsg = e.message?.includes('no está disponible') || e.message?.includes('does not exist')
-        ? 'El servicio de inicialización no está disponible. Por favor, contacta al soporte.'
-        : 'No se pudo completar el registro. Intenta nuevamente.';
-      set({ error: friendlyMsg });
+      set({ isDemoMode: true, needsOnboarding: false });
+      await get().refreshDemoState();
+      set({ isLoaded: true, version: '1.0.0-demo', error: 'Modo demo activado' });
     }
   },
 

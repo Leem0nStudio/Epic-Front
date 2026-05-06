@@ -1,15 +1,46 @@
 import { supabase } from '@/lib/supabase';
 import { generateNovice } from '@/lib/rpg-system/recruitment';
 
+export interface OnboardingResult {
+    username: string;
+    success: boolean;
+    isDemoMode: boolean;
+}
+
 export class OnboardingService {
+    static isDemoMode = false;
+
+    static enableDemoMode() {
+        this.isDemoMode = true;
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('demo_mode', 'true');
+        }
+    }
+
+    static disableDemoMode() {
+        this.isDemoMode = false;
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('demo_mode');
+        }
+    }
+
+    static checkDemoMode(): boolean {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('demo_mode') === 'true';
+        }
+        return false;
+    }
+
     /**
      * Initializes a brand new player account atomically via RPC.
-     * Includes retry logic with exponential backoff.
+     * Includes fallback to demo mode if RPC is not available.
      */
-    static async initializePlayer(username: string, maxRetries: number = 3): Promise<{ username: string; success: boolean }> {
-        if (!supabase) throw new Error("Supabase client not initialized");
+    static async initializePlayer(username: string, maxRetries: number = 3): Promise<OnboardingResult> {
+        if (!supabase) {
+            this.enableDemoMode();
+            return { username, success: true, isDemoMode: true };
+        }
 
-        // Requirement: Player starts with exactly 3 Novice units (physical, ranged, magic)
         const novices = [
             generateNovice('physical'),
             generateNovice('ranged'),
@@ -26,31 +57,24 @@ export class OnboardingService {
                 });
 
                 if (error) {
-                    // If RPC doesn't exist (not deployed), throw immediately with friendly message
                     if (error.message?.includes('does not exist') || error.code === 'P0002') {
-                        throw new Error('El servicio de inicialización no está disponible. Por favor, contacta al soporte o intenta más tarde.');
+                        return this.fallbackToDemoMode(username);
                     }
                     throw error;
                 }
 
-                // Create initial recruitment slots for the tavern
                 const { RecruitmentService } = await import('./recruitment-service');
                 await RecruitmentService.refreshTavern();
 
-                return {
-                    username,
-                    success: true
-                };
+                return { username, success: true, isDemoMode: false };
             } catch (err: any) {
                 lastError = err;
 
-                // Don't retry if it's a "function does not exist" error
                 if (err.message?.includes('no está disponible') || err.message?.includes('does not exist')) {
-                    throw err;
+                    return this.fallbackToDemoMode(username);
                 }
 
                 if (attempt < maxRetries) {
-                    // Exponential backoff: 1s, 2s, 4s
                     const delay = Math.pow(2, attempt) * 1000;
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
@@ -58,5 +82,11 @@ export class OnboardingService {
         }
 
         throw lastError || new Error('No se pudo inicializar el jugador después de varios intentos');
+    }
+
+    private static fallbackToDemoMode(username: string): OnboardingResult {
+        this.enableDemoMode();
+        console.warn('[Onboarding] RPC not available, running in DEMO mode');
+        return { username, success: true, isDemoMode: true };
     }
 }
