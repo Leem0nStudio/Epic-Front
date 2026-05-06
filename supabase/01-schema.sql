@@ -17,17 +17,76 @@ CREATE TABLE IF NOT EXISTS game_configs (
 -- SECTION 2: STATIC DATA (Content)
 -- =====================================================
 
+-- Sistema de Jobs mejorado (Ragnarok/Brave Frontier style)
 CREATE TABLE IF NOT EXISTS jobs (
     id TEXT PRIMARY KEY,
     version TEXT REFERENCES game_configs(version),
     name TEXT NOT NULL,
-    tier INTEGER NOT NULL,
+    display_name TEXT NOT NULL,  -- Nombre para mostrar
+    description TEXT,
+    tier INTEGER NOT NULL,  -- 1=base, 2=first, 3=second, 4=transcendence
+    job_type TEXT NOT NULL,  -- physical, magic, ranged, support, hybrid
     parent_job_id TEXT REFERENCES jobs(id),
+    is_transcendence BOOLEAN DEFAULT false,  -- Es job de transcendence?
+    
+    -- Stats
     stat_modifiers JSONB NOT NULL,
+    bonus_stats_at_max JSONB,  -- Stats extra al alcanzar job level 50
+    
+    -- Equipment
     allowed_weapons TEXT[] NOT NULL,
-    skills_unlocked JSONB NOT NULL,
-    passive_effects TEXT[] NOT NULL,
-    evolution_requirements JSONB NOT NULL
+    recommended_affinity TEXT,
+    
+    -- Sistema de Skills
+    max_job_level INTEGER DEFAULT 50,  -- Nivel máximo de maestría del job
+    skill_tree JSONB,  -- { "tier1": ["skill1", "skill2"], "tier2": ["skill3"] }
+    skill_points_per_level INTEGER DEFAULT 1,  -- Puntos de skill por level
+    skills_unlocked JSONB DEFAULT '[]'::JSONB,  -- Skills base del job (no de skill tree)
+    passive_effects TEXT[] DEFAULT ARRAY[]::TEXT[],
+    
+    -- Evolución
+    evolution_requirements JSONB NOT NULL,
+    alternative_jobs TEXT[],  -- Jobs alternativos que se pueden desbloquear
+    transcendence_requirement TEXT,  -- Job requerido para transcendence
+    
+    -- Imagen
+    icon_path TEXT,
+    sprite_path TEXT,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Sistema de Potentials (stats adicionales por nivel)
+-- Similar a "stat potentials" en Brave Frontier o "status bonuses" en Ragnarok
+CREATE TABLE IF NOT EXISTS potentials (
+    id TEXT PRIMARY KEY,
+    version TEXT REFERENCES game_configs(version),
+    name TEXT NOT NULL,
+    description TEXT,
+    potential_type TEXT NOT NULL,  -- 'stat_boost', 'skill_boost', 'elemental', 'special'
+    requirement_type TEXT NOT NULL,  -- 'level', 'job_level', 'transcendence', 'awakening'
+    requirement_value INTEGER NOT NULL,  -- Nivel requerido
+    stat_bonus JSONB NOT NULL,  -- { "atk": 5, "hp": 50 }
+    skill_bonus JSONB,  -- { "cooldown_reduce": 0.1 }
+    rarity TEXT DEFAULT 'rare',
+    is_default BOOLEAN DEFAULT false,  -- Potencial por defecto para todas las unidades
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Job Skill Tree - Skills disponibles en el tree de cada job
+CREATE TABLE IF NOT EXISTS job_skill_trees (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+    skill_id TEXT NOT NULL,  -- ID del skill en tabla skills
+    tier INTEGER NOT NULL,  -- Tier del skill en el tree (1-5)
+    row_index INTEGER NOT NULL,  -- Fila en el tree
+    col_index INTEGER NOT NULL,  -- Columna en el tree
+    cost INTEGER DEFAULT 1,  -- Puntos de skill requeridos
+    prerequisites JSONB DEFAULT '[]'::JSONB,  -- IDs de skills requeridos
+    max_level INTEGER DEFAULT 1,  -- Nivel máximo del skill
+    is_ultimate BOOLEAN DEFAULT false,  -- Es skill ultimate (solo uno por job)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(job_id, skill_id)
 );
 
 CREATE TABLE IF NOT EXISTS skills (
@@ -268,7 +327,14 @@ CREATE TABLE IF NOT EXISTS units (
     
     -- Sistema de equipamiento flexible (como Ragnarok/Brave Frontier)
     equipped_items JSONB DEFAULT '{}'::JSONB,
-    -- Estructura: { "weapon": "instance_id", "armor": "instance_id", "accessory": "instance_id", "boots": "instance_id", "cards": ["id1", "id2", "id3"], "skills": ["id1", "id2"] }
+    
+    -- NUEVO: Sistema de progresión v2.0 (Ragnarok/Brave Frontier style)
+    job_levels JSONB DEFAULT '{}'::JSONB,  -- { "swordman": 50, "knight": 30 } - nivel de maestría por job
+    job_skill_points JSONB DEFAULT '{}'::JSONB,  -- { "swordman": 5 } - puntos de skill disponibles por job
+    job_skills JSONB DEFAULT '{}'::JSONB,  -- { "swordman": { "skill_1": true, "skill_2": false } } - skills desbloqueados
+    potentials_unlocked TEXT[] DEFAULT ARRAY[]::TEXT[],  -- Potenciales desbloqueados
+    transcendence_level INTEGER DEFAULT 0,  -- Nivel de transcendence (0-5)
+    awakening_count INTEGER DEFAULT 0,  -- Veces que ha hecho awakening
     
     sprite_id TEXT,
     icon_id TEXT,

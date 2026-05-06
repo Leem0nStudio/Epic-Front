@@ -114,6 +114,18 @@ export function UnitDetailsView({
 
   const { unit, job, equipment, setBonus, finalStats: stats } = data;
   const { weapon, armor, accessory, boots, cards, skills } = equipment || { weapon: null, armor: null, accessory: null, boots: null, cards: [], skills: [] };
+  
+  // Get job level info for current job
+  const jobLevels = unit.job_levels || {};
+  const currentJobLevel = jobLevels[unit.current_job_id]?.level || 1;
+  const currentJobPoints = jobLevels[unit.current_job_id]?.skillPoints || 0;
+  
+  // Add to equipment for display
+  const enhancedEquipment = {
+    ...equipment,
+    jobLevel: currentJobLevel,
+    skillPoints: currentJobPoints
+  };
 
   return (
     <ViewShell
@@ -140,20 +152,53 @@ export function UnitDetailsView({
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-32 h-6 bg-black/40 blur-xl rounded-[100%] -z-10" />
            </motion.div>
 
-           <div className="mt-6 flex flex-col items-center">
-              <div className="px-4 py-1.5 bg-black/60 backdrop-blur-md border border-[#F5C76B]/20 rounded-xl">
-                 <span className="text-xl font-black text-white uppercase font-display tracking-tight">{unit.name}</span>
-              </div>
-              <div className="mt-2 flex items-center gap-3">
-                 <span className="text-[10px] font-black text-[#F5C76B] uppercase tracking-widest bg-[#F5C76B]/10 px-2 py-0.5 rounded-lg border border-[#F5C76B]/20">
-                    LV. {unit.level}
-                 </span>
-                 <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                    {job.name}
-                 </span>
-              </div>
-           </div>
-        </div>
+<div className="mt-6 flex flex-col items-center">
+               <div className="px-4 py-1.5 bg-black/60 backdrop-blur-md border border-[#F5C76B]/20 rounded-xl">
+                  <span className="text-xl font-black text-white uppercase font-display tracking-tight">{unit.name}</span>
+               </div>
+               
+               {/* Progression Info - v2.0 */}
+               <div className="mt-3 flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-3">
+                     <span className="text-[10px] font-black text-[#F5C76B] uppercase tracking-widest bg-[#F5C76B]/10 px-2 py-0.5 rounded-lg border border-[#F5C76B]/20">
+                        LV. {unit.level}
+                     </span>
+                     <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">
+                        {job.name}
+                     </span>
+                  </div>
+                  
+                  {/* Job Level & Skill Points */}
+                  {enhancedEquipment && (
+                    <div className="flex items-center gap-3 text-[9px]">
+                       <div className="flex items-center gap-1 bg-purple-500/20 px-2 py-0.5 rounded border border-purple-500/30">
+                          <Sparkles size={10} className="text-purple-400" />
+                          <span className="text-purple-300">
+                             Job Lv {enhancedEquipment.jobLevel || 1}
+                          </span>
+                       </div>
+                       {enhancedEquipment.skillPoints > 0 && (
+                         <div className="flex items-center gap-1 bg-cyan-500/20 px-2 py-0.5 rounded border border-cyan-500/30">
+                            <Star size={10} className="text-cyan-400" />
+                            <span className="text-cyan-300">
+                               {enhancedEquipment.skillPoints} pts
+                            </span>
+                         </div>
+                       )}
+                       {/* Transcendence indicator */}
+                       {(unit.transcendence_level || 0) > 0 && (
+                         <div className="flex items-center gap-1 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">
+                            <Star size={10} className="text-amber-400" />
+                            <span className="text-amber-300">
+                               T{unit.transcendence_level}
+                            </span>
+                         </div>
+                       )}
+                    </div>
+                  )}
+               </div>
+            </div>
+         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3">

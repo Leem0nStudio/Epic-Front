@@ -1,14 +1,17 @@
 // Build Calculator - Sistema de cálculo de estadísticas finales
 // Version: 2.0 - Incluye set bonuses, elementos, y todos los equipos
-// Similar a sistemas de RPGs profesionales como Ragnarok/Brave Frontier
+// Version: 2.1 - Incluye bonuses de progresión v2.0
 
-import type { UnitStats, GrowthRates } from '@/lib/types/game-types';
+import type { UnitStats, GrowthRates, JobLevels } from '@/lib/types/game-types';
 import type { JobDefinition } from '../rpg-system/types';
+import { getLevelBonusStats, getJobLevelBonusStats } from '@/lib/config/level-curve';
+import { ProgressionService } from './progression-service';
 
 export interface DBUnit {
     id: string;
     name: string;
     level: number;
+    exp?: number;
     base_stats: UnitStats;
     growth_rates: GrowthRates;
     affinity: string;
@@ -16,6 +19,10 @@ export interface DBUnit {
     current_job_id: string;
     unlocked_jobs: string[];
     equipped_items?: Record<string, any>;
+    // Sistema de progresión v2.0
+    job_levels?: JobLevels;
+    transcendence_level?: number;
+    potentials_unlocked?: string[];
 }
 
 export interface EquipmentPiece {
@@ -120,6 +127,25 @@ export function calculateFinalStats(
         if (setBonus?.bonus) {
             const setBonusVal = Number(setBonus.bonus[field]) || 0;
             total += setBonusVal;
+        }
+
+// 6. Progression v2.0 Bonuses
+        // Level bonus (every 10 levels gives extra stats)
+        const levelBonusStats = getLevelBonusStats(unit.level);
+        const levelBonusVal = levelBonusStats[field as keyof typeof levelBonusStats] || 0;
+        total += levelBonusVal;
+
+        // Job level bonus
+        const jobLevelsMap = unit.job_levels || {};
+        const currentJobLvl = jobLevelsMap[unit.current_job_id]?.level || 1;
+        const jobBonusStats = getJobLevelBonusStats(currentJobLvl);
+        const jobBonusVal = jobBonusStats[field as keyof typeof jobBonusStats] || 0;
+        total += jobBonusVal;
+
+        // Transcendence bonus (10% per level)
+        const transLevel = unit.transcendence_level || 0;
+        if (transLevel > 0) {
+            total = Math.floor(total * (1 + transLevel * 0.1));
         }
 
         return Math.floor(Math.max(0, total));

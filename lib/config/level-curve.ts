@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { UnitStats } from '@/lib/types/game-types';
 
 export const LevelConfigSchema = z.object({
   level: z.number().min(1).max(99),
@@ -117,4 +118,126 @@ export function getEnergyCostForLevel(level: number): number {
 export function getEnemyPowerForLevel(level: number): number {
   const config = PROGRESSION_LEVELS.find(c => c.level === level);
   return config?.enemyPower ?? 10;
+}
+
+// ============================================================================
+// PROGRESION DINÁMICA v2.0 - Fórmulas como Ragnarok/Brave Frontier
+// ============================================================================
+
+/**
+ * Calcula la EXP requerida para un nivel específico (fórmula exponencial)
+ * Similar a Ragnarok Online: base * level^1.5
+ */
+export function calculateExpForLevel(level: number, baseExp: number = 100, exponent: number = 1.5): number {
+  if (level <= 1) return 0;
+  return Math.floor(baseExp * Math.pow(level - 1, exponent));
+}
+
+/**
+ * Calcula la EXP requerida para el siguiente nivel del jugador
+ * vs Unit: Las unidades tienen una curva diferente (más lenta)
+ */
+export function getPlayerExpForLevel(level: number): number {
+  // Curva del jugador: más rápida que las unidades
+  return calculateExpForLevel(level, 100, 1.5);
+}
+
+/**
+ * Calcula la EXP requerida para el siguiente nivel de unidad
+ * Las unidades progresan más lento
+ */
+export function getUnitExpForLevel(level: number): number {
+  // Curva de unidad: más lenta, más cuidadosa
+  return calculateExpForLevel(level, 80, 1.8);
+}
+
+/**
+ * Calcula la EXP requerida para job level (maestría del job)
+ * Sistema como Brave Frontier - cada job tiene su propio nivel
+ */
+export function getJobLevelExpForLevel(jobLevel: number): number {
+  // Curva de job mastery: similar a unidad pero más recompensa por estar maxeado
+  return calculateExpForLevel(jobLevel, 50, 1.3);
+}
+
+/**
+ * Calcula el nivel basado en EXP total (para jugador)
+ */
+export function calculatePlayerLevelFromExp(totalExp: number, maxLevel: number = 50): number {
+  let level = 1;
+  while (level < maxLevel && totalExp >= getPlayerExpForLevel(level + 1)) {
+    level++;
+  }
+  return level;
+}
+
+/**
+ * Calcula el nivel basado en EXP total (para unidad)
+ */
+export function calculateUnitLevelFromExp(totalExp: number, maxLevel: number = 99): number {
+  let level = 1;
+  while (level < maxLevel && totalExp >= getUnitExpForLevel(level + 1)) {
+    level++;
+  }
+  return level;
+}
+
+/**
+ * Calcula el nivel de job mastery basado en EXP total
+ */
+export function calculateJobLevelFromExp(totalExp: number, maxJobLevel: number = 50): number {
+  let level = 1;
+  while (level < maxJobLevel && totalExp >= getJobLevelExpForLevel(level + 1)) {
+    level++;
+  }
+  return level;
+}
+
+/**
+ * Bonus de stats por alcanzar niveles específicos (like Ragnarok)
+ * Niveles clave: 10, 25, 50, 75, 99
+ */
+export const LEVEL_BONUS_THRESHOLDS = [10, 25, 50, 75, 99] as const;
+export const LEVEL_BONUS_STATS: Record<number, Partial<UnitStats>> = {
+  10: { hp: 50, atk: 5, def: 3 },
+  25: { hp: 100, atk: 10, def: 5, agi: 3 },
+  50: { hp: 200, atk: 20, def: 10, agi: 5 },
+  75: { hp: 300, atk: 30, def: 15, agi: 10 },
+  99: { hp: 500, atk: 50, def: 25, agi: 15 },
+};
+
+/**
+ * Obtiene los bonus de stats acumulados por nivel
+ */
+export function getLevelBonusStats(unitLevel: number): Partial<UnitStats> {
+  const bonuses: Partial<UnitStats> = { hp: 0, atk: 0, def: 0, matk: 0, mdef: 0, agi: 0 };
+  
+  for (const threshold of LEVEL_BONUS_THRESHOLDS) {
+    if (unitLevel >= threshold) {
+      const bonus = LEVEL_BONUS_STATS[threshold];
+      if (bonus) {
+        bonuses.hp = (bonuses.hp || 0) + (bonus.hp || 0);
+        bonuses.atk = (bonuses.atk || 0) + (bonus.atk || 0);
+        bonuses.def = (bonuses.def || 0) + (bonus.def || 0);
+        bonuses.matk = (bonuses.matk || 0) + (bonus.matk || 0);
+        bonuses.mdef = (bonuses.mdef || 0) + (bonus.mdef || 0);
+        bonuses.agi = (bonuses.agi || 0) + (bonus.agi || 0);
+      }
+    }
+  }
+  
+  return bonuses;
+}
+
+/**
+ * Bonus de stats por job level (cada 10 niveles)
+ */
+export function getJobLevelBonusStats(jobLevel: number): Partial<UnitStats> {
+  const tiers = Math.floor(jobLevel / 10);
+  return {
+    hp: tiers * 25,
+    atk: tiers * 3,
+    def: tiers * 2,
+    agi: tiers * 1,
+  };
 }

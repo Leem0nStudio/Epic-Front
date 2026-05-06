@@ -57,12 +57,73 @@ export interface GrowthRates {
   agi: number;
 }
 
+// ============================================================================
+// PROGRESION v2.0 - Sistema de progresión mejorado (Ragnarok/Brave Frontier)
+// ============================================================================
+
+/** Nivel de maestría de un job (1-50) */
+export interface JobLevel {
+  jobId: string;
+  level: number;
+  exp: number;
+  skillPoints: number;
+  skillsUnlocked: string[];
+}
+
+/** Sistema de job levels - cada job tiene su propio nivel */
+export interface JobLevels {
+  [jobId: string]: JobLevel;
+}
+
+/** Puntos de habilidad por job */
+export interface JobSkillPoints {
+  [jobId: string]: number;
+}
+
+/** Skills desbloqueados por job */
+export interface JobSkills {
+  [jobId: string]: {
+    [skillId: string]: number; // skillId: level del skill
+  };
+}
+
+/** Potencial desbloqueado (stats adicionales) */
+export type PotentialType = 'stat_boost' | 'skill_boost' | 'elemental' | 'special';
+export interface Potential {
+  id: string;
+  name: string;
+  description: string;
+  potentialType: PotentialType;
+  requirementType: 'level' | 'job_level' | 'transcendence' | 'awakening';
+  requirementValue: number;
+  statBonus?: Partial<UnitStats>;
+  rarity: string;
+}
+
+/** Transcendence (awakening en BF, transcendent en RO) */
+export interface Transcendence {
+  level: number;  // 0-5
+  isActive: boolean;
+  bonusStats?: Partial<UnitStats>;
+}
+
+/** Nivel de unidad con toda la info de progresión */
+export interface UnitProgression {
+  level: number;
+  exp: number;
+  jobLevels: JobLevels;
+  potentialsUnlocked: string[];
+  transcendenceLevel: number;
+  awakeningCount: number;
+}
+
 /** Unidad del juego (personaje) */
 export interface GameUnit {
   id: string;
   player_id: string;
   name: string;
   level: number;
+  exp: number;
   current_job_id: string;
   unlocked_jobs: string[];
   baseStats: UnitStats;
@@ -71,13 +132,25 @@ export interface GameUnit {
   trait?: string;
   sprite_id?: string;
   icon_id?: string;
+  
+  // Sistema de equipamiento
   equipped_weapon_instance_id?: string;
   equipped_card_instance_ids: string[];
   equipped_skill_instance_ids: string[];
+  equipped_items?: Record<string, any>;
+  
+  // Sistema de progresión v2.0
+  job_levels?: JobLevels;
+  job_skill_points?: JobSkillPoints;
+  job_skills?: JobSkills;
+  potentials_unlocked?: string[];
+  transcendence_level?: number;
+  awakening_count?: number;
+  
   // Propiedades calculadas/alternativas
-  cards?: InventoryItem[]; // Cartas equipadas (calculado)
-  skills?: InventoryItem[]; // Skills equipadas (calculado)
-  weapon?: InventoryItem; // Arma equipada (calculado)
+  cards?: InventoryItem[];
+  skills?: InventoryItem[];
+  weapon?: InventoryItem;
 }
 
 // ============================================================================
