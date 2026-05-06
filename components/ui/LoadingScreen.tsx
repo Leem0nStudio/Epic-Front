@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { usePreloadAssets } from '@/lib/asset-manager';
 import { config } from '@/lib/config/app-config';
+import { LoadingSpinner } from './LoadingSpinner';
 
 interface LoadingScreenProps {
   message?: string;
@@ -61,12 +62,8 @@ export function LoadingScreen({
           className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
         >
           <div className="text-center space-y-8">
-            {/* Spinner animado */}
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-              className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full mx-auto"
-            />
+           {/* Spinner animado */}
+           <LoadingSpinner size="lg" className="border-[#F5C76B]/40" />
 
             {/* Mensaje de carga */}
             <motion.div
@@ -74,7 +71,7 @@ export function LoadingScreen({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="text-xl text-amber-400 font-medium"
+               className="text-xl text-[#F5C76B] font-medium"
             >
               {currentMessage}
             </motion.div>
@@ -84,7 +81,7 @@ export function LoadingScreen({
               <div className="w-80 mx-auto space-y-2">
                 <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
                   <motion.div
-                    className="h-full bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full"
+                     className="h-full bg-gradient-to-r from-[#F5C76B] to-amber-500 rounded-full"
                     initial={{ width: 0 }}
                     animate={{ width: `${progressPercentage}%` }}
                     transition={{ duration: 0.3 }}
@@ -109,28 +106,6 @@ export function LoadingScreen({
         </motion.div>
       )}
     </AnimatePresence>
-  );
-}
-
-// Componente de loading más simple para estados locales
-interface LoadingSpinnerProps {
-  size?: 'sm' | 'md' | 'lg';
-  className?: string;
-}
-
-export function LoadingSpinner({ size = 'md', className = '' }: LoadingSpinnerProps) {
-  const sizeClasses = {
-    sm: 'w-4 h-4 border-2',
-    md: 'w-8 h-8 border-3',
-    lg: 'w-12 h-12 border-4',
-  };
-
-  return (
-    <motion.div
-      animate={{ rotate: 360 }}
-      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-      className={`${sizeClasses[size]} border-amber-500 border-t-transparent rounded-full ${className}`}
-    />
   );
 }
 

@@ -22,7 +22,7 @@ import { GuildView } from '@/components/views/GuildView';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { ErrorDisplay } from '@/components/ui/ErrorDisplay';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
@@ -223,7 +223,9 @@ export default function Applet() {
               transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.3 }}
               className="absolute inset-0 flex flex-col overflow-y-auto overflow-x-hidden pb-20"
             >
-              {renderView()}
+              <ErrorBoundary>
+                {renderView()}
+              </ErrorBoundary>
             </motion.div>
           </AnimatePresence>
         </div>

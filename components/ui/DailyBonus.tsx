@@ -50,9 +50,9 @@ export function DailyBonusDisplay({ streak, lastClaimDate, onClaim, isLoading }:
               transition={{ delay: index * 0.05 }}
               className={`
                 relative p-2 rounded-lg text-center
-                ${isClaimed ? 'bg-yellow-500/20 border border-yellow-500/40' : ''}
-                ${isToday && canClaim ? 'bg-green-500/20 border-2 border-green-400 animate-pulse' : ''}
-                ${isToday && !canClaim ? 'bg-amber-500/20 border border-amber-500/40' : ''}
+                 ${isClaimed ? 'bg-[#F5C76B]/20 border border-[#F5C76B]/40' : ''}
+                 ${isToday && canClaim ? 'bg-green-500/20 border-2 border-green-400 animate-pulse' : ''}
+                 ${isToday && !canClaim ? 'bg-[#F5C76B]/20 border border-[#F5C76B]/40' : ''}
                 ${!isClaimed && !isToday ? 'bg-white/5 border border-white/10' : ''}
               `}
             >
@@ -76,10 +76,10 @@ export function DailyBonusDisplay({ streak, lastClaimDate, onClaim, isLoading }:
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-4 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-xl border border-amber-500/40"
+           className="p-4 bg-gradient-to-r from-[#F5C76B]/20 to-amber-500/20 rounded-xl border border-[#F5C76B]/40"
         >
           <div className="text-center mb-4">
-            <div className="text-amber-300 text-sm mb-1">Recompensa de hoy</div>
+             <div className="text-[#F5C76B] text-sm mb-1">Recompensa de hoy</div>
             <div className="text-2xl font-bold text-white">
               {currentBonus.currency} 🪙 + {currentBonus.premiumCurrency} 💎
             </div>
@@ -88,11 +88,11 @@ export function DailyBonusDisplay({ streak, lastClaimDate, onClaim, isLoading }:
             )}
           </div>
           
-          <Button
-            onClick={onClaim}
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-bold"
-          >
+           <Button
+             onClick={onClaim}
+             disabled={isLoading}
+             className="w-full bg-gradient-to-r from-[#F5C76B] to-amber-500 hover:from-[#F5C76B]/80 hover:to-amber-400 text-black font-bold"
+           >
             {isLoading ? 'Reclamando...' : '🎁 Reclamar Recompensa'}
           </Button>
         </motion.div>

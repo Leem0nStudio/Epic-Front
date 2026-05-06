@@ -194,12 +194,14 @@ export function UnitDetailsView({
         <div className="space-y-6">
            <div className="flex items-center justify-between">
               <SectionHeader icon={Sparkles} title="HABILIDADES" />
-              <button
+              <Button
                 onClick={() => { loadAvailableSkills(); setShowLearnSkill(true); }}
+                variant="ghost"
+                size="sm"
                 className="text-[9px] font-black text-[#F5C76B] uppercase tracking-widest hover:brightness-125 transition-all"
               >
                 + APRENDER
-              </button>
+              </Button>
            </div>
            <div className="grid grid-cols-1 gap-4">
               {[0, 1, 2].map(idx => (
@@ -249,9 +251,9 @@ export function UnitDetailsView({
             className="fixed inset-0 z-50 bg-[#0B1A2A]/98 backdrop-blur-2xl flex flex-col p-6"
           >
             <div className="flex items-center justify-between mb-8">
-               <button onClick={() => setShowLearnSkill(false)} className="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl text-white/60">
-                  <ChevronLeft size={20} />
-               </button>
+                <Button onClick={() => setShowLearnSkill(false)} variant="ghost" size="sm" className="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl" aria-label="Volver a detalles de unidad">
+                    <ChevronLeft size={20} />
+                 </Button>
                <h2 className="text-xl font-black text-white uppercase font-display">ENTRENAMIENTO</h2>
                <div className="w-10" />
             </div>
@@ -269,9 +271,10 @@ export function UnitDetailsView({
                       key={skill.id}
                       type="border"
                       variant="default"
-                      className={`p-4 glass-frosted frame-earthstone ${isLearned ? 'opacity-40 grayscale pointer-events-none' : 'hover:border-cyan-400/40 cursor-pointer'}`}
-                      onClick={async () => {
-                        if (!confirm(`¿Aprender ${skill.name}?`)) return;
+                       className={`p-4 glass-frosted frame-earthstone ${isLearned ? 'opacity-40 grayscale pointer-events-none' : 'hover:border-cyan-400/40 cursor-pointer'}`}
+                       onClick={async () => {
+                         // TODO: Replace with proper toast notification
+                         if (!confirm(`¿Aprender ${skill.name}?`)) return;
                         // RPC learn skill logic...
                         try {
                            const { error } = await supabase.rpc('rpc_learn_skill', {
@@ -378,14 +381,17 @@ function EquipSlot({ label, item, onAdd, onRemove, onDetail }: any) {
           </div>
        </div>
 
-       {item && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onRemove(item.id); }}
-            className="p-2 text-white/10 hover:text-red-500 transition-colors"
-          >
-             <X size={14} />
-          </button>
-       )}
+         {item && (
+            <Button
+              onClick={(e) => { e.stopPropagation(); onDiscard(item.id); }}
+              variant="ghost"
+              size="sm"
+              className="p-2 text-white/10 hover:text-red-500 transition-colors"
+              aria-label={`Eliminar ${item.definition?.name || item.name}`}
+            >
+               <X size={14} />
+            </Button>
+         )}
     </NineSlicePanel>
   );
 }

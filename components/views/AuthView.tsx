@@ -6,6 +6,7 @@ import { AssetService } from '@/lib/services/asset-service';
 import { Mail, Lock, UserPlus, LogIn, ShieldCheck, Sparkles, Stars, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PanelButton } from '@/components/ui/PanelButton';
+import { Button } from '@/components/ui/Button';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 
 export function AuthView() {
@@ -196,12 +197,13 @@ export function AuthView() {
                   )}
 
                   <div className="space-y-2">
-                    <label className="text-[9px] sm:text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-2 font-stats">
+                    <label htmlFor="email" className="text-[9px] sm:text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-2 font-stats">
                       Firma de Aventurero (Email)
                     </label>
                     <div className="relative">
                       <Mail size={16} className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-[#F5C76B]/40" />
                       <input
+                        id="email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -214,12 +216,13 @@ export function AuthView() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[9px] sm:text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-2 font-stats">
+                    <label htmlFor="password" className="text-[9px] sm:text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-2 font-stats">
                       Código de Encriptación (Clave)
                     </label>
                     <div className="relative">
                       <Lock size={16} className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-[#F5C76B]/40" />
                       <input
+                        id="password"
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -251,15 +254,17 @@ export function AuthView() {
                   </PanelButton>
 
                   <div className="pt-2 text-center">
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setIsRegistering(!isRegistering)}
+                      variant="ghost"
+                      size="sm"
                       className="text-[10px] font-black text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest font-stats"
                     >
                       {isRegistering
                         ? '¿Ya eres un Guardián? Conectarse'
                         : '¿Nuevo Aventurero? Crear Cuenta'}
-                    </button>
+                    </Button>
                   </div>
                 </motion.form>
               )}

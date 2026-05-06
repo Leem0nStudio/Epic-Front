@@ -3,6 +3,7 @@
 import { AssetService } from '@/lib/services/asset-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { ActionButton } from '@/components/ui/ActionButton';
+import { Button } from '@/components/ui/Button';
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorDisplay } from '@/components/ui/ErrorDisplay';
@@ -76,7 +77,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const [screenGlow, setScreenGlow] = useState<'none' | 'gold' | 'fire' | 'ice' | 'dark'>('none');
   const [hitSequence, setHitSequence] = useState<{ id: number, value: number, time: number }[]>([]);
 
-  const preferrsReducedMotion = usePrefersReducedMotion();
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   // Statistics for Star calculation
   const [stats, setStats] = useState({
@@ -342,14 +343,16 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       {/* TOP: Boss HP Bar & Elements */}
       <div className="relative z-20 px-4 pt-10 pb-4">
         <div className="flex justify-between items-center mb-3 px-1">
-          <button onClick={onBack} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-90"><ChevronLeft size={20} /></button>
-          <button
+          <Button onClick={onBack} variant="ghost" size="sm" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-90"><ChevronLeft size={20} /></Button>
+          <Button
             onClick={() => setAutoBattle(!autoBattle)}
+            variant={autoBattle ? "primary" : "ghost"}
+            size="sm"
             className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all active:scale-90 ${autoBattle ? 'bg-green-600 border-green-500 text-white' : 'bg-white/5 border-white/10 text-white/40 hover:text-white'}`}
             title="Auto-battle"
           >
             <Zap size={18} className={autoBattle ? 'animate-pulse' : ''} />
-          </button>
+          </Button>
           <div className="flex flex-col items-center">
              <div className="flex items-center gap-2 mb-1">
                 <Swords size={12} className="text-[#F5C76B]" />
@@ -504,10 +507,10 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
             {damageNumbers.map(d => (
               <motion.div
                 key={d.id}
-                initial={preferrsReducedMotion ? { opacity: 1, scale: 1 } : { opacity: 0, y: 0, scale: 0.5, rotate: -10 }}
-                animate={preferrsReducedMotion ? { opacity: 1 } : { opacity: 1, y: d.y, scale: d.isCrit ? 2.5 : 1.8, rotate: 0 }}
-                exit={preferrsReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.2 }}
-                transition={preferrsReducedMotion ? { duration: 0.01 } : { type: 'spring', damping: 10 }}
+                initial={prefersReducedMotion ? { opacity: 1, scale: 1 } : { opacity: 0, y: 0, scale: 0.5, rotate: -10 }}
+                animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: d.y, scale: d.isCrit ? 2.5 : 1.8, rotate: 0 }}
+                exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.2 }}
+                transition={prefersReducedMotion ? { duration: 0.01 } : { type: 'spring', damping: 10 }}
                 className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-black text-3xl italic drop-shadow-[0_4px_8px_rgba(0,0,0,1)] flex flex-col items-center z-60 ${d.color}`}
                 style={{ marginLeft: d.x }}
               >
@@ -766,12 +769,14 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
         {/* Battle Log Terminal Overlay - Fixed position below boss HP bar */}
          <div className="absolute top-40 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pointer-events-none z-20">
            <div className="flex flex-col items-end gap-1">
-             <button
-               onClick={() => setShowBattleLog(!showBattleLog)}
-               className="pointer-events-auto px-3 py-1 text-[8px] font-black uppercase tracking-widest text-white/60 hover:text-white bg-black/40 rounded-lg border border-white/10 hover:border-white/20 transition-all"
-             >
-               {showBattleLog ? 'OCULTAR LOG' : 'VER LOG'}
-             </button>
+              <Button
+                onClick={() => setShowBattleLog(!showBattleLog)}
+                variant="ghost"
+                size="sm"
+                className="pointer-events-auto text-[8px] font-black uppercase tracking-widest px-3 py-1"
+              >
+                {showBattleLog ? 'OCULTAR LOG' : 'VER LOG'}
+              </Button>
              {showBattleLog && (
                <NineSlicePanel
                  type="border"
@@ -1117,14 +1122,14 @@ function BattleResult({ winner, completionData, isRecording, onConfirm }: any) {
           </motion.div>
         )}
         
-        <motion.button 
-          whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(255,255,255,0.1)' }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onConfirm} 
-          className="bg-white text-black font-black py-4 px-20 rounded-full tracking-[0.3em] uppercase text-[10px] shadow-2xl hover:bg-[#F5C76B] transition-colors"
+        <Button
+          onClick={onConfirm}
+          variant="primary"
+          className="font-black py-4 px-20 rounded-full tracking-[0.3em] uppercase text-[10px] shadow-2xl hover:scale-105 active:scale-95 transition-transform"
+          style={{ backgroundColor: 'white', color: 'black' }}
         >
           Continue Expedition
-        </motion.button>
+        </Button>
       </div>
     </motion.div>
   );

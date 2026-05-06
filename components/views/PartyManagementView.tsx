@@ -6,6 +6,7 @@ import { Shield, Sword, Heart, UserMinus, Plus, Sparkles, ArrowRight } from 'luc
 import { AssetService } from '@/lib/services/asset-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { ViewShell } from '@/components/ui/ViewShell';
+import { Button } from '@/components/ui/Button';
 import { RarityIcon } from '@/components/ui/RarityIcon';
 import { getRarityCode } from '@/lib/config/assets-config';
 
@@ -94,22 +95,26 @@ export function PartyManagementView({
                 <h3 className="text-[10px] font-bold text-[#F5C76B] uppercase tracking-[0.2em] flex items-center gap-2 font-stats">
                   <ArrowRight size={14} className="text-[#F5C76B]" /> Asignar Ranura {selectedSlot + 1}
                 </h3>
-                <button
+                <Button
                   onClick={() => setSelectedSlot(null)}
-                  className="text-[9px] font-bold text-white/40 uppercase hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5 font-stats"
+                  variant="ghost"
+                  size="sm"
+                  className="text-[9px] font-bold text-white/40 uppercase hover:text-white transition-colors"
                 >
                   Cancelar
-                </button>
+                </Button>
               </div>
 
               <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                 {activePartyUnits[selectedSlot] && (
-                  <button
+                  <Button
                     onClick={() => { onRemoveFromParty(selectedSlot); setSelectedSlot(null); }}
-                    className="w-full glass-frosted frame-earthstone p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-bold text-red-400 uppercase tracking-widest hover:bg-red-500/10 transition-all active:scale-95 font-stats"
+                    variant="danger"
+                    size="sm"
+                    className="w-full flex items-center justify-center gap-2 font-bold uppercase"
                   >
                     <UserMinus size={16} /> Retirar de Formación
-                  </button>
+                  </Button>
                 )}
 
                 {saveData.roster

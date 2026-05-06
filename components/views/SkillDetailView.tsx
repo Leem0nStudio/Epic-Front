@@ -57,7 +57,7 @@ export function SkillDetailView({ skillId, itemId, onBack, onEquip, onDiscard }:
 
         <div className="grid grid-cols-2 gap-3">
            <StatBox label="ENERGÍA" value={skill.energy_cost || 0} icon={Zap} color="text-blue-400" />
-           <StatBox label="ENFRIAMIENTO" value={`${skill.cooldown || 0}T`} icon={Clock} color="text-amber-400" />
+           <StatBox label="ENFRIAMIENTO" value={`${skill.cooldown || 0}T`} icon={Clock} color="text-[#F5C76B]" />
         </div>
 
         <div className="mt-auto space-y-3">

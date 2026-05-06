@@ -56,7 +56,7 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
       background="campaign"
       loading={loading}
     >
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar">
         {currentChapter?.stages.map((stage, idx) => {
           const stageProgress = progress.find(p => p.stage_id === stage.id);
           const isUnlocked = idx === 0 || progress.some(p => {
@@ -78,6 +78,9 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
                   isUnlocked ? 'glass-frosted frame-earthstone cursor-pointer hover:border-[#F5C76B]/40' : 'opacity-40 grayscale pointer-events-none'
                 }`}
                 onClick={() => isUnlocked && onSelectStage(stage)}
+                role="button"
+                tabIndex={isUnlocked ? 0 : undefined}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (isUnlocked) onSelectStage(stage); } }}
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${
@@ -91,7 +94,7 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
                       <Zap size={10} className="text-blue-400" />
                       <span className="text-[10px] font-black text-white/40 tabular-nums">{stage.energy_cost}</span>
                       {stageProgress?.cleared && (
-                        <div className="flex items-center gap-0.5 ml-2">
+                        <div className="flex items-center gap-0.5 ml-2" aria-label={`${stageProgress.stars || 0} de 3 estrellas`}>
                           {Array.from({ length: 3 }).map((_, i) => (
                             <Star key={i} size={8} className={i < (stageProgress.stars || 0) ? 'text-[#F5C76B] fill-[#F5C76B]' : 'text-white/10'} />
                           ))}

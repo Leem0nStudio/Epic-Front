@@ -12,6 +12,7 @@ import {
   Users
 } from 'lucide-react';
 import { AssetService } from '@/lib/services/asset-service';
+import { Button } from '@/components/ui/Button';
 
 interface RPGHomeViewProps {
   saveData: any;
@@ -160,16 +161,18 @@ function QuickActions({ onNavigate }: any) {
   return (
     <div className="flex items-center gap-2">
       {actions.map((action) => (
-        <motion.button
+        <Button
           key={action.id}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => onNavigate(action.id)}
-          className={`flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-br ${action.color} border backdrop-blur-sm`}
+          variant="ghost"
+          size="sm"
+          className={`flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-sm ${action.color}`}
         >
           <action.icon size={14} className="text-white/60" />
           <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">{action.label}</span>
-        </motion.button>
+        </Button>
       ))}
     </div>
   );
@@ -182,37 +185,39 @@ function CurrentObjective({ onNavigate }: any) {
       animate={{ opacity: 1, x: 0 }}
       className="w-full max-w-[280px] pointer-events-auto"
     >
-       <div
-         onClick={onNavigate}
-         className="group cursor-pointer bg-black/40 backdrop-blur-xl border border-white/5 p-4 rounded-2xl hover:border-[#F5C76B]/30 transition-all shadow-2xl relative overflow-hidden"
-       >
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F5C76B]/20 to-amber-900/40 border border-[#F5C76B]/30 flex items-center justify-center">
-                <Castle className="w-5 h-5 text-[#F5C76B]" />
-             </div>
-             <div>
-                <p className="text-[9px] font-black text-[#F5C76B] uppercase tracking-widest">OBJETIVO ACTUAL</p>
-                <h3 className="text-sm font-black text-white uppercase font-display tracking-tight">El Templo Sumergido</h3>
-             </div>
-          </div>
-          <div className="mt-3 py-2 px-3 bg-white/5 rounded-lg border border-white/5">
-             <p className="text-[10px] text-white/40 leading-relaxed italic">
-               &quot;Infiltra las profundidades del templo y recupera la Reliquia Antigua.&quot;
-             </p>
-          </div>
-          <div className="mt-2 flex items-center justify-end gap-1 text-[#F5C76B] opacity-40 group-hover:opacity-100 transition-opacity">
-            <span className="text-[8px] font-black uppercase tracking-widest">IR AHORA</span>
-            <ChevronRight className="w-3 h-3" />
-          </div>
-       </div>
+      <Button
+        onClick={() => onNavigate('campaign')}
+        variant="ghost"
+        className="w-full bg-black/40 backdrop-blur-xl border border-white/5 p-4 rounded-2xl hover:border-[#F5C76B]/30 transition-all shadow-2xl relative overflow-hidden text-left"
+      >
+        <div className="flex items-center gap-3">
+           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F5C76B]/20 to-amber-900/40 border border-[#F5C76B]/30 flex items-center justify-center">
+                 <Castle className="w-5 h-5 text-[#F5C76B]" />
+              </div>
+              <div>
+                 <p className="text-[9px] font-black text-[#F5C76B] uppercase tracking-widest">OBJETIVO ACTUAL</p>
+                 <h3 className="text-sm font-black text-white uppercase font-display tracking-tight">El Templo Sumergido</h3>
+              </div>
+           </div>
+           <div className="mt-3 py-2 px-3 bg-white/5 rounded-lg border border-white/5">
+              <p className="text-[10px] text-white/40 leading-relaxed italic">
+                &quot;Infiltra las profundidades del templo y recupera la Reliquia Antigua.&quot;
+              </p>
+           </div>
+           <div className="mt-2 flex items-center justify-end gap-1 text-[#F5C76B] opacity-40 group-hover:opacity-100 transition-opacity">
+             <span className="text-[8px] font-black uppercase tracking-widest">IR AHORA</span>
+             <ChevronRight className="w-3 h-3" />
+           </div>
+      </Button>
     </motion.div>
   );
 }
 
 function NotificationBanner({ onNavigate }: any) {
   return (
-    <button
+    <Button
       onClick={() => onNavigate('daily_rewards')}
+      variant="ghost"
       className="w-full max-w-md bg-[#F5C76B]/5 border border-[#F5C76B]/20 rounded-xl px-4 py-2 flex items-center gap-3 group hover:bg-[#F5C76B]/10 transition-all pointer-events-auto"
     >
       <div className="relative">
@@ -223,6 +228,6 @@ function NotificationBanner({ onNavigate }: any) {
         ¡EVENTO ACTIVO! Reclama tus recompensas diarias.
       </p>
       <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white transition-colors" />
-    </button>
+    </Button>
   );
 }

@@ -65,7 +65,7 @@ export function TrainingView({ unitId, unitName, onBack, onUpdate }: TrainingVie
                key={opt.id}
                type="border"
                variant="default"
-               className="p-5 glass-frosted frame-earthstone flex flex-col gap-4 hover:border-cyan-400/40 cursor-pointer group transition-all"
+                className="p-5 glass-frosted frame-earthstone flex flex-col gap-4 hover:border-[#F5C76B]/40 cursor-pointer group transition-all"
                onClick={() => !training && handleTrain(opt.id as any)}
              >
                 <div className="flex items-center justify-between">

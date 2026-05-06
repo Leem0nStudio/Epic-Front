@@ -218,17 +218,18 @@ function CurrencyCard({ icon: Icon, value, label, color }: any) {
 function PullButton({ amount, price, currency, onClick, disabled, highlight }: any) {
   const Icon = currency === 'soft' ? Coins : Diamond;
   const color = currency === 'soft' ? 'text-[#F5C76B]' : 'text-cyan-400';
-
+  
   return (
-    <motion.button
+    <Button
       whileHover={!disabled ? { y: -4, scale: 1.02 } : {}}
       whileTap={!disabled ? { scale: 0.98 } : {}}
       onClick={onClick}
       disabled={disabled}
+      variant={highlight ? 'primary' : 'secondary'}
       className={`flex flex-col items-center gap-2 p-4 rounded-3xl border transition-all ${
         highlight
-          ? 'bg-[#F5C76B]/10 border-[#F5C76B]/30 shadow-[0_10px_30px_rgba(245,199,107,0.1)]'
-          : 'bg-white/5 border-white/10 hover:bg-white/10'
+          ? 'border-[#F5C76B]/30 shadow-[0_10px_30px_rgba(245,199,107,0.1)]'
+          : 'border-white/10 hover:bg-white/10'
       } ${disabled ? 'opacity-50 grayscale' : ''}`}
     >
       <div className="flex items-center gap-2">
@@ -239,6 +240,6 @@ function PullButton({ amount, price, currency, onClick, disabled, highlight }: a
          <Icon size={10} className={color} />
          <span className={`text-[10px] font-black ${color} tabular-nums`}>{price.toLocaleString()}</span>
       </div>
-    </motion.button>
+    </Button>
   );
 }

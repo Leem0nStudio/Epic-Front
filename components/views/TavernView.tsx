@@ -108,9 +108,14 @@ function RecruitCard({ slot, now, onClaim, onDiscard }: any) {
               </span>
             </div>
             {isReady && (
-              <button onClick={() => onDiscard(slot.id)} className="text-white/20 hover:text-red-500 transition-colors p-2">
+              <Button
+                onClick={() => onDiscard(slot.id)}
+                variant="danger"
+                size="sm"
+                className="p-2"
+              >
                 <Trash2 size={16} />
-              </button>
+              </Button>
             )}
           </div>
 

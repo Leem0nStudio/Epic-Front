@@ -15,6 +15,7 @@ import { SkillDetailView } from './SkillDetailView';
 import { CardDetailView } from './CardDetailView';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { gameDebugger } from '@/lib/debug';
+import { Button } from '@/components/ui/Button';
 
 interface InventoryViewProps {
   targetSlot: 'weapon' | 'card' | 'skill' | null;
@@ -95,18 +96,31 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
       {/* Search & Filter */}
       <div className="p-4 pb-2">
         <div className="flex gap-2 mb-3">
-          <div className="flex-1 relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-            <input type="text" placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-white/20" />
-          </div>
+            <div className="flex-1 relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+              <input 
+                type="text" 
+                placeholder="Buscar..." 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+                aria-label="Buscar objetos en inventario"
+                className="w-full pl-9 pr-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-white/20" 
+              />
+            </div>
         </div>
 
         {/* Filter tabs */}
         <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {FILTERS.map((f) => (
-            <button key={f.key} onClick={() => setFilter(f.key)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all ${filter === f.key ? 'bg-[#F5C76B] text-black' : 'bg-black/40 border border-white/10 text-white/60 hover:text-white'}`}>
+            <Button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              variant={filter === f.key ? "primary" : "ghost"}
+              size="sm"
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all ${filter === f.key ? 'bg-[#F5C76B] text-black' : 'bg-black/40 border border-white/10 text-white/60 hover:text-white'}`}
+            >
               {f.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -123,7 +137,18 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
             {filteredItems.map((item, idx) => {
               const rarity = getRarityCode(item.definition?.rarity);
               return (
-                <motion.button key={item.id} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }} onClick={() => { if (item.item_type === 'card') setSelectedCard(item.item_id); else if (item.item_type === 'skill' || item.item_type === 'skill_scroll') setSelectedSkill(item.item_id); else onEquip(item); }}>
+                <motion.button 
+                  key={item.id} 
+                  initial={{ opacity: 0, scale: 0.8 }} 
+                  animate={{ opacity: 1, scale: 1 }} 
+                  transition={{ delay: idx * 0.03 }} 
+                  onClick={() => { if (item.item_type === 'card') setSelectedCard(item.item_id); else if (item.item_type === 'skill' || item.item_type === 'skill_scroll') setSelectedSkill(item.item_id); else onEquip(item); }}
+                  aria-label={`Ver detalles de ${item.definition?.name || item.name}`}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (item.item_type === 'card') setSelectedCard(item.item_id); else if (item.item_type === 'skill' || item.item_type === 'skill_scroll') setSelectedSkill(item.item_id); else onEquip(item); }}}
+                  className="text-left"
+                >
                   <RarityBorder rarity={item.definition?.rarity} className="transition-all hover:scale-105 active:scale-95">
                     <div className="w-full h-full rounded-lg bg-black/40 flex items-center justify-center relative overflow-hidden">
                       {item.item_type === 'card' && <img src={AssetService.getCardUrl(item.item_id)} alt="" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.src = AssetService.getCardUrlFallback(item.item_id); }} />}
