@@ -191,7 +191,7 @@ function CurrentObjective({ onNavigate }: any) {
         className="w-full bg-black/40 backdrop-blur-xl border border-white/5 p-4 rounded-2xl hover:border-[#F5C76B]/30 transition-all shadow-2xl relative overflow-hidden text-left"
       >
         <div className="flex items-center gap-3">
-           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F5C76B]/20 to-amber-900/40 border border-[#F5C76B]/30 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F5C76B]/20 to-[#F5C76B]/40 border border-[#F5C76B]/30 flex items-center justify-center">
                  <Castle className="w-5 h-5 text-[#F5C76B]" />
               </div>
               <div>
