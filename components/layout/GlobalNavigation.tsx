@@ -46,7 +46,7 @@ export function GlobalNavigation({ currentView, onNavigate }: GlobalNavigationPr
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.9, y: 2 }}
               onClick={() => onNavigate(tab.id as any)}
-              className="relative flex-1 flex flex-col items-center justify-center py-2 gap-1 group"
+              className="relative flex-1 flex flex-col items-center justify-center py-3 gap-1.5 group"
             >
               {isActive && (
                 <motion.div
@@ -58,7 +58,7 @@ export function GlobalNavigation({ currentView, onNavigate }: GlobalNavigationPr
 
               <div className="relative">
                 <tab.icon
-                  size={isActive ? 22 : 20}
+                  size={isActive ? 24 : 22}
                   className={`${isActive ? 'text-[#F5C76B]' : 'text-white/40'} group-hover:text-white transition-colors`}
                 />
                 {isActive && (
@@ -66,7 +66,7 @@ export function GlobalNavigation({ currentView, onNavigate }: GlobalNavigationPr
                 )}
               </div>
 
-              <span className={`text-[8px] font-black tracking-widest uppercase ${isActive ? 'text-white' : 'text-white/20'}`}>
+              <span className={`text-[7px] sm:text-[9px] font-black tracking-widest uppercase ${isActive ? 'text-white' : 'text-white/20'}`}>
                 {tab.label}
               </span>
 

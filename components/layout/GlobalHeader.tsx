@@ -28,7 +28,7 @@ export function GlobalHeader({ profile, onNavigate }: GlobalHeaderProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 pointer-events-auto">
+      <div className="flex items-center gap-1 sm:gap-3 pointer-events-auto">
         <ResourceItem icon={Zap} value={profile.energy || 0} maxValue={100} color="text-blue-400" />
         <ResourceItem icon={Coins} value={profile.currency || 0} color="text-[#F5C76B]" />
         <ResourceItem icon={Diamond} value={profile.premium_currency || 0} color="text-cyan-400" />
@@ -47,7 +47,7 @@ export function GlobalHeader({ profile, onNavigate }: GlobalHeaderProps) {
 
 function ResourceItem({ icon: Icon, value, maxValue, color }: any) {
   return (
-    <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/5 px-2.5 py-1.5 rounded-xl">
+    <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/5 px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-xl">
       <Icon size={14} className={color} />
       <div className="flex flex-col items-start leading-none">
         <span className="text-[11px] font-black text-white tabular-nums">

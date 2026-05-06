@@ -102,7 +102,7 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {FILTERS.map((f) => (
             <button key={f.key} onClick={() => setFilter(f.key)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all ${filter === f.key ? 'bg-[#F5C76B] text-black' : 'bg-black/40 border border-white/10 text-white/60 hover:text-white'}`}>
               {f.label}
@@ -119,7 +119,7 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
             <p className="text-sm font-stats">No hay objetos</p>
           </div>
         ) : (
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-4">
             {filteredItems.map((item, idx) => {
               const rarity = getRarityCode(item.definition?.rarity);
               return (

@@ -1,7 +1,7 @@
 'use client';
+
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { GlobalNavigation } from '@/components/layout/GlobalNavigation';
-
 import { useGameState } from '@/hooks/useGameState';
 import { RPGHomeView } from '@/components/views/RPGHomeView';
 import { TavernView } from '@/components/views/TavernView';
@@ -55,6 +55,7 @@ export default function Applet() {
                />;
       case 'tavern':
         return <TavernView 
+                 onBack={() => actions.navigateTo('home')}
                  onClaim={actions.handleClaimRecruit}
                />;
       case 'party':
@@ -167,6 +168,7 @@ export default function Applet() {
     }
   };
 
+  // Global keyboard navigation handler
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!state.isAuthenticated || state.error) return;
 
@@ -198,7 +200,7 @@ export default function Applet() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] aspect-square bg-purple-600/10 blur-[120px] rounded-full" />
       </div>
 
-      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl bg-[#0B1A2A] h-[100dvh] sm:h-[85vh] sm:max-h-[850px] shadow-[0_0_80px_rgba(0,0,0,0.9)] sm:rounded-[40px] overflow-hidden relative border-white/5 flex flex-col items-center sm:border">
+      <div className="w-full max-w-xl bg-[#0B1A2A] h-[100dvh] sm:h-[85vh] sm:max-h-[850px] shadow-[0_0_80px_rgba(0,0,0,0.9)] sm:rounded-[40px] overflow-hidden relative border-white/5 flex flex-col items-center sm:border">
 
         {/* Persistent Header */}
         {!["battle", "auth"].includes(state.view) && <GlobalHeader profile={state.profile} onNavigate={actions.navigateTo} />}
@@ -222,6 +224,7 @@ export default function Applet() {
         <GlobalNavigation currentView={state.view} onNavigate={actions.navigateTo} />
       </div>
 
+      {/* Global Card Details Modal */}
       {state.selectedCardId && (
         <CardModal 
           card={state.inventory.find(i => i.id === state.selectedCardId)}
