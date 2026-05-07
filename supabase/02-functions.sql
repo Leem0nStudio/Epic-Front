@@ -135,6 +135,23 @@ SELECT version INTO v_active_version FROM game_configs WHERE is_active = true LI
         v_p_leg := v_p_leg + 1;
         v_roll := random();
 
+        -- Determine rarity based on pity system
+        IF v_p_leg >= 50 OR random() < 0.02 THEN
+            v_rarity := 'legendary';
+            v_p_leg := 0;
+        ELSIF v_p_epic >= 25 OR random() < 0.08 THEN
+            v_rarity := 'epic';
+            v_p_epic := 0;
+        ELSIF random() < 0.25 THEN
+            v_rarity := 'rare';
+        ELSIF random() < 0.50 THEN
+            v_rarity := 'uncommon';
+        ELSE
+            v_rarity := 'common';
+        END IF;
+
+        -- Determine item type
+        v_roll := random();
         IF v_rarity = 'legendary' AND random() < 0.15 THEN
             v_target_type := 'job_core';
         ELSIF v_roll < 0.4 THEN
@@ -145,6 +162,7 @@ SELECT version INTO v_active_version FROM game_configs WHERE is_active = true LI
             v_target_type := 'skill';
         END IF;
 
+        -- Query item from appropriate table
         IF v_target_type = 'card' THEN
             SELECT id, name INTO v_target_id, v_target_name
             FROM cards WHERE rarity = v_rarity AND (version = v_active_version OR version IS NULL)
@@ -157,46 +175,41 @@ SELECT version INTO v_active_version FROM game_configs WHERE is_active = true LI
             SELECT id, name INTO v_target_id, v_target_name
             FROM skills WHERE rarity = v_rarity AND (version = v_active_version OR version IS NULL)
             ORDER BY random() LIMIT 1;
-        ELSE -- job_core
+        ELSE
             SELECT id, name INTO v_target_id, v_target_name
             FROM job_cores WHERE rarity = v_rarity AND (version = v_active_version OR version IS NULL)
             ORDER BY random() LIMIT 1;
         END IF;
 
-        v_roll := random();
-        IF v_rarity = 'legendary' AND random() < 0.15 THEN
-            v_target_type := 'job_core';
-        ELSIF v_roll < 0.4 THEN
-            v_target_type := 'card';
-        ELSIF v_roll < 0.7 THEN
-            v_target_type := 'weapon';
-        ELSE
-            v_target_type := 'skill';
-        END IF;
-
-        IF v_target_type = 'card' THEN
-            SELECT id, name INTO v_target_id, v_target_name
-            FROM cards WHERE rarity = v_rarity AND version = v_active_version
-            ORDER BY random() LIMIT 1;
-        ELSIF v_target_type = 'weapon' THEN
-            SELECT id, name INTO v_target_id, v_target_name
-            FROM weapons WHERE rarity = v_rarity AND version = v_active_version
-            ORDER BY random() LIMIT 1;
-        ELSIF v_target_type = 'skill' THEN
-            SELECT id, name INTO v_target_id, v_target_name
-            FROM skills WHERE rarity = v_rarity AND version = v_active_version
-            ORDER BY random() LIMIT 1;
-        ELSE -- job_core
-            SELECT id, name INTO v_target_id, v_target_name
-            FROM job_cores WHERE rarity = v_rarity AND version = v_active_version
-            ORDER BY random() LIMIT 1;
+        -- If no item found with rarity, try fallback to common
+        IF v_target_id IS NULL THEN
+            IF v_target_type = 'card' THEN
+                SELECT id, name INTO v_target_id, v_target_name
+                FROM cards WHERE rarity = 'common' AND (version = v_active_version OR version IS NULL)
+                ORDER BY random() LIMIT 1;
+            ELSIF v_target_type = 'weapon' THEN
+                SELECT id, name INTO v_target_id, v_target_name
+                FROM weapons WHERE rarity = 'common' AND (version = v_active_version OR version IS NULL)
+                ORDER BY random() LIMIT 1;
+            ELSIF v_target_type = 'skill' THEN
+                SELECT id, name INTO v_target_id, v_target_name
+                FROM skills WHERE rarity = 'common' AND (version = v_active_version OR version IS NULL)
+                ORDER BY random() LIMIT 1;
+            ELSE
+                SELECT id, name INTO v_target_id, v_target_name
+                FROM job_cores WHERE rarity = 'common' AND (version = v_active_version OR version IS NULL)
+                ORDER BY random() LIMIT 1;
+            END IF;
+            v_rarity := 'common';
         END IF;
 
         IF v_target_id IS NOT NULL THEN
+            -- Add to inventory
             INSERT INTO inventory (player_id, item_id, item_type)
             VALUES (v_user_id, v_target_id, v_target_type)
             ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + 1;
 
+            -- Return result
             res_item_id := v_target_id;
             res_item_name := v_target_name;
             res_item_rarity := v_rarity;
@@ -205,12 +218,14 @@ SELECT version INTO v_active_version FROM game_configs WHERE is_active = true LI
         END IF;
     END LOOP;
 
+    -- Deduct currency
     IF p_currency_type = 'premium' THEN
         UPDATE players SET premium_currency = premium_currency - v_total_cost WHERE id = v_user_id;
     ELSE
         UPDATE players SET currency = currency - v_total_cost WHERE id = v_user_id;
     END IF;
 
+    -- Update pity counters
     UPDATE gacha_state
     SET pulls_since_epic = v_p_epic, pulls_since_legendary = v_p_leg, last_pull_at = NOW()
     WHERE player_id = v_user_id;
