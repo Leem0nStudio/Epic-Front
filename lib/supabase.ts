@@ -31,6 +31,7 @@ function initializeSupabase() {
   
   try {
     const { supabaseUrl, supabaseAnonKey } = getSupabaseConfig();
+    console.log('[SUPABASE DEBUG] URL:', supabaseUrl, '| Key starts with:', supabaseAnonKey?.substring(0, 10));
     gameDebugger.info('supabase', 'Initializing Supabase client', { url: supabaseUrl });
     
     _supabase = createClient(supabaseUrl, supabaseAnonKey, {
