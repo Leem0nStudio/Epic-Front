@@ -48,10 +48,14 @@ BEGIN
     -- Add starter items to inventory
     INSERT INTO inventory (player_id, item_id, item_type, quantity)
     VALUES 
-        (v_user_id, 'weapon_wooden_sword', 'weapon', 1),
+        (v_user_id, 'weapon_sword_iron', 'weapon', 1),
         (v_user_id, 'card_power_up', 'card', 2),
-        (v_user_id, 'skill_fireball', 'skill', 1),
-        (v_user_id, 'card_light_heal', 'card', 1);
+        (v_user_id, 'skill_basic_attack', 'skill', 1),
+        (v_user_id, 'card_light_heal', 'card', 1),
+        (v_user_id, 'armor_leather', 'armor', 1),
+        (v_user_id, 'ring_copper', 'accessory', 1),
+        (v_user_id, 'boots_leather', 'boots', 1),
+        (v_user_id, 'mat_iron', 'material', 10);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -65,10 +69,14 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM inventory WHERE player_id = v_user_id) THEN
         INSERT INTO inventory (player_id, item_id, item_type, quantity)
         VALUES 
-            (v_user_id, 'weapon_wooden_sword', 'weapon', 1),
+            (v_user_id, 'weapon_sword_iron', 'weapon', 1),
             (v_user_id, 'card_power_up', 'card', 2),
-            (v_user_id, 'skill_fireball', 'skill', 1),
-            (v_user_id, 'card_light_heal', 'card', 1);
+            (v_user_id, 'skill_basic_attack', 'skill', 1),
+            (v_user_id, 'card_light_heal', 'card', 1),
+            (v_user_id, 'armor_leather', 'armor', 1),
+            (v_user_id, 'ring_copper', 'accessory', 1),
+            (v_user_id, 'boots_leather', 'boots', 1),
+            (v_user_id, 'mat_iron', 'material', 10);
     END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -553,7 +561,9 @@ CREATE OR REPLACE FUNCTION rpc_equip_skill(p_unit_id UUID, p_inventory_id UUID)
 RETURNS void AS $$
 DECLARE
     v_user_id UUID := auth.uid();
-    v_max_skills INTEGER := 5;
+    v_current_equipped JSONB;
+    v_skills TEXT[];
+    v_max_skills INTEGER := 2;
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM inventory
@@ -564,18 +574,26 @@ BEGIN
         RAISE EXCEPTION 'Skill not found in inventory';
     END IF;
 
-    IF EXISTS (SELECT 1 FROM units WHERE id = p_unit_id AND p_inventory_id = ANY(equipped_skill_instance_ids)) THEN
+    -- Get current equipped items
+    SELECT equipped_items INTO v_current_equipped FROM units WHERE id = p_unit_id;
+    v_current_equipped := COALESCE(v_current_equipped, '{}'::JSONB);
+    v_skills := COALESCE(v_current_equipped->'skills', ARRAY[]::TEXT[]);
+
+    -- Check if already equipped
+    IF p_inventory_id::TEXT = ANY(v_skills) THEN
         RAISE EXCEPTION 'Skill already equipped';
     END IF;
 
-    UPDATE units
-    SET equipped_skill_instance_ids =
-        CASE
-            WHEN array_length(equipped_skill_instance_ids, 1) >= v_max_skills
-            THEN equipped_skill_instance_ids
-            ELSE array_append(equipped_skill_instance_ids, p_inventory_id)
-        END
-    WHERE id = p_unit_id AND player_id = v_user_id;
+    -- Add if under max
+    IF array_length(v_skills, 1) < v_max_skills THEN
+        v_skills := array_append(v_skills, p_inventory_id::TEXT);
+        
+        UPDATE units
+        SET equipped_items = jsonb_set(v_current_equipped, '{skills}', to_jsonb(v_skills))
+        WHERE id = p_unit_id AND player_id = v_user_id;
+    ELSE
+        RAISE EXCEPTION 'Maximum skills equipped (max: %)', v_max_skills;
+    END IF;
 
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Unit not found';
@@ -832,5 +850,301 @@ BEGIN
     JOIN skill_modules sm ON sm.id = pls.skill_module_id
     WHERE pls.player_id = p_player_id
     ORDER BY pls.learned_at DESC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
+-- SECTION 12: PROGRESION V2.0 (Job Levels, Transcendence, Potentials)
+-- =====================================================
+
+-- Add player EXP with level up calculation
+CREATE OR REPLACE FUNCTION rpc_add_player_exp(p_player_id UUID, p_exp_gain INTEGER)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_current_exp INTEGER;
+    v_current_level INTEGER;
+    v_new_exp INTEGER;
+    v_new_level INTEGER;
+    v_exp_for_next INTEGER;
+    v_leveled_up BOOLEAN := FALSE;
+BEGIN
+    -- Use provided player_id or auth.uid()
+    v_user_id := COALESCE(p_player_id, v_user_id);
+
+    SELECT exp, level INTO v_current_exp, v_current_level FROM players WHERE id = v_user_id;
+    
+    v_new_exp := v_current_exp + p_exp_gain;
+    v_new_level := v_current_level;
+    
+    -- Calculate level up using formula: level * 100 EXP
+    WHILE v_new_exp >= (v_new_level * 100) LOOP
+        v_new_exp := v_new_exp - (v_new_level * 100);
+        v_new_level := v_new_level + 1;
+        v_leveled_up := TRUE;
+    END LOOP;
+
+    UPDATE players SET exp = v_new_exp, level = v_new_level WHERE id = v_user_id;
+
+    RETURN jsonb_build_object(
+        'leveledUp', v_leveled_up,
+        'newLevel', v_new_level,
+        'expGained', p_exp_gain,
+        'expRemaining', v_new_exp,
+        'expForNextLevel', v_new_level * 100
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Add unit EXP with level up and job level calculation
+CREATE OR REPLACE FUNCTION rpc_add_unit_exp(p_unit_id UUID, p_exp_gain INTEGER)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_current_exp INTEGER;
+    v_current_level INTEGER;
+    v_current_job TEXT;
+    v_job_levels JSONB;
+    v_current_job_exp INTEGER;
+    v_current_job_level INTEGER;
+    v_new_exp INTEGER;
+    v_new_level INTEGER;
+    v_new_job_exp INTEGER;
+    v_new_job_level INTEGER;
+    v_leveled_up BOOLEAN := FALSE;
+    v_job_leveled_up BOOLEAN := FALSE;
+    v_skill_points_gained INTEGER := 0;
+BEGIN
+    SELECT exp, level, current_job_id, job_levels INTO v_current_exp, v_current_level, v_current_job, v_job_levels
+    FROM units WHERE id = p_unit_id AND player_id = v_user_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Unit not found';
+    END IF;
+
+    -- Get current job level info
+    v_job_levels := COALESCE(v_job_levels, '{}'::JSONB);
+    v_current_job_exp := COALESCE((v_job_levels->v_current_job->>'exp')::INTEGER, 0);
+    v_current_job_level := COALESCE((v_job_levels->v_current_job->>'level')::INTEGER, 1);
+
+    -- Unit level progression (slower than player): level * 80
+    v_new_exp := v_current_exp + p_exp_gain;
+    v_new_level := v_current_level;
+
+    WHILE v_new_exp >= (v_new_level * 80) LOOP
+        v_new_exp := v_new_exp - (v_new_level * 80);
+        v_new_level := v_new_level + 1;
+        v_leveled_up := TRUE;
+    END LOOP;
+
+    -- Job level progression (half of unit EXP): level * 50
+    v_new_job_exp := v_current_job_exp + floor(p_exp_gain::NUMERIC / 2);
+    v_new_job_level := v_current_job_level;
+
+    WHILE v_new_job_exp >= (v_new_job_level * 50) LOOP
+        v_new_job_exp := v_new_job_exp - (v_new_job_level * 50);
+        v_new_job_level := v_new_job_level + 1;
+        v_job_leveled_up := TRUE;
+        v_skill_points_gained := v_skill_points_gained + 1;
+    END LOOP;
+
+    -- Update job levels
+    v_job_levels := jsonb_set(v_job_levels, 
+        ARRAY[v_current_job::TEXT],
+        jsonb_build_object(
+            'jobId', v_current_job,
+            'level', v_new_job_level,
+            'exp', v_new_job_exp,
+            'skillPoints', ((v_job_levels->v_current_job->>'skillPoints')::INTEGER + v_skill_points_gained),
+            'skillsUnlocked', COALESCE(v_job_levels->v_current_job->'skillsUnlocked', '[]'::JSONB)
+        )
+    );
+
+    UPDATE units 
+    SET exp = v_new_exp, 
+        level = v_new_level,
+        job_levels = v_job_levels
+    WHERE id = p_unit_id;
+
+    RETURN jsonb_build_object(
+        'unitLeveledUp', v_leveled_up,
+        'unitNewLevel', v_new_level,
+        'jobLeveledUp', v_job_leveled_up,
+        'jobNewLevel', v_new_job_level,
+        'skillPointsGained', v_skill_points_gained,
+        'expGained', p_exp_gain
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Invest skill point in job skill tree
+CREATE OR REPLACE FUNCTION rpc_invest_skill_point(
+    p_unit_id UUID, 
+    p_job_id TEXT, 
+    p_skill_id TEXT,
+    p_tier INTEGER
+)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_job_levels JSONB;
+    v_job_skills JSONB;
+    v_available_points INTEGER;
+    v_current_skill_level INTEGER;
+BEGIN
+    -- Get current progression data
+    SELECT job_levels, job_skills INTO v_job_levels, v_job_skills
+    FROM units WHERE id = p_unit_id AND player_id = v_user_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Unit not found';
+    END IF;
+
+    v_job_levels := COALESCE(v_job_levels, '{}'::JSONB);
+    v_job_skills := COALESCE(v_job_skills, '{}'::JSONB);
+
+    -- Get available skill points
+    v_available_points := COALESCE((v_job_levels->p_job_id->>'skillPoints')::INTEGER, 0);
+
+    IF v_available_points < 1 THEN
+        RAISE EXCEPTION 'No skill points available';
+    END IF;
+
+    -- Check tier prerequisites
+    IF p_tier > 1 THEN
+        v_current_skill_level := COALESCE((v_job_skills->p_job_id->p_skill_id)::INTEGER, 0);
+        IF v_current_skill_level = 0 THEN
+            RAISE EXCEPTION 'Unlock previous tier first';
+        END IF;
+    END IF;
+
+    -- Deduct point and add skill
+    v_job_levels := jsonb_set(v_job_levels, 
+        ARRAY[p_job_id, 'skillPoints'],
+        (v_available_points - 1)::TEXT::JSONB
+    );
+
+    v_current_skill_level := COALESCE((v_job_skills->p_job_id->p_skill_id)::INTEGER, 0);
+    v_job_skills := jsonb_set(v_job_skills,
+        ARRAY[p_job_id, p_skill_id],
+        (v_current_skill_level + 1)::TEXT::JSONB
+    );
+
+    UPDATE units 
+    SET job_levels = v_job_levels, job_skills = v_job_skills
+    WHERE id = p_unit_id;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'skillId', p_skill_id,
+        'newLevel', v_current_skill_level + 1,
+        'pointsRemaining', v_available_points - 1
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Transcend unit (awakening system)
+CREATE OR REPLACE FUNCTION rpc_transcend_unit(p_unit_id UUID)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_current_transcend INTEGER;
+    v_required_level INTEGER := 99;
+    v_max_transcend INTEGER := 5;
+BEGIN
+    SELECT transcendence_level INTO v_current_transcend FROM units 
+    WHERE id = p_unit_id AND player_id = v_user_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Unit not found';
+    END IF;
+
+    v_current_transcend := COALESCE(v_current_transcend, 0);
+
+    IF v_current_transcend >= v_max_transcend THEN
+        RAISE EXCEPTION 'Maximum transcendence level reached (%)', v_max_transcend;
+    END IF;
+
+    -- Check level requirement
+    IF (SELECT level FROM units WHERE id = p_unit_id) < v_required_level THEN
+        RAISE EXCEPTION 'Requires level % to transcend', v_required_level;
+    END IF;
+
+    UPDATE units SET transcendence_level = v_current_transcend + 1
+    WHERE id = p_unit_id;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'newTranscendenceLevel', v_current_transcend + 1,
+        'bonusStats', jsonb_build_object(
+            'hp', 0.1 * (v_current_transcend + 1),
+            'atk', 0.1 * (v_current_transcend + 1),
+            'def', 0.1 * (v_current_transcend + 1)
+        )
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Unlock potential
+CREATE OR REPLACE FUNCTION rpc_unlock_potential(p_unit_id UUID, p_potential_id TEXT)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_potentials TEXT[];
+    v_potential RECORD;
+    v_unit_level INTEGER;
+    v_job_level INTEGER;
+    v_transcend_level INTEGER;
+    v_can_unlock BOOLEAN := FALSE;
+    v_job_levels JSONB;
+    v_current_job TEXT;
+BEGIN
+    SELECT potentials_unlocked, level, current_job_id, transcendence_level, job_levels
+    INTO v_potentials, v_unit_level, v_current_job, v_transcend_level, v_job_levels
+    FROM units WHERE id = p_unit_id AND player_id = v_user_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Unit not found';
+    END IF;
+
+    -- Check if already unlocked
+    IF p_potential_id = ANY(COALESCE(v_potentials, ARRAY[]::TEXT[])) THEN
+        RAISE EXCEPTION 'Potential already unlocked';
+    END IF;
+
+    -- Get potential requirements
+    SELECT * INTO v_potential FROM potentials WHERE id = p_potential_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Potential not found';
+    END IF;
+
+    -- Check requirements
+    v_job_levels := COALESCE(v_job_levels, '{}'::JSONB);
+    v_job_level := COALESCE((v_job_levels->v_current_job->>'level')::INTEGER, 0);
+
+    CASE v_potential.requirement_type
+        WHEN 'level' THEN
+            v_can_unlock := v_unit_level >= v_potential.requirement_value;
+        WHEN 'job_level' THEN
+            v_can_unlock := v_job_level >= v_potential.requirement_value;
+        WHEN 'transcendence' THEN
+            v_can_unlock := v_transcend_level >= v_potential.requirement_value;
+    END CASE;
+
+    IF NOT v_can_unlock THEN
+        RAISE EXCEPTION 'Requirements not met: % %', 
+            v_potential.requirement_type, v_potential.requirement_value;
+    END IF;
+
+    -- Unlock potential
+    v_potentials := COALESCE(v_potentials, ARRAY[]::TEXT[]) || p_potential_id;
+    UPDATE units SET potentials_unlocked = v_potentials WHERE id = p_unit_id;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'potentialId', p_potential_id,
+        'potentialName', v_potential.name,
+        'statBonus', v_potential.stat_bonus
+    );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
