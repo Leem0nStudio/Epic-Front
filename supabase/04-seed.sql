@@ -171,7 +171,7 @@ INSERT INTO potentials (id, version, name, description, potential_type, requirem
 -- JOBS (Actualizados con skill_tree y sistema v2.0)
 -- ============================================================================
 -- Jobs Base
-INSERT INTO jobs (id, version, name, display_name, description, tier, job_type, parent_job_id, is_transcendence, stat_modifiers, bonus_stats_at_max, allowed_weapons, recommended_affinity, max_job_level, skill_points_per_level, skills_unlocked, passive_effects, evolution_requirements, alternative_jobs) VALUES
+INSERT INTO jobs (id, version, name, display_name, description, tier, job_type, parent_job_id, is_transcendence, stat_modifiers, bonus_stats_at_max, allowed_weapons, recommended_affinity, max_job_level, skill_points_per_level, skills_unlocked, passive_effects, evolution_requirements, alternative_jobs, transcendence_requirement) VALUES
 ('novice', 'v1.0', 'Novato', 'Novato', 'Clase inicial de todo guerrero', 1, 'hybrid', NULL, false, 
 '{"hp": 1.0, "atk": 1.0, "def": 1.0, "matk": 1.0, "mdef": 1.0, "agi": 1.0}'::jsonb,
 '{"hp": 0, "atk": 0, "def": 0, "agi": 0}'::jsonb,
@@ -181,7 +181,8 @@ ARRAY['sword', 'axe', 'bow', 'staff', 'dagger'],
 '["Ataque Básico", "Defensa Básica"]'::jsonb,
 ARRAY[]::text[],
 '{"minLevel": 10, "materials": [], "currencyCost": 100}'::jsonb,
-ARRAY['swordman', 'mage', 'archer', 'priest']),
+ARRAY['swordman', 'mage', 'archer', 'priest'],
+NULL),
 
 -- Jobs Tier 2
 ('swordman', 'v1.0', 'Espadachín', 'Espadachín', 'Guerrero especializado en espadas', 2, 'physical', 'novice', false,
@@ -193,7 +194,8 @@ ARRAY['sword', 'axe'],
 '["Corte", "Parada", "Furia"]'::jsonb,
 ARRAY['pasive_atk_up'],
 '{"minLevel": 15, "materials": [{"itemId": "mat_iron", "amount": 10}], "currencyCost": 500}'::jsonb,
-ARRAY['knight', 'berserker']),
+ARRAY['knight', 'berserker'],
+NULL),
 
 ('mage', 'v1.0', 'Mago', 'Mago', 'Usuario de magia arcana', 2, 'magic', 'novice', false,
 '{"hp": 0.9, "atk": 0.9, "def": 0.9, "matk": 1.3, "mdef": 1.2, "agi": 1.0}'::jsonb,
@@ -204,7 +206,8 @@ ARRAY['staff', 'wand'],
 '["Bola de Fuego", "Escudo Mágico", "Meditación"]'::jsonb,
 ARRAY['passive_matk_up'],
 '{"minLevel": 15, "materials": [{"itemId": "mat_crystal", "amount": 10}], "currencyCost": 500}'::jsonb,
-ARRAY['wizard', 'warlock']),
+ARRAY['wizard', 'warlock'],
+NULL),
 
 ('archer', 'v1.0', 'Arquero', 'Arquero', 'Experto en combate a distancia', 2, 'ranged', 'novice', false,
 '{"hp": 1.0, "atk": 1.2, "def": 0.9, "matk": 0.9, "mdef": 0.9, "agi": 1.3}'::jsonb,
@@ -215,7 +218,8 @@ ARRAY['bow', 'crossbow'],
 '["Disparo Preciso", "Flecha Envolvente", "Tiro Rápido"]'::jsonb,
 ARRAY['passive_crit_up'],
 '{"minLevel": 15, "materials": [{"itemId": "mat_wood", "amount": 10}], "currencyCost": 500}'::jsonb,
-ARRAY['ranger', 'hunter']),
+ARRAY['ranger', 'hunter'],
+NULL),
 
 ('priest', 'v1.0', 'Sacerdote', 'Sacerdote', 'Sanador y protector sagrado', 2, 'support', 'novice', false,
 '{"hp": 1.1, "atk": 0.8, "def": 1.1, "matk": 1.1, "mdef": 1.2, "agi": 1.0}'::jsonb,
@@ -226,7 +230,8 @@ ARRAY['staff', 'mace'],
 '["Sanación", "Protección Divina", "Luz Sagrada"]'::jsonb,
 ARRAY['passive_heal_up'],
 '{"minLevel": 15, "materials": [{"itemId": "mat_herb", "amount": 10}], "currencyCost": 500}'::jsonb,
-ARRAY['cleric', 'monk']);
+ARRAY['cleric', 'monk'],
+NULL);
 
 -- Jobs Tier 3 (Evoluciones)
 ('knight', 'v1.0', 'Caballero', 'Caballero', 'Guerrero blindado con espadas', 3, 'physical', 'swordman', false,
@@ -238,6 +243,7 @@ ARRAY['sword'],
 '["Escudo Divino", "Carga de Caballería", "Defensa Total"]'::jsonb,
 ARRAY['passive_def_up', 'passive_block_up'],
 '{"minLevel": 30, "materials": [{"itemId": "mat_gold", "amount": 5}], "currencyCost": 2000}'::jsonb,
+NULL,
 NULL),
 
 ('berserker', 'v1.0', 'Berserker', 'Berserker', 'Guerrero furioso de combate', 3, 'physical', 'swordman', false,
@@ -249,6 +255,7 @@ ARRAY['axe', 'sword'],
 '["Furia Salvaje", "Corte Giratorio", "Golpe Demencial"]'::jsonb,
 ARRAY['passive_atk_up', 'passive_crit_up'],
 '{"minLevel": 30, "materials": [{"itemId": "mat_dragon_scale", "amount": 3}], "currencyCost": 2500}'::jsonb,
+NULL,
 NULL),
 
 ('wizard', 'v1.0', 'Mago', 'Mago', 'Maestro del fuego y hielo', 3, 'magic', 'mage', false,
@@ -260,6 +267,7 @@ ARRAY['staff', 'wand'],
 '["Meteorito", "Tormenta de Hielo", "Portales"]'::jsonb,
 ARRAY['passive_matk_up', 'passive_mdef_up'],
 '{"minLevel": 30, "materials": [{"itemId": "mat_crystal", "amount": 10}], "currencyCost": 2000}'::jsonb,
+NULL,
 NULL),
 
 ('wizard_dark', 'v1.0', 'Brujo', 'Brujo', 'Usuario de magia oscura', 3, 'magic', 'mage', false,
@@ -271,6 +279,7 @@ ARRAY['staff', 'wand'],
 '["Rayo Negro", "Canalizar Alma", "召唤"]'::jsonb,
 ARRAY['passive_matk_up', 'passive_crit_up'],
 '{"minLevel": 30, "materials": [{"itemId": "mat_void_essence", "amount": 2}], "currencyCost": 3000}'::jsonb,
+NULL,
 NULL),
 
 ('ranger', 'v1.0', 'Cazador', 'Cazador', 'Maestro del arco', 3, 'ranged', 'archer', false,
@@ -282,6 +291,7 @@ ARRAY['bow'],
 '["Lluvia de Flechas", "Trampa de Pinchos", "Disparo Mortal"]'::jsonb,
 ARRAY['passive_crit_up', 'passive_dodge_up'],
 '{"minLevel": 30, "materials": [{"itemId": "mat_wood", "amount": 15}], "currencyCost": 2000}'::jsonb,
+NULL,
 NULL),
 
 ('ranger_beast', 'v1.0', 'Bestia', 'Domador de Bestias', 'Cazador con compañero beast', 3, 'ranged', 'archer', false,
@@ -293,6 +303,7 @@ ARRAY['bow', 'dagger'],
 '["Llamada de Bestia", "Embestida Salvaje", "Instinto Salvaje"]'::jsonb,
 ARRAY['passive_atk_up', 'passive_hp_up'],
 '{"minLevel": 30, "materials": [{"itemId": "mat_herb", "amount": 10}], "currencyCost": 1800}'::jsonb,
+NULL,
 NULL),
 
 ('cleric', 'v1.0', 'Clérigo', 'Clérigo', 'Sacerdote guerrero sagrado', 3, 'support', 'priest', false,
@@ -304,6 +315,7 @@ ARRAY['staff', 'mace'],
 '["Santa Explisión", "Resurrección", "Arma Sagrada"]'::jsonb,
 ARRAY['passive_heal_up', 'passive_mdef_up'],
 '{"minLevel": 30, "materials": [{"itemId": "mat_phoenix_feather", "amount": 1}], "currencyCost": 2500}'::jsonb,
+NULL,
 NULL),
 
 ('monk', 'v1.0', 'Monje', 'Monje', 'Arte marcial espiritual', 3, 'support', 'priest', false,
@@ -315,6 +327,7 @@ ARRAY['fist', 'staff'],
 '["Patada Voladora", "Puño de Energia", "Estado de Zen"]'::jsonb,
 ARRAY['passive_atk_up', 'passive_agi_up'],
 '{"minLevel": 30, "materials": [{"itemId": "mat_gold", "amount": 5}], "currencyCost": 2000}'::jsonb,
+NULL,
 NULL);
 
 -- ============================================================================
