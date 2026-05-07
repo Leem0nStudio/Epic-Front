@@ -805,7 +805,7 @@ BEGIN
 
     INSERT INTO player_learned_skills (player_id, skill_module_id)
     VALUES (p_player_id, v_skill_module_id)
-    ON CONFLICT DO NOTHING
+    ON CONFLICT (player_id, skill_module_id) DO NOTHING
     RETURNING id INTO v_learned_skill_id;
 
     IF v_learned_skill_id IS NULL THEN
