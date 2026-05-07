@@ -100,6 +100,16 @@ CREATE TABLE IF NOT EXISTS skills (
     rarity TEXT NOT NULL
 );
 
+-- Materials para evolución y crafting
+CREATE TABLE IF NOT EXISTS materials (
+    id TEXT PRIMARY KEY,
+    version TEXT REFERENCES game_configs(version),
+    name TEXT NOT NULL,
+    rarity TEXT NOT NULL CHECK (rarity IN ('common', 'rare', 'epic', 'legendary', 'mythic')),
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS cards (
     id TEXT PRIMARY KEY,
     version TEXT REFERENCES game_configs(version),
@@ -551,6 +561,13 @@ CREATE POLICY "Allow read cards" ON cards FOR SELECT TO authenticated USING (tru
 CREATE POLICY "Allow read weapons" ON weapons FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Allow read jobs" ON jobs FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Allow read job_cores" ON job_cores FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read materials" ON materials FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read potentials" ON potentials FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read job_skill_trees" ON job_skill_trees FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read equipment_sets" ON equipment_sets FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read armors" ON armors FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read accessories" ON accessories FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read boots" ON boots FOR SELECT TO authenticated USING (true);
 
 -- =====================================================
 -- SECTION 9: GRANTS
@@ -570,6 +587,13 @@ GRANT SELECT ON skills TO authenticated;
 GRANT SELECT ON cards TO authenticated;
 GRANT SELECT ON weapons TO authenticated;
 GRANT SELECT ON job_cores TO authenticated;
+GRANT SELECT ON materials TO authenticated;
+GRANT SELECT ON potentials TO authenticated;
+GRANT SELECT ON job_skill_trees TO authenticated;
+GRANT SELECT ON equipment_sets TO authenticated;
+GRANT SELECT ON armors TO authenticated;
+GRANT SELECT ON accessories TO authenticated;
+GRANT SELECT ON boots TO authenticated;
 
 -- New Skill System
 GRANT SELECT ON tags TO authenticated;
