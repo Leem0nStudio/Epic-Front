@@ -7,7 +7,8 @@
 -- GAME CONFIG
 -- ============================================================================
 INSERT INTO game_configs (version, is_active, config_data) VALUES 
-('v1.0', true, '{"gameName": "Epic RPG", "maxLevel": 99, "maxJobLevel": 50}');
+('v1.0', true, '{"gameName": "Epic RPG", "maxLevel": 99, "maxJobLevel": 50}')
+ON CONFLICT (version) DO NOTHING;
 
 -- ============================================================================
 -- EQUIPMENT SETS (Ragnarok/Brave Frontier style)
@@ -394,7 +395,8 @@ INSERT INTO skill_fragments (id, version, name, description, piece_count, rarity
 INSERT INTO chapters (id, version, index_num, name, description) VALUES
 ('chapter_1', 'v1.0', 1, 'Bosque de los Inicios', 'El punto de partida de tu aventura'),
 ('chapter_2', 'v1.0', 2, 'Cueva Oscura', 'Un lugar lleno de peligros'),
-('chapter_3', 'v1.0', 3, 'Montaña de los Gigantes', 'El camino hacia la grandeza');
+('chapter_3', 'v1.0', 3, 'Montaña de los Gigantes', 'El camino hacia la grandeza')
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO stages (id, version, chapter_id, index_num, name, description, energy_cost, enemies, rewards, first_clear_rewards, star_conditions, unlock_requirements) VALUES
 -- Chapter 1 Stages
@@ -461,7 +463,8 @@ NULL),
 '{"currency": 200, "exp": 150, "materials": []}'::jsonb,
 '{"currency": 500, "exp": 250, "materials": [{"itemId": "mat_dragon_scale", "amount": 1}, {"itemId": "mat_gold", "amount": 3}]}'::jsonb,
 '[{"stars": 1, "condition": "win"}, {"stars": 2, "condition": "no_deaths"}, {"stars": 3, "condition": "turns_le_10"}]'::jsonb,
-'{"stage_id": "stage_3_2"}'::jsonb);
+'{"stage_id": "stage_3_2"}'::jsonb)
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
 -- INIT PLAYER DATA
