@@ -265,7 +265,14 @@ export class AssetService {
     if (id.includes('lamia')) return `${this.UI_PATH}/ui_card_lamia_queen_256.png`;
     
     const cleanId = id.replace(/^card_/, '');
-    return `${this.ITEMS_PATH}/card_${cleanId}.png`;
+    const tryPath = `${this.ITEMS_PATH}/card_${cleanId}.png`;
+    // Return a placeholder if the image likely doesn't exist
+    return tryPath;
+  }
+
+  // Universal fallback for any image that might not exist
+  static getUniversalFallback(): string {
+    return '/assets/ui/ui_icon_novice_64.png';
   }
 
   static getArmorIconUrl(armorId: string): string {
