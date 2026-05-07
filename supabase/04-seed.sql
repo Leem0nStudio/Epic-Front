@@ -54,7 +54,8 @@ NULL),
 '{"atk": 15, "mdef": 10, "water_res": 10}'::jsonb,
 '{"atk": 30, "mdef": 20, "water_res": 20, "dodge": 5}'::jsonb,
 '{"atk": 45, "mdef": 30, "water_res": 30, "dodge": 10, "freeze_chance": 0.1}'::jsonb,
-NULL);
+NULL)
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
 -- WEAPONS (Armas con elementos y sets)
@@ -79,7 +80,8 @@ INSERT INTO weapons (id, version, name, description, weapon_type, rarity, elemen
 -- Bastones (staff)
 ('weapon_staff_wood', 'v1.0', 'Bastón de Madera', 'Bastón básico de mago', 'staff', 'common', 'none', 1, NULL, '{"matk": 12, "mdef": 2}'::jsonb, 40),
 ('weapon_staff_crystal', 'v1.0', 'Bastón de Cristal', 'Bastón de cristal mágico', 'staff', 'rare', 'water', 18, 'set_mage', '{"matk": 55, "mdef": 15, "hp": 30}'::jsonb, 700),
-('weapon_staff_legend', 'v1.0', 'Bastón del Archimago', 'Bastón legendario del archimago', 'staff', 'legendary', 'none', 45, 'set_mage', '{"matk": 120, "mdef": 40, "agi": 10, "cooldown_reduce": 0.15}'::jsonb, 3500);
+('weapon_staff_legend', 'v1.0', 'Bastón del Archimago', 'Bastón legendario del archimago', 'staff', 'legendary', 'none', 45, 'set_mage', '{"matk": 120, "mdef": 40, "agi": 10, "cooldown_reduce": 0.15}'::jsonb, 3500)
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
 -- ARMORS (Armaduras con elementos y sets)
