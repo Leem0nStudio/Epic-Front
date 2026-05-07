@@ -7,6 +7,20 @@ import { gameDebugger } from '@/lib/debug';
 import type { EquipmentSlot } from '@/lib/types/game-types';
 import type { JobDefinition } from '../rpg-system/types';
 
+async function getCurrentPlayerId(): Promise<string | null> {
+  if (!supabase) return null;
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id || null;
+}
+
+async function getPlayerIdWithValidation(requiredPlayerId?: string): Promise<string> {
+  const playerId = requiredPlayerId || await getCurrentPlayerId();
+  if (!playerId) {
+    throw new Error('Player not authenticated');
+  }
+  return playerId;
+}
+
 // Límites de equipamiento (como RPGs profesionales)
 const MAX_CARDS = 3;
 const MAX_GACHA_SKILLS = 2;
@@ -22,36 +36,42 @@ export class EquipmentService {
   /**
    * Valida si un item puede ser equipado en una ranura específica
    * Incluye: level requirement, job restrictions, slot compatibility
+   * Version 2.1 - Validación de ownership
    */
   static async validateEquip(
     unitId: string, 
     itemInstanceId: string, 
-    targetSlot: EquipmentSlot
+    targetSlot: EquipmentSlot,
+    playerId?: string
   ): Promise<EquipValidationResult> {
     if (!supabase) {
       return { valid: false, error: 'Supabase no inicializado' };
     }
 
-    // 1. Get unit data
+    const resolvedPlayerId = await getPlayerIdWithValidation(playerId);
+
+    // 1. Get unit data with player ownership check
     const { data: unit, error: unitError } = await supabase
       .from('units')
       .select('*, current_job:jobs!inner(*)')
       .eq('id', unitId)
+      .eq('player_id', resolvedPlayerId)
       .single();
 
     if (unitError || !unit) {
-      return { valid: false, error: 'Unidad no encontrada' };
+      return { valid: false, error: 'Unidad no encontrada o acceso denegado' };
     }
 
-    // 2. Get item definition from inventory
+    // Validate item belongs to same player
     const { data: inventoryItem } = await supabase
       .from('inventory')
       .select('*, item_id')
       .eq('id', itemInstanceId)
+      .eq('player_id', resolvedPlayerId)
       .single();
 
     if (!inventoryItem) {
-      return { valid: false, error: 'Item no encontrado en inventario' };
+      return { valid: false, error: 'Item no encontrado en inventario o acceso denegado' };
     }
 
     // 3. Get item definition based on type
@@ -243,16 +263,27 @@ export class EquipmentService {
     };
   }
 
-  /**
-   * Desequipa un item de una unidad
+/**
+   * Sistema flexible basado en JSONB (como Brave Frontier)
+   * Version 2.1 - Validación de ownership
    */
-  static async unequipItem(
+  static async equipItem(
     unitId: string, 
     itemInstanceId: string, 
-    slot: EquipmentSlot
+    targetSlot: EquipmentSlot,
+    playerId?: string
   ): Promise<{ success: boolean; message?: string }> {
     if (!supabase) {
       return { success: false, message: 'Supabase no inicializado' };
+    }
+
+    const resolvedPlayerId = await getPlayerIdWithValidation(playerId);
+
+    // Validate first
+    const validation = await this.validateEquip(unitId, itemInstanceId, targetSlot, playerId);
+    if (!validation.valid) {
+      gameDebugger.warn('unit', 'Equip validation failed', { error: validation.error });
+      return { success: false, message: validation.error };
     }
 
     const { data: unit } = await supabase
@@ -321,6 +352,60 @@ export class EquipmentService {
         ? `Intercambiado: ${equipResult.message}`
         : `Error en intercambio: ${equipResult.message}`
     };
+  }
+
+  /**
+   * Des-equipa un item de una unidad
+   * Version 2.1 - Validación de ownership
+   */
+  static async unequipItem(
+    unitId: string,
+    itemInstanceId: string,
+    slot: EquipmentSlot,
+    playerId?: string
+  ): Promise<{ success: boolean; message?: string }> {
+    if (!supabase) {
+      return { success: false, message: 'Supabase no inicializado' };
+    }
+
+    const resolvedPlayerId = await getPlayerIdWithValidation(playerId);
+
+    // Verify ownership
+    const { data: unit } = await supabase
+      .from('units')
+      .select('equipped_items')
+      .eq('id', unitId)
+      .eq('player_id', resolvedPlayerId)
+      .single();
+
+    if (!unit) {
+      return { success: false, message: 'Unidad no encontrada o acceso denegado' };
+    }
+
+    const currentEquipped = unit.equipped_items || {};
+    let newEquipped = { ...currentEquipped };
+
+    // Handle different slot types
+    if (slot === 'card') {
+      const cards = [...(currentEquipped.cards || [])];
+      const idx = cards.indexOf(itemInstanceId);
+      if (idx > -1) cards.splice(idx, 1);
+      newEquipped.cards = cards;
+    } else if (slot === 'skill') {
+      const skills = [...(currentEquipped.skills || [])];
+      const idx = skills.indexOf(itemInstanceId);
+      if (idx > -1) skills.splice(idx, 1);
+      newEquipped.skills = skills;
+    } else {
+      delete newEquipped[slot];
+    }
+
+    await supabase
+      .from('units')
+      .update({ equipped_items: newEquipped })
+      .eq('id', unitId);
+
+    return { success: true, message: 'Item des-equipado correctamente' };
   }
 
   /**

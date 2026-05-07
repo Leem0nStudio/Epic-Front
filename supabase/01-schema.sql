@@ -645,14 +645,17 @@ ALTER TABLE equipment_sets ENABLE ROW LEVEL SECURITY;
 -- Armors
 GRANT SELECT ON armors TO authenticated;
 ALTER TABLE armors ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow read armors" ON armors FOR SELECT TO authenticated USING (true);
 
 -- Accessories
 GRANT SELECT ON accessories TO authenticated;
 ALTER TABLE accessories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow read accessories" ON accessories FOR SELECT TO authenticated USING (true);
 
 -- Boots
 GRANT SELECT ON boots TO authenticated;
 ALTER TABLE boots ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow read boots" ON boots FOR SELECT TO authenticated USING (true);
 
 -- =====================================================
 -- CAMPAIGN TABLES (Chapters & Stages)

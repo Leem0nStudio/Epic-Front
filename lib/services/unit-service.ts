@@ -1,11 +1,27 @@
 // Unit Service - Gestión de unidades y equipamiento
 // Version: 2.0 - Sistema de equipamiento expandido
+// Version: 2.1 - Consolidado con validación de player ownership
 
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { gameDebugger } from '@/lib/debug';
 import { calculateFinalStats, getEmptyEquipment, type FinalStatsResult } from './build-calculator';
 import { EquipmentService } from './equipment-service';
 import type { EquipmentSlot } from '@/lib/types/game-types';
+
+async function getCurrentPlayerId(): Promise<string | null> {
+  if (!supabase) return null;
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id || null;
+}
+
+async function getPlayerIdWithValidation(requiredPlayerId?: string): Promise<string> {
+  const playerId = requiredPlayerId || await getCurrentPlayerId();
+  if (!playerId) {
+    throw new Error('Player not authenticated');
+  }
+  return playerId;
+}
 
 interface EquipmentData {
   weapon: any | null;
@@ -17,18 +33,27 @@ interface EquipmentData {
 }
 
 export class UnitService {
-  static async getPlayerRoster() {
+  static async getPlayerRoster(playerId?: string) {
     if (!supabase) return [];
-    const { data, error } = await supabase.from('units').select('*').order('created_at', { ascending: true });
-    if (error) return [];
-    return data;
+    const resolvedPlayerId = await getPlayerIdWithValidation(playerId);
+    const { data, error } = await supabase
+      .from('units')
+      .select('*')
+      .eq('player_id', resolvedPlayerId)
+      .order('created_at', { ascending: true });
+    if (error) {
+      gameDebugger.error('unit-service', 'getPlayerRoster failed', error);
+      return [];
+    }
+    return data || [];
   }
 
   /**
    * Obtiene los detalles de una unidad incluyendo equipamiento
    * Sistema v2 - Usa JSONB equipped_items
+   * Version 2.1 - Validación de ownership
    */
-  static async getUnitDetails(unitId: string): Promise<{
+  static async getUnitDetails(unitId: string, playerId?: string): Promise<{
     unit: any;
     job: any;
     equipment: EquipmentData;
@@ -38,8 +63,15 @@ export class UnitService {
     if (!supabase) throw new Error("Database connection unavailable");
 
     try {
-        const { data: unit, error: unitError } = await supabase.from('units').select('*').eq('id', unitId).single();
-        if (unitError || !unit) throw new Error("Unit not found");
+        const resolvedPlayerId = await getPlayerIdWithValidation(playerId);
+        
+        const { data: unit, error: unitError } = await supabase
+          .from('units')
+          .select('*')
+          .eq('id', unitId)
+          .eq('player_id', resolvedPlayerId)
+          .single();
+        if (unitError || !unit) throw new Error("Unit not found or access denied");
 
         const { data: job, error: jobError } = await supabase.from('jobs').select('*').eq('id', unit.current_job_id).single();
         if (jobError || !job) throw new Error("Job definition missing");
@@ -154,8 +186,15 @@ export class UnitService {
     };
   }
 
-  static async evolveUnit(unitId: string, targetJobId: string) {
+  static async evolveUnit(unitId: string, targetJobId: string, playerId?: string) {
     if (!supabase) throw new Error("Action unavailable in demo mode");
+    const resolvedPlayerId = await getPlayerIdWithValidation(playerId);
+    
+    const { data: unit } = await supabase.from('units').select('player_id').eq('id', unitId).single();
+    if (!unit || unit.player_id !== resolvedPlayerId) {
+      throw new Error("Unit not found or access denied");
+    }
+    
     const { error } = await supabase.rpc('rpc_evolve_unit', {
       p_unit_id: unitId,
       p_target_job_id: targetJobId
@@ -171,8 +210,13 @@ export class UnitService {
     return data || [];
   }
 
-  static async releaseUnit(unitId: string) {
+  static async releaseUnit(unitId: string, playerId?: string) {
     if (!supabase) return;
+    const resolvedPlayerId = await getPlayerIdWithValidation(playerId);
+    const { data: unit } = await supabase.from('units').select('player_id').eq('id', unitId).single();
+    if (!unit || unit.player_id !== resolvedPlayerId) {
+      throw new Error("Unit not found or access denied");
+    }
     await supabase.from('units').delete().eq('id', unitId);
   }
 }
