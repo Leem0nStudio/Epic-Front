@@ -564,10 +564,8 @@ CREATE POLICY "Allow read job_cores" ON job_cores FOR SELECT TO authenticated US
 CREATE POLICY "Allow read materials" ON materials FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Allow read potentials" ON potentials FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Allow read job_skill_trees" ON job_skill_trees FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow read equipment_sets" ON equipment_sets FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow read armors" ON armors FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow read accessories" ON accessories FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow read boots" ON boots FOR SELECT TO authenticated USING (true);
+
+-- Section 10 handles equipment tables RLS
 
 -- =====================================================
 -- SECTION 9: GRANTS
@@ -637,24 +635,21 @@ CREATE POLICY "Allow read player_learned_skills" ON player_learned_skills FOR SE
 -- =====================================================
 -- SECTION 10: EQUIPMENT TABLES RLS & GRANTS
 -- Nuevo sistema de equipamiento (Ragnarok/Brave Frontier style)
+-- Policies are in Section 8 to avoid duplicates
 -- =====================================================
 
 -- Equipment Sets
 GRANT SELECT ON equipment_sets TO authenticated;
 ALTER TABLE equipment_sets ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow read equipment_sets" ON equipment_sets FOR SELECT TO authenticated USING (true);
 
 -- Armors
 GRANT SELECT ON armors TO authenticated;
 ALTER TABLE armors ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow read armors" ON armors FOR SELECT TO authenticated USING (true);
 
 -- Accessories
 GRANT SELECT ON accessories TO authenticated;
 ALTER TABLE accessories ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow read accessories" ON accessories FOR SELECT TO authenticated USING (true);
 
 -- Boots
 GRANT SELECT ON boots TO authenticated;
 ALTER TABLE boots ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow read boots" ON boots FOR SELECT TO authenticated USING (true);
