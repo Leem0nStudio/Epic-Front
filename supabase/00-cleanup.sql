@@ -56,6 +56,8 @@ DROP TABLE IF EXISTS materials CASCADE;
 DROP TABLE IF EXISTS skill_fragments CASCADE;
 DROP TABLE IF EXISTS jobs CASCADE;
 DROP TABLE IF EXISTS game_configs CASCADE;
+DROP TABLE IF EXISTS stages CASCADE;
+DROP TABLE IF EXISTS chapters CASCADE;
 
 -- =====================================================
 -- SECTION 2: DROP ALL FUNCTIONS (RPCs)
