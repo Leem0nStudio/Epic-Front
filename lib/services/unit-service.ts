@@ -1,27 +1,14 @@
 // Unit Service - Gestión de unidades y equipamiento
 // Version: 2.0 - Sistema de equipamiento expandido
-// Version: 2.1 - Consolidado con validación de player ownership
+// Version: 2.2 - Usa player-auth-utils compartido
 
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { gameDebugger } from '@/lib/debug';
 import { calculateFinalStats, getEmptyEquipment, type FinalStatsResult } from './build-calculator';
 import { EquipmentService } from './equipment-service';
+import { getCurrentPlayerId, getPlayerIdWithValidation } from './player-auth-utils';
 import type { EquipmentSlot } from '@/lib/types/game-types';
-
-async function getCurrentPlayerId(): Promise<string | null> {
-  if (!supabase) return null;
-  const { data: { user } } = await supabase.auth.getUser();
-  return user?.id || null;
-}
-
-async function getPlayerIdWithValidation(requiredPlayerId?: string): Promise<string> {
-  const playerId = requiredPlayerId || await getCurrentPlayerId();
-  if (!playerId) {
-    throw new Error('Player not authenticated');
-  }
-  return playerId;
-}
 
 interface EquipmentData {
   weapon: any | null;

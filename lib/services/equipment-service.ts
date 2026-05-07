@@ -1,25 +1,12 @@
 // Equipment Service - Sistema de equipamiento profesional
 // Version: 2.0 - Similar a Ragnarok Online / Brave Frontier
-// Incluye: validaciones de level, job restrictions, elementos, set bonuses
+// Version: 2.2 - Usa player-auth-utils compartido
 
 import { supabase } from '@/lib/supabase';
 import { gameDebugger } from '@/lib/debug';
+import { getCurrentPlayerId, getPlayerIdWithValidation } from './player-auth-utils';
 import type { EquipmentSlot } from '@/lib/types/game-types';
 import type { JobDefinition } from '../rpg-system/types';
-
-async function getCurrentPlayerId(): Promise<string | null> {
-  if (!supabase) return null;
-  const { data: { user } } = await supabase.auth.getUser();
-  return user?.id || null;
-}
-
-async function getPlayerIdWithValidation(requiredPlayerId?: string): Promise<string> {
-  const playerId = requiredPlayerId || await getCurrentPlayerId();
-  if (!playerId) {
-    throw new Error('Player not authenticated');
-  }
-  return playerId;
-}
 
 // Límites de equipamiento (como RPGs profesionales)
 const MAX_CARDS = 3;
