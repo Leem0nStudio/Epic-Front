@@ -190,14 +190,16 @@ export class EquipmentService {
     return data;
   }
 
-  /**
+/**
    * Equipa un item a una unidad
    * Sistema flexible basado en JSONB (como Brave Frontier)
+   * Version 2.1 - Validación de ownership
    */
   static async equipItem(
     unitId: string, 
     itemInstanceId: string, 
-    targetSlot: EquipmentSlot
+    targetSlot: EquipmentSlot,
+    playerId?: string
   ): Promise<{ success: boolean; message?: string }> {
     if (!supabase) {
       return { success: false, message: 'Supabase no inicializado' };
@@ -257,95 +259,32 @@ export class EquipmentService {
       slot: targetSlot 
     });
 
-    return { 
+return { 
       success: true, 
       message: validation.warning || 'Item equipado correctamente' 
     };
   }
 
-/**
-   * Sistema flexible basado en JSONB (como Brave Frontier)
-   * Version 2.1 - Validación de ownership
-   */
-  static async equipItem(
-    unitId: string, 
-    itemInstanceId: string, 
-    targetSlot: EquipmentSlot,
-    playerId?: string
-  ): Promise<{ success: boolean; message?: string }> {
-    if (!supabase) {
-      return { success: false, message: 'Supabase no inicializado' };
-    }
-
-    const resolvedPlayerId = await getPlayerIdWithValidation(playerId);
-
-    // Validate first
-    const validation = await this.validateEquip(unitId, itemInstanceId, targetSlot, playerId);
-    if (!validation.valid) {
-      gameDebugger.warn('unit', 'Equip validation failed', { error: validation.error });
-      return { success: false, message: validation.error };
-    }
-
-    const { data: unit } = await supabase
-      .from('units')
-      .select('equipped_items')
-      .eq('id', unitId)
-      .single();
-
-    if (!unit) {
-      return { success: false, message: 'Unidad no encontrada' };
-    }
-
-    const currentEquipped = unit.equipped_items || {};
-    let newEquipped = { ...currentEquipped };
-
-    // Handle different slot types
-    if (slot === 'weapon' || slot === 'armor' || slot === 'accessory' || slot === 'boots') {
-      if (newEquipped[slot] === itemInstanceId) {
-        delete newEquipped[slot];
-      } else {
-        return { success: false, message: 'Item no encontrado en esa ranura' };
-      }
-    } else if (slot === 'card') {
-      const cards = (newEquipped.cards || []).filter((id: string) => id !== itemInstanceId);
-      newEquipped.cards = cards;
-    } else if (slot === 'skill') {
-      const skills = (newEquipped.skills || []).filter((id: string) => id !== itemInstanceId);
-      newEquipped.skills = skills;
-    }
-
-    const { error } = await supabase
-      .from('units')
-      .update({ equipped_items: newEquipped })
-      .eq('id', unitId);
-
-    if (error) {
-      gameDebugger.error('unit', 'Failed to unequip item', error);
-      return { success: false, message: 'Error al desequipar: ' + error.message };
-    }
-
-    gameDebugger.info('unit', 'Item unequipped', { unitId, itemInstanceId, slot });
-    return { success: true, message: 'Item desequipado correctamente' };
-  }
-
   /**
    * Swap - Intercambia un item equipado con uno del inventario
    * Más fluido que unequip + equip
+   * Version 2.1 - Validación de ownership
    */
   static async swapItem(
     unitId: string,
     equippedItemId: string,
     newItemId: string,
-    slot: EquipmentSlot
+    slot: EquipmentSlot,
+    playerId?: string
   ): Promise<{ success: boolean; message?: string }> {
     // First unequip
-    const unequipResult = await this.unequipItem(unitId, equippedItemId, slot);
+    const unequipResult = await this.unequipItem(unitId, equippedItemId, slot, playerId);
     if (!unequipResult.success) {
       return unequipResult;
     }
 
     // Then equip new item
-    const equipResult = await this.equipItem(unitId, newItemId, slot);
+    const equipResult = await this.equipItem(unitId, newItemId, slot, playerId);
     return {
       success: equipResult.success,
       message: equipResult.success 

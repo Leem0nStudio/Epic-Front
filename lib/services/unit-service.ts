@@ -42,7 +42,7 @@ export class UnitService {
       .eq('player_id', resolvedPlayerId)
       .order('created_at', { ascending: true });
     if (error) {
-      gameDebugger.error('unit-service', 'getPlayerRoster failed', error);
+      gameDebugger.error('unit', 'getPlayerRoster failed', error);
       return [];
     }
     return data || [];
