@@ -121,7 +121,7 @@ export function ProfileView({ onBack }: ProfileViewProps) {
               ) : (
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-black text-white font-display">
-                    {profile?.username || profile?.email?.split('@')[0] || 'Jugador'}
+                    {username || 'Jugador'}
                   </h2>
                   <button 
                     onClick={() => setIsEditingName(true)}
