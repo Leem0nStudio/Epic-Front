@@ -359,7 +359,9 @@ const [profRes, unitsRes, partyRes, recruitsRes] = await Promise.all([
     });
     
     try {
-      const result = await EquipmentService.equipItem(selectedUnitId, item.id, targetSlot);
+      // For cards and skills, use item_id; for equipment, use id
+      const instanceId = (itemType === 'card' || itemType === 'skill') ? item.item_id : item.id;
+      const result = await EquipmentService.equipItem(selectedUnitId, instanceId, targetSlot);
       
       if (result.success) {
         await get().refreshState();

@@ -56,13 +56,31 @@ export class EquipmentService {
       .eq('id', unit.current_job_id)
       .single();
 
-    // Validate item belongs to same player
-    const { data: inventoryItem } = await supabase
-      .from('inventory')
-      .select('*, item_id')
-      .eq('id', itemInstanceId)
-      .eq('player_id', resolvedPlayerId)
-      .single();
+    // Validate item belongs to same player - try by item_id for card/skill, or by id for equipment
+    let inventoryItem = null;
+    
+    // Check if it's a card or skill (use item_id) or equipment (use id)
+    const isCardOrSkill = targetSlot === 'card' || targetSlot === 'skill';
+    
+    if (isCardOrSkill) {
+      // For cards and skills, search by item_id
+      const { data } = await supabase
+        .from('inventory')
+        .select('*, item_id')
+        .eq('item_id', itemInstanceId)
+        .eq('player_id', resolvedPlayerId)
+        .single();
+      inventoryItem = data;
+    } else {
+      // For equipment, search by inventory id
+      const { data } = await supabase
+        .from('inventory')
+        .select('*, item_id')
+        .eq('id', itemInstanceId)
+        .eq('player_id', resolvedPlayerId)
+        .single();
+      inventoryItem = data;
+    }
 
     if (!inventoryItem) {
       return { valid: false, error: 'Item no encontrado en inventario o acceso denegado' };
