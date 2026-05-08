@@ -54,6 +54,7 @@ export interface ItemDefinition {
   // Skill Fragment specific
   piece_count?: number;
   skill_module_id?: string;
+  cooldown?: number;
   
   // Common
   version?: string;
@@ -92,6 +93,42 @@ function setCachedInventory(playerId: string, data: InventoryItem[]) {
 function invalidateCache(playerId: string) {
   inventoryCache.delete(getCacheKey(playerId));
   gameDebugger.info('inventory', 'Cache invalidated', { playerId });
+}
+
+// Fallback definitions when DB tables are empty
+const FALLBACK_DEFINITIONS: Record<string, Record<string, ItemDefinition>> = {
+  weapon: {
+    'weapon_sword': { id: 'weapon_sword', name: 'Espada Básica', description: 'Una espada simple pero confiable', weapon_type: 'sword', element: 'none', level_required: 1, rarity: 'common', sell_price: 10 },
+    'weapon_staff': { id: 'weapon_staff', name: 'Bastón Básico', description: 'Un bastón para principiantes', weapon_type: 'staff', element: 'none', level_required: 1, rarity: 'common', sell_price: 10 },
+    'weapon_bow': { id: 'weapon_bow', name: 'Arco Básico', description: 'Un arco simple', weapon_type: 'bow', element: 'none', level_required: 1, rarity: 'common', sell_price: 10 },
+  },
+  card: {
+    'card_light_heal': { id: 'card_light_heal', name: 'Card Curación', description: 'Card de habilidad curativa', rarity: 'common' },
+    'card_power_up': { id: 'card_power_up', name: 'Card Poder', description: 'Card de buff de ataque', rarity: 'uncommon' },
+    'card_ice_shield': { id: 'card_ice_shield', name: 'Card Escudo de Hielo', description: 'Card de defensa mágica', rarity: 'rare' },
+  },
+  skill: {
+    'skill_basic_attack': { id: 'skill_basic_attack', name: 'Ataque Básico', description: 'Ataque estándar', rarity: 'common', cooldown: 0 },
+    'skill_light_heal': { id: 'skill_light_heal', name: 'Curación Ligera', description: 'Restaura HP', rarity: 'common', cooldown: 3 },
+    'skill_power_up': { id: 'skill_power_up', name: 'Potenciar', description: 'Aumenta ataque', rarity: 'uncommon', cooldown: 5 },
+  },
+  material: {
+    'material_herb': { id: 'material_herb', name: 'Hierba Medicinal', description: 'Material básico', rarity: 'common' },
+    'material_ore': { id: 'material_ore', name: 'Mineral de Hierro', description: 'Material de forja', rarity: 'common' },
+  },
+};
+
+function getFallbackDefinition(itemId: string, itemType: string): ItemDefinition | null {
+  const typeMap: Record<string, string> = {
+    'skill_scroll': 'skill',
+    'skill_fragment': 'skill',
+  };
+  const mappedType = typeMap[itemType] || itemType;
+  const def = FALLBACK_DEFINITIONS[mappedType]?.[itemId];
+  if (def) {
+    gameDebugger.info('inventory', 'Using fallback definition', { itemId, itemType });
+  }
+  return def || null;
 }
 
 export class InventoryService {
@@ -370,19 +407,27 @@ export class InventoryService {
       const definition = definitionMap.get(item.item_id);
       
       if (!definition) {
-        gameDebugger.warn('inventory', 'Item definition not found', { 
-          itemId: item.item_id, 
-          itemType: item.item_type 
-        });
+        // Try fallback from memory
+        const fallback = getFallbackDefinition(item.item_id, item.item_type);
+        if (fallback) {
+          gameDebugger.info('inventory', 'Using fallback definition', { 
+            itemId: item.item_id, 
+            itemType: item.item_type 
+          });
+        }
+        return {
+          ...item,
+          definition: fallback || {
+            id: item.item_id,
+            name: item.item_id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+            rarity: 'common' as const,
+          },
+        };
       }
 
       return {
         ...item,
-        definition: definition || {
-          id: item.item_id,
-          name: 'Item Desconocido',
-          rarity: 'common' as const,
-        },
+        definition,
       };
     });
   }
