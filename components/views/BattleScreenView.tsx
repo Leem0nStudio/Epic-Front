@@ -34,12 +34,32 @@ import { CombatAdapter } from '@/lib/services/combat-adapter';
 import { CampaignService } from '@/lib/services/campaign-service';
 import { logger } from '@/lib/logger';
 import { Stage } from '@/lib/rpg-system/campaign-types';
+import type { GameUnit } from '@/lib/types/game-types';
 
 interface BattleScreenViewProps {
-  squad: any[];
+  squad: GameUnit[];
   stageId?: string;
   onBack: () => void;
   onRefresh: () => void;
+}
+
+interface BattleRewards {
+  currency: number;
+  premium_currency?: number;
+  exp?: number;
+  materials?: Array<{ itemId: string; amount: number; chance: number }>;
+}
+
+interface BattleCompletionData {
+  stars?: number;
+  rewards: BattleRewards;
+}
+
+interface BattleResultProps {
+  winner: 'player' | 'enemy';
+  completionData: BattleCompletionData | null;
+  isRecording: boolean;
+  onConfirm: () => void;
 }
 
 export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleScreenViewProps) {
@@ -122,8 +142,9 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
 
         setUnits([...playerUnits, ...enemies]);
         setIsInitializing(false);
-      } catch (e: any) {
-        setInitError(e.message || "Error al inicializar combate");
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Error al inicializar combate";
+        setInitError(message);
         setIsInitializing(false);
       }
     }
@@ -803,7 +824,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
 
       {/* Victory/Defeat Overlay */}
       <AnimatePresence>
-        {isBattleOver && <BattleResult winner={winner} completionData={completionData} isRecording={isRecordingResult} onConfirm={() => { onRefresh(); onBack(); }} />}
+        {isBattleOver && winner && <BattleResult winner={winner} completionData={completionData} isRecording={isRecordingResult} onConfirm={() => { onRefresh(); onBack(); }} />}
       </AnimatePresence>
     </motion.div>
   );
@@ -1017,7 +1038,7 @@ function ErrorScreen({ error, onBack }: { error: string, onBack: () => void }) {
   );
 }
 
-function BattleResult({ winner, completionData, isRecording, onConfirm }: any) {
+function BattleResult({ winner, completionData, isRecording, onConfirm }: BattleResultProps) {
   return (
     <motion.div 
       initial={{ opacity: 0 }} 
@@ -1097,7 +1118,7 @@ function BattleResult({ winner, completionData, isRecording, onConfirm }: any) {
                  <span className="text-[7px] font-black text-white/30 uppercase tracking-widest">Zeny</span>
                </div>
 
-{completionData.rewards.premium_currency > 0 && (
+{(completionData.rewards.premium_currency || 0) > 0 && (
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-16 h-16 rounded-3xl bg-black/40 border border-[#F5C76B]/20 flex items-center justify-center shadow-2xl hover:border-[#F5C76B]/60 transition-colors">
                        <StarIcon size={24} className="text-[#F5C76B] fill-current" />
@@ -1129,7 +1150,7 @@ function BattleResult({ winner, completionData, isRecording, onConfirm }: any) {
               )}
 
               {/* EXP Display */}
-              {completionData.rewards.exp > 0 && (
+              {(completionData.rewards.exp || 0) > 0 && (
                 <div className="mt-4 flex items-center gap-2">
                   <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center">
                     <Zap size={16} className="text-blue-400" />
