@@ -5,7 +5,7 @@
 import { supabase } from '@/lib/supabase';
 import { gameDebugger } from '@/lib/debug';
 import { getCurrentPlayerId, getPlayerIdWithValidation } from './player-auth-utils';
-import { InventoryService } from './inventory-service';
+import { InventoryService, invalidateCache } from './inventory-service';
 import type { EquipmentSlot } from '@/lib/types/game-types';
 import type { JobDefinition } from '../rpg-system/types';
 
@@ -264,7 +264,10 @@ export class EquipmentService {
       slot: targetSlot 
     });
 
-return { 
+// Invalidate inventory cache
+    invalidateCache(resolvedPlayerId);
+    
+    return { 
       success: true, 
       message: validation.warning || 'Item equipado correctamente' 
     };
@@ -348,6 +351,10 @@ return {
       .from('units')
       .update({ equipped_items: newEquipped })
       .eq('id', unitId);
+
+    // Invalidate inventory cache
+    const playerId = await getPlayerIdWithValidation(playerIdParam);
+    invalidateCache(playerId);
 
     return { success: true, message: 'Item des-equipado correctamente' };
   }
