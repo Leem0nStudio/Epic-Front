@@ -274,8 +274,7 @@ export function ProfileView({ onBack }: ProfileViewProps) {
 }
 
 function CharacterCard({ unit, onSelect }: { unit: GameUnit; onSelect: () => void }) {
-  const jobIcon = AssetService.getJobIconUrl(unit.current_job_id || 'novice');
-  const jobSprite = AssetService.getJobSpriteUrl(unit.current_job_id || 'novice');
+  const jobSpriteUrl = unit.sprite_id ? AssetService.getSpriteUrl(unit.sprite_id) : null;
   
   return (
     <motion.button
@@ -286,8 +285,8 @@ function CharacterCard({ unit, onSelect }: { unit: GameUnit; onSelect: () => voi
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg bg-black/40 overflow-hidden flex items-center justify-center">
-          {jobSprite ? (
-            <img src={jobSprite} alt="" className="w-full h-full object-cover" />
+          {jobSpriteUrl ? (
+            <img src={jobSpriteUrl} alt="" className="w-full h-full object-cover" />
           ) : (
             <User size={20} className="text-white/40" />
           )}
@@ -307,15 +306,15 @@ function CharacterCard({ unit, onSelect }: { unit: GameUnit; onSelect: () => voi
       <div className="mt-2 grid grid-cols-3 gap-1 text-[8px]">
         <div className="text-center">
           <span className="text-white/40">ATQ</span>
-          <div className="font-black text-white">{unit.base_stats?.atk || 0}</div>
+          <div className="font-black text-white">{unit.baseStats?.atk || 0}</div>
         </div>
         <div className="text-center">
           <span className="text-white/40">DEF</span>
-          <div className="font-black text-white">{unit.base_stats?.def || 0}</div>
+          <div className="font-black text-white">{unit.baseStats?.def || 0}</div>
         </div>
         <div className="text-center">
           <span className="text-white/40">VEL</span>
-          <div className="font-black text-white">{unit.base_stats?.agi || 0}</div>
+          <div className="font-black text-white">{unit.baseStats?.agi || 0}</div>
         </div>
       </div>
     </motion.button>
