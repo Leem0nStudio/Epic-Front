@@ -10,6 +10,13 @@ export interface PullResult {
     item_type: string;
 }
 
+interface GachaRpcResponse {
+    res_item_id: string;
+    res_item_name: string;
+    res_item_rarity: string;
+    res_item_type: string;
+}
+
 export class GachaService {
     /**
      * Performs a secure gacha pull using the database RPC.
@@ -34,7 +41,7 @@ export class GachaService {
 
         gameDebugger.info('gacha', `Pull completed, got ${(data || []).length} items`, data);
 
-        return (data || []).map((item: any) => ({
+        return (data || []).map((item: GachaRpcResponse) => ({
             item_id: item.res_item_id,
             item_name: item.res_item_name,
             rarity: item.res_item_rarity,

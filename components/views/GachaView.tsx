@@ -13,10 +13,11 @@ import { getRarityCode, RARITY_COLORS } from '@/lib/config/assets-config';
 import { GachaService, type PullResult } from '@/lib/services/gacha-service';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { gameDebugger } from '@/lib/debug';
+import type { PlayerProfile, ViewType } from '@/lib/types/game-types';
 
 interface GachaViewProps {
-  profile: any;
-  onNavigate: (view: any) => void;
+  profile: PlayerProfile | null;
+  onNavigate: (view: ViewType) => void;
   onPullComplete?: () => void;
 }
 
@@ -58,9 +59,10 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
       if (onPullComplete) {
         onPullComplete();
       }
-    } catch (e: any) {
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Error desconocido';
       gameDebugger.error('gacha', 'Pull failed', e);
-      showToast(e.message, 'error');
+      showToast(message, 'error');
     } finally {
       setIsPulling(false);
     }
@@ -98,8 +100,8 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
 
         {/* Currency Display */}
         <div className="grid grid-cols-2 gap-4 shrink-0">
-           <CurrencyCard icon={Coins} value={profile?.currency || 0} label="ZENY" color="text-[#F5C76B]" />
-           <CurrencyCard icon={Diamond} value={profile?.premium_currency || 0} label="CRISTALES" color="text-cyan-400" />
+<CurrencyCard icon={Coins} value={profile?.currency || 0} label="ZENY" color="text-[#F5C76B]" />
+            <CurrencyCard icon={Diamond} value={profile?.gems || 0} label="CRISTALES" color="text-cyan-400" />
         </div>
 
         {/* Action Buttons */}
@@ -221,7 +223,14 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
   );
 }
 
-function CurrencyCard({ icon: Icon, value, label, color }: any) {
+interface CurrencyCardProps {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  value: number;
+  label: string;
+  color: string;
+}
+
+function CurrencyCard({ icon: Icon, value, label, color }: CurrencyCardProps) {
   return (
     <div className="bg-black/40 border border-white/5 p-3 rounded-2xl flex flex-col gap-1">
        <div className="flex items-center gap-2">
@@ -233,7 +242,16 @@ function CurrencyCard({ icon: Icon, value, label, color }: any) {
   );
 }
 
-function PullButton({ amount, price, currency, onClick, disabled, highlight }: any) {
+interface PullButtonProps {
+  amount: number;
+  price: number;
+  currency: 'soft' | 'premium';
+  onClick: () => void;
+  disabled: boolean;
+  highlight?: boolean;
+}
+
+function PullButton({ amount, price, currency, onClick, disabled, highlight }: PullButtonProps) {
   const Icon = currency === 'soft' ? Coins : Diamond;
   const color = currency === 'soft' ? 'text-[#F5C76B]' : 'text-cyan-400';
   
