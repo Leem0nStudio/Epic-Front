@@ -18,14 +18,25 @@ interface ProfileViewProps {
 export function ProfileView({ onBack }: ProfileViewProps) {
   const { profile, roster, reinitializeAccount } = useGameStore();
   const [username, setUsername] = useState('');
+  const [userEmail, setUserEmail] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
-    if (profile) {
-      setUsername(profile.username || profile.email?.split('@')[0] || 'Jugador');
+    async function loadUserData() {
+      if (!supabase) return;
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserEmail(user.email || '');
+      }
     }
+    
+    if (profile) {
+      setUsername(profile.username || 'Jugador');
+    }
+    loadUserData();
   }, [profile]);
 
   const handleSaveUsername = async () => {
@@ -101,7 +112,7 @@ export function ProfileView({ onBack }: ProfileViewProps) {
                     size="sm"
                     onClick={() => {
                       setIsEditingName(false);
-                      setUsername(profile?.username || profile?.email?.split('@')[0] || 'Jugador');
+                      setUsername(profile?.username || 'Jugador');
                     }}
                   >
                     Cancelar
@@ -123,7 +134,7 @@ export function ProfileView({ onBack }: ProfileViewProps) {
               <div className="flex items-center gap-2 mt-1">
                 <Mail size={12} className="text-white/40" />
                 <span className="text-xs text-white/40 font-stats truncate max-w-[200px]">
-                  {profile?.email || 'Sin email'}
+                  {userEmail || 'Sin email'}
                 </span>
               </div>
             </div>
