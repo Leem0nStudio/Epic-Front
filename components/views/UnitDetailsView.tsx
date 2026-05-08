@@ -51,10 +51,11 @@ export function UnitDetailsView({
       setData(details);
       const jobs = await UnitService.getNextJobs(details.job.id);
       setNextJobs(jobs);
-      } catch (e: any) {
-        logger.error('error', 'Failed to load unit details', e as Error);
-       setError(e.message || "Error al cargar detalles de unidad");
-     } finally {
+} catch (e) {
+        const message = e instanceof Error ? e.message : "Error al cargar detalles de unidad";
+        logger.error('error', 'Failed to load unit details', e instanceof Error ? e : undefined);
+        setError(message);
+      } finally {
        setLoading(false);
      }
    };
@@ -70,9 +71,9 @@ export function UnitDetailsView({
        if (!error && data) {
          setAvailableSkills(data);
        }
-      } catch (e) {
-        logger.error('error', 'Failed to load available skills', e as Error);
-     } finally {
+} catch (e) {
+         logger.error('error', 'Failed to load available skills', e instanceof Error ? e : undefined);
+      } finally {
        setLoadingSkills(false);
      }
    };
@@ -86,8 +87,9 @@ export function UnitDetailsView({
       await EquipmentService.unequipItem(unitId, instanceId, slot);
       loadData();
       onUpdate();
-    } catch (e: any) {
-      alert(e.message);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Error al des-equipar';
+      alert(message);
     }
   };
 
@@ -98,8 +100,9 @@ export function UnitDetailsView({
       setEvolvedJobName(jobName);
       await loadData();
       onUpdate();
-    } catch (e: any) {
-      alert(e.message);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Error al evolucionar';
+      alert(message);
     } finally {
       setLoading(false);
     }
@@ -394,7 +397,10 @@ export function UnitDetailsView({
                            if (error) throw error;
                            loadData();
                            setShowLearnSkill(false);
-                        } catch (err: any) { alert(err.message); }
+                        } catch (err) { 
+                          const message = err instanceof Error ? err.message : 'Error al aprender habilidad';
+                          alert(message); 
+                        }
                       }}
                     >
                       <div className="flex items-center justify-between mb-2">
