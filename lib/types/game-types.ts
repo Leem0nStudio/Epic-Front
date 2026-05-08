@@ -378,6 +378,7 @@ export interface GameState {
   handleOpenCardDetails: (cardId: string, itemId: string) => void;
   handleOpenSkillDetails: (skillId: string, itemId: string) => void;
   handleDiscardItem: (itemId: string) => void;
+  reinitializeAccount: (toast?: ToastFunction) => Promise<void>;
   navigateTo: (newView: ViewType) => void;
 }
 
