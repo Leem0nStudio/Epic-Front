@@ -40,7 +40,7 @@ export class EquipmentService {
     // 1. Get unit data with player ownership check
     const { data: unit, error: unitError } = await supabase
       .from('units')
-      .select('*, current_job:jobs!inner(*)')
+      .select('*')
       .eq('id', unitId)
       .eq('player_id', resolvedPlayerId)
       .single();
@@ -48,6 +48,13 @@ export class EquipmentService {
     if (unitError || !unit) {
       return { valid: false, error: 'Unidad no encontrada o acceso denegado' };
     }
+
+    // Get job info separately
+    const { data: job } = await supabase
+      .from('jobs')
+      .select('*')
+      .eq('id', unit.current_job_id)
+      .single();
 
     // Validate item belongs to same player
     const { data: inventoryItem } = await supabase
@@ -76,14 +83,13 @@ export class EquipmentService {
     }
 
     // 5. Validate job restrictions for weapons
-    if (targetSlot === 'weapon' && itemDef.weapon_type) {
-      const jobData = unit.current_job as unknown as JobDefinition;
-      if (jobData?.allowed_weapons) {
-        const allowedWeapons = jobData.allowed_weapons as unknown as string[];
+    if (targetSlot === 'weapon' && itemDef.weapon_type && job) {
+      if (job.allowed_weapons) {
+        const allowedWeapons = job.allowed_weapons as unknown as string[];
         if (!allowedWeapons.includes(itemDef.weapon_type)) {
           return { 
             valid: false, 
-            error: `Job ${jobData.name} no puede usar ${itemDef.weapon_type}` 
+            error: `Job ${job.name} no puede usar ${itemDef.weapon_type}` 
           };
         }
       }
