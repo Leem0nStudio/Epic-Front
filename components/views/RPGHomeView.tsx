@@ -2,14 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, useMotionValue, useTransform } from 'motion/react';
-import {
-  ChevronRight,
-  Castle,
-  Bell,
-  Star,
-  Trophy,
-  Users
-} from 'lucide-react';
+import { ChevronRight, Castle, Bell, Star, Trophy, Users, BookOpen } from 'lucide-react';
 import { AssetService } from '@/lib/services/asset-service';
 import { Button } from '@/components/ui/Button';
 import type { GameState, PartySlot, ViewType } from '@/lib/types/game-types';
@@ -25,7 +18,7 @@ export function RPGHomeView({
   saveData,
   activePartyUnits,
   onNavigate,
-  onSelectUnit
+  onSelectUnit,
 }: RPGHomeViewProps) {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -46,9 +39,9 @@ export function RPGHomeView({
       {/* Background Layer with Parallax */}
       <motion.div
         style={{
-          x: useTransform(mouseX, [ -20, 20 ], [ 10, -10 ]),
-          y: useTransform(mouseY, [ -20, 20 ], [ 10, -10 ]),
-          scale: 1.1
+          x: useTransform(mouseX, [-20, 20], [10, -10]),
+          y: useTransform(mouseY, [-20, 20], [10, -10]),
+          scale: 1.1,
         }}
         className="absolute inset-0 z-0"
       >
@@ -62,10 +55,9 @@ export function RPGHomeView({
 
       {/* Main Content */}
       <div className="relative z-20 w-full h-full flex flex-col justify-between p-6">
-
         {/* Character Stage */}
         <div className="flex-1 flex items-center justify-center relative mt-12">
-           <div className="w-full max-w-5xl h-full flex items-end justify-center gap-4 sm:gap-8 pointer-events-none">
+          <div className="w-full max-w-5xl h-full flex items-end justify-center gap-4 sm:gap-8 pointer-events-none">
             {activePartyUnits.slice(0, 3).map((unit, idx) => (
               <UnitDisplay
                 key={unit?.id || `empty-${idx}`}
@@ -86,11 +78,11 @@ export function RPGHomeView({
 
         {/* Bottom Section */}
         <div className="flex flex-col items-center gap-4 mt-auto mb-4">
-           <NotificationBanner onNavigate={onNavigate} />
-           <QuickActions onNavigate={onNavigate} />
-           <div className="lg:hidden w-full px-4">
-             <CurrentObjective onNavigate={() => onNavigate('campaign')} />
-           </div>
+          <NotificationBanner onNavigate={onNavigate} />
+          <QuickActions onNavigate={onNavigate} />
+          <div className="lg:hidden w-full px-4">
+            <CurrentObjective onNavigate={() => onNavigate('campaign')} />
+          </div>
         </div>
       </div>
 
@@ -101,14 +93,15 @@ export function RPGHomeView({
 }
 
 function UnitDisplay({ unit, idx, mouseX, mouseY, onSelectUnit }: any) {
-  const x = useTransform(mouseX, [ -20, 20 ], [ idx * 2, -idx * 2 ]);
-  const y = useTransform(mouseY, [ -20, 20 ], [ idx * 1, -idx * 1 ]);
+  const x = useTransform(mouseX, [-20, 20], [idx * 2, -idx * 2]);
+  const y = useTransform(mouseY, [-20, 20], [idx * 1, -idx * 1]);
 
-  if (!unit) return (
-    <div className="w-40 h-[50%] border-2 border-dashed border-white/5 rounded-3xl flex items-center justify-center bg-white/5 backdrop-blur-sm">
-       <Star className="w-6 h-6 text-white/10" />
-    </div>
-  );
+  if (!unit)
+    return (
+      <div className="w-40 h-[50%] border-2 border-dashed border-white/5 rounded-3xl flex items-center justify-center bg-white/5 backdrop-blur-sm">
+        <Star className="w-6 h-6 text-white/10" />
+      </div>
+    );
 
   const spriteUrl = AssetService.getSpriteUrl(unit.sprite_id || 'novice_idle.png');
 
@@ -124,7 +117,7 @@ function UnitDisplay({ unit, idx, mouseX, mouseY, onSelectUnit }: any) {
       {/* Sprite Container */}
       <motion.div
         animate={{ y: [0, -8, 0] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: idx * 0.5 }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: idx * 0.5 }}
         className="relative z-20"
       >
         <img
@@ -153,13 +146,29 @@ function UnitDisplay({ unit, idx, mouseX, mouseY, onSelectUnit }: any) {
 
 function QuickActions({ onNavigate }: any) {
   const actions = [
-    { id: 'guild', icon: Users, label: 'GREMIO', color: 'from-violet-500/20 to-violet-600/20 border-violet-500/30' },
-    { id: 'tower', icon: Trophy, label: 'TORRE', color: 'from-orange-500/20 to-orange-600/20 border-orange-500/30' },
+    {
+      id: 'guild',
+      icon: Users,
+      label: 'GREMIO',
+      color: 'from-violet-500/20 to-violet-600/20 border-violet-500/30',
+    },
+    {
+      id: 'tower',
+      icon: Trophy,
+      label: 'TORRE',
+      color: 'from-orange-500/20 to-orange-600/20 border-orange-500/30',
+    },
+    {
+      id: 'quests',
+      icon: BookOpen,
+      label: 'MISIONES',
+      color: 'from-blue-500/20 to-blue-600/20 border-blue-500/30',
+    },
   ];
 
   return (
     <div className="flex items-center gap-2">
-      {actions.map((action) => (
+      {actions.map(action => (
         <Button
           key={action.id}
           whileHover={{ scale: 1.05 }}
@@ -170,7 +179,9 @@ function QuickActions({ onNavigate }: any) {
           className={`flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-sm ${action.color}`}
         >
           <action.icon size={14} className="text-white/60" />
-          <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">{action.label}</span>
+          <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">
+            {action.label}
+          </span>
         </Button>
       ))}
     </div>
@@ -190,23 +201,27 @@ function CurrentObjective({ onNavigate }: any) {
         className="w-full bg-black/40 backdrop-blur-xl border border-white/5 p-4 rounded-2xl hover:border-[#F5C76B]/30 transition-all shadow-2xl relative overflow-hidden text-left"
       >
         <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F5C76B]/20 to-[#F5C76B]/40 border border-[#F5C76B]/30 flex items-center justify-center">
-                 <Castle className="w-5 h-5 text-[#F5C76B]" />
-              </div>
-              <div>
-                 <p className="text-[9px] font-black text-[#F5C76B] uppercase tracking-widest">OBJETIVO ACTUAL</p>
-                 <h3 className="text-sm font-black text-white uppercase font-display tracking-tight">El Templo Sumergido</h3>
-              </div>
-           </div>
-           <div className="mt-3 py-2 px-3 bg-white/5 rounded-lg border border-white/5">
-              <p className="text-[10px] text-white/40 leading-relaxed italic">
-                &quot;Infiltra las profundidades del templo y recupera la Reliquia Antigua.&quot;
-              </p>
-           </div>
-           <div className="mt-2 flex items-center justify-end gap-1 text-[#F5C76B] opacity-40 group-hover:opacity-100 transition-opacity">
-             <span className="text-[8px] font-black uppercase tracking-widest">IR AHORA</span>
-             <ChevronRight className="w-3 h-3" />
-           </div>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F5C76B]/20 to-[#F5C76B]/40 border border-[#F5C76B]/30 flex items-center justify-center">
+            <Castle className="w-5 h-5 text-[#F5C76B]" />
+          </div>
+          <div>
+            <p className="text-[9px] font-black text-[#F5C76B] uppercase tracking-widest">
+              OBJETIVO ACTUAL
+            </p>
+            <h3 className="text-sm font-black text-white uppercase font-display tracking-tight">
+              El Templo Sumergido
+            </h3>
+          </div>
+        </div>
+        <div className="mt-3 py-2 px-3 bg-white/5 rounded-lg border border-white/5">
+          <p className="text-[10px] text-white/40 leading-relaxed italic">
+            &quot;Infiltra las profundidades del templo y recupera la Reliquia Antigua.&quot;
+          </p>
+        </div>
+        <div className="mt-2 flex items-center justify-end gap-1 text-[#F5C76B] opacity-40 group-hover:opacity-100 transition-opacity">
+          <span className="text-[8px] font-black uppercase tracking-widest">IR AHORA</span>
+          <ChevronRight className="w-3 h-3" />
+        </div>
       </Button>
     </motion.div>
   );

@@ -8,13 +8,21 @@ import {
   Lock,
   Zap,
   ChevronRight,
-  Sword
+  Sword,
+  ChevronLeft,
+  ChevronRight as ChevronRightIcon,
+  BookOpen,
 } from 'lucide-react';
 import { CampaignService } from '@/lib/services/campaign-service';
 import { logger } from '@/lib/logger';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { ViewShell } from '@/components/ui/ViewShell';
-import { type Chapter, type Stage, type PlayerStageProgress } from '@/lib/rpg-system/campaign-types';
+import { Button } from '@/components/ui/Button';
+import {
+  type Chapter,
+  type Stage,
+  type PlayerStageProgress,
+} from '@/lib/rpg-system/campaign-types';
 
 interface CampaignMapViewProps {
   playerEnergy: number;
@@ -28,41 +36,95 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
   const [progress, setProgress] = useState<PlayerStageProgress[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const currentChapter = chapters[currentChapterIndex];
+  const hasMultipleChapters = chapters.length > 1;
+
   useEffect(() => {
     async function loadData() {
       try {
         const [chaptersData, progressData] = await Promise.all([
           CampaignService.getChapters(),
-          CampaignService.getPlayerProgress()
+          CampaignService.getPlayerProgress(),
         ]);
         setChapters(chaptersData);
         setProgress(progressData);
-       } catch (e) {
-          logger.error('error', 'Failed to load campaign data', e as Error);
-       } finally {
-         setLoading(false);
-       }
+      } catch (e) {
+        logger.error('error', 'Failed to load campaign data', e as Error);
+      } finally {
+        setLoading(false);
+      }
     }
     loadData();
   }, []);
 
-  const currentChapter = chapters[currentChapterIndex];
+  const canGoPrev = currentChapterIndex > 0;
+  const canGoNext = currentChapterIndex < chapters.length - 1;
 
   return (
     <ViewShell
       title="CAMPAÑA"
-      subtitle={currentChapter ? `CAPÍTULO ${currentChapter.index}: ${currentChapter.name}` : 'Cargando...'}
+      subtitle={
+        currentChapter ? `CAPÍTULO ${currentChapter.index}: ${currentChapter.name}` : 'Cargando...'
+      }
       onBack={() => onNavigate('home')}
       background="campaign"
       loading={loading}
     >
-       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar">
+        {/* Chapter Navigation */}
+        {hasMultipleChapters && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-center gap-4 mb-4"
+          >
+            <Button
+              onClick={() => setCurrentChapterIndex(i => Math.max(0, i - 1))}
+              disabled={!canGoPrev}
+              variant={canGoPrev ? 'secondary' : 'ghost'}
+              size="sm"
+              className="w-10 h-10 rounded-full"
+            >
+              <ChevronLeft size={18} />
+            </Button>
+            <div className="flex-1 text-center">
+              <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">
+                Capítulo {currentChapter?.index} de {chapters.length}
+              </span>
+            </div>
+            <Button
+              onClick={() => setCurrentChapterIndex(i => Math.min(chapters.length - 1, i + 1))}
+              disabled={!canGoNext}
+              variant={canGoNext ? 'secondary' : 'ghost'}
+              size="sm"
+              className="w-10 h-10 rounded-full"
+            >
+              <ChevronRightIcon size={18} />
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Quick Actions */}
+        <div className="flex justify-end mb-2">
+          <Button
+            onClick={() => onNavigate('quests')}
+            variant="secondary"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <BookOpen size={14} />
+            <span className="text-[9px] font-black uppercase">Misiones</span>
+          </Button>
+        </div>
+
         {currentChapter?.stages.map((stage, idx) => {
           const stageProgress = progress.find(p => p.stage_id === stage.id);
-          const isUnlocked = idx === 0 || progress.some(p => {
-             const prevStage = currentChapter.stages[idx-1];
-             return p.stage_id === prevStage?.id && p.cleared;
-          });
+          const isUnlocked =
+            idx === 0 ||
+            progress.some(p => {
+              const prevStage = currentChapter.stages[idx - 1];
+              return p.stage_id === prevStage?.id && p.cleared;
+            });
 
           return (
             <motion.div
@@ -75,35 +137,70 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
                 type="border"
                 variant="default"
                 className={`p-4 flex items-center justify-between group transition-all ${
-                  isUnlocked ? 'glass-frosted frame-earthstone cursor-pointer hover:border-[#F5C76B]/40' : 'opacity-40 grayscale pointer-events-none'
+                  isUnlocked
+                    ? 'glass-frosted frame-earthstone cursor-pointer hover:border-[#F5C76B]/40'
+                    : 'opacity-40 grayscale pointer-events-none'
                 }`}
                 onClick={() => isUnlocked && onSelectStage(stage)}
                 role="button"
                 tabIndex={isUnlocked ? 0 : undefined}
-                 onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (isUnlocked) onSelectStage(stage); } }}
+                onKeyDown={(e: React.KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (isUnlocked) onSelectStage(stage);
+                  }
+                }}
               >
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${
-                    isUnlocked ? 'bg-[#F5C76B]/10 border-[#F5C76B]/20' : 'bg-white/5 border-white/10'
-                  }`}>
-                    {isUnlocked ? <Sword size={20} className="text-[#F5C76B]" /> : <Lock size={20} className="text-white/20" />}
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center border ${
+                      isUnlocked
+                        ? 'bg-[#F5C76B]/10 border-[#F5C76B]/20'
+                        : 'bg-white/5 border-white/10'
+                    }`}
+                  >
+                    {isUnlocked ? (
+                      <Sword size={20} className="text-[#F5C76B]" />
+                    ) : (
+                      <Lock size={20} className="text-white/20" />
+                    )}
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-white uppercase font-display leading-none">{stage.name}</h4>
+                    <h4 className="text-sm font-black text-white uppercase font-display leading-none">
+                      {stage.name}
+                    </h4>
                     <div className="flex items-center gap-2 mt-1">
                       <Zap size={10} className="text-blue-400" />
-                      <span className="text-[10px] font-black text-white/40 tabular-nums">{stage.energy_cost}</span>
+                      <span className="text-[10px] font-black text-white/40 tabular-nums">
+                        {stage.energy_cost}
+                      </span>
                       {stageProgress?.cleared && (
-                        <div className="flex items-center gap-0.5 ml-2" aria-label={`${stageProgress.stars || 0} de 3 estrellas`}>
+                        <div
+                          className="flex items-center gap-0.5 ml-2"
+                          aria-label={`${stageProgress.stars || 0} de 3 estrellas`}
+                        >
                           {Array.from({ length: 3 }).map((_, i) => (
-                            <Star key={i} size={8} className={i < (stageProgress.stars || 0) ? 'text-[#F5C76B] fill-[#F5C76B]' : 'text-white/10'} />
+                            <Star
+                              key={i}
+                              size={8}
+                              className={
+                                i < (stageProgress.stars || 0)
+                                  ? 'text-[#F5C76B] fill-[#F5C76B]'
+                                  : 'text-white/10'
+                              }
+                            />
                           ))}
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
-                {isUnlocked && <ChevronRight size={18} className="text-white/10 group-hover:text-[#F5C76B] transition-colors" />}
+                {isUnlocked && (
+                  <ChevronRight
+                    size={18}
+                    className="text-white/10 group-hover:text-[#F5C76B] transition-colors"
+                  />
+                )}
               </NineSlicePanel>
             </motion.div>
           );
