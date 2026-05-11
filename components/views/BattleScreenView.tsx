@@ -63,6 +63,8 @@ interface BattleResultProps {
   winner: 'player' | 'enemy';
   completionData: BattleCompletionData | null;
   isRecording: boolean;
+  recordingTimeout: boolean;
+  recordingFailed: boolean;
   onConfirm: () => void;
 }
 
@@ -72,7 +74,8 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const [round, setRound] = useState(1);
   const [isBattleOver, setIsBattleOver] = useState(false);
   const [winner, setWinner] = useState<'player' | 'enemy' | null>(null);
-  const [battleLog, setBattleLog] = useState<string[]>([]);
+  const [battleLog, setBattleLog] = useState<{ id: number; text: string }[]>([]);
+  const logIdRef = useRef(0);
   const [activeUnitId, setActiveUnitId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
@@ -80,11 +83,14 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const [completionData, setCompletionData] = useState<BattleCompletionData | null>(null);
   const [showBattleLog, setShowBattleLog] = useState(false);
   const [isRecordingResult, setIsRecordingResult] = useState(false);
+  const [recordingTimeout, setRecordingTimeout] = useState(false);
+  const [recordingFailed, setRecordingFailed] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [isBurstActive, setIsBurstActive] = useState(false);
   const [damageNumbers, setDamageNumbers] = useState<{ id: number, value: number, x: number, y: number, color: string, isCrit?: boolean }[]>([]);
   const [participatingUnits, setParticipatingUnits] = useState<Set<string>>(new Set());
   const [autoBattle, setAutoBattle] = useState(false);
+  const [battleSpeed, setBattleSpeed] = useState<'1x' | '2x'>('1x');
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   
   // INTENSE COMBAT FEEDBACK SYSTEM
@@ -103,12 +109,36 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const [hitSequence, setHitSequence] = useState<{ id: number, value: number, time: number }[]>([]);
   const [dyingEnemyIds, setDyingEnemyIds] = useState<string[]>([]);
 
+  // Refs for combo tracking to avoid stale closures in rapid multi-hit
+  const comboCountRef = useRef(0);
+  const lastComboMilestoneRef = useRef(0);
+
   const prefersReducedMotion = usePrefersReducedMotion();
+
+  const turnOrder = useMemo(() => BattleManager.getTurnOrder(units), [units]);
+  const nextTurns = useMemo(() => {
+    if (!activeUnitId) return [];
+    const idx = turnOrder.findIndex(u => u.id === activeUnitId);
+    if (idx === -1) return [];
+    return turnOrder.slice(idx + 1, idx + 6);
+  }, [turnOrder, activeUnitId]);
 
   // Reset auto-battle when battle ends
   useEffect(() => { if (isBattleOver) setAutoBattle(false); }, [isBattleOver]);
 
+  // Escape key handling for modals
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showExitConfirm) setShowExitConfirm(false);
+      }
+    };
+    if (showExitConfirm) document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [showExitConfirm]);
+
   const playerUnits = useMemo(() => units.filter(u => u.side === 'player'), [units]);
+  const alivePlayerUnits = useMemo(() => units.filter(u => u.side === 'player' && !u.isDead), [units]);
   const enemyUnits = useMemo(() => units.filter(u => u.side === 'enemy' && !u.isDead), [units]);
 
   // Reset target if targeted enemy is dead
@@ -207,9 +237,10 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       return filtered;
     });
     
-    // Update combo system with INTENSE effects
+    // Update combo system with INTENSE effects (ref-based to avoid stale closures in rapid multi-hit)
     if (hitType === 'damage' || isCrit) {
-      const newCombo = comboCount + 1;
+      const newCombo = comboCountRef.current + 1;
+      comboCountRef.current = newCombo;
       setComboCount(newCombo);
       setLastHitType(isCrit ? 'CRITICAL' : hitType);
       
@@ -218,12 +249,12 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
         setScreenFlash('crit');
         setScreenShakeIntensity(15);
         setScreenGlow('fire');
-        // Add combat log with big text
         setCombatLog(prev => [...prev.slice(-3), { text: `💥 CRÍTICO: ${value}!`, type: 'crit', time: now }]);
         setTimeout(() => { setScreenGlow('none'); setScreenShakeIntensity(0); }, 400);
       } 
       // COMBO MILESTONES
-      else if (newCombo > 0 && newCombo % 5 === 0 && newCombo !== lastComboMilestone) {
+      else if (newCombo > 0 && newCombo % 5 === 0 && newCombo !== lastComboMilestoneRef.current) {
+        lastComboMilestoneRef.current = newCombo;
         setLastComboMilestone(newCombo);
         setScreenFlash('combo');
         setScreenShakeIntensity(10);
@@ -233,7 +264,6 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       }
       // REGULAR HIT
       else {
-        // Add to combat log
         const logText = isCrit ? `⚔️ CRÍTICO! ${value} dmg` : `💥 ${value} dmg`;
         setCombatLog(prev => [...prev.slice(-4), { text: logText, type: isCrit ? 'crit' : 'hit', time: now }]);
       }
@@ -246,7 +276,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     }
     
     setTimeout(() => setDamageNumbers(prev => prev.filter(d => d.id !== newId)), 1200);
-  }, [comboCount, lastComboMilestone, units]);
+  }, [units]);
 
   const runTurn = useCallback((actor: CombatUnit, skill: SkillDefinition, manualTargetId?: string, isBurst: boolean = false) => {
     if (isBattleOver) return;
@@ -281,7 +311,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       return newSet;
     });
 
-    setBattleLog(prev => [...prev, ...results.map(r => r.log)].slice(-20));
+    setBattleLog(prev => [...prev, ...results.map(r => ({ id: ++logIdRef.current, text: r.log }))].slice(-20));
     setUnits(updatedUnits);
     setTurn(prev => prev + 1);
     setTargetId(null);
@@ -342,6 +372,23 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     }
   }, [stageId, round, participatingUnits]);
 
+  // Timeout for recording result - after 5s, allow continue even if server fails
+  useEffect(() => {
+    if (!isRecordingResult) {
+      return;
+    }
+    setRecordingTimeout(false);
+    const timer = setTimeout(() => setRecordingTimeout(true), 5000);
+    return () => clearTimeout(timer);
+  }, [isRecordingResult]);
+
+  // If recording finished but completionData is null, recording failed
+  useEffect(() => {
+    if (!isRecordingResult && !completionData && winner === 'player') {
+      setRecordingFailed(true);
+    }
+  }, [isRecordingResult, completionData, winner]);
+
   useEffect(() => {
     if (isInitializing || isBattleOver || initError) return;
 
@@ -351,7 +398,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       handleBattleOver('player', deadPlayers);
       return;
     }
-    if (playerUnits.length === 0) {
+    if (alivePlayerUnits.length === 0) {
       handleBattleOver('enemy', deadPlayers);
       return;
     }
@@ -372,7 +419,8 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
 
     if (activeUnit.side === 'enemy') {
       const skill = activeUnit.skills[0];
-      const timer = setTimeout(() => runTurn(activeUnit, skill), 1000);
+      const delay = battleSpeed === '2x' ? 400 : 1000;
+      const timer = setTimeout(() => runTurn(activeUnit, skill), delay);
       return () => clearTimeout(timer);
     }
 
@@ -380,20 +428,21 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     if (autoBattle && activeUnit.side === 'player' && enemyUnits.length > 0) {
       const autoTargetId = enemyUnits[0].id;
       setTargetId(autoTargetId);
+      const speedDelay = battleSpeed === '2x' ? 200 : 500;
       const useBB = activeUnit.burst >= 100;
       if (useBB) {
         const bbSkill = activeUnit.skills.find((s: SkillDefinition) => s.skillType === 'bb');
         if (bbSkill) {
           setIsBurstActive(true);
-          const timer = setTimeout(() => { runTurn(activeUnit, bbSkill, autoTargetId, true); setIsBurstActive(false); }, 500);
+          const timer = setTimeout(() => { runTurn(activeUnit, bbSkill, autoTargetId, true); setIsBurstActive(false); }, speedDelay);
           return () => clearTimeout(timer);
         }
       }
       const skill = activeUnit.skills[0] || { id: 'attack', name: 'Attack', type: 'basic', cooldown: 0, effects: [] };
-      const timer = setTimeout(() => runTurn(activeUnit, skill, autoTargetId), 500);
+      const timer = setTimeout(() => runTurn(activeUnit, skill, autoTargetId), speedDelay);
       return () => clearTimeout(timer);
     }
-  }, [units, turn, isInitializing, isBattleOver, initError, autoBattle, enemyUnits, playerUnits, runTurn, handleBattleOver]);
+  }, [units, turn, isInitializing, isBattleOver, initError, autoBattle, battleSpeed, enemyUnits, playerUnits, runTurn, handleBattleOver]);
 
   if (isInitializing) return <LoadingScreen />;
   if (initError) return <ErrorScreen error={initError} onBack={onBack} />;
@@ -432,6 +481,15 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
           >
             <Zap size={18} className={autoBattle ? 'animate-pulse' : ''} />
           </Button>
+          <Button
+            onClick={() => setBattleSpeed(s => s === '1x' ? '2x' : '1x')}
+            variant="ghost"
+            size="sm"
+            className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all active:scale-90 ${battleSpeed === '2x' ? 'bg-cyan-600 border-cyan-500 text-white' : 'bg-white/5 border-white/10 text-white/40 hover:text-white'}`}
+            title={`Velocidad: ${battleSpeed}`}
+          >
+            <span className={`text-[9px] font-black tracking-wider ${battleSpeed === '2x' ? '' : ''}`}>{battleSpeed}</span>
+          </Button>
           <div className="flex flex-col items-center">
              <div className="flex items-center gap-2 mb-1">
                 <Swords size={12} className="text-[#F5C76B]" />
@@ -458,14 +516,37 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
           <motion.div 
             initial={{ width: '100%' }}
             animate={{ width: `${Math.min((totalEnemyHp / maxEnemyHp) * 100, 100)}%` }}
-            className="h-full bg-[linear-gradient(90deg,#991b1b_0%,#ef4444_50%,#f87171_100%)] relative"
+            className="h-full relative"
           >
-             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.3)_0%,transparent_50%,rgba(0,0,0,0.3)_100%)]" />
-             <motion.div 
-               animate={{ x: ['-100%', '200%'] }} 
-               transition={{ repeat: Infinity, duration: 3, ease: 'linear' }}
-               className="absolute inset-y-0 w-32 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg]" 
-             />
+            {enemyUnits.length > 1 ? (
+              <div className="flex h-full">
+                {enemyUnits.map(enemy => (
+                  <div
+                    key={enemy.id}
+                    className="h-full relative"
+                    style={{ width: `${(enemy.maxHp / maxEnemyHp) * 100}%` }}
+                  >
+                    <div
+                      className="h-full bg-[linear-gradient(90deg,#991b1b_0%,#ef4444_50%,#f87171_100%)]"
+                      style={{ width: `${Math.min((enemy.currentHp / enemy.maxHp) * 100, 100)}%` }}
+                    />
+                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.3)_0%,transparent_50%,rgba(0,0,0,0.3)_100%)]" />
+                    {enemy.currentHp > 0 && enemy.currentHp < enemy.maxHp && (
+                      <div className="absolute top-0 bottom-0 right-0 w-px bg-black/40" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-full bg-[linear-gradient(90deg,#991b1b_0%,#ef4444_50%,#f87171_100%)] relative">
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.3)_0%,transparent_50%,rgba(0,0,0,0.3)_100%)]" />
+                <motion.div 
+                  animate={{ x: ['-100%', '200%'] }} 
+                  transition={{ repeat: Infinity, duration: 3, ease: 'linear' }}
+                  className="absolute inset-y-0 w-32 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg]" 
+                />
+              </div>
+            )}
           </motion.div>
           <div className="absolute inset-0 flex items-center justify-center text-[11px] font-black tracking-[0.2em] drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] italic">
             {totalEnemyHp.toLocaleString()} <span className="mx-1 text-white/40">/</span> {maxEnemyHp.toLocaleString()}
@@ -788,6 +869,23 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
 
       </div>
 
+       {/* Turn Timeline */}
+       {!isBattleOver && !isInitializing && turnOrder.length > 0 && (
+         <div className="relative z-30 px-4 pb-1">
+           <div className="flex items-center gap-1 justify-center">
+             <span className="text-[6px] font-black text-white/30 uppercase tracking-widest mr-1">SIG:</span>
+             {nextTurns.map((u, i) => (
+               <div key={u.id} className="flex items-center gap-0.5">
+                 <div className={`w-5 h-5 rounded-full ${u.side === 'enemy' ? 'bg-red-900/60 border border-red-500/30' : 'bg-cyan-900/60 border border-cyan-500/30'} flex items-center justify-center overflow-hidden`}>
+                   <img src={AssetService.getSpriteUrl(u.sprite_id || '')} className="w-4 h-4 object-contain" alt="" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                 </div>
+                 {i < nextTurns.length - 1 && <span className="text-white/10 text-[6px]">→</span>}
+               </div>
+             ))}
+           </div>
+         </div>
+       )}
+
        {/* BOTTOM: Unit Cards & Skill Bar */}
        <div className="relative z-30 pb-8 px-4 flex flex-col gap-6">
          {/* Unit Cards Grid - Improved with more detail */}
@@ -897,17 +995,17 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
                  className="w-full max-h-[80px] overflow-y-auto flex flex-col gap-0.5 p-2"
                  style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
                >
-                 {battleLog.slice(-5).map((log, i) => (
-                   <motion.div 
-                     key={i}
-                     initial={{ opacity: 0, x: -20 }}
-                     animate={{ opacity: 1, x: 0 }}
-                     className="border-l border-[#F5C76B]/30 pl-1.5 py-0.5"
-                     style={{ lineHeight: '1.2' }}
-                   >
-                     <span className="text-[6px] font-mono text-white/70 uppercase tracking-wider">{log}</span>
-                   </motion.div>
-                 ))}
+                  {battleLog.slice(-5).map(log => (
+                    <motion.div 
+                      key={log.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="border-l border-[#F5C76B]/30 pl-1.5 py-0.5"
+                      style={{ lineHeight: '1.2' }}
+                    >
+                      <span className="text-[6px] font-mono text-white/70 uppercase tracking-wider">{log.text}</span>
+                    </motion.div>
+                  ))}
                </NineSlicePanel>
              )}
            </div>
@@ -921,7 +1019,9 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center"
+            onClick={() => setShowExitConfirm(false)}
           >
+            <div onClick={(e) => e.stopPropagation()}>
             <NineSlicePanel type="border" variant="default" className="p-8 mx-4 max-w-sm w-full" glassmorphism>
               <h3 className="text-lg font-black text-white text-center mb-2 uppercase tracking-wider">¿Abandonar batalla?</h3>
               <p className="text-[10px] text-white/60 text-center mb-6">Perderás el progreso de esta batalla.</p>
@@ -930,13 +1030,14 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
                 <Button onClick={() => { setShowExitConfirm(false); onBack(); }} variant="primary" className="flex-1 py-3 text-[9px] font-black uppercase tracking-widest bg-red-600 hover:bg-red-700">Salir</Button>
               </div>
             </NineSlicePanel>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Victory/Defeat Overlay */}
       <AnimatePresence>
-        {isBattleOver && winner && <BattleResult winner={winner} completionData={completionData} isRecording={isRecordingResult} onConfirm={() => { onRefresh(); onBack(); }} />}
+        {isBattleOver && winner && <BattleResult winner={winner} completionData={completionData} isRecording={isRecordingResult} recordingTimeout={recordingTimeout} recordingFailed={recordingFailed} onConfirm={() => { onRefresh(); onBack(); }} />}
       </AnimatePresence>
     </motion.div>
   );
@@ -980,7 +1081,7 @@ function EnemySprite({ enemy, isTargeted, onTarget }: { enemy: CombatUnit, isTar
       <div className="absolute -top-14 left-1/2 -translate-x-1/2 w-20 flex flex-col items-center gap-1">
         <div className="flex items-center gap-1">
            <ElementBadge element={enemy.element} />
-           <span className="text-[7px] font-black text-red-500 bg-black/40 px-1 rounded-sm border border-red-500/20">LV.5</span>
+           <span className="text-[7px] font-black text-red-500 bg-black/40 px-1 rounded-sm border border-red-500/20">LV.{enemy.level}</span>
            <span className="text-[8px] font-black text-white drop-shadow-lg truncate uppercase tracking-tighter">{enemy.name}</span>
         </div>
         <div className="w-full h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10 shadow-lg">
@@ -1079,7 +1180,7 @@ function UnitCard({ unit, isActive }: { unit: CombatUnit, isActive: boolean }) {
         </div>
         <div className="flex flex-col items-end">
            <div className="flex gap-0.5 justify-center w-full">
-              {[1, 2, 3, 4].map(i => <StarIcon key={i} size={6} className="text-yellow-400 fill-current" />)}
+               {unit.level > 1 && [1, 2, 3].map(i => <StarIcon key={i} size={6} className="text-yellow-400 fill-current" />)}
            </div>
         </div>
       </div>
@@ -1184,7 +1285,7 @@ function ErrorScreen({ error, onBack }: { error: string, onBack: () => void }) {
   );
 }
 
-function BattleResult({ winner, completionData, isRecording, onConfirm }: BattleResultProps) {
+function BattleResult({ winner, completionData, isRecording, recordingTimeout, recordingFailed, onConfirm }: BattleResultProps) {
   return (
     <motion.div 
       initial={{ opacity: 0 }} 
@@ -1227,16 +1328,26 @@ function BattleResult({ winner, completionData, isRecording, onConfirm }: Battle
             transition={{ delay: 0.8 }}
             className="flex flex-col items-center gap-4 w-full max-w-sm"
           >
-            <p className="text-[11px] font-black text-white/40 uppercase tracking-widest">Sincronizando recompensas...</p>
-            {isRecording && (
-              <motion.div
-                animate={{ opacity: [0.3, 1, 0.3] }}
-                transition={{ repeat: Infinity, duration: 1.5 }}
-                className="flex items-center gap-2"
-              >
-                <Terminal size={12} className="text-[#F5C76B]" />
-                <span className="text-[8px] font-black text-[#F5C76B] uppercase tracking-[0.5em]">Registrando...</span>
+            {(recordingTimeout || recordingFailed) ? (
+              <motion.div className="flex flex-col items-center gap-2">
+                <AlertTriangle size={20} className="text-yellow-400" />
+                <p className="text-[10px] font-black text-yellow-400 uppercase tracking-widest text-center">Tiempo de espera agotado</p>
+                <p className="text-[8px] font-black text-white/40 uppercase tracking-widest text-center">Las recompensas se otorgarán al reconectar</p>
               </motion.div>
+            ) : (
+              <>
+                <p className="text-[11px] font-black text-white/40 uppercase tracking-widest">Sincronizando recompensas...</p>
+                {isRecording && (
+                  <motion.div
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                    className="flex items-center gap-2"
+                  >
+                    <Terminal size={12} className="text-[#F5C76B]" />
+                    <span className="text-[8px] font-black text-[#F5C76B] uppercase tracking-[0.5em]">Registrando...</span>
+                  </motion.div>
+                )}
+              </>
             )}
           </motion.div>
         )}
@@ -1330,7 +1441,7 @@ function BattleResult({ winner, completionData, isRecording, onConfirm }: Battle
        )}
 
       <div className="absolute bottom-12 flex flex-col items-center gap-6">
-        {isRecording && (
+        {isRecording && !recordingTimeout && (
           <motion.div 
             animate={{ opacity: [0.3, 1, 0.3] }}
             transition={{ repeat: Infinity, duration: 1.5 }}
@@ -1345,7 +1456,6 @@ function BattleResult({ winner, completionData, isRecording, onConfirm }: Battle
           onClick={onConfirm}
           variant="primary"
           className="font-black py-4 px-20 rounded-full tracking-[0.3em] uppercase text-[10px] shadow-2xl hover:scale-105 active:scale-95 transition-transform"
-          style={{ backgroundColor: 'white', color: 'black' }}
         >
           Continue Expedition
         </Button>

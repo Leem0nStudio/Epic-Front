@@ -51,6 +51,7 @@ function createMockUnit(id: string, name: string, agi: number = 50): CombatUnit 
     isDead: false,
     isStunned: false,
     isTaunting: false,
+    level: 1,
     modifierIds: []
   };
 }

@@ -7,7 +7,7 @@ import { getRarityCode, RARITY_COLORS } from '@/lib/config/assets-config';
 import { InventoryService } from '@/lib/services/inventory-service';
 import { useGameStore } from '@/lib/stores/game-store';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Zap, Sword, Shield, Sparkles, Package } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { motion } from 'motion/react';
@@ -87,23 +87,78 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
     });
   }, [storeInventory, targetSlot]);
 
-  const filteredItems = items.filter(item => {
+  const filteredItems = useMemo(() => items.filter(item => {
     const matchesFilter = filter === 'all' || item.item_type === filter;
     const matchesSearch = !search || item.definition?.name?.toLowerCase().includes(search.toLowerCase());
     return matchesFilter && matchesSearch;
-  });
+  }), [items, filter, search]);
+
+  const handleDiscard = async (itemId: string) => {
+    const confirmed = await confirmToast('¿Descartar este objeto?');
+    if (!confirmed) return;
+    if (!supabase) return;
+    try {
+      await InventoryService.discardItem(itemId);
+      const updated = await InventoryService.getInventory();
+      useGameStore.getState().setInventory(updated as any[]);
+    } catch (e) {
+      gameDebugger.error('inventory', 'Failed to discard item', e);
+    }
+  };
+
+  const handleItemClick = (item: any) => {
+    if (item.item_type === 'card') setSelectedCard(item.item_id);
+    else if (item.item_type === 'skill' || item.item_type === 'skill_scroll') setSelectedSkill(item.item_id);
+    else onEquip(item);
+  };
+
+  const renderItemIcon = (item: any) => {
+    switch (item.item_type) {
+      case 'card':
+        return <img src={AssetService.getCardUrlWithFallback(item.item_id)} alt="" className="w-full h-full object-contain" />;
+      case 'weapon':
+        return <img src={AssetService.getWeaponIconUrl(item.item_id)} alt="" className="w-10 h-10 object-contain" />;
+      case 'armor':
+        return <Shield size={24} className="text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]" />;
+      case 'accessory':
+        return <Sparkles size={24} className="text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]" />;
+      case 'boots':
+        return <Zap size={24} className="text-orange-400 drop-shadow-[0_0_10px_rgba(251,146,60,0.5)]" />;
+      case 'skill':
+      case 'skill_scroll':
+        return <Zap size={24} className="text-[#F5C76B] drop-shadow-[0_0_10px_rgba(245,199,107,0.5)]" />;
+      case 'job_core':
+        return <Shield size={24} className="text-green-400" />;
+      case 'material':
+        return <Package size={24} className="text-blue-400" />;
+      default:
+        return <Package size={24} className="text-white/30" />;
+    }
+  };
 
   if (selectedSkill) {
-    return <SkillDetailView skillId={selectedSkill} itemId={items.find(i => i.item_id === selectedSkill)?.id || ''} onBack={() => setSelectedSkill(null)} onEquip={(item) => { onEquip(item); setSelectedSkill(null); }} onDiscard={async (itemId) => { const confirmed = await confirmToast('¿Descartar este objeto?'); if (!confirmed || !supabase) return; await supabase.from('inventory').delete().eq('id', itemId); setSelectedSkill(null); }} />;
+    const skillItem = items.find(i => i.item_id === selectedSkill);
+    return <SkillDetailView skillId={selectedSkill} itemId={skillItem?.id || ''} onBack={() => setSelectedSkill(null)} onEquip={(item) => { onEquip(item); setSelectedSkill(null); }} onDiscard={handleDiscard} />;
   }
 
   if (selectedCard) {
     const item = items.find(i => i.item_id === selectedCard);
-    return <CardDetailView cardId={selectedCard} itemId={item?.id || ''} onBack={() => setSelectedCard(null)} onEquip={(item) => { onEquip(item); setSelectedCard(null); }} onDiscard={async (itemId) => { const confirmed = await confirmToast('¿Descartar este objeto?'); if (!confirmed || !supabase) return; await supabase.from('inventory').delete().eq('id', itemId); setSelectedCard(null); }} />;
+    return <CardDetailView cardId={selectedCard} itemId={item?.id || ''} onBack={() => setSelectedCard(null)} onEquip={(item) => { onEquip(item); setSelectedCard(null); }} onDiscard={handleDiscard} />;
   }
 
   return (
     <ViewShell title="Inventario" subtitle={`${items.length} objetos`} onBack={onBack} loading={loading} emptyMessage="No hay objetos en tu inventario">
+      {/* Equip mode banner */}
+      {targetSlot && (
+        <div className="px-4 pt-4 pb-0">
+          <div className="bg-[#F5C76B]/10 border border-[#F5C76B]/30 rounded-xl px-4 py-3 text-center">
+            <p className="text-[9px] font-black text-[#F5C76B] uppercase tracking-widest">
+              {fromUnitDetails ? 'Selecciona un objeto para equipar' : `Seleccionando: ${targetSlot}`}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Search & Filter */}
       <div className="p-4 pb-2">
         <div className="flex gap-2 mb-3">
@@ -129,6 +184,7 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
               variant={filter === f.key ? "primary" : "ghost"}
               size="sm"
               className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all ${filter === f.key ? 'bg-[#F5C76B] text-black' : 'bg-black/40 border border-white/10 text-white/60 hover:text-white'}`}
+              aria-pressed={filter === f.key}
             >
               {f.label}
             </Button>
@@ -153,22 +209,23 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
                   initial={{ opacity: 0, scale: 0.8 }} 
                   animate={{ opacity: 1, scale: 1 }} 
                   transition={{ delay: idx * 0.03 }} 
-                  onClick={() => { if (item.item_type === 'card') setSelectedCard(item.item_id); else if (item.item_type === 'skill' || item.item_type === 'skill_scroll') setSelectedSkill(item.item_id); else onEquip(item); }}
+                  onClick={() => handleItemClick(item)}
                   aria-label={`Ver detalles de ${item.definition?.name || item.name}`}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (item.item_type === 'card') setSelectedCard(item.item_id); else if (item.item_type === 'skill' || item.item_type === 'skill_scroll') setSelectedSkill(item.item_id); else onEquip(item); }}}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleItemClick(item); }}}
                   className="text-left"
                 >
                   <RarityBorder rarity={item.definition?.rarity} className="transition-all hover:scale-105 active:scale-95">
-                    <div className="w-full h-full rounded-lg bg-black/40 flex items-center justify-center relative overflow-hidden">
-                      {item.item_type === 'card' && <img src={AssetService.getCardUrlWithFallback(item.item_id)} alt="" className="w-full h-full object-contain" />}
-                      {item.item_type === 'weapon' && <img src={AssetService.getWeaponIconUrl(item.item_id)} alt="" className="w-10 h-10 object-contain" />}
-                      {item.item_type === 'skill' || item.item_type === 'skill_scroll' ? <Zap size={24} className="text-[#F5C76B] drop-shadow-[0_0_10px_rgba(245,199,107,0.5)]" /> : null}
-                      {item.item_type === 'job_core' && <Shield size={24} className="text-green-400" />}
-                      {item.item_type === 'material' && <Package size={24} className="text-blue-400" />}
-                      {item.quantity > 1 && <div className="absolute bottom-0 right-0 bg-black/60 px-1.5 py-0.5 rounded-tl-lg">
-                        <span className="text-[8px] font-black text-white">{item.quantity}</span>
+                    <div className="w-full h-full rounded-lg bg-black/40 flex flex-col items-center justify-center relative overflow-hidden p-1">
+                      <div className="flex-1 flex items-center justify-center w-full min-h-[48px]">
+                        {renderItemIcon(item)}
+                      </div>
+                      <span className="text-[6px] font-bold text-white/60 truncate w-full text-center leading-tight mt-0.5 px-0.5">
+                        {item.definition?.name || item.item_id.split('_').slice(-1)[0]}
+                      </span>
+                      {item.quantity > 1 && <div className="absolute top-0 right-0 bg-black/60 px-1 py-0.5 rounded-bl-lg">
+                        <span className="text-[7px] font-black text-white">{item.quantity}</span>
                       </div>}
                     </div>
                   </RarityBorder>
@@ -181,24 +238,7 @@ export function InventoryView({ targetSlot, fromUnitDetails, onBack, onEquip, on
 
       {/* Hint */}
       <div className="p-4 text-center">
-        <p className="text-[10px] text-white/30 font-stats">Toca una carta o skill para ver detalles</p>
-      </div>
-
-      {/* Re-initialize account button */}
-      <div className="p-4 pt-0 text-center">
-        <button 
-          onClick={async () => {
-            const confirmed = window.confirm('¿Reiniciar cuenta? Perderás todo el progreso.');
-            if (confirmed) {
-              await useGameStore.getState().reinitializeAccount((msg, type) => {
-                alert(msg);
-              });
-            }
-          }}
-          className="text-[10px] text-red-400/50 hover:text-red-400 underline"
-        >
-          ¿Problemas? Reiniciar cuenta
-        </button>
+        <p className="text-[10px] text-white/30 font-stats">{targetSlot ? 'Toca un objeto para equiparlo' : 'Toca un objeto para ver detalles'}</p>
       </div>
     </ViewShell>
   );
