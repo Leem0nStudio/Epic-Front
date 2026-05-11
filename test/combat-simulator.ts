@@ -75,6 +75,7 @@ function createUnit(name: string, agi: number, atk: number): CombatUnit {
     isDead: false,
     isStunned: false,
     isTaunting: false,
+    level: 1,
     modifierIds: []
   };
 }
@@ -101,6 +102,7 @@ function createEnemy(name: string, hp: number): CombatUnit {
     isDead: false,
     isStunned: false,
     isTaunting: false,
+    level: 1,
     modifierIds: []
   };
 }

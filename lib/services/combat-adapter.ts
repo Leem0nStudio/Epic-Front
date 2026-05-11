@@ -88,7 +88,8 @@ export class CombatAdapter {
       isStunned: false,
       isTaunting: false,
       sprite_id: details.unit.sprite_id,
-      icon_id: details.unit.icon_id
+      icon_id: details.unit.icon_id,
+      level: details.unit.level || 1,
     };
   }
 
@@ -124,7 +125,8 @@ export class CombatAdapter {
       jobId: unit.current_job_id || unit.currentJobId,
       isDead: false,
       isStunned: false,
-      isTaunting: false
+      isTaunting: false,
+      level: unit.level || 1,
     };
   }
 
@@ -164,6 +166,7 @@ export class CombatAdapter {
       isDead: false,
       isStunned: false,
       isTaunting: false,
+      level,
       sprite_id: AssetService.getRandomSpriteId('melee'),
       icon_id: AssetService.getJobIconId('swordman')
     };

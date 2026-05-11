@@ -537,6 +537,7 @@ export async function runCombatFromDatabase(
     isDead: false,
     isStunned: false,
     isTaunting: false,
+    level: 1,
     modifierIds: build.modifiers.map(m => m.id)
   };
 
@@ -561,6 +562,7 @@ export async function runCombatFromDatabase(
     isDead: false,
     isStunned: false,
     isTaunting: false,
+    level: 1,
     modifierIds: []
   };
 

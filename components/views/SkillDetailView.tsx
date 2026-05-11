@@ -9,6 +9,7 @@ import { RarityBadge } from '@/components/ui/RarityBadge';
 import { ViewShell } from '@/components/ui/ViewShell';
 import { getRarityCode } from '@/lib/config/assets-config';
 import { Button } from '@/components/ui/Button';
+import { useGameStore } from '@/lib/stores/game-store';
 
 interface SkillDetailViewProps {
   skillId: string;
@@ -30,13 +31,18 @@ export function SkillDetailView({ skillId, itemId, onBack, onEquip, onDiscard }:
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadSkill() {
-      if (!supabase) return;
-      const { data } = await supabase.from('skills').select('*').eq('id', skillId).single();
-      setSkill(data);
+    const storeItem = useGameStore.getState().inventory.find(i => i.item_id === skillId);
+    if (storeItem?.definition) {
+      setSkill(storeItem.definition);
       setLoading(false);
+      return;
     }
-    loadSkill();
+
+    if (!supabase) { setLoading(false); return; }
+    supabase.from('skills').select('*').eq('id', skillId).single().then(({ data }) => {
+      setSkill(data || null);
+      setLoading(false);
+    });
   }, [skillId]);
 
   if (loading) return <ViewShell title="Habilidad" onBack={onBack} loading />;

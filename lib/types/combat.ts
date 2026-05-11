@@ -65,6 +65,7 @@ export interface CombatUnit {
   sprite_id?: string;
   icon_id?: string;
   modifierIds?: string[];
+  level: number;
 }
 
 export interface CombatState {
