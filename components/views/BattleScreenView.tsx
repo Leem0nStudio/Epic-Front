@@ -47,12 +47,16 @@ interface BattleRewards {
   currency: number;
   premium_currency?: number;
   exp?: number;
-  materials?: Array<{ itemId: string; amount: number; chance: number }>;
+  materials?: Array<{ itemId: string; amount: number; chance?: number }>;
 }
 
 interface BattleCompletionData {
-  stars?: number;
+  stars: number;
   rewards: BattleRewards;
+  isFirstClear?: boolean;
+  firstClearBonus?: Record<string, unknown>;
+  currencyGained?: number;
+  expGained?: number;
 }
 
 interface BattleResultProps {
@@ -73,7 +77,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
   const [targetId, setTargetId] = useState<string | null>(null);
-  const [completionData, setCompletionData] = useState<any>(null);
+  const [completionData, setCompletionData] = useState<BattleCompletionData | null>(null);
   const [showBattleLog, setShowBattleLog] = useState(false);
   const [isRecordingResult, setIsRecordingResult] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
@@ -81,12 +85,11 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const [damageNumbers, setDamageNumbers] = useState<{ id: number, value: number, x: number, y: number, color: string, isCrit?: boolean }[]>([]);
   const [participatingUnits, setParticipatingUnits] = useState<Set<string>>(new Set());
   const [autoBattle, setAutoBattle] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   
   // INTENSE COMBAT FEEDBACK SYSTEM
   const [comboCount, setComboCount] = useState(0);
-  const [comboChain, setComboChain] = useState<string[]>([]);
   const [lastHitType, setLastHitType] = useState<string>('');
-  const [activeEffects, setActiveEffects] = useState<{ name: string, icon: string, color: string }[]>([]);
   const [combatLog, setCombatLog] = useState<{ text: string, type: string, time: number }[]>([]);
   
   // INTENSE VISUAL FEEDBACK STATES
@@ -97,19 +100,42 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const [lastComboMilestone, setLastComboMilestone] = useState(0);
   const [screenGlow, setScreenGlow] = useState<'none' | 'gold' | 'fire' | 'ice' | 'dark'>('none');
   const [hitSequence, setHitSequence] = useState<{ id: number, value: number, time: number }[]>([]);
+  const [dyingEnemyIds, setDyingEnemyIds] = useState<string[]>([]);
 
   const prefersReducedMotion = usePrefersReducedMotion();
+
+  // Reset auto-battle when battle ends
+  useEffect(() => { if (isBattleOver) setAutoBattle(false); }, [isBattleOver]);
+
+  const playerUnits = useMemo(() => units.filter(u => u.side === 'player'), [units]);
+  const enemyUnits = useMemo(() => units.filter(u => u.side === 'enemy' && !u.isDead), [units]);
+
+  // Reset target if targeted enemy is dead
+  useEffect(() => {
+    if (targetId && !enemyUnits.some(u => u.id === targetId)) {
+      setTargetId(null);
+    }
+  }, [targetId, enemyUnits]);
+
+  // Track dying enemies for fade-out animation
+  const prevAliveEnemyIds = useRef<string[]>([]);
+  useEffect(() => {
+    const currentIds = enemyUnits.map(u => u.id);
+    if (prevAliveEnemyIds.current.length > 0) {
+      const newlyDead = prevAliveEnemyIds.current.filter(id => !currentIds.includes(id));
+      if (newlyDead.length > 0) {
+        setDyingEnemyIds(prev => [...prev, ...newlyDead]);
+        setTimeout(() => setDyingEnemyIds(prev => prev.filter(id => !newlyDead.includes(id))), 1000);
+      }
+    }
+    prevAliveEnemyIds.current = currentIds;
+  }, [enemyUnits]);
 
   // Statistics for Star calculation
   const [stats, setStats] = useState({
     totalTurns: 0,
     playerDeaths: 0
   });
-
-  const triggerShake = () => {
-    setIsShaking(true);
-    setTimeout(() => setIsShaking(false), 300);
-  };
 
   useEffect(() => {
     async function initBattle() {
@@ -141,6 +167,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
         }
 
         setUnits([...playerUnits, ...enemies]);
+        setParticipatingUnits(new Set(playerUnits.map(u => u.id)));
         setIsInitializing(false);
       } catch (e) {
         const message = e instanceof Error ? e.message : "Error al inicializar combate";
@@ -154,27 +181,30 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
   const addDamageNumber = useCallback((value: number, unitId: string, color: string = 'text-white', isCrit: boolean = false, hitType: string = '') => {
     const now = Date.now();
     const newId = now + Math.random();
+    const targetUnit = units.find(u => u.id === unitId);
+    const positionIndex = targetUnit?.position ?? 0;
+    const isEnemy = targetUnit?.side === 'enemy';
+    const baseX = isEnemy ? (positionIndex - 1) * 80 : (positionIndex - 1) * 60;
+    const baseY = isEnemy ? -60 - Math.random() * 30 : 20 - Math.random() * 40;
     
     setDamageNumbers(prev => {
-      return [...prev, { id: newId, value, x: Math.random() * 60 - 30, y: -50 - Math.random() * 20, color, isCrit }];
+      return [...prev, { id: newId, value, x: baseX + Math.random() * 20 - 10, y: baseY, color, isCrit }];
     });
     
-    // Add to hit sequence for chain detection
+    // Add to hit sequence for chain detection (fresh sequence inside setter avoids stale closure)
     setHitSequence(prev => {
       const newSeq = [...prev, { id: newId, value, time: now }];
-      // Keep only last 1.5 seconds of hits
-      return newSeq.filter(h => now - h.time < 1500);
+      const filtered = newSeq.filter(h => now - h.time < 1500);
+      const recentHits = filtered.filter(h => now - h.time < 500);
+      if (recentHits.length >= 2) {
+        const newChain = recentHits.length + 1;
+        setChainCount(newChain);
+        setChainMultiplier(Math.min(3, 1 + (newChain - 2) * 0.5));
+        setScreenFlash('chain');
+        setTimeout(() => setScreenFlash('none'), 200);
+      }
+      return filtered;
     });
-    
-    // Check for chains (rapid hits within 500ms)
-    const recentHits = hitSequence.filter(h => now - h.time < 500);
-    if (recentHits.length >= 2) {
-      const newChain = recentHits.length + 1;
-      setChainCount(newChain);
-      setChainMultiplier(Math.min(3, 1 + (newChain - 2) * 0.5)); // 1.5x, 2x, 2.5x, 3x
-      setScreenFlash('chain');
-      setTimeout(() => setScreenFlash('none'), 200);
-    }
     
     // Update combo system with INTENSE effects
     if (hitType === 'damage' || isCrit) {
@@ -215,9 +245,9 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     }
     
     setTimeout(() => setDamageNumbers(prev => prev.filter(d => d.id !== newId)), 1200);
-  }, [comboCount, hitSequence, lastComboMilestone]);
+  }, [comboCount, lastComboMilestone, units]);
 
-  const runTurn = (actor: CombatUnit, skill: SkillDefinition, manualTargetId?: string, isBurst: boolean = false) => {
+  const runTurn = useCallback((actor: CombatUnit, skill: SkillDefinition, manualTargetId?: string, isBurst: boolean = false) => {
     if (isBattleOver) return;
 
     const { results, updatedUnits } = BattleManager.executeTurn(actor, skill, units, manualTargetId, isBurst);
@@ -228,7 +258,6 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       }
     });
 
-    // Track participating units
     setParticipatingUnits(prev => {
       const newSet = new Set(prev);
       newSet.add(actor.id);
@@ -240,15 +269,16 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     setTurn(prev => prev + 1);
     setTargetId(null);
     setStats(prev => ({ ...prev, totalTurns: prev.totalTurns + 1 }));
-  };
+  }, [isBattleOver, units, addDamageNumber]);
 
-  const handleBurst = () => {
+  const currentActor = useMemo(() => units.find(u => u.id === activeUnitId), [units, activeUnitId]);
+
+  const handleBurst = useCallback(() => {
     if (isBattleOver || !currentActor || currentActor.side !== 'player') return;
     if (currentActor.burst < 100) return;
 
     setIsBurstActive(true);
 
-    // Create a burst skill: 1.5x damage, resets burst to 0
     const burstSkill: SkillDefinition = {
       id: 'burst_ultra',
       name: 'Burst Ultra',
@@ -260,14 +290,12 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       ]
     };
 
-    // Execute burst turn and reset burst
     runTurn(currentActor, burstSkill, targetId || undefined, true);
 
-    // Reset burst after a short delay for visual feedback
     setTimeout(() => setIsBurstActive(false), 1500);
-  };
+  }, [isBattleOver, currentActor, targetId, runTurn]);
 
-  const handleBattleOver = async (winnerSide: 'player' | 'enemy', deaths: number) => {
+  const handleBattleOver = useCallback(async (winnerSide: 'player' | 'enemy', deaths: number) => {
     setIsBattleOver(true);
     setWinner(winnerSide);
     if (winnerSide === 'player' && stageId) {
@@ -276,30 +304,28 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
         const result = await CampaignService.completeStage(
           stageId, 
           { turns: round, deaths },
-          Array.from(participatingUnits) // Pass participating unit IDs
+          Array.from(participatingUnits)
         );
-        setCompletionData(result);
+        if (result) setCompletionData(result as BattleCompletionData);
      } catch (e: unknown) {
          logger.error('error', "Failed to record stage completion:", e as Error);
        } finally {
         setIsRecordingResult(false);
       }
     }
-  };
+  }, [stageId, round, participatingUnits]);
 
   useEffect(() => {
     if (isInitializing || isBattleOver || initError) return;
 
-    const aliveEnemies = units.filter(u => u.side === 'enemy' && !u.isDead);
-    const alivePlayers = units.filter(u => u.side === 'player' && !u.isDead);
-    const deadPlayers = units.filter(u => u.side === 'player' && u.isDead).length;
+    const deadPlayers = playerUnits.filter(u => u.isDead).length;
 
-    if (aliveEnemies.length === 0) {
-      setTimeout(() => handleBattleOver('player', deadPlayers), 0);
+    if (enemyUnits.length === 0) {
+      handleBattleOver('player', deadPlayers);
       return;
     }
-    if (alivePlayers.length === 0) {
-      setTimeout(() => handleBattleOver('enemy', deadPlayers), 0);
+    if (playerUnits.length === 0) {
+      handleBattleOver('enemy', deadPlayers);
       return;
     }
 
@@ -307,40 +333,34 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
     if (order.length === 0) return;
 
     if (turn >= order.length) {
-      setTimeout(() => {
-        setTurn(0);
-        setRound(prev => prev + 1);
-        setUnits(prev => prev.map(u => BattleManager.updateUnitStartTurn(u)));
-      }, 0);
+      setTurn(0);
+      setRound(prev => prev + 1);
+      setUnits(prev => prev.map(u => BattleManager.updateUnitStartTurn(u)));
       return;
     }
 
-    const currentActor = order[turn];
-    setTimeout(() => setActiveUnitId(currentActor.id), 0);
+    const activeUnit = order[turn];
+    setActiveUnitId(activeUnit.id);
 
-    if (currentActor.side === 'enemy') {
-      const skill = currentActor.skills[0];
-      const timer = setTimeout(() => runTurn(currentActor, skill), 1000);
+    if (activeUnit.side === 'enemy') {
+      const skill = activeUnit.skills[0];
+      const timer = setTimeout(() => runTurn(activeUnit, skill), 1000);
       return () => clearTimeout(timer);
     }
 
     // Auto-battle: if player's turn and auto-battle is on
-    if (autoBattle && currentActor.side === 'player' && enemyUnits.length > 0) {
+    if (autoBattle && activeUnit.side === 'player' && enemyUnits.length > 0) {
       const autoTargetId = enemyUnits[0].id;
       setTargetId(autoTargetId);
-      const skill = currentActor.skills[0] || { id: 'attack', name: 'Attack', type: 'basic', cooldown: 0, effects: [] };
-      const timer = setTimeout(() => runTurn(currentActor, skill, autoTargetId), 500);
+      const skill = activeUnit.skills[0] || { id: 'attack', name: 'Attack', type: 'basic', cooldown: 0, effects: [] };
+      const timer = setTimeout(() => runTurn(activeUnit, skill, autoTargetId), 500);
       return () => clearTimeout(timer);
     }
-  }, [units, turn, isInitializing, isBattleOver, initError, autoBattle]);
+  }, [units, turn, isInitializing, isBattleOver, initError, autoBattle, enemyUnits, playerUnits, runTurn, handleBattleOver]);
 
   if (isInitializing) return <LoadingScreen />;
   if (initError) return <ErrorScreen error={initError} onBack={onBack} />;
 
-  const playerUnits = units.filter(u => u.side === 'player');
-  const enemyUnits = units.filter(u => u.side === 'enemy' && !u.isDead);
-  const currentActor = units.find(u => u.id === activeUnitId);
-  
   const totalPlayerHp = playerUnits.reduce((acc, u) => acc + u.currentHp, 0);
   const maxPlayerHp = playerUnits.reduce((acc, u) => acc + u.maxHp, 0);
   const totalEnemyHp = enemyUnits.reduce((acc, u) => acc + u.currentHp, 0);
@@ -365,7 +385,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       {/* TOP: Boss HP Bar & Elements */}
       <div className="relative z-20 px-4 pt-10 pb-4">
         <div className="flex justify-between items-center mb-3 px-1">
-          <Button onClick={onBack} variant="ghost" size="sm" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-90"><ChevronLeft size={20} /></Button>
+          <Button onClick={() => { if (isBattleOver) { onBack(); } else { setShowExitConfirm(true); } }} variant="ghost" size="sm" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-90"><ChevronLeft size={20} /></Button>
           <Button
             onClick={() => setAutoBattle(!autoBattle)}
             variant={autoBattle ? "primary" : "ghost"}
@@ -460,9 +480,27 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
 
         {/* Enemies Section */}
         <div className="flex justify-center gap-4 sm:gap-12 -mt-8 sm:-mt-16">
-          {enemyUnits.map((enemy) => (
-            <EnemySprite key={enemy.id} enemy={enemy} isTargeted={targetId === enemy.id} onTarget={() => setTargetId(enemy.id)} />
-          ))}
+          <AnimatePresence>
+            {enemyUnits.map((enemy) => (
+              <EnemySprite key={enemy.id} enemy={enemy} isTargeted={targetId === enemy.id} onTarget={() => setTargetId(enemy.id)} />
+            ))}
+            {dyingEnemyIds.map(id => {
+              const deadEnemy = units.find(u => u.id === id);
+              if (!deadEnemy) return null;
+              return (
+                <motion.div
+                  key={deadEnemy.id}
+                  initial={{ opacity: 1 }}
+                  animate={{ opacity: 0, scale: 0.5 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8 }}
+                  className="pointer-events-none"
+                >
+                  <EnemySprite enemy={deadEnemy} isTargeted={false} onTarget={() => {}} />
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </div>
 
         {/* Player Sprites on Field */}
@@ -696,26 +734,6 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
           </div>
         </div>
 
-        {/* Active Effects Indicator - Left side */}
-        {activeEffects.length > 0 && (
-          <div className="absolute top-4 left-4 flex gap-2 z-50">
-            {activeEffects.map((effect, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ scale: 0, x: -20 }}
-                animate={{ scale: 1, x: 0 }}
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl border-2"
-                style={{ 
-                  backgroundColor: 'rgba(0,0,0,0.8)',
-                  borderColor: effect.color === 'text-red-500' ? '#ef4444' : '#3b82f6'
-                }}
-                title={effect.name}
-              >
-                {effect.icon}
-              </motion.div>
-            ))}
-          </div>
-        )}
       </div>
 
        {/* BOTTOM: Unit Cards & Skill Bar */}
@@ -747,44 +765,45 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
              ))}
            </div>
 
-            <ActionButton
-              onClick={handleBurst}
-              variant="burst"
-              disabled={!currentActor || (currentActor?.burst || 0) < 100 || isBurstActive}
-              className={`w-16 h-16 rounded-full p-1 shadow-[0_0_30px_rgba(239,68,68,0.4)] group relative ${(currentActor?.burst || 0) >= 100 ? 'animate-pulse' : ''}`}
-              whileHover={(currentActor?.burst || 0) >= 100 ? { scale: 1.05 } : {}}
-              whileTap={(currentActor?.burst || 0) >= 100 ? { scale: 0.9 } : {}}
-            >
-                <div className={`w-full h-full bg-[#0B1A2A]/90 rounded-full flex flex-col items-center justify-center border-2 ${(currentActor?.burst || 0) >= 100 ? 'border-red-400' : 'border-white/20'}`}>
-                   {isBurstActive ? (
-                     <motion.div
-                       initial={{ scale: 0.5, opacity: 0 }}
-                       animate={{ scale: 2, opacity: 1 }}
-                       transition={{ duration: 0.8 }}
-                       className="text-yellow-300 font-black text-xs uppercase tracking-widest"
-                     >
-                       ULTRA!
-                     </motion.div>
-                   ) : (
-                     <>
-                       <motion.div
-                         animate={(currentActor?.burst || 0) >= 100 ? { opacity: [0.4, 1, 0.4] } : { opacity: 0.4 }}
-                         transition={{ repeat: Infinity, duration: 1.5 }}
-                         className="absolute inset-0 bg-white/10 rounded-full"
-                       />
-                       <span className={`text-[7px] font-black uppercase tracking-widest leading-none mb-0.5 ${(currentActor?.burst || 0) >= 100 ? 'text-yellow-300' : 'text-white/60'}`}>Burst</span>
-                       <span className={`text-[11px] font-black uppercase leading-none italic drop-shadow-lg ${(currentActor?.burst || 0) >= 100 ? 'text-yellow-300' : 'text-white'}`}>ULTRA</span>
-                       {/* Burst bar mini indicator */}
-                       <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-black/40 rounded-full overflow-hidden">
-                         <div
-                           className={`h-full ${(currentActor?.burst || 0) >= 100 ? 'bg-yellow-400' : 'bg-cyan-400'}`}
-                           style={{ width: `${currentActor?.burst || 0}%` }}
-                         />
-                       </div>
-                     </>
-                   )}
-                </div>
-             </ActionButton>
+             {currentActor?.side === 'player' && (
+               <ActionButton
+                 onClick={handleBurst}
+                 variant="burst"
+                 disabled={!currentActor || (currentActor?.burst || 0) < 100 || isBurstActive}
+                 className={`w-16 h-16 rounded-full p-1 shadow-[0_0_30px_rgba(239,68,68,0.4)] group relative ${(currentActor?.burst || 0) >= 100 ? 'animate-pulse' : ''}`}
+                 whileHover={(currentActor?.burst || 0) >= 100 ? { scale: 1.05 } : {}}
+                 whileTap={(currentActor?.burst || 0) >= 100 ? { scale: 0.9 } : {}}
+               >
+                   <div className={`w-full h-full bg-[#0B1A2A]/90 rounded-full flex flex-col items-center justify-center border-2 ${(currentActor?.burst || 0) >= 100 ? 'border-red-400' : 'border-white/20'}`}>
+                      {isBurstActive ? (
+                        <motion.div
+                          initial={{ scale: 0.5, opacity: 0 }}
+                          animate={{ scale: 2, opacity: 1 }}
+                          transition={{ duration: 0.8 }}
+                          className="text-yellow-300 font-black text-xs uppercase tracking-widest"
+                        >
+                          ULTRA!
+                        </motion.div>
+                      ) : (
+                        <>
+                          <motion.div
+                            animate={(currentActor?.burst || 0) >= 100 ? { opacity: [0.4, 1, 0.4] } : { opacity: 0.4 }}
+                            transition={{ repeat: Infinity, duration: 1.5 }}
+                            className="absolute inset-0 bg-white/10 rounded-full"
+                          />
+                          <span className={`text-[7px] font-black uppercase tracking-widest leading-none mb-0.5 ${(currentActor?.burst || 0) >= 100 ? 'text-yellow-300' : 'text-white/60'}`}>Burst</span>
+                          <span className={`text-[11px] font-black uppercase leading-none italic drop-shadow-lg ${(currentActor?.burst || 0) >= 100 ? 'text-yellow-300' : 'text-white'}`}>ULTRA</span>
+                          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-black/40 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full ${(currentActor?.burst || 0) >= 100 ? 'bg-yellow-400' : 'bg-cyan-400'}`}
+                              style={{ width: `${currentActor?.burst || 0}%` }}
+                            />
+                          </div>
+                        </>
+                      )}
+                   </div>
+                </ActionButton>
+             )}
          </NineSlicePanel>
        </div>
 
@@ -821,6 +840,27 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
              )}
            </div>
          </div>
+
+      {/* Exit Confirmation Modal */}
+      <AnimatePresence>
+        {showExitConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center"
+          >
+            <NineSlicePanel type="border" variant="default" className="p-8 mx-4 max-w-sm w-full" glassmorphism>
+              <h3 className="text-lg font-black text-white text-center mb-2 uppercase tracking-wider">¿Abandonar batalla?</h3>
+              <p className="text-[10px] text-white/60 text-center mb-6">Perderás el progreso de esta batalla.</p>
+              <div className="flex gap-3">
+                <Button onClick={() => setShowExitConfirm(false)} variant="ghost" className="flex-1 py-3 text-[9px] font-black uppercase tracking-widest">Cancelar</Button>
+                <Button onClick={() => { setShowExitConfirm(false); onBack(); }} variant="primary" className="flex-1 py-3 text-[9px] font-black uppercase tracking-widest bg-red-600 hover:bg-red-700">Salir</Button>
+              </div>
+            </NineSlicePanel>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Victory/Defeat Overlay */}
       <AnimatePresence>
@@ -1074,13 +1114,34 @@ function BattleResult({ winner, completionData, isRecording, onConfirm }: Battle
         className="h-1 bg-gradient-to-r from-transparent via-[#F5C76B] to-transparent mt-4 mb-8"
       />
 
-       {winner === 'player' && completionData && (
-         <motion.div
-           initial={{ opacity: 0, y: 30 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ delay: 0.8 }}
-           className="flex flex-col items-center gap-8 w-full max-w-sm"
-         >
+        {winner === 'player' && !completionData && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="flex flex-col items-center gap-4 w-full max-w-sm"
+          >
+            <p className="text-[11px] font-black text-white/40 uppercase tracking-widest">Sincronizando recompensas...</p>
+            {isRecording && (
+              <motion.div
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ repeat: Infinity, duration: 1.5 }}
+                className="flex items-center gap-2"
+              >
+                <Terminal size={12} className="text-[#F5C76B]" />
+                <span className="text-[8px] font-black text-[#F5C76B] uppercase tracking-[0.5em]">Registrando...</span>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+
+        {winner === 'player' && completionData && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="flex flex-col items-center gap-8 w-full max-w-sm"
+          >
            <div className="flex gap-6">
              {[1, 2, 3].map(s => (
                <motion.div
