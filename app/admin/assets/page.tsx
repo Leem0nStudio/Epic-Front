@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Image, Sword, Shield, Sparkles, Package, Users, Map, Save, RotateCcw, Check } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Image, Sword, Shield, Sparkles, Package, Users, Map, Save, RotateCcw, Check, Upload, File } from 'lucide-react';
 import { AssetService } from '@/lib/services/asset-service';
 import { UI_ASSETS, BG_ASSETS } from '@/lib/config/assets-config';
 import { SpriteConfigService, type JobSpriteEntry } from '@/lib/services/sprite-config-service';
@@ -10,6 +10,7 @@ const SECTIONS = [
   { id: 'sprites', label: 'Job Sprites', icon: Users },
   { id: 'ui', label: 'UI Icons', icon: Shield },
   { id: 'backgrounds', label: 'Backgrounds', icon: Map },
+  { id: 'upload', label: 'Upload', icon: Upload },
 ];
 
 const JOBS = ['novice', 'swordman', 'mage', 'ranger', 'archer', 'acolyte', 'knight', 'wizard', 'priest'];
@@ -134,6 +135,50 @@ export default function AdminAssetsPage() {
     </div>
   );
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<{ name: string; size: number } | null>(null);
+  const [uploadFilename, setUploadFilename] = useState('');
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (!file) return;
+    setSelectedFile({ name: file.name, size: file.size });
+    setPreviewUrl(URL.createObjectURL(file));
+    setUploadFilename(file.name);
+    setUploadMsg(null);
+  };
+
+  const handleUpload = async () => {
+    const file = fileInputRef.current?.files?.[0];
+    if (!file || !uploadFilename.trim()) return;
+    setUploading(true);
+    setUploadMsg(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('filename', uploadFilename.trim());
+
+    try {
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.success) {
+        setUploadMsg({ type: 'success', text: `✓ Uploaded: ${data.filename}` });
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      } else {
+        setUploadMsg({ type: 'error', text: data.error || 'Upload failed' });
+      }
+    } catch {
+      setUploadMsg({ type: 'error', text: 'Upload failed' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const renderBGs = () => (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
       {BG_ASSETS && Object.entries(BG_ASSETS).map(([key, val]: [string, any]) => (
@@ -178,6 +223,85 @@ export default function AdminAssetsPage() {
         {section === 'sprites' && renderSpriteEditor()}
         {section === 'ui' && renderUI()}
         {section === 'backgrounds' && renderBGs()}
+        {section === 'upload' && (
+          <div className="max-w-lg mx-auto">
+            <h2 className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-6 text-center">Upload Sprite</h2>
+
+            <div className="space-y-4">
+              {/* Drop zone */}
+              {!previewUrl ? (
+                <label className="block border-2 border-dashed border-white/10 rounded-2xl p-12 text-center cursor-pointer hover:border-cyan-500/30 hover:bg-cyan-500/5 transition-all">
+                  <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="hidden" onChange={handleFileSelect} />
+                  <Upload size={40} className="mx-auto mb-4 text-white/20" />
+                  <p className="text-[11px] font-black text-white/30 uppercase tracking-widest">Select a sprite image</p>
+                  <p className="text-[8px] text-white/20 mt-2">PNG, JPEG, GIF or WebP · Max 5MB</p>
+                </label>
+              ) : (
+                <div className="bg-black/60 rounded-2xl p-6 border border-white/5">
+                  {/* Preview + Filename */}
+                  <div className="flex items-center gap-5 mb-5">
+                    <div className="w-24 h-24 rounded-xl bg-black/80 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                      <img src={previewUrl} className="w-full h-full object-contain pixel-art" alt="preview" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1.5">Filename</p>
+                      <input
+                        type="text"
+                        value={uploadFilename}
+                        onChange={e => setUploadFilename(e.target.value)}
+                        className="w-full bg-black/80 border border-white/10 rounded-lg px-3 py-2 text-[12px] text-white font-mono focus:border-cyan-500/50 focus:outline-none"
+                        placeholder="sprite_filename.png"
+                        autoFocus
+                      />
+                      <p className="text-[8px] text-white/20 mt-1.5">
+                        {selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : ''}
+                        {' · '}Will save to <code className="text-cyan-400/60">/assets/sprites/</code>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => { setSelectedFile(null); setPreviewUrl(null); setUploadMsg(null); }}
+                      className="flex-1 py-3 bg-white/5 border border-white/10 rounded-xl text-white/40 font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all min-h-[44px]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUpload}
+                      disabled={uploading || !uploadFilename.trim()}
+                      className="flex-1 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl text-white font-black uppercase tracking-widest text-[10px] hover:brightness-110 transition-all disabled:opacity-50 min-h-[44px]"
+                    >
+                      {uploading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Uploading...
+                        </span>
+                      ) : 'Upload Sprite'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Success/Error message */}
+              {uploadMsg && (
+                <div className={`p-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-center ${
+                  uploadMsg.type === 'success'
+                    ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                    : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                }`}>
+                  {uploadMsg.text}
+                  {uploadMsg.type === 'success' && (
+                    <p className="text-[8px] text-white/30 mt-2 font-normal normal-case tracking-normal">
+                      Configure the job sprite in the <span className="text-cyan-400 font-bold">Job Sprites</span> tab.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
