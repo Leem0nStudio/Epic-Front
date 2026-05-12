@@ -1,0 +1,325 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CharacterDetailView snapshot renders and matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="max-w-3xl mx-auto p-4"
+  >
+    <div
+      class="bg-gradient-to-b from-slate-900 to-slate-800 rounded-xl p-4 shadow-lg panel-elevated"
+    >
+      <div
+        class="flex flex-col md:flex-row items-start gap-4"
+      >
+        <div
+          class="w-full md:w-2/5"
+        >
+          <div
+            class="relative w-full "
+          >
+            <div
+              class="mx-auto relative w-full h-56 sm:h-64 md:h-72 lg:h-80 pointer-events-none"
+            >
+              <div
+                class="relative mx-auto w-[90%] h-full overflow-visible"
+                style="max-width: 360px;"
+              >
+                <div
+                  class="sprite-overlap"
+                >
+                  <div
+                    class="sprite-image sprite-break-out w-[80%] mx-auto relative"
+                  >
+                    <img
+                      alt="novice"
+                      src="/assets/sprites/novice.png"
+                    />
+                  </div>
+                </div>
+                <div
+                  class="card-portrait rounded-lg border p-2 mt-28 sm:mt-32 md:mt-36 bg-gradient-to-b from-slate-800 to-slate-900 shadow-inner"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex-1"
+        >
+          <div
+            class="flex items-center justify-between"
+          >
+            <div>
+              <h2
+                class="text-xl font-bold text-slate-100"
+              >
+                Garran
+              </h2>
+              <div
+                class="text-xs text-slate-300 uppercase"
+              >
+                novice
+              </div>
+            </div>
+            <div
+              class="bg-amber-600 text-black px-3 py-1 rounded-full text-sm"
+            >
+              UR
+            </div>
+          </div>
+          <div
+            class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2"
+          >
+            <div
+              class="stat-card text-center p-2 rounded-md bg-slate-700/60"
+            >
+              <div
+                class="text-xs text-slate-300"
+              >
+                HP
+              </div>
+              <div
+                class="text-lg font-semibold text-white"
+              >
+                90
+              </div>
+            </div>
+            <div
+              class="stat-card text-center p-2 rounded-md bg-slate-700/60"
+            >
+              <div
+                class="text-xs text-slate-300"
+              >
+                ATK
+              </div>
+              <div
+                class="text-lg font-semibold text-white"
+              >
+                10
+              </div>
+            </div>
+            <div
+              class="stat-card text-center p-2 rounded-md bg-slate-700/60"
+            >
+              <div
+                class="text-xs text-slate-300"
+              >
+                DEF
+              </div>
+              <div
+                class="text-lg font-semibold text-white"
+              >
+                9
+              </div>
+            </div>
+            <div
+              class="stat-card text-center p-2 rounded-md bg-slate-700/60"
+            >
+              <div
+                class="text-xs text-slate-300"
+              >
+                SPD
+              </div>
+              <div
+                class="text-lg font-semibold text-white"
+              >
+                10
+              </div>
+            </div>
+          </div>
+          <div
+            class="mt-5"
+          >
+            <h3
+              class="text-sm text-slate-300"
+            >
+              Arsenal de Combate
+            </h3>
+            <div
+              class="flex flex-wrap gap-3 mt-2"
+            >
+              <div
+                class="w-12 h-12 rounded-full border border-slate-600 bg-slate-800 flex items-center justify-center"
+              >
+                <div
+                  class="text-slate-500"
+                >
+                  +
+                </div>
+              </div>
+              <div
+                class="w-12 h-12 rounded-full border border-slate-600 bg-slate-800 flex items-center justify-center"
+              >
+                <div
+                  class="text-slate-500"
+                >
+                  +
+                </div>
+              </div>
+              <div
+                class="w-12 h-12 rounded-full border border-slate-600 bg-slate-800 flex items-center justify-center"
+              >
+                <div
+                  class="text-slate-500"
+                >
+                  +
+                </div>
+              </div>
+              <div
+                class="w-12 h-12 rounded-full border border-slate-600 bg-slate-800 flex items-center justify-center"
+              >
+                <div
+                  class="text-slate-500"
+                >
+                  +
+                </div>
+              </div>
+              <div
+                class="w-12 h-12 rounded-full border border-slate-600 bg-slate-800 flex items-center justify-center"
+              >
+                <div
+                  class="text-slate-500"
+                >
+                  +
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="mt-5"
+          >
+            <h3
+              class="text-sm text-slate-300"
+            >
+              Técnicas Especiales
+            </h3>
+            <div
+              class="flex flex-wrap gap-3 mt-2"
+            >
+              <div
+                class="w-12 h-12 rounded-md border border-slate-600 bg-slate-800 flex items-center justify-center"
+              >
+                <div
+                  class="text-slate-500"
+                >
+                  +
+                </div>
+              </div>
+              <div
+                class="w-12 h-12 rounded-md border border-slate-600 bg-slate-800 flex items-center justify-center"
+              >
+                <div
+                  class="text-slate-500"
+                >
+                  +
+                </div>
+              </div>
+              <div
+                class="w-12 h-12 rounded-md border border-slate-600 bg-slate-800 flex items-center justify-center"
+              >
+                <div
+                  class="text-slate-500"
+                >
+                  +
+                </div>
+              </div>
+              <div
+                class="w-12 h-12 rounded-md border border-slate-600 bg-slate-800 flex items-center justify-center"
+              >
+                <div
+                  class="text-slate-500"
+                >
+                  +
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="mt-6"
+          >
+            <h3
+              class="text-sm text-slate-300"
+            >
+              Senda de Evolución
+            </h3>
+            <div
+              class="flex flex-col sm:flex-row gap-3 mt-3"
+            >
+              <div
+                class="flex-1"
+              >
+                <button
+                  class="w-full bg-slate-700/50 rounded-lg p-2 flex items-center gap-2"
+                >
+                  <div
+                    class="w-14 h-14 relative"
+                  >
+                    <img
+                      alt="swordman"
+                      src="/assets/sprites/swordman.png"
+                    />
+                  </div>
+                  <div
+                    class="flex-1 text-left"
+                  >
+                    <div
+                      class="text-sm text-white font-semibold"
+                    >
+                      swordman
+                    </div>
+                    <div
+                      class="text-xs text-slate-300"
+                    >
+                      Ver requisitos
+                    </div>
+                  </div>
+                  <div
+                    class="text-slate-300"
+                  >
+                    ›
+                  </div>
+                </button>
+              </div>
+              <div
+                class="flex-1"
+              >
+                <button
+                  class="w-full bg-slate-700/50 rounded-lg p-2 flex items-center gap-2"
+                >
+                  <div
+                    class="w-14 h-14 relative"
+                  >
+                    <img
+                      alt="mage"
+                      src="/assets/sprites/mage.png"
+                    />
+                  </div>
+                  <div
+                    class="flex-1 text-left"
+                  >
+                    <div
+                      class="text-sm text-white font-semibold"
+                    >
+                      mage
+                    </div>
+                    <div
+                      class="text-xs text-slate-300"
+                    >
+                      Ver requisitos
+                    </div>
+                  </div>
+                  <div
+                    class="text-slate-300"
+                  >
+                    ›
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
