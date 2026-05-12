@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Image, Sword, Shield, Sparkles, Package, Users, Map, Save, RotateCcw, Check } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Image, Sword, Shield, Sparkles, Package, Users, Map, Save, RotateCcw, Check, Upload, File } from 'lucide-react';
 import { AssetService } from '@/lib/services/asset-service';
 import { UI_ASSETS, BG_ASSETS } from '@/lib/config/assets-config';
 import { SpriteConfigService, type JobSpriteEntry } from '@/lib/services/sprite-config-service';
@@ -10,6 +10,7 @@ const SECTIONS = [
   { id: 'sprites', label: 'Job Sprites', icon: Users },
   { id: 'ui', label: 'UI Icons', icon: Shield },
   { id: 'backgrounds', label: 'Backgrounds', icon: Map },
+  { id: 'upload', label: 'Upload', icon: Upload },
 ];
 
 const JOBS = ['novice', 'swordman', 'mage', 'ranger', 'archer', 'acolyte', 'knight', 'wizard', 'priest'];
@@ -134,6 +135,41 @@ export default function AdminAssetsPage() {
     </div>
   );
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<{ name: string; size: number } | null>(null);
+
+  const handleUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const file = fileInputRef.current?.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadMsg(null);
+    setPreviewUrl(URL.createObjectURL(file));
+
+    const formData = new FormData();
+    formData.append('file', file);
+    const filename = prompt('Sprite filename (e.g. sprite_mage_idle_64.png):', file.name);
+    if (!filename) { setUploading(false); return; }
+    formData.append('filename', filename);
+
+    try {
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.success) {
+        setUploadMsg({ type: 'success', text: `Uploaded: ${data.filename}` });
+      } else {
+        setUploadMsg({ type: 'error', text: data.error || 'Upload failed' });
+      }
+    } catch {
+      setUploadMsg({ type: 'error', text: 'Upload failed' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const renderBGs = () => (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
       {BG_ASSETS && Object.entries(BG_ASSETS).map(([key, val]: [string, any]) => (
@@ -178,6 +214,46 @@ export default function AdminAssetsPage() {
         {section === 'sprites' && renderSpriteEditor()}
         {section === 'ui' && renderUI()}
         {section === 'backgrounds' && renderBGs()}
+        {section === 'upload' && (
+          <div className="max-w-lg mx-auto">
+            <h2 className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-6 text-center">Upload Sprite</h2>
+
+            <form onSubmit={handleUpload} className="space-y-4">
+              {/* Drop zone */}
+              <label className="block border-2 border-dashed border-white/10 rounded-2xl p-12 text-center cursor-pointer hover:border-cyan-500/30 transition-all">
+                <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="hidden" onChange={(e) => { setPreviewUrl(null); setSelectedFile(e.target.files?.[0] || null); }} />
+                <Upload size={32} className="mx-auto mb-3 text-white/20" />
+                <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Click to select PNG/JPEG/GIF/WebP</p>
+                <p className="text-[8px] text-white/20 mt-1">Max 5MB</p>
+              </label>
+
+              {/* Preview */}
+              {previewUrl && (
+                <div className="bg-black/60 rounded-xl p-4 flex items-center gap-4">
+                  <img src={previewUrl} className="w-16 h-16 object-contain pixel-art rounded-lg bg-black/40" alt="preview" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[9px] font-black text-white/60 truncate">{selectedFile?.name}</p>
+                    <p className="text-[8px] text-white/30">{selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : ''}</p>
+                  </div>
+                </div>
+              )}
+
+              {uploadMsg && (
+                <div className={`p-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-center ${
+                  uploadMsg.type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                }`}>
+                  {uploadMsg.text}
+                </div>
+              )}
+
+              <button type="submit" disabled={uploading}
+                className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl text-white font-black uppercase tracking-widest text-[11px] hover:brightness-110 transition-all disabled:opacity-50 min-h-[44px]"
+              >
+                {uploading ? 'Uploading...' : 'Upload Sprite'}
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );
