@@ -46,7 +46,7 @@ const fromMock = jest.fn(() => ({ select: selectMock }));
 const rpcMock = jest.fn();
 
 jest.mock('@/hooks/useSupabase', () => ({
-  useSupabase: () => ({ supabase: { from: fromMock, rpc: rpcMock } }),
+  useSupabase: () => ({ from: fromMock, rpc: rpcMock }),
 }));
 
 describe('CharacterDetailView snapshot', () => {
