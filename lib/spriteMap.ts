@@ -1,15 +1,24 @@
-export const spriteForJob = (jobName?: string) => {
+export const spriteForJob = (jobName?: string, variant: 'default' | 'portrait' = 'default') => {
   const key = (jobName || '').toLowerCase();
+  const base = `/assets/sprites/${key}`;
   const map: Record<string, string> = {
-    novice: '/assets/sprites/novice.png',
-    archer: '/assets/sprites/archer.png',
-    swordman: '/assets/sprites/swordman.png',
-    assassin: '/assets/sprites/assassin.png',
-    mage: '/assets/sprites/mage.png',
-    swordsman: '/assets/sprites/swordman.png',
-    // añade más mappings según tus jobs/clases
+    novice: `${base}.png`,
+    archer: `${base}.png`,
+    swordman: `${base}.png`,
+    assassin: `${base}.png`,
+    mage: `${base}.png`,
+    swordsman: `${base}.png`,
   };
-  return map[key] ?? `/assets/sprites/${key}.png`;
+
+  // Prefer explicit map entry
+  const defaultPath = map[key] ?? `${base}.png`;
+
+  if (variant === 'portrait') {
+    // convention: job_portrait.png
+    return `${base}_portrait.png`;
+  }
+
+  return defaultPath;
 };
 
 export default spriteForJob;
