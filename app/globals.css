@@ -968,3 +968,26 @@ button, a, [role="button"] {
   height: 18px;
 }
 
+/* Responsive sprite overlap positioning */
+.sprite-overlap {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  top: -22px;
+}
+
+@media (min-width: 640px) {
+  .sprite-overlap { top: -30px; }
+}
+
+@media (min-width: 1024px) {
+  .sprite-overlap { top: -40px; }
+}
+
+/* Card portrait spacing responsive */
+.card-portrait { margin-top: 5.5rem; }
+@media (min-width: 640px) { .card-portrait { margin-top: 7rem; } }
+@media (min-width: 1024px) { .card-portrait { margin-top: 8.5rem; } }
+
+
