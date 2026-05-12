@@ -50,8 +50,8 @@ export function PartyManagementView({
                 key={`party-slot-${idx}`}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedSlot(isSelected ? null : idx)}
-                className={`relative aspect-[4/5] rounded-[24px] border-2 transition-all cursor-pointer overflow-hidden ${
-                  isSelected ? 'border-[#F5C76B] shadow-[0_0_20px_rgba(245,199,107,0.3)]' : 'border-white/5 bg-black/40 hover:border-white/10'
+                className={`relative aspect-[4/5] rounded-[24px] border-2 transition-all cursor-pointer overflow-hidden card-premium ${
+                  isSelected ? 'border-[#F5C76B] shadow-[0_0_20px_rgba(245,199,107,0.3)] glow-pulse-gold' : 'border-white/5 bg-black/40 hover:border-white/10'
                 }`}
               >
                 {unit ? (
@@ -125,7 +125,7 @@ export function PartyManagementView({
                       key={unit.id}
                       type="border"
                       variant="default"
-                      className="glass-frosted frame-earthstone p-3.5 flex items-center gap-3 hover:border-[#F5C76B]/50 cursor-pointer transition-all rounded-2xl"
+                      className="glass-frosted frame-earthstone p-3.5 flex items-center gap-3 cursor-pointer transition-all rounded-2xl card-premium"
                       onClick={() => { onAssignToParty(selectedSlot, unit.id); setSelectedSlot(null); }}
                       as={motion.div}
                       initial={{ opacity: 0, x: -10 }}
@@ -188,7 +188,7 @@ export function PartyManagementView({
                     key={unit.id}
                     type="border"
                     variant="default"
-                    className="glass-frosted frame-earthstone p-3.5 flex items-center gap-3 hover:border-[#F5C76B]/50 cursor-pointer group relative rounded-2xl"
+                    className="glass-frosted frame-earthstone p-3.5 flex items-center gap-3 cursor-pointer group relative rounded-2xl card-premium"
                     onClick={() => onSelectUnit(unit.id)}
                     as={motion.div}
                     initial={{ opacity: 0, y: 10 }}

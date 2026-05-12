@@ -67,7 +67,7 @@ export function TrainingView({ unitId, unitName, onBack, onUpdate }: TrainingVie
                key={opt.id}
                type="border"
                variant={training ? 'default' : 'default'}
-               className={`p-5 glass-frosted frame-earthstone flex flex-col gap-4 transition-all ${training ? 'opacity-50 pointer-events-none' : 'hover:border-[#F5C76B]/40 cursor-pointer group'}`}
+               className={`p-5 glass-frosted frame-earthstone flex flex-col gap-4 transition-all card-premium ${training ? 'opacity-50 pointer-events-none' : 'cursor-pointer group'}`}
                onClick={() => handleTrain(opt.id as 'basic' | 'intensive' | 'elite')}
              >
                 <div className="flex items-center justify-between">

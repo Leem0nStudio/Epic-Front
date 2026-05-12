@@ -75,8 +75,8 @@ export function QuestLogView({ playerEnergy, onNavigate, onOpenQuest }: QuestLog
               <NineSlicePanel
                 type="border"
                 variant="default"
-                className={`p-5 glass-frosted frame-earthstone flex flex-col gap-4 relative overflow-hidden transition-all ${
-                  quest.status === 'completed' ? 'opacity-60 grayscale' : 'hover:border-[#F5C76B]/40'
+                className={`p-5 glass-frosted frame-earthstone flex flex-col gap-4 relative overflow-hidden transition-all card-premium ${
+                  quest.status === 'completed' ? 'opacity-60 grayscale' : ''
                 }`}
               >
                 <div className="flex items-center justify-between">

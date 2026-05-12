@@ -182,13 +182,14 @@ export function CampaignMapView({ playerEnergy, onNavigate, onSelectStage }: Cam
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.05 }}
+              className={`animate-reveal reveal-delay-${Math.min(idx + 1, 5)}`}
             >
               <NineSlicePanel
                 type="border"
                 variant="default"
                 className={`p-4 flex items-center justify-between group transition-all ${
                   isUnlocked && hasEnergy
-                    ? 'glass-frosted frame-earthstone cursor-pointer hover:border-[#F5C76B]/40'
+                    ? 'glass-frosted frame-earthstone cursor-pointer card-premium'
                     : 'opacity-40 grayscale pointer-events-none'
                 }`}
                 onClick={() => isUnlocked && hasEnergy && onSelectStage(stage)}
