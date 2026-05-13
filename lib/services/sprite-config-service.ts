@@ -13,7 +13,8 @@ export class SpriteConfigService {
    * Get all job sprite configs from DB, fallback to hardcoded asset-service map
    */
   static async getConfigs(): Promise<JobSpriteEntry[]> {
-    if (!supabase) return this.getDefaultConfigs();
+    const defaults = this.getDefaultConfigs();
+    if (!supabase) return defaults;
 
     try {
       const { data, error } = await supabase
@@ -21,17 +22,20 @@ export class SpriteConfigService {
         .select('*')
         .order('job_id');
 
-      if (error || !data || data.length === 0) {
-        return this.getDefaultConfigs();
-      }
+      if (error || !data) return defaults;
 
-      return data.map((row: any) => ({
-        job_id: row.job_id,
-        sprite_file: row.sprite_file,
-        icon_file: row.icon_file,
-      }));
+      // Merge DB configs with defaults, DB overrides win
+      const dbMap = new Map(data.map((r: any) => [r.job_id, r]));
+      return defaults.map(def => {
+        const db = dbMap.get(def.job_id);
+        return db ? {
+          job_id: db.job_id,
+          sprite_file: db.sprite_file,
+          icon_file: db.icon_file || def.icon_file,
+        } : def;
+      });
     } catch {
-      return this.getDefaultConfigs();
+      return defaults;
     }
   }
 
