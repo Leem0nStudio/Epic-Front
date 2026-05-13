@@ -155,10 +155,10 @@ export function UnitDetailsView({
         </div>
 
         {/* MAIN CHARACTER PORTRAIT - Premium Hero Framing */}
-        <section className="portrait-card relative mx-auto w-full max-w-[340px] mt-4" style={{ height: 320, overflow: 'visible' }}>
+        <section className="portrait-card relative w-full" style={{ height: 280, overflow: 'visible' }}>
           
-          {/* FRAME UI */}
-          <div className="portrait-frame relative w-full h-full rounded-[32px] overflow-hidden bg-[#1A2837] border-2 border-[#3A4A5A] shadow-2xl">
+          {/* FRAME UI - clips sides/bottom, but sprite overflows top */}
+          <div className="portrait-frame relative w-full h-full rounded-2xl overflow-hidden bg-[#1A2837] border-2 border-[#3A4A5A] shadow-2xl">
             
             {/* BACKGROUND interno */}
             <div className="absolute inset-0 bg-gradient-to-b from-[#1A2837] via-[#2A3B4B] to-[#0B1A2A]" />
@@ -175,7 +175,6 @@ export function UnitDetailsView({
                     <circle cx="100" cy="100" r="90" strokeDasharray="10 5" />
                     <circle cx="100" cy="100" r="80" strokeDasharray="5 10" />
                     <path d="M100 10 L100 190 M10 100 L190 100 M40 40 L160 160 M40 160 L160 40" opacity="0.5" />
-                    <text x="50%" y="50%" className="text-[4px] fill-current opacity-30 uppercase tracking-tighter" textAnchor="middle">ANCIENT ARTIFACT SYSTEM • CALIBRATION ACTIVE</text>
                  </svg>
                </motion.div>
             </div>
@@ -193,27 +192,21 @@ export function UnitDetailsView({
 
           </div>
 
-          {/* CHARACTER SPRITE - The "Hero Unit" Effect */}
-          <div className="sprite-wrapper absolute inset-0 pointer-events-none z-20 flex justify-center" style={{ overflow: 'visible' }}>
-            <motion.div
-              animate={{ translateY: [-6, 6, -6] }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              className="relative w-full h-full flex justify-center"
-            >
-              <img
-                src={SpriteConfigService.getJobSpriteUrl(unit.current_job_id || 'novice')}
-                className="character-sprite absolute pixel-art"
-                style={{
-                  bottom: -20,
-                  height: '135%',
-                  width: 'auto',
-                  maxWidth: 'none',
-                  filter: 'drop-shadow(0 20px 30px rgba(0,0,0,0.8))',
-                }}
-                alt={unit.name}
-              />
-            </motion.div>
-          </div>
+          {/* CHARACTER SPRITE - OUTSIDE the frame, overflows TOP */}
+          <img
+            src={SpriteConfigService.getJobSpriteUrl(unit.current_job_id || 'novice')}
+            className="character-sprite absolute pixel-art z-20 pointer-events-none"
+            style={{
+              bottom: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              height: '140%',
+              width: 'auto',
+              maxWidth: 'none',
+              filter: 'drop-shadow(0 20px 30px rgba(0,0,0,0.7))',
+            }}
+            alt={unit.name}
+          />
 
         </section>
 
