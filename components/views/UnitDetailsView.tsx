@@ -321,18 +321,22 @@ export function UnitDetailsView({
                      className={`p-6 flex flex-col items-center gap-4 glass-frosted frame-earthstone group transition-all card-premium ${evolving ? 'opacity-50 grayscale pointer-events-none' : 'cursor-pointer'}`}
                      onClick={() => handleEvolve(job.id, job.name)}
                    >
-                      {evolving ? (
-                        <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                          <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }} className="w-6 h-6 border-2 border-t-purple-400 border-white/10 rounded-full" />
-                        </div>
-                      ) : (
-                        <div className="w-12 h-12 rounded-xl bg-[#F5C76B]/10 flex items-center justify-center border border-[#F5C76B]/20 group-hover:scale-110 transition-transform">
-                          <Star className="text-[#F5C76B]" />
-                        </div>
-                      )}
-                      <div className="text-center">
-                         <h4 className="text-sm font-black text-white uppercase font-display">{job.name}</h4>
-                         <p className="text-[8px] font-black text-white/40 uppercase tracking-widest mt-1">Requerido: LV. {job.evolution_requirements?.minLevel}</p>
+                       {evolving ? (
+                         <div className="w-16 h-16 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                           <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }} className="w-6 h-6 border-2 border-t-purple-400 border-white/10 rounded-full" />
+                         </div>
+                       ) : (
+                         <div className="w-16 h-16 rounded-xl bg-black/40 border border-white/5 flex items-center justify-center overflow-hidden group-hover:scale-110 transition-transform sprite-break-out">
+                           <img
+                             src={SpriteConfigService.getJobSpriteUrl(job.id)}
+                             className="w-full h-full object-contain pixel-art"
+                             alt={job.name}
+                           />
+                         </div>
+                       )}
+                       <div className="text-center">
+                          <h4 className="text-sm font-black text-white uppercase font-display">{job.name}</h4>
+                          <p className="text-[8px] font-black text-white/40 uppercase tracking-widest mt-1">LV. {job.evolution_requirements?.minLevel}</p>
                       </div>
                    </NineSlicePanel>
                 ))}
