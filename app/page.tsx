@@ -31,6 +31,7 @@ import { SkillDetailView } from '@/components/views/SkillDetailView';
 import { TutorialOverlay, hasSeenTutorial } from '@/components/ui/TutorialOverlay';
 import { CardDetailView } from '@/components/views/CardDetailView';
 import { ProfileView } from '@/components/views/ProfileView';
+import { SimpleHomeHubView } from '@/components/views/home/SimpleHomeHubView';
 
 export default function Applet() {
   const { showToast } = useToast();
@@ -152,6 +153,42 @@ export default function Applet() {
         return <ProfileView
                   onBack={() => actions.navigateTo('home')}
                 />;
+      case 'events':
+        return <SimpleHomeHubView
+                 title="EVENTS VIEW"
+                 subtitle="Live Ops Showcase"
+                 icon="events"
+                 description="Track time-limited events, campaign windows, and special summon rotations from a dedicated home-side hub."
+                 primaryLabel="GO TO REWARDS"
+                 primaryTarget="rewards"
+                 secondaryLabel="OPEN CAMPAIGN"
+                 secondaryTarget="campaign"
+                 onNavigate={actions.navigateTo}
+               />;
+      case 'mail':
+        return <SimpleHomeHubView
+                 title="MAIL VIEW"
+                 subtitle="Player Inbox"
+                 icon="mail"
+                 description="Collect announcements, compensation bundles, and account notices from the new premium inbox entrypoint."
+                 primaryLabel="CLAIM DAILY REWARDS"
+                 primaryTarget="daily_rewards"
+                 secondaryLabel="RETURN HOME"
+                 secondaryTarget="home"
+                 onNavigate={actions.navigateTo}
+               />;
+      case 'rewards':
+        return <SimpleHomeHubView
+                 title="REWARDS VIEW"
+                 subtitle="Premium Drops"
+                 icon="rewards"
+                 description="Review your active treasure track, free claims, and event-linked reward bundles without leaving the fantasy shell."
+                 primaryLabel="OPEN DAILY REWARDS"
+                 primaryTarget="daily_rewards"
+                 secondaryLabel="GO TO GACHA"
+                 secondaryTarget="gacha"
+                 onNavigate={actions.navigateTo}
+               />;
       case 'daily_rewards':
         return <DailyRewardsView 
                   onBack={() => actions.navigateTo('home')}
@@ -217,7 +254,7 @@ export default function Applet() {
       <div className="w-full max-w-xl bg-[#0B1A2A] h-[100dvh] sm:h-[85vh] sm:max-h-[850px] shadow-[0_0_80px_rgba(0,0,0,0.9)] sm:rounded-[40px] overflow-y-hidden relative border-white/5 flex flex-col items-center sm:border">
 
         {/* Persistent Header */}
-        {!["battle", "auth"].includes(state.view) && <GlobalHeader profile={state.profile} onNavigate={actions.navigateTo} />}
+        {!["battle", "auth", "home"].includes(state.view) && <GlobalHeader profile={state.profile} onNavigate={actions.navigateTo} />}
 
         <div className="w-full h-full relative flex flex-col flex-1">
           <AnimatePresence mode="wait">
@@ -227,7 +264,7 @@ export default function Applet() {
               animate={{ opacity: 1, x: 0 }}
               exit={prefersReducedMotion ? { opacity: 1, x: -20 } : { opacity: 0, x: -20 }}
               transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.3 }}
-              className="absolute inset-0 flex flex-col overflow-y-auto overflow-x-hidden pb-20"
+              className={`absolute inset-0 flex flex-col overflow-y-auto overflow-x-hidden ${state.view === 'home' ? 'pb-0' : 'pb-20'}`}
             >
               <ErrorBoundary>
                 {renderView()}
@@ -237,7 +274,9 @@ export default function Applet() {
         </div>
 
         {/* Persistent Navigation */}
-        <GlobalNavigation currentView={state.view} onNavigate={actions.navigateTo} />
+        {state.view !== 'home' && (
+          <GlobalNavigation currentView={state.view} onNavigate={actions.navigateTo} />
+        )}
       </div>
 
       {/* Global Card Details Modal */}

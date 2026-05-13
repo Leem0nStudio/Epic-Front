@@ -34,7 +34,7 @@ export function GlobalNavigation({ currentView, onNavigate }: GlobalNavigationPr
   const activeTab = getActiveTab();
 
   // Only show in main views
-  const hiddenViews = ['battle', 'auth'];
+  const hiddenViews = ['battle', 'auth', 'home'];
   if (hiddenViews.includes(currentView)) return null;
 
   return (

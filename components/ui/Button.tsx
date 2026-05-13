@@ -45,9 +45,11 @@ export function Button({
   type = 'button',
   title,
   style,
+  ...rest
 }: ButtonProps) {
   return (
     <motion.button
+      {...rest}
       type={type}
       title={title}
       style={style}
