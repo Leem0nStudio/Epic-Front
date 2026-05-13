@@ -1,20 +1,16 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { ReactNode, ButtonHTMLAttributes } from 'react';
+import { motion, type HTMLMotionProps } from 'framer-motion';
+import { ReactNode } from 'react';
 
-interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
+interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
   children: ReactNode;
-  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
   className?: string;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'action';
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'game';
   whileHover?: any;
   whileTap?: any;
-  type?: 'button' | 'submit' | 'reset';
-  title?: string;
-  style?: React.CSSProperties;
 }
 
 const variantClasses = {
