@@ -54,9 +54,19 @@ export function UnitDetailsView({
     setLoading(true);
     try {
       const details = await UnitService.getUnitDetails(unitId);
+      if (!details) {
+        setError('No se pudieron cargar los datos de la unidad');
+        return;
+      }
       setData(details);
-      const jobs = await UnitService.getNextJobs(details.job.id);
-      setNextJobs(jobs);
+      
+      // Safe access to job.id with null check
+      if (details.job?.id) {
+        const jobs = await UnitService.getNextJobs(details.job.id);
+        setNextJobs(jobs);
+      } else {
+        setNextJobs([]);
+      }
 } catch (e) {
         const message = e instanceof Error ? e.message : "Error al cargar detalles de unidad";
         logger.error('error', 'Failed to load unit details', e instanceof Error ? e : undefined);
@@ -120,13 +130,13 @@ export function UnitDetailsView({
     return <ViewShell error={error} onBack={() => onNavigate('home')} />;
   }
 
-  const { unit, job, equipment, setBonus, finalStats: stats } = data;
+  const { unit, job, equipment, setBonus, finalStats: stats } = data || {};
   const { weapon, armor, accessory, boots, cards, skills } = equipment || { weapon: null, armor: null, accessory: null, boots: null, cards: [], skills: [] };
   
-  // Get job level info for current job
-  const jobLevels = unit.job_levels || {};
-  const currentJobLevel = jobLevels[unit.current_job_id]?.level || 1;
-  const currentJobPoints = jobLevels[unit.current_job_id]?.skillPoints || 0;
+  // Get job level info for current job - safe access
+  const jobLevels = unit?.job_levels || {};
+  const currentJobLevel = jobLevels[unit?.current_job_id]?.level || 1;
+  const currentJobPoints = jobLevels[unit?.current_job_id]?.skillPoints || 0;
   
   // Add to equipment for display
   const enhancedEquipment = {

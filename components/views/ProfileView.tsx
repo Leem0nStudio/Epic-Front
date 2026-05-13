@@ -283,6 +283,8 @@ export function ProfileView({ onBack }: ProfileViewProps) {
 }
 
 function CharacterCard({ unit, onSelect }: { unit: GameUnit; onSelect: () => void }) {
+  if (!unit) return null;
+  
   const jobSpriteUrl = unit.sprite_id ? AssetService.getSpriteUrl(unit.sprite_id) : null;
   
   return (
@@ -308,7 +310,7 @@ function CharacterCard({ unit, onSelect }: { unit: GameUnit; onSelect: () => voi
             Lv.{unit.level} • {unit.current_job_id || 'Novato'}
           </p>
         </div>
-        {unit.level >= 50 && (
+        {(unit.level || 0) >= 50 && (
           <Crown size={14} className="text-[#F5C76B]" />
         )}
       </div>
