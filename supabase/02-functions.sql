@@ -388,14 +388,12 @@ CREATE OR REPLACE FUNCTION rpc_complete_stage(
     p_stage_id TEXT,
     p_stars INTEGER,
     p_turns INTEGER,
-    p_rewards JSONB,
     p_participating_units UUID[] DEFAULT NULL
 )
 RETURNS JSONB AS $$
 DECLARE
     v_user_id UUID := auth.uid();
     v_material RECORD;
-    v_fragment RECORD;
     v_exp_gain INTEGER;
     v_player_exp INTEGER;
     v_player_level INTEGER;
@@ -404,9 +402,25 @@ DECLARE
     v_unit_exp_gain INTEGER;
     v_is_first_clear BOOLEAN := FALSE;
     v_clear_count INTEGER := 0;
-    v_final_rewards JSONB;
     v_stage_record RECORD;
+    v_base_currency INTEGER;
+    v_base_exp INTEGER;
+    v_stage_materials JSONB;
+    v_awarded_materials JSONB := '[]'::JSONB;
+    v_drop_roll NUMERIC;
 BEGIN
+    -- Get stage rewards from server (not client) to prevent manipulation
+    SELECT base_currency, base_exp, material_drops INTO v_stage_record
+    FROM stages WHERE id = p_stage_id;
+    
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Stage not found: %', p_stage_id;
+    END IF;
+
+    v_base_currency := COALESCE(v_stage_record.base_currency, 0);
+    v_base_exp := COALESCE(v_stage_record.base_exp, 0);
+    v_stage_materials := COALESCE(v_stage_record.material_drops, '[]'::JSONB);
+
     -- Check if this is first clear
     SELECT clear_count INTO v_clear_count FROM campaign_progress
     WHERE player_id = v_user_id AND stage_id = p_stage_id;
@@ -423,33 +437,27 @@ BEGIN
         cleared_at = NOW();
 
     -- Apply diminishing returns for repeated clears (50% reduction after first 3 clears)
-    v_final_rewards := p_rewards;
     IF NOT v_is_first_clear AND v_clear_count >= 3 THEN
-        v_final_rewards := jsonb_set(v_final_rewards, '{currency}',
-            ((p_rewards->>'currency')::NUMERIC * 0.5)::TEXT::JSONB);
-        v_final_rewards := jsonb_set(v_final_rewards, '{exp}',
-            ((p_rewards->>'exp')::NUMERIC * 0.5)::TEXT::JSONB);
+        v_base_currency := floor(v_base_currency::NUMERIC * 0.5);
+        v_base_exp := floor(v_base_exp::NUMERIC * 0.5);
     END IF;
 
     -- 1. Apply Currency Rewards (with diminishing returns if applicable)
     UPDATE players
-    SET currency = currency + (v_final_rewards->>'currency')::BIGINT,
-        premium_currency = premium_currency + COALESCE((v_final_rewards->>'premium_currency')::INTEGER, 0)
+    SET currency = currency + v_base_currency,
+        premium_currency = premium_currency + CASE WHEN v_is_first_clear THEN 10 ELSE 0 END
     WHERE id = v_user_id;
 
     -- First clear bonus: extra 50% currency and 100 bonus exp
     IF v_is_first_clear THEN
         UPDATE players
-        SET currency = currency + floor((v_final_rewards->>'currency')::NUMERIC * 0.5),
+        SET currency = currency + floor(v_base_currency::NUMERIC * 0.5),
             exp = exp + 100
         WHERE id = v_user_id;
-
-        v_final_rewards := jsonb_set(v_final_rewards, '{firstClearBonus}',
-            '{"currency": true, "exp": 100}'::JSONB);
     END IF;
 
     -- 2. Apply Player EXP and Level Up
-    v_exp_gain := COALESCE((v_final_rewards->>'exp')::INTEGER, 0);
+    v_exp_gain := v_base_exp;
     IF v_exp_gain > 0 THEN
         SELECT exp, level INTO v_player_exp, v_player_level FROM players WHERE id = v_user_id;
         v_player_exp := v_player_exp + v_exp_gain;
@@ -475,43 +483,35 @@ BEGIN
         END LOOP;
     END IF;
 
-    -- 4. Apply Material Rewards (diminishing returns on repeated clears)
-    IF v_final_rewards->'materials' IS NOT NULL AND jsonb_array_length(v_final_rewards->'materials') > 0 THEN
-        FOR v_material IN SELECT * FROM jsonb_to_recordset(v_final_rewards->'materials') AS x("itemId" TEXT, amount INTEGER) LOOP
-            -- On repeated clears (not first clear), 30% chance to drop
-            IF NOT v_is_first_clear AND v_clear_count >= 3 THEN
-                CONTINUE WHEN random() > 0.3;
+    -- 4. Apply Material Rewards (server-side drop calculation)
+    -- Drop rates are calculated server-side to prevent client manipulation
+    IF jsonb_array_length(v_stage_materials) > 0 THEN
+        FOR v_material IN SELECT * FROM jsonb_to_recordset(v_stage_materials) AS x(item_id TEXT, amount INTEGER, drop_chance NUMERIC) LOOP
+            -- Server-side drop roll
+            v_drop_roll := random();
+            
+            -- First clear always drops; repeated clears use drop chance with diminishing returns
+            IF v_is_first_clear OR (v_clear_count < 3 AND v_drop_roll <= v_material.drop_chance) OR 
+               (v_clear_count >= 3 AND v_drop_roll <= v_material.drop_chance * 0.3) THEN
+                
+                INSERT INTO inventory (player_id, item_id, item_type, quantity)
+                VALUES (v_user_id, v_material.item_id, 'material', v_material.amount)
+                ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + v_material.amount;
+                
+                v_awarded_materials := v_awarded_materials || jsonb_build_array(jsonb_build_object('itemId', v_material.item_id, 'amount', v_material.amount));
             END IF;
-
-            INSERT INTO inventory (player_id, item_id, item_type, quantity)
-            VALUES (v_user_id, v_material."itemId", 'material', v_material.amount)
-            ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + v_material.amount;
         END LOOP;
     END IF;
 
-    -- 5. Apply Skill Fragment Rewards (lower chance than materials)
-    IF v_final_rewards->'skill_fragments' IS NOT NULL AND jsonb_array_length(v_final_rewards->'skill_fragments') > 0 THEN
-        FOR v_fragment IN
-            SELECT * FROM jsonb_to_recordset(v_final_rewards->'skill_fragments') AS x("itemId" TEXT, amount INTEGER)
-        LOOP
-            -- Only 20% chance to drop skill fragments
-            IF random() > 0.2 THEN
-                CONTINUE;
-            END IF;
-
-            PERFORM rpc_add_skill_fragment(v_user_id, v_fragment."itemId", v_fragment.amount);
-        END LOOP;
-    END IF;
-
-    -- Return summary of applied rewards
+    -- Return summary of applied rewards (server-calculated)
     RETURN jsonb_build_object(
         'isFirstClear', v_is_first_clear,
-        'currency', (v_final_rewards->>'currency')::INTEGER,
-        'exp', COALESCE((v_final_rewards->>'exp')::INTEGER, 0),
-        'premiumCurrency', COALESCE((v_final_rewards->>'premium_currency')::INTEGER, 0),
-        'materials', COALESCE(v_final_rewards->'materials', '[]'::JSONB),
-        'skillFragments', COALESCE(v_final_rewards->'skill_fragments', '[]'::JSONB),
-        'firstClearBonus', CASE WHEN v_is_first_clear THEN '{"currency": true, "exp": 100}'::JSONB ELSE '{}'::JSONB END
+        'currency', v_base_currency,
+        'exp', v_exp_gain,
+        'premiumCurrency', CASE WHEN v_is_first_clear THEN 10 ELSE 0 END,
+        'materials', v_awarded_materials,
+        'clearCount', v_clear_count + 1,
+        'diminishingReturns', CASE WHEN v_clear_count >= 3 THEN true ELSE false END
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -744,26 +744,48 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION rpc_train_unit(
     p_unit_id UUID,
-    p_energy_cost INTEGER,
-    p_exp_gain INTEGER
+    p_training_type TEXT DEFAULT 'basic'
 )
 RETURNS JSONB AS $$
 DECLARE
     v_user_id UUID := auth.uid();
-    v_current_energy INTEGER;
+    v_energy_cost INTEGER;
+    v_exp_gain INTEGER;
+    v_new_level INTEGER;
 BEGIN
-    -- 1. Deduct Energy
-    IF NOT rpc_deduct_energy(p_energy_cost) THEN
+    -- Server-side validation of training type and values
+    -- This prevents client manipulation of exp/energy values
+    CASE p_training_type
+        WHEN 'basic' THEN
+            v_energy_cost := 5;
+            v_exp_gain := 25;
+        WHEN 'intensive' THEN
+            v_energy_cost := 15;
+            v_exp_gain := 75;
+        WHEN 'elite' THEN
+            v_energy_cost := 30;
+            v_exp_gain := 200;
+        ELSE
+            RAISE EXCEPTION 'Invalid training type: %', p_training_type;
+    END CASE;
+
+    -- 1. Deduct Energy (server validates)
+    IF NOT rpc_deduct_energy(v_energy_cost) THEN
         RAISE EXCEPTION 'Insufficient energy';
     END IF;
 
-    -- 2. Award EXP to unit
-    PERFORM rpc_award_unit_exp(p_unit_id, p_exp_gain);
+    -- 2. Award EXP to unit (returns actual exp gained, may vary due to level bonuses)
+    PERFORM rpc_award_unit_exp(p_unit_id, v_exp_gain);
+
+    -- 3. Get new level after training
+    SELECT u.level INTO v_new_level FROM units u WHERE u.id = p_unit_id;
 
     RETURN jsonb_build_object(
         'success', true,
         'unit_id', p_unit_id,
-        'exp_gained', p_exp_gain
+        'exp_gained', v_exp_gain,
+        'new_level', v_new_level,
+        'training_type', p_training_type
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

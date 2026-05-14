@@ -77,10 +77,6 @@ export class EquipmentService {
       return { valid: false, error: 'No tienes suficiente cantidad de este item' };
     }
 
-    if (!inventoryItem) {
-      return { valid: false, error: 'Item no encontrado en inventario o acceso denegado' };
-    }
-
     // 3. Get item definition based on type
     const itemDef = await this.getItemDefinition(inventoryItem.item_id, inventoryItem.item_type);
     if (!itemDef) {

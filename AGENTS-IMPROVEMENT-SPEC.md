@@ -1,143 +1,73 @@
 # AGENTS.md Improvement Specification
 
-## Current State
+## 1. What's Good
 
-The existing `AGENTS.md` (50 lines) provides baseline project information but lacks comprehensive agent guidance.
+- **Commands**: Clear npm scripts (dev, build, lint, test, clean)
+- **Environment**: Lists required .env variables with examples
+- **Architecture**: Explains Next.js 15, App Router, Supabase, Tailwind 4
+- **Database**: Step-by-step SQL setup instructions (1-3 order)
+- **Learning Entries**: Captures project-specific patterns (form accessibility)
+- **Debugging**: Documents `lib/debug.ts` usage
+- **Git**: Specifies main branch, no experimental
 
----
+## 2. What's Missing
 
-## What's Good
+### Skills/Rules
+- No `.ona/skills/` directory
+- No `.cursor/rules/` directory
+- No task-specific agent instructions (e.g., gacha, game state, UI components)
 
-| Section | Notes |
-|---------|-------|
-| Commands | All npm scripts documented |
-| Environment | All required env vars listed |
-| Architecture | Key tech stack (Next.js 15, Supabase, Tailwind 4, motion) |
-| Database | Clear SQL file ordering |
-| Known Issues | Documents onboarding fallback & HMR issue |
-| Debugging | gameDebugger usage explained |
+### Conventions
+- No code style guide (beyond "follow existing patterns")
+- No TypeScript conventions
+- No component structure patterns
+- No naming conventions
 
----
+### Workflows
+- No PR checklist
+- No commit message format
+- No code review guidelines
+- No testing conventions
 
-## What's Missing
+### Project-Specific
+- No gacha system documentation
+- No inventory system patterns
+- No game state management patterns
 
-### Critical (Agent Operation)
-1. **Code conventions** — no style guidelines, no TypeScript patterns
-2. **Component patterns** — only "views" documented, no UI component patterns
-3. **Before-commit checklist** — no lint/typecheck verification step documented
-4. **Testing patterns** — Jest mentioned but no test conventions, no run options (--watch, --testPathPattern)
+## 3. What's Wrong
 
-### Important (Project Clarity)
-5. **File structure overview** — scattered, no single source of truth
-6. **State management** — unclear how global state is handled
-7. **API patterns** — Supabase RPC usage not documented
-8. **Error handling** — no patterns for graceful failures
+- **Git section (line ~24)**: Statement "no experimental branch exists" is static and will become outdated
+- **No version tracking**: No instruction to update AGENTS.md when project structure changes
 
-### Nice to Have
-9. **Security best practices**
-10. **Deployment instructions**
-11. **Common troubleshooting guide**
-12. **Code review checklist**
+## 4. Recommended Improvements
 
----
+### Add Skill Files
+Create `.ona/skills/` with task-specific instructions:
+- `gacha.md` — Gacha system patterns, RPC calls, rates
+- `inventory.md` — Inventory management, item types
+- `game-state.md` — State debugging, sync patterns
+- `ui-components.md` — Reusable component usage
 
-## What's Wrong
+### Add Workflows
+- PR template checklist
+- Commit message format: `type: description` (feat, fix, refactor, test)
+- Code review checklist
 
-| Issue | Location | Fix |
-|-------|----------|-----|
-| Broken formatting | Line 40-42 `##-**Learning:` | Change to `###` or `-` |
-| Contradiction with WORKFLOW.md | Line 28 | Git branch info conflicts (WORKFLOW says `experimental` exists) |
-| Missing verification step | General | Document "always run lint after changes" |
-| Incomplete test commands | Line 7 | Document `--watch` and `--testPathPattern` options |
+### Add Conventions
+- TypeScript strict mode usage
+- Component file structure (`components/views/*.tsx`)
+- Supabase client initialization pattern
 
----
+### Make Dynamic
+- Add note: "Update this file when architecture changes"
+- Add "Last reviewed" date
 
-## Improvement Spec
+## 5. Priority Actions
 
-### 1. Fix Broken Formatting
-- Line 40: `## 2025-05-15` → `### 2025-05-15`
-- Lines 41-42: Fix markdown syntax
-
-### 2. Resolve Branch Contradiction
-- Remove line 28 ("no experimental branch exists")
-- Add reference to WORKFLOW.md for branch strategy
-
-### 3. Add Before-Commit Checklist
-```
-## Before Committing
-- Run `npm run lint` — must pass
-- Run `npm run build` — must succeed
-- Run `npm run test` — must pass
-- Check for console.log/debug code
-```
-
-### 4. Expand Test Commands
-```
-- `npm run test` — Run all tests
-- `npm run test -- --watch` — Watch mode
-- `npm run test -- --testPathPattern=<pattern>` — Run specific tests
-```
-
-### 5. Add Code Conventions Section
-```
-## Code Conventions
-- Use functional components with hooks
-- Prefer `const` over `let`
-- Use `interface` for shapes, `type` for unions
-- Use `@/*` path alias for imports
-- Follow ESLint rules (extends `next`)
-- No `console.log` in production code
-```
-
-### 6. Add Component Patterns Section
-```
-## Component Patterns
-- **Views**: `components/views/*.tsx` — self-contained game screens
-- **UI**: `components/ui/*.tsx` — reusable primitives (Button, Card, Modal)
-- **Hooks**: `hooks/*.ts` — custom hooks in top-level `hooks/` folder
-- **Services**: `lib/*.ts` — utilities and API clients
-```
-
-### 7. Add File Structure Overview
-```
-## File Structure
-app/              # Next.js App Router pages
-components/
-  ui/             # Reusable UI components
-  views/          # Game screen views
-lib/              # Utilities, services, debug
-hooks/            # Custom React hooks
-supabase/         # SQL schema, functions, seeds
-public/assets/    # Sprites, backgrounds, cards
-```
-
-### 8. Add Supabase RPC Patterns
-```
-## API Patterns (Supabase)
-- All game logic via RPC (see `supabase/02-functions.sql`)
-- Client calls through `lib/supabase.ts` helpers
-- Handle errors gracefully with try/catch + user feedback
-```
+1. **High**: Create skill files for gacha and game state (most complex systems)
+2. **Medium**: Add PR/commit conventions
+3. **Low**: Add code style guide
 
 ---
 
-## Implementation Priority
-
-| Priority | Items |
-|----------|-------|
-| **P0** (Fix) | Lines 28, 40-42 contradiction/format fixes |
-| **P1** (Add) | Before-commit checklist, code conventions, test commands |
-| **P2** (Add) | Component patterns, file structure, API patterns |
-| **P3** (Nice) | Security, deployment, troubleshooting |
-
----
-
-## Expected Result
-
-After improvements, AGENTS.md should be ~120 lines with:
-- Role/constraint framing for agents
-- Complete command reference with options
-- Code and component conventions
-- Clear file organization
-- Before-commit verification steps
-- Matching WORKFLOW.md for branches
+*Generated: 2026-05-13*
