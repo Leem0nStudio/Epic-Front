@@ -138,14 +138,13 @@ export function useCompleteStage() {
       stageId: string;
       stars: number;
       turns: number;
-      rewards: any;
       participatingUnits?: string[];
     }) => {
+      // Server calculates rewards - client only sends completion stats
       const { data, error } = await supabase.rpc('rpc_complete_stage', {
         p_stage_id: params.stageId,
         p_stars: params.stars,
         p_turns: params.turns,
-        p_rewards: params.rewards,
         p_participating_units: params.participatingUnits,
       });
 
