@@ -58,7 +58,6 @@ export default function Applet() {
     switch (state.view) {
       case 'home':
         return <RPGHomeView
-                 saveData={state as any}
                  activePartyUnits={state.activePartyUnits}
                  onNavigate={actions.navigateTo}
                  onSelectUnit={actions.handleSelectUnit}

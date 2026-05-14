@@ -2,21 +2,19 @@
 
 import React, { useState, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, MotionValue } from 'motion/react';
-import { ChevronRight, Castle, Bell, Star, Trophy, Users, BookOpen } from 'lucide-react';
+import { ChevronRight, Castle, Star, Trophy, Users, Swords } from 'lucide-react';
 import { AssetService } from '@/lib/services/asset-service';
 import { Button } from '@/components/ui/Button';
-import type { GameState, GameUnit, ViewType } from '@/lib/types/game-types';
+import type { GameUnit, ViewType } from '@/lib/types/game-types';
 import { SpriteConfigService } from '@/lib/services/sprite-config-service';
 
 interface RPGHomeViewProps {
-  saveData: GameState | null;
   activePartyUnits: (GameUnit | null)[];
   onNavigate: (view: ViewType) => void;
   onSelectUnit?: (unitId: string) => void;
 }
 
 export function RPGHomeView({
-  saveData,
   activePartyUnits,
   onNavigate,
   onSelectUnit,
@@ -73,7 +71,7 @@ export function RPGHomeView({
               const unit = partySlots[slotIdx];
               return (
                 <UnitDisplay
-                  key={unit?.id || `empty-${slotIdx}`}
+                  key={unit ? unit.id : `empty-slot-${slotIdx}`}
                   unit={unit}
                   idx={slotIdx}
                   totalUnits={partySlots.length}
@@ -86,18 +84,14 @@ export function RPGHomeView({
           </div>
 
           {/* Current Objective Overlay */}
-          <div className="absolute top-1/2 right-4 -translate-y-1/2 hidden lg:block">
+          <div className="lg:absolute lg:top-1/2 lg:right-4 lg:-translate-y-1/2 w-full px-4 lg:w-auto lg:px-0">
             <CurrentObjective onNavigate={() => onNavigate('campaign')} />
           </div>
         </div>
 
-        {/* Bottom Section - reduced presence */}
+        {/* Bottom Section */}
         <div className="flex flex-col items-center gap-3 mt-auto mb-2 relative z-30">
-          <NotificationBanner onNavigate={onNavigate} />
           <QuickActions onNavigate={onNavigate} />
-          <div className="lg:hidden w-full px-4">
-            <CurrentObjective onNavigate={() => onNavigate('campaign')} />
-          </div>
         </div>
       </div>
 
@@ -248,10 +242,10 @@ function QuickActions({ onNavigate }: QuickActionsProps) {
       color: 'from-orange-500/20 to-orange-600/20 border-orange-500/30',
     },
     {
-      id: 'quests' as const,
-      icon: BookOpen,
-      label: 'MISIONES',
-      color: 'from-blue-500/20 to-blue-600/20 border-blue-500/30',
+      id: 'arena' as const,
+      icon: Swords,
+      label: 'ARENA',
+      color: 'from-red-500/20 to-red-600/20 border-red-500/30',
     },
   ];
 
@@ -317,28 +311,5 @@ function CurrentObjective({ onNavigate }: CurrentObjectiveProps) {
         </div>
       </Button>
     </motion.div>
-  );
-}
-
-interface NotificationBannerProps {
-  onNavigate: (view: ViewType) => void;
-}
-
-function NotificationBanner({ onNavigate }: NotificationBannerProps) {
-  return (
-    <Button
-      onClick={() => onNavigate('daily_rewards')}
-      variant="ghost"
-      className="w-full max-w-md bg-[#F5C76B]/5 border border-[#F5C76B]/20 rounded-xl px-4 py-2 flex items-center gap-3 group hover:bg-[#F5C76B]/10 transition-all pointer-events-auto"
-    >
-      <div className="relative">
-        <Bell className="w-4 h-4 text-[#F5C76B] group-hover:animate-bounce" />
-        <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
-      </div>
-      <p className="text-[10px] font-bold text-white/60 group-hover:text-white transition-colors flex-1 text-left">
-        ¡EVENTO ACTIVO! Reclama tus recompensas diarias.
-      </p>
-      <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white transition-colors" />
-    </Button>
   );
 }
