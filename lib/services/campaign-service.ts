@@ -134,29 +134,12 @@ export class CampaignService {
         });
 
         const progress = await this.getPlayerProgress();
-        const isFirstClear = !progress.some(p => p.stage_id === stageId);
-
-        const baseRewards = (isFirstClear && stage.first_clear_rewards)
-            ? stage.first_clear_rewards
-            : stage.rewards;
-
-        const grantedMaterials = (baseRewards.materials || [])
-            .filter((m: any) => Math.random() < m.chance)
-            .map((m: any) => ({ itemId: m.itemId, amount: m.amount }));
-
-        const finalRewards = {
-            isFirstClear,
-            currency: baseRewards.currency,
-            premium_currency: baseRewards.premium_currency || 0,
-            exp: baseRewards.exp,
-            materials: grantedMaterials
-        };
-
-        const rpcParams: any = {
+        // Server now calculates rewards - we just pass completion stats
+        
+        const rpcParams = {
             p_stage_id: stageId,
             p_stars: stars,
-            p_turns: stats.turns,
-            p_rewards: finalRewards
+            p_turns: stats.turns
         };
 
         // Add participating units if provided
@@ -172,15 +155,16 @@ export class CampaignService {
 
         if (error) throw error;
 
-        const rewardResults = data || {};
+        const serverRewards = data || {};
 
         return {
             stars,
-            rewards: finalRewards,
-            isFirstClear: rewardResults.isFirstClear || false,
-            firstClearBonus: rewardResults.firstClearBonus || {},
-            currencyGained: rewardResults.currency || 0,
-            expGained: rewardResults.exp || 0
+            isFirstClear: serverRewards.isFirstClear || false,
+            currencyGained: serverRewards.currency || 0,
+            expGained: serverRewards.exp || 0,
+            materials: serverRewards.materials || [],
+            clearCount: serverRewards.clearCount || 1,
+            diminishingReturns: serverRewards.diminishingReturns || false
         };
     }
 
