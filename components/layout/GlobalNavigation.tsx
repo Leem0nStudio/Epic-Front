@@ -42,7 +42,6 @@ export function GlobalNavigation({ currentView, onNavigate }: GlobalNavigationPr
       <div className="bg-[#1A1A1A]/80 backdrop-blur-2xl border border-white/10 rounded-[24px] p-2 flex items-center justify-between shadow-2xl panel-elevated">
         {tabs.map(tab => {
           const isActive = activeTab === tab.id;
-          const isRealActive = currentView === tab.id;
 
           return (
             <Tooltip key={tab.id} content={tab.tooltip || tab.label} position="top">

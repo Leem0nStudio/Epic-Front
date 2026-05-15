@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Coins, Diamond, Zap, Bell, Gift, AlertTriangle } from 'lucide-react';
+import { Coins, Diamond, Zap, Bell } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { ViewType, PlayerProfile } from '@/lib/types/game-types';
 
