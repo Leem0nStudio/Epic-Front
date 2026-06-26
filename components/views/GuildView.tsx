@@ -40,7 +40,7 @@ export function GuildView({ onBack }: GuildViewProps) {
       const data = await GuildService.getInfo();
       setGuild(data);
     } catch (e) {
-      gameDebugger.error('guild', 'Failed to load guild info', e);
+      gameDebugger.error('game-state', 'Failed to load guild info', e);
     } finally {
       setIsLoading(false);
     }

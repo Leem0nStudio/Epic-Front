@@ -363,14 +363,14 @@ export class ProgressionService {
   /**
    * Calcula stats finales incluyendo bonuses de progresión
    */
-  static calculateProgressionStats(
+  static async calculateProgressionStats(
     baseStats: UnitStats,
     unitLevel: number,
     currentJobId: string,
     jobLevels: Record<string, any>,
     transcendenceLevel: number,
     potentials: string[]
-  ): UnitStats {
+  ): Promise<UnitStats> {
     // Start with base stats
     let finalStats = { ...baseStats };
 
@@ -403,7 +403,7 @@ export class ProgressionService {
     }
 
     // Add potential bonuses (fetch from potentials table)
-    const potentialsUnlocked = unit.potentials_unlocked || [];
+    const potentialsUnlocked = potentials || [];
     if (potentialsUnlocked.length > 0) {
       const { data: potentials } = await supabase
         .from('potentials')

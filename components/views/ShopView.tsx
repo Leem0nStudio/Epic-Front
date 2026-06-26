@@ -36,7 +36,7 @@ export function ShopView({ profile, onNavigate, onPurchaseComplete }: ShopViewPr
         const data = await ShopService.getItems();
         setItems(data);
       } catch (e) {
-        gameDebugger.error('shop', 'Failed to load shop items', e);
+        gameDebugger.error('inventory', 'Failed to load shop items', e);
       } finally {
         setIsLoading(false);
       }

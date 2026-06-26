@@ -40,7 +40,7 @@ export function ArenaView({ onBack, onBattleStart }: ArenaViewProps) {
       setRanking(rankData);
       setLeaderboard(lbData);
     } catch (e) {
-      gameDebugger.error('arena', 'Failed to load arena data', e);
+      gameDebugger.error('combat', 'Failed to load arena data', e);
     } finally {
       setIsLoading(false);
     }
@@ -54,7 +54,7 @@ export function ArenaView({ onBack, onBattleStart }: ArenaViewProps) {
       const data = await ArenaService.findOpponents();
       setOpponents(data);
     } catch (e) {
-      gameDebugger.error('arena', 'Failed to find opponents', e);
+      gameDebugger.error('combat', 'Failed to find opponents', e);
     } finally {
       setIsSearching(false);
     }

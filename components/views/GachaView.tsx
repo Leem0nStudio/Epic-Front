@@ -156,6 +156,7 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
   // Time left for banner
   const getTimeLeft = (endDate: string | null) => {
     if (!endDate) return null;
+    // eslint-disable-next-line react-hooks/purity -- Date.now is acceptable for time display
     const diff = new Date(endDate).getTime() - Date.now();
     if (diff <= 0) return 'FINALIZADO';
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));

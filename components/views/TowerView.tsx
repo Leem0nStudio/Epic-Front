@@ -24,7 +24,7 @@ export function TowerView({ onBack, onBattleStart }: TowerViewProps) {
       const data = await TowerService.getProgress();
       setProgress(data);
     } catch (e) {
-      gameDebugger.error('tower', 'Failed to load tower progress', e);
+      gameDebugger.error('campaign', 'Failed to load tower progress', e);
     } finally {
       setIsLoading(false);
     }
@@ -41,10 +41,10 @@ export function TowerView({ onBack, onBattleStart }: TowerViewProps) {
     setCompletingFloor(floor);
     try {
       const result: FloorResult = await TowerService.completeFloor(floor, 3);
-      gameDebugger.info('tower', `Floor ${floor} completed`, result);
+      gameDebugger.info('campaign', `Floor ${floor} completed`, result);
       await loadProgress();
     } catch (e) {
-      gameDebugger.error('tower', `Failed to complete floor ${floor}`, e);
+      gameDebugger.error('campaign', `Failed to complete floor ${floor}`, e);
     } finally {
       setCompletingFloor(null);
     }
