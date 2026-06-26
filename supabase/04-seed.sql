@@ -484,4 +484,74 @@ ON CONFLICT (id) DO NOTHING;
 -- Add starter items
 -- El RPC rpc_add_starter_inventory se encarga de esto
 
+-- ============================================================================
+-- GACHA BANNERS
+-- ============================================================================
+
+-- Standard banner (always available, no featured items)
+INSERT INTO banners (id, name, description, banner_type, featured_rarity, rate_up_multiplier, is_active, pity_carry_over, spark_cost, display_order) VALUES
+('standard', 'Invocación Estándar', 'Pool completa de invocaciones. Pity se mantiene entre banners.', 'standard', NULL, 1.0, true, true, NULL, 1)
+ON CONFLICT (id) DO NOTHING;
+
+-- Rate-Up banner: Featured legendary with 2x rate and spark at 300 pulls
+INSERT INTO banners (id, name, description, banner_type, featured_rarity, rate_up_multiplier, start_date, end_date, is_active, pity_carry_over, spark_cost, display_order) VALUES
+('rateup_knight', 'Forja de los Valientes', 'Tasa mejorada de legendary: 6% durante evento. Spark a 300 pulls.', 'rate_up', 'legendary', 2.0, NOW(), NOW() + INTERVAL '14 days', true, false, 300, 2)
+ON CONFLICT (id) DO NOTHING;
+
+-- Featured items for the rate-up banner
+INSERT INTO banner_featured_items (banner_id, item_id, item_type, rate_up_multiplier, display_order) VALUES
+('rateup_knight', 'wpn_legendary_flame', 'weapon', 3.0, 1),
+('rateup_knight', 'wpn_legendary_ice', 'weapon', 3.0, 2),
+('rateup_knight', 'card_legendary_power', 'card', 3.0, 3)
+ON CONFLICT (banner_id, item_id) DO NOTHING;
+
+-- ============================================================================
+-- ARENA SEASONS
+-- ============================================================================
+
+INSERT INTO arena_seasons (id, name, start_date, end_date, is_active, reward_tiers) VALUES
+('arena_s1', 'Temporada I - Ascenso del Coliseo', NOW(), NOW() + INTERVAL '30 days', true,
+ '[{"tier": "bronce", "minPoints": 0, "rewards": {"currency": 500, "gems": 50}},
+   {"tier": "plata", "minPoints": 1000, "rewards": {"currency": 1000, "gems": 100}},
+   {"tier": "oro", "minPoints": 1200, "rewards": {"currency": 2000, "gems": 200}},
+   {"tier": "diamante", "minPoints": 1500, "rewards": {"currency": 3000, "gems": 300}},
+   {"tier": "leyenda", "minPoints": 2000, "rewards": {"currency": 5000, "gems": 500}}]'::JSONB)
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- TOWER SEASONS
+-- ============================================================================
+
+INSERT INTO tower_seasons (id, name, start_date, end_date, is_active) VALUES
+('tower_s1', 'Ascensión del Guardián - Temporada 1', NOW(), NOW() + INTERVAL '30 days', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- SHOP ITEMS
+-- ============================================================================
+
+INSERT INTO shop_items (id, name, description, item_type, content, price_gems, display_order, max_purchases_per_day) VALUES
+-- Energy packs
+('shop_energy_small', 'Paquete de Energía (S)', 'Restaura 30 energía', 'energy',
+ '{"energy": 30}'::JSONB, 50, 1, 5),
+('shop_energy_large', 'Paquete de Energía (L)', 'Restaura toda la energía', 'energy',
+ '{"energy": 999}'::JSONB, 100, 2, 3),
+
+-- Currency packs
+('shop_zeny_small', 'Paquete de Zeny (S)', '5,000 Zeny', 'currency',
+ '{"currency": 5000}'::JSONB, 80, 3, NULL),
+('shop_zeny_large', 'Paquete de Zeny (L)', '20,000 Zeny', 'currency',
+ '{"currency": 20000}'::JSONB, 250, 4, NULL),
+
+-- Gem packs (bonus gems)
+('shop_gems_small', 'Cristales (S)', '100 Cristales + 10 bonus', 'currency',
+ '{"gems": 110}'::JSONB, 100, 5, NULL),
+('shop_gems_large', 'Cristales (L)', '500 Cristales + 75 bonus', 'currency',
+ '{"gems": 575}'::JSONB, 450, 6, NULL),
+
+-- Starter pack (one-time)
+('shop_starter_pack', 'Paquete de Inicio', 'Para nuevos héroes: Zeny, Cristales y Energía', 'pack',
+ '{"currency": 10000, "gems": 200, "energy": 60}'::JSONB, 200, 7, 1)
+ON CONFLICT (id) DO NOTHING;
+
 SELECT 'Seed completado exitosamente' as result;

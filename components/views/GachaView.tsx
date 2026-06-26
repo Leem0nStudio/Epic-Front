@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Diamond, Coins, Box, ScrollText, Zap, Info, Star, Sword } from 'lucide-react';
+import { Sparkles, Diamond, Coins, Box, ScrollText, Zap, Info, Star, Sword, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AssetService } from '@/lib/services/asset-service';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { RarityIcon } from '@/components/ui/RarityIcon';
@@ -11,7 +11,9 @@ import { Button } from '@/components/ui/Button';
 import { ViewShell } from '@/components/ui/ViewShell';
 import { getRarityCode, RARITY_COLORS } from '@/lib/config/assets-config';
 import { GachaService, type PullResult } from '@/lib/services/gacha-service';
+import { BannerService, type Banner, type BannerPity } from '@/lib/services/banner-service';
 import { InventoryService } from '@/lib/services/inventory-service';
+import { GACHA_COSTS } from '@/lib/config/gacha-config';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { gameDebugger } from '@/lib/debug';
 import type { PlayerProfile, ViewType } from '@/lib/types/game-types';
@@ -29,13 +31,66 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
   const [selectedReward, setSelectedReward] = useState<PullResult | null>(null);
   const pullLockRef = useRef(false);
 
+  // Banner state
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [selectedBannerIdx, setSelectedBannerIdx] = useState(0);
+  const [bannerPity, setBannerPity] = useState<BannerPity | null>(null);
+  const [globalPity, setGlobalPity] = useState<{ pullsSinceEpic: number; pullsSinceLegendary: number } | null>(null);
+
+  const selectedBanner = banners[selectedBannerIdx] || null;
+
+  // Fetch banners on mount
+  useEffect(() => {
+    const loadBanners = async () => {
+      try {
+        const data = await BannerService.getActiveBanners();
+        setBanners(data);
+      } catch (e) {
+        gameDebugger.error('gacha', 'Failed to load banners', e);
+      }
+    };
+    loadBanners();
+  }, []);
+
+  // Fetch pity when banner changes
+  useEffect(() => {
+    if (!selectedBanner) return;
+    const loadPity = async () => {
+      try {
+        if (selectedBanner.bannerType === 'standard') {
+          const pity = await BannerService.getGlobalPity();
+          setGlobalPity(pity);
+          setBannerPity(null);
+        } else {
+          const pity = await BannerService.getBannerPity(selectedBanner.id);
+          setBannerPity(pity);
+          setGlobalPity(null);
+        }
+      } catch (e) {
+        gameDebugger.error('gacha', 'Failed to load pity', e);
+      }
+    };
+    loadPity();
+  }, [selectedBanner]);
+
+  // Get costs from selected banner
+  const singleCost = selectedBanner?.currencyCost
+    ? selectedBanner.currencyCost.premium.single
+    : GACHA_COSTS.premium.single;
+  const multiCost = selectedBanner?.currencyCost
+    ? selectedBanner.currencyCost.premium.multi
+    : GACHA_COSTS.premium.multi;
+  const softSingleCost = selectedBanner?.currencyCost
+    ? selectedBanner.currencyCost.soft.single
+    : GACHA_COSTS.soft.single;
+
   const handlePull = async (amount: number, currency: 'soft' | 'premium') => {
-    if (pullLockRef.current) return;
+    if (pullLockRef.current || !selectedBanner) return;
     pullLockRef.current = true;
 
     // Confirmation for premium pulls
     if (currency === 'premium') {
-      const price = amount === 10 ? 2700 : 300;
+      const price = amount === 10 ? multiCost : singleCost;
       const confirmed = await confirmToast(`¿Gastar ${price} CRISTALES en ${amount}x invocaciones?`);
       if (!confirmed) { pullLockRef.current = false; return; }
     }
@@ -44,16 +99,25 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
     setResults([]);
     setSelectedReward(null);
     try {
-      const items = await GachaService.pull(amount, currency);
+      const items = await GachaService.pull(amount, currency, selectedBanner.id);
       gameDebugger.info('gacha', 'Pull completed', { count: items.length, items });
-      
+
       // Batch save items to inventory
       await Promise.all(items.map(item =>
         InventoryService.addItem(item.item_id, item.item_type as any, 1)
       ));
       gameDebugger.info('gacha', 'Items saved to inventory', { count: items.length });
-      
+
       setResults(items);
+
+      // Refresh pity
+      if (selectedBanner.bannerType === 'standard') {
+        const pity = await BannerService.getGlobalPity();
+        setGlobalPity(pity);
+      } else {
+        const pity = await BannerService.getBannerPity(selectedBanner.id);
+        setBannerPity(pity);
+      }
 
       if (onPullComplete) {
         onPullComplete();
@@ -68,6 +132,20 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
     }
   };
 
+  const handleClaimSpark = async (itemId: string) => {
+    if (!selectedBanner) return;
+    try {
+      await BannerService.claimSpark(selectedBanner.id, itemId);
+      showToast('¡Item reclamado con Spark!', 'success');
+      const pity = await BannerService.getBannerPity(selectedBanner.id);
+      setBannerPity(pity);
+      if (onPullComplete) onPullComplete();
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Error al reclamar spark';
+      showToast(message, 'error');
+    }
+  };
+
   const getItemIcon = (item: PullResult) => {
     if (item.item_type === 'weapon') return <Sword size={24} className="text-white/80" />;
     if (item.item_type === 'card') return <img src={AssetService.getCardUrlWithFallback(item.item_id)} className="w-10 h-10 object-contain" alt={item.item_name} />;
@@ -75,9 +153,52 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
     return <Box size={24} className="text-white/80" />;
   };
 
+  // Time left for banner
+  const getTimeLeft = (endDate: string | null) => {
+    if (!endDate) return null;
+    const diff = new Date(endDate).getTime() - Date.now();
+    if (diff <= 0) return 'FINALIZADO';
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    return `${days}D ${hours}H`;
+  };
+
   return (
     <ViewShell title="INVOCACIÓN" subtitle="Adquiere Equipo Legendario" onBack={() => onNavigate('home')} background="gacha">
-      <div className="flex-1 flex flex-col p-4 sm:p-6 space-y-6 overflow-hidden relative">
+      <div className="flex-1 flex flex-col p-4 sm:p-6 space-y-4 overflow-hidden relative">
+
+        {/* Banner Selector */}
+        {banners.length > 1 && (
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setSelectedBannerIdx(i => (i - 1 + banners.length) % banners.length)}
+              className="p-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <ChevronLeft size={16} className="text-white/60" />
+            </button>
+            <div className="flex-1 flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+              {banners.map((b, idx) => (
+                <button
+                  key={b.id}
+                  onClick={() => setSelectedBannerIdx(idx)}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
+                    idx === selectedBannerIdx
+                      ? 'bg-[#F5C76B]/20 border border-[#F5C76B]/40 text-[#F5C76B]'
+                      : 'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10'
+                  }`}
+                >
+                  {b.name}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setSelectedBannerIdx(i => (i + 1) % banners.length)}
+              className="p-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <ChevronRight size={16} className="text-white/60" />
+            </button>
+          </div>
+        )}
 
         {/* Banner Display */}
         <NineSlicePanel type="border" variant="fancy" className="aspect-[16/9] glass-frosted frame-earthstone relative overflow-hidden group shrink-0 panel-elevated-lg">
@@ -87,10 +208,23 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
           <div className="absolute bottom-4 left-4 right-4">
              <div className="flex items-center gap-2 mb-1">
                 <Sparkles size={16} className="text-[#F5C76B] animate-pulse" />
-                <span className="text-[10px] font-black text-[#F5C76B] uppercase tracking-widest">EVENTO LIMITADO</span>
+                <span className="text-[10px] font-black text-[#F5C76B] uppercase tracking-widest">
+                  {selectedBanner?.bannerType === 'rate_up' ? 'TASA MEJORADA' : selectedBanner?.bannerType === 'collab' ? 'COLABORACIÓN' : 'EVENTO LIMITADO'}
+                </span>
              </div>
-             <h2 className="text-xl font-black text-white uppercase font-display leading-none">Forja de las Estrellas</h2>
+             <h2 className="text-xl font-black text-white uppercase font-display leading-none">{selectedBanner?.name || 'Cargando...'}</h2>
+             {selectedBanner?.description && (
+               <p className="text-[10px] text-white/40 mt-1">{selectedBanner.description}</p>
+             )}
           </div>
+
+          {/* Time left */}
+          {selectedBanner?.endDate && (
+            <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-[#F5C76B]/30 px-3 py-1 rounded-full flex items-center gap-2">
+              <Zap size={12} className="text-[#F5C76B]" />
+              <span className="text-[9px] font-black text-white/80 uppercase tracking-widest">{getTimeLeft(selectedBanner.endDate)}</span>
+            </div>
+          )}
 
           <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md border border-[#F5C76B]/30 px-3 py-1 rounded-full flex items-center gap-2">
              <Info size={12} className="text-[#F5C76B]" />
@@ -98,28 +232,85 @@ export function GachaView({ profile, onNavigate, onPullComplete }: GachaViewProp
           </div>
         </NineSlicePanel>
 
+        {/* Featured Items */}
+        {selectedBanner?.featuredItems && selectedBanner.featuredItems.length > 0 && (
+          <div className="shrink-0">
+            <div className="flex items-center gap-2 mb-2">
+              <Star size={12} className="text-[#F5C76B] fill-[#F5C76B]" />
+              <span className="text-[9px] font-black text-[#F5C76B] uppercase tracking-widest">Featured Items</span>
+              {selectedBanner.rateUpMultiplier > 1 && (
+                <span className="text-[8px] font-black text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-full">x{selectedBanner.rateUpMultiplier} RATE UP</span>
+              )}
+            </div>
+            <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+              {selectedBanner.featuredItems.map((fi) => (
+                <div key={fi.itemId} className="shrink-0 w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <span className="text-[8px] text-white/60 text-center leading-tight px-1">{fi.itemId.replace(/_/g, ' ').slice(0, 12)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Pity Progress */}
+        <div className="shrink-0 space-y-2">
+          {selectedBanner?.bannerType !== 'standard' && bannerPity && (
+            <>
+              <div className="flex items-center justify-between text-[9px] uppercase tracking-widest font-black">
+                <span className="text-white/40">Legendary Pity</span>
+                <span className="text-white/60">{bannerPity.pullsSinceLegendary}/80</span>
+              </div>
+              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-[#F5C76B] to-yellow-300 rounded-full transition-all" style={{ width: `${(bannerPity.pullsSinceLegendary / 80) * 100}%` }} />
+              </div>
+              {bannerPity.sparkCost && (
+                <>
+                  <div className="flex items-center justify-between text-[9px] uppercase tracking-widest font-black">
+                    <span className="text-white/40">Spark</span>
+                    <span className="text-cyan-400">{bannerPity.sparkCount}/{bannerPity.sparkCost}</span>
+                  </div>
+                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-cyan-500 to-cyan-300 rounded-full transition-all" style={{ width: `${(bannerPity.sparkCount / bannerPity.sparkCost) * 100}%` }} />
+                  </div>
+                </>
+              )}
+            </>
+          )}
+          {selectedBanner?.bannerType === 'standard' && globalPity && (
+            <>
+              <div className="flex items-center justify-between text-[9px] uppercase tracking-widest font-black">
+                <span className="text-white/40">Legendary Pity</span>
+                <span className="text-white/60">{globalPity.pullsSinceLegendary}/80</span>
+              </div>
+              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-[#F5C76B] to-yellow-300 rounded-full transition-all" style={{ width: `${(globalPity.pullsSinceLegendary / 80) * 100}%` }} />
+              </div>
+            </>
+          )}
+        </div>
+
         {/* Currency Display */}
-        <div className="grid grid-cols-2 gap-4 shrink-0">
-<CurrencyCard icon={Coins} value={profile?.currency || 0} label="ZENY" color="text-[#F5C76B]" />
-            <CurrencyCard icon={Diamond} value={profile?.gems || 0} label="CRISTALES" color="text-cyan-400" />
+        <div className="grid grid-cols-2 gap-3 shrink-0">
+          <CurrencyCard icon={Coins} value={profile?.currency || 0} label="ZENY" color="text-[#F5C76B]" />
+          <CurrencyCard icon={Diamond} value={profile?.gems || 0} label="CRISTALES" color="text-cyan-400" />
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-4 mt-auto">
+        <div className="grid grid-cols-2 gap-3 mt-auto shrink-0">
           <PullButton
             amount={1}
-            price={100}
+            price={softSingleCost}
             currency="soft"
-            disabled={isPulling || (profile?.currency || 0) < 100}
-            insufficient={(profile?.currency || 0) < 100}
+            disabled={isPulling || !selectedBanner || (profile?.currency || 0) < softSingleCost}
+            insufficient={(profile?.currency || 0) < softSingleCost}
             onClick={() => handlePull(1, 'soft')}
           />
           <PullButton
             amount={10}
-            price={2700}
+            price={multiCost}
             currency="premium"
-            disabled={isPulling || (profile?.gems || 0) < 2700}
-            insufficient={(profile?.gems || 0) < 2700}
+            disabled={isPulling || !selectedBanner || (profile?.gems || 0) < multiCost}
+            insufficient={(profile?.gems || 0) < multiCost}
             onClick={() => handlePull(10, 'premium')}
             highlight
           />

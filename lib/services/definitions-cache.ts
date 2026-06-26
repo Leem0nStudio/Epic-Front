@@ -5,7 +5,7 @@ interface CacheEntry<T> {
   timestamp: number;
 }
 
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes (static data rarely changes)
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours (static game definitions rarely change)
 
 const cache = new Map<string, CacheEntry<any>>();
 
@@ -59,8 +59,8 @@ function buildItemDefinition(id: string, item: any): any {
 function normalizeRarity(rarity: string | null | undefined): string {
   if (!rarity) return 'common';
   const map: Record<string, string> = {
-    c: 'common', r: 'rare', sr: 'super_rare', ur: 'ultra_rare', mr: 'mythic',
-    common: 'common', rare: 'rare', epic: 'super_rare', legendary: 'ultra_rare',
+    c: 'common', uc: 'uncommon', r: 'rare', sr: 'epic', ur: 'epic', mr: 'mythic',
+    common: 'common', uncommon: 'uncommon', rare: 'rare', epic: 'epic', legendary: 'legendary', mythic: 'mythic',
   };
   return map[rarity.toLowerCase()] || 'common';
 }

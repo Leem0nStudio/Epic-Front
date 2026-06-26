@@ -98,6 +98,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   activePartyUnits: Array(5).fill(null),
 
   view: 'home',
+  viewHistory: [],
   returnView: null,
   selectedUnitId: null,
   selectedStage: null,
@@ -297,7 +298,19 @@ const [profRes, unitsRes, partyRes, recruitsRes] = await Promise.all([
     }
   },
 
-  navigateTo: (newView) => set({ view: newView }),
+  navigateTo: (newView) => set((state) => ({
+    view: newView,
+    viewHistory: [...state.viewHistory.slice(-9), state.view], // Keep last 10 views
+  })),
+
+  goBack: () => set((state) => {
+    if (state.viewHistory.length === 0) {
+      return { view: 'home' as ViewType };
+    }
+    const history = [...state.viewHistory];
+    const previousView = history.pop()!;
+    return { view: previousView, viewHistory: history };
+  }),
 
   handleSelectUnit: (id) => {
     set({ selectedUnitId: id, view: 'unit_details' });

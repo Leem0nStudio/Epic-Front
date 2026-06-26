@@ -322,6 +322,48 @@ CREATE TABLE IF NOT EXISTS gacha_state (
     last_pull_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- =====================================================
+-- SECTION 2C: GACHA BANNER SYSTEM
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS banners (
+    id TEXT PRIMARY KEY,
+    version TEXT REFERENCES game_configs(version),
+    name TEXT NOT NULL,
+    description TEXT,
+    banner_type TEXT NOT NULL DEFAULT 'standard',  -- 'standard', 'rate_up', 'collab', 'seasonal'
+    featured_rarity TEXT,  -- which rarity gets rate-up (e.g. 'legendary')
+    rate_up_multiplier NUMERIC DEFAULT 2.0,  -- how much to boost featured rarity rate
+    start_date TIMESTAMP WITH TIME ZONE,
+    end_date TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN DEFAULT true,
+    pity_carry_over BOOLEAN DEFAULT true,  -- does pity persist when banner ends?
+    currency_cost JSONB NOT NULL DEFAULT '{"premium": {"single": 300, "multi": 2700}, "soft": {"single": 100, "multi": 900}}'::JSONB,
+    spark_cost INTEGER,  -- pulls needed for spark selector (NULL = no spark)
+    display_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS banner_featured_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    banner_id TEXT NOT NULL REFERENCES banners(id) ON DELETE CASCADE,
+    item_id TEXT NOT NULL,
+    item_type TEXT NOT NULL,  -- 'card', 'weapon', 'skill', 'job_core'
+    rate_up_multiplier NUMERIC DEFAULT 3.0,  -- individual rate-up on top of banner rate-up
+    display_order INTEGER DEFAULT 0,
+    UNIQUE(banner_id, item_id)
+);
+
+CREATE TABLE IF NOT EXISTS banner_pity (
+    player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+    banner_id TEXT NOT NULL REFERENCES banners(id) ON DELETE CASCADE,
+    pulls_since_epic INTEGER DEFAULT 0,
+    pulls_since_legendary INTEGER DEFAULT 0,
+    spark_count INTEGER DEFAULT 0,
+    last_pull_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (player_id, banner_id)
+);
+
 CREATE TABLE IF NOT EXISTS units (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
@@ -424,6 +466,127 @@ CREATE INDEX IF NOT EXISTS idx_party_player ON party(player_id);
 CREATE INDEX IF NOT EXISTS idx_gacha_state_player ON gacha_state(player_id);
 CREATE INDEX IF NOT EXISTS idx_campaign_progress_player_stage ON campaign_progress(player_id, stage_id);
 CREATE INDEX IF NOT EXISTS idx_player_daily_rewards_player ON player_daily_rewards(player_id);
+CREATE INDEX IF NOT EXISTS idx_banners_active ON banners(is_active, start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_banner_featured_items_banner ON banner_featured_items(banner_id);
+CREATE INDEX IF NOT EXISTS idx_banner_pity_player_banner ON banner_pity(player_id, banner_id);
+CREATE INDEX IF NOT EXISTS idx_arena_rankings_season ON arena_rankings(season_id, points DESC);
+CREATE INDEX IF NOT EXISTS idx_arena_matches_attacker ON arena_matches(attacker_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_arena_matches_defender ON arena_matches(defender_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tower_progress_player_season ON tower_progress(player_id, season_id);
+
+-- =====================================================
+-- SECTION 2D: ARENA PVP SYSTEM
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS arena_seasons (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    start_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    reward_tiers JSONB NOT NULL DEFAULT '[]'::JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS arena_rankings (
+    player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+    season_id TEXT NOT NULL REFERENCES arena_seasons(id) ON DELETE CASCADE,
+    points INTEGER DEFAULT 1000,
+    wins INTEGER DEFAULT 0,
+    losses INTEGER DEFAULT 0,
+    streak INTEGER DEFAULT 0,
+    rank_tier TEXT DEFAULT 'bronce',
+    reward_claimed BOOLEAN DEFAULT false,
+    last_match_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (player_id, season_id)
+);
+
+CREATE TABLE IF NOT EXISTS arena_matches (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    attacker_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+    defender_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+    season_id TEXT NOT NULL REFERENCES arena_seasons(id) ON DELETE CASCADE,
+    result TEXT NOT NULL CHECK (result IN ('win', 'loss', 'draw')),
+    attacker_points_change INTEGER DEFAULT 0,
+    defender_points_change INTEGER DEFAULT 0,
+    battle_log JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =====================================================
+-- SECTION 2E: INFINITE TOWER SYSTEM
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS tower_seasons (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    start_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tower_progress (
+    player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+    season_id TEXT NOT NULL REFERENCES tower_seasons(id) ON DELETE CASCADE,
+    highest_floor INTEGER DEFAULT 0,
+    floors_completed JSONB DEFAULT '[]'::JSONB,
+    reward_claimed_up_to INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (player_id, season_id)
+);
+
+-- =====================================================
+-- SECTION 2F: SHOP SYSTEM
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS shop_items (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    item_type TEXT NOT NULL,  -- 'currency', 'energy', 'pack', 'material'
+    content JSONB NOT NULL,  -- { "currency": 500, "gems": 50, "items": [...] }
+    price_gems INTEGER,  -- cost in premium gems
+    price_money TEXT,  -- real money price (e.g. "0.99")
+    is_available BOOLEAN DEFAULT true,
+    display_order INTEGER DEFAULT 0,
+    max_purchases_per_day INTEGER,  -- NULL = unlimited
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS shop_purchases (
+    player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+    item_id TEXT NOT NULL REFERENCES shop_items(id) ON DELETE CASCADE,
+    purchase_count INTEGER DEFAULT 0,
+    last_purchase_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (player_id, item_id)
+);
+
+-- =====================================================
+-- SECTION 2G: GUILD SYSTEM
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS guilds (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    level INTEGER DEFAULT 1,
+    exp BIGINT DEFAULT 0,
+    member_count INTEGER DEFAULT 1,
+    max_members INTEGER DEFAULT 30,
+    leader_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS guild_members (
+    player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+    guild_id UUID NOT NULL REFERENCES guilds(id) ON DELETE CASCADE,
+    role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('leader', 'officer', 'member')),
+    contribution BIGINT DEFAULT 0,
+    joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (player_id, guild_id)
+);
 
 -- =====================================================
 -- SECTION 6: ENABLE RLS
@@ -443,6 +606,18 @@ ALTER TABLE recruitment_queue ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gacha_state ENABLE ROW LEVEL SECURITY;
 ALTER TABLE campaign_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE player_daily_rewards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE banners ENABLE ROW LEVEL SECURITY;
+ALTER TABLE banner_featured_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE banner_pity ENABLE ROW LEVEL SECURITY;
+ALTER TABLE arena_seasons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE arena_rankings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE arena_matches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tower_seasons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tower_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE shop_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE shop_purchases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE guilds ENABLE ROW LEVEL SECURITY;
+ALTER TABLE guild_members ENABLE ROW LEVEL SECURITY;
 
 -- =====================================================
 -- SECTION 7: RLS POLICIES - PLAYER DATA
@@ -526,6 +701,74 @@ CREATE POLICY "Allow authenticated players update gacha_state" ON gacha_state
 CREATE POLICY "Allow authenticated players delete own gacha" ON gacha_state
     FOR DELETE TO authenticated USING (auth.uid() = player_id);
 
+-- Banners (public read)
+CREATE POLICY "Allow read banners" ON banners FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read banner_featured_items" ON banner_featured_items FOR SELECT TO authenticated USING (true);
+
+-- Banner Pity (player own)
+CREATE POLICY "Allow authenticated players read own banner_pity" ON banner_pity
+    FOR SELECT TO authenticated USING (auth.uid() = player_id);
+
+CREATE POLICY "Allow authenticated players insert banner_pity" ON banner_pity
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = player_id);
+
+CREATE POLICY "Allow authenticated players update banner_pity" ON banner_pity
+    FOR UPDATE TO authenticated USING (auth.uid() = player_id) WITH CHECK (auth.uid() = player_id);
+
+-- Arena Seasons (public read)
+CREATE POLICY "Allow read arena_seasons" ON arena_seasons FOR SELECT TO authenticated USING (true);
+
+-- Arena Rankings (public read, player own write)
+CREATE POLICY "Allow read arena_rankings" ON arena_rankings FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow authenticated players insert arena_rankings" ON arena_rankings
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = player_id);
+CREATE POLICY "Allow authenticated players update arena_rankings" ON arena_rankings
+    FOR UPDATE TO authenticated USING (auth.uid() = player_id) WITH CHECK (auth.uid() = player_id);
+
+-- Arena Matches (player own read/write)
+CREATE POLICY "Allow authenticated players read own arena_matches" ON arena_matches
+    FOR SELECT TO authenticated USING (auth.uid() = attacker_id OR auth.uid() = defender_id);
+CREATE POLICY "Allow authenticated players insert arena_matches" ON arena_matches
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = attacker_id);
+
+-- Tower Seasons (public read)
+CREATE POLICY "Allow read tower_seasons" ON tower_seasons FOR SELECT TO authenticated USING (true);
+
+-- Tower Progress (player own)
+CREATE POLICY "Allow authenticated players read own tower_progress" ON tower_progress
+    FOR SELECT TO authenticated USING (auth.uid() = player_id);
+CREATE POLICY "Allow authenticated players insert tower_progress" ON tower_progress
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = player_id);
+CREATE POLICY "Allow authenticated players update tower_progress" ON tower_progress
+    FOR UPDATE TO authenticated USING (auth.uid() = player_id) WITH CHECK (auth.uid() = player_id);
+
+-- Shop Items (public read)
+CREATE POLICY "Allow read shop_items" ON shop_items FOR SELECT TO authenticated USING (true);
+
+-- Shop Purchases (player own)
+CREATE POLICY "Allow authenticated players read own shop_purchases" ON shop_purchases
+    FOR SELECT TO authenticated USING (auth.uid() = player_id);
+CREATE POLICY "Allow authenticated players insert shop_purchases" ON shop_purchases
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = player_id);
+CREATE POLICY "Allow authenticated players update shop_purchases" ON shop_purchases
+    FOR UPDATE TO authenticated USING (auth.uid() = player_id) WITH CHECK (auth.uid() = player_id);
+
+-- Guilds (public read, leader write)
+CREATE POLICY "Allow read guilds" ON guilds FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow authenticated players create guilds" ON guilds
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = leader_id);
+CREATE POLICY "Allow authenticated players update own guilds" ON guilds
+    FOR UPDATE TO authenticated USING (leader_id = auth.uid());
+
+-- Guild Members (public read, player own write)
+CREATE POLICY "Allow read guild_members" ON guild_members FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow authenticated players insert guild_members" ON guild_members
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = player_id);
+CREATE POLICY "Allow authenticated players update guild_members" ON guild_members
+    FOR UPDATE TO authenticated USING (auth.uid() = player_id);
+CREATE POLICY "Allow authenticated players delete own guild_members" ON guild_members
+    FOR DELETE TO authenticated USING (auth.uid() = player_id);
+
 -- Campaign Progress
 CREATE POLICY "Allow authenticated players read own campaign_progress" ON campaign_progress
     FOR SELECT TO authenticated USING (auth.uid() = player_id);
@@ -579,6 +822,18 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON recruitment_queue TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON gacha_state TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON campaign_progress TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON player_daily_rewards TO authenticated;
+GRANT SELECT ON banners TO authenticated;
+GRANT SELECT ON banner_featured_items TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON banner_pity TO authenticated;
+GRANT SELECT ON arena_seasons TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON arena_rankings TO authenticated;
+GRANT SELECT, INSERT ON arena_matches TO authenticated;
+GRANT SELECT ON tower_seasons TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON tower_progress TO authenticated;
+GRANT SELECT ON shop_items TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON shop_purchases TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON guilds TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON guild_members TO authenticated;
 GRANT SELECT ON game_configs TO authenticated;
 GRANT SELECT ON jobs TO authenticated;
 GRANT SELECT ON skills TO authenticated;

@@ -14,7 +14,7 @@ interface NavigationContextValue {
 const NavigationContext = createContext<NavigationContextValue | null>(null);
 
 export function NavigationProvider({ children }: { children: React.ReactNode }) {
-  const { navigateTo, setSelectedUnitId, setSelectedCardId, setSelectedItemId, setSelectedSkillId, setSelectedStage } = useGameStore();
+  const { navigateTo, goBack: storeGoBack, setSelectedUnitId, setSelectedCardId, setSelectedItemId, setSelectedSkillId, setSelectedStage } = useGameStore();
 
   const navigate = useCallback((view: ViewType, params?: Record<string, any>) => {
     // Set relevant state before navigating
@@ -45,9 +45,8 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   }, [navigateTo]);
 
   const goBack = useCallback(() => {
-    // Simple back navigation - could be enhanced with a history stack
-    navigateTo('home');
-  }, [navigateTo]);
+    storeGoBack();
+  }, [storeGoBack]);
 
   return (
     <NavigationContext.Provider value={{ navigate, navigateWithParams, goHome, goBack }}>

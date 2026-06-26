@@ -47,7 +47,7 @@ export function generateNovice(forcedAffinity?: Affinity) {
 
     // 3. Roll for a Trait (30% chance)
     let traitId: string | undefined = undefined;
-    if (Math.random() < 0.3) {
+    if (Math.random() < 0.55) { // 55% chance for trait (buffed from 30%)
         traitId = TRAIT_ID_LIST[Math.floor(Math.random() * TRAIT_ID_LIST.length)];
         const traitDef = TRAITS_DATABASE[traitId];
         if (traitDef) {

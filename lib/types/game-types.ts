@@ -29,7 +29,8 @@ export type ViewType =
   | 'guild' 
   | 'skill_detail' 
   | 'card_detail'
-  | 'profile';
+  | 'profile'
+  | 'shop';
 
 // ============================================================================
 // TIPOS DE UNIDADES
@@ -331,6 +332,7 @@ export interface GameState {
 
   // Navegación
   view: ViewType;
+  viewHistory: ViewType[];
   returnView: ViewType | null;
   selectedUnitId: string | null;
   selectedStage: GameStage | null;
@@ -384,6 +386,7 @@ export interface GameState {
   handleDiscardItem: (itemId: string) => void;
   reinitializeAccount: (toast?: ToastFunction) => Promise<void>;
   navigateTo: (newView: ViewType) => void;
+  goBack: () => void;
 }
 
 /** Slot en el party */

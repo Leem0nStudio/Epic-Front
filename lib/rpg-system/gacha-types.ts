@@ -1,6 +1,6 @@
 import { BaseStats, WeaponCategory } from './types';
 
-export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 export type GachaItemType = 'card' | 'weapon' | 'job_core' | 'skill_fragment' | 'cosmetic';
 
 export interface BaseGachaItem {

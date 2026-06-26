@@ -22,7 +22,8 @@ import {
   Gift,
   Trophy,
   Crown,
-  Castle
+  Castle,
+  ShoppingBag
 } from 'lucide-react';
 import { AssetService } from '@/lib/services/asset-service';
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
@@ -383,6 +384,16 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
                     <span className="text-[8px] font-bold text-amber-300 uppercase">Tower</span>
                   </motion.button>
                 )}
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onNavigate('shop')}
+                  className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-xl border border-cyan-500/30 flex flex-col items-center gap-1"
+                >
+                  <ShoppingBag size={18} className="text-cyan-400" />
+                  <span className="text-[8px] font-bold text-cyan-300 uppercase">Shop</span>
+                </motion.button>
 
                 <motion.button
                   whileHover={{ scale: 1.05 }}

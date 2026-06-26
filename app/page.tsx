@@ -31,6 +31,7 @@ import { SkillDetailView } from '@/components/views/SkillDetailView';
 import { TutorialOverlay, hasSeenTutorial } from '@/components/ui/TutorialOverlay';
 import { CardDetailView } from '@/components/views/CardDetailView';
 import { ProfileView } from '@/components/views/ProfileView';
+import { ShopView } from '@/components/views/ShopView';
 
 export default function Applet() {
   const { showToast } = useToast();
@@ -169,6 +170,12 @@ export default function Applet() {
         return <GuildView 
                   onBack={() => actions.navigateTo('home')}
                 />;
+      case 'shop':
+        return <ShopView
+                  profile={state.profile}
+                  onNavigate={actions.navigateTo}
+                  onPurchaseComplete={actions.refreshState}
+                />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -216,7 +223,7 @@ export default function Applet() {
       <div className="w-full bg-[#0B1A2A] h-[100dvh] sm:h-[85vh] sm:max-h-[850px] sm:w-auto sm:aspect-[9/16] shadow-[0_0_80px_rgba(0,0,0,0.9)] sm:rounded-[40px] overflow-y-hidden relative border-white/5 flex flex-col items-center sm:border">
 
         {/* Persistent Header */}
-        {!["battle", "auth"].includes(state.view) && <GlobalHeader profile={state.profile} onNavigate={actions.navigateTo} />}
+        {!["battle", "auth"].includes(state.view) && <GlobalHeader profile={state.profile} onNavigate={actions.navigateTo} onRefillComplete={actions.refreshState} />}
 
         <div className="w-full h-full relative flex flex-col flex-1">
           <AnimatePresence mode="wait">

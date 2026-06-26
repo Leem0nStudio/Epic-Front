@@ -8,6 +8,7 @@ export interface PullResult {
     item_name: string;
     rarity: string;
     item_type: string;
+    spark_count: number;
 }
 
 interface GachaRpcResponse {
@@ -15,22 +16,23 @@ interface GachaRpcResponse {
     res_item_name: string;
     res_item_rarity: string;
     res_item_type: string;
+    res_spark_count: number;
 }
 
 export class GachaService {
     /**
      * Performs a secure gacha pull using the database RPC.
-     * Includes multi-pull logic and currency selection.
-     * Pity is handled server-side: 10 pulls for SR, 50 pulls for UR.
+     * Supports banner selection for rate-up banners.
      */
-    static async pull(amount: number = 1, currencyType: 'soft' | 'premium' = 'soft'): Promise<PullResult[]> {
+    static async pull(amount: number = 1, currencyType: 'soft' | 'premium' = 'soft', bannerId: string = 'standard'): Promise<PullResult[]> {
         if (!supabase) throw new Error("Supabase client not initialized");
 
-        gameDebugger.info('gacha', `Starting pull: ${amount}x ${currencyType}`);
+        gameDebugger.info('gacha', `Starting pull: ${amount}x ${currencyType} on banner ${bannerId}`);
 
         const { data, error } = await supabase.rpc('rpc_pull_gacha', {
             p_amount: amount,
-            p_currency_type: currencyType
+            p_currency_type: currencyType,
+            p_banner_id: bannerId,
         });
 
         if (error) {
@@ -46,15 +48,15 @@ export class GachaService {
             item_name: item.res_item_name,
             rarity: item.res_item_rarity,
             item_type: item.res_item_type,
+            spark_count: item.res_spark_count,
         }));
     }
 
     /**
      * Helper for standard Multi pull (10 items)
-     * Provides a 1-pull discount (10 for the price of 9).
      */
-    static async pullMulti(currencyType: 'soft' | 'premium' = 'soft') {
-        return this.pull(10, currencyType);
+    static async pullMulti(currencyType: 'soft' | 'premium' = 'soft', bannerId: string = 'standard') {
+        return this.pull(10, currencyType, bannerId);
     }
 
     /**

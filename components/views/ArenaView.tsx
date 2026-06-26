@@ -1,62 +1,69 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sword, Trophy, Users, Star, Shield } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { Sword, Trophy, Users, Star, Shield, ChevronRight, Zap } from 'lucide-react';
 import { ViewShell } from '@/components/ui/ViewShell';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { Button } from '@/components/ui/Button';
-import { logger } from '@/lib/logger';
+import { ArenaService, type ArenaOpponent, type ArenaRanking, type LeaderboardEntry } from '@/lib/services/arena-service';
+import { gameDebugger } from '@/lib/debug';
 
 interface ArenaViewProps {
   onBack: () => void;
-  playerPower?: number;
+  onBattleStart?: (opponentId: string) => void;
 }
 
-interface LeaderboardEntry {
-  rank: number;
-  username: string;
-  power: number;
-  wins: number;
-  rank_tier: string;
-}
+const RANK_TIER_COLORS: Record<string, string> = {
+  bronce: 'text-orange-400',
+  plata: 'text-gray-300',
+  oro: 'text-yellow-400',
+  diamante: 'text-cyan-400',
+  leyenda: 'text-purple-400',
+};
 
-export function ArenaView({ onBack, playerPower = 5000 }: ArenaViewProps) {
+export function ArenaView({ onBack, onBattleStart }: ArenaViewProps) {
+  const [ranking, setRanking] = useState<ArenaRanking | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [opponents, setOpponents] = useState<ArenaOpponent[]>([]);
+  const [selectedOpponent, setSelectedOpponent] = useState<ArenaOpponent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedOpponent, setSelectedOpponent] = useState<LeaderboardEntry | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      if (!supabase) {
-        logger.warn('api_call', 'Supabase not configured, cannot fetch leaderboard');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        // TODO: Replace with actual leaderboard table/query when available
-        // const { data, error } = await supabase
-        //   .from('leaderboard')
-        //   .select('rank, username, power, wins, rank_tier')
-        //   .order('rank', { ascending: true })
-        //   .limit(50);
-        
-        // if (error) throw error;
-        // setLeaderboard(data || []);
-        
-        // Placeholder: Show empty state until backend is ready
-        setLeaderboard([]);
-        setIsLoading(false);
-      } catch (error) {
-        logger.error('api_call', 'Failed to fetch leaderboard', error as Error);
-        setIsLoading(false);
-      }
-    };
-
-    fetchLeaderboard();
+  const loadData = useCallback(async () => {
+    try {
+      const [rankData, lbData] = await Promise.all([
+        ArenaService.getRanking(),
+        ArenaService.getLeaderboard(20),
+      ]);
+      setRanking(rankData);
+      setLeaderboard(lbData);
+    } catch (e) {
+      gameDebugger.error('arena', 'Failed to load arena data', e);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const handleFindOpponents = async () => {
+    setIsSearching(true);
+    try {
+      const data = await ArenaService.findOpponents();
+      setOpponents(data);
+    } catch (e) {
+      gameDebugger.error('arena', 'Failed to find opponents', e);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleStartBattle = (opponent: ArenaOpponent) => {
+    if (onBattleStart) {
+      onBattleStart(opponent.opponentId);
+    }
+  };
 
   return (
     <ViewShell
@@ -66,85 +73,121 @@ export function ArenaView({ onBack, playerPower = 5000 }: ArenaViewProps) {
       background="battle"
       loading={isLoading}
     >
-      <div className="flex-1 flex flex-col p-4 sm:p-6 space-y-6 overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 sm:p-6 space-y-4 overflow-hidden">
 
-        {/* Player Stats Bar */}
-        <NineSlicePanel type="border" variant="default" className="p-4 flex items-center justify-between glass-frosted frame-earthstone shrink-0">
-           <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-                 <Shield className="text-cyan-400" size={20} />
+        {/* Player Ranking Card */}
+        <NineSlicePanel type="border" variant="default" className="p-4 glass-frosted frame-earthstone shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+                <Shield className="text-cyan-400" size={24} />
               </div>
               <div>
-                 <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">TU PODER</p>
-                 <p className="text-lg font-black text-white font-display">{playerPower.toLocaleString()}</p>
+                <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">RANGO</p>
+                <p className={`text-lg font-black font-stats uppercase ${RANK_TIER_COLORS[ranking?.rankTier || 'bronce']}`}>
+                  {ranking?.rankTier || 'BRONCE'}
+                </p>
               </div>
-           </div>
-           <div className="text-right">
-              <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">RANGO</p>
-              <p className="text-sm font-black text-[#F5C76B] font-stats">PLATA II</p>
-           </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">PUNTOS</p>
+              <p className="text-2xl font-black text-white font-display">{ranking?.points || 1000}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-white/5">
+            <div className="text-center">
+              <p className="text-[8px] text-white/40 uppercase">VICTORIAS</p>
+              <p className="text-sm font-black text-green-400 font-stats">{ranking?.wins || 0}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[8px] text-white/40 uppercase">DERROTAS</p>
+              <p className="text-sm font-black text-red-400 font-stats">{ranking?.losses || 0}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[8px] text-white/40 uppercase">RACHA</p>
+              <p className="text-sm font-black text-[#F5C76B] font-stats">{ranking?.streak || 0}</p>
+            </div>
+          </div>
         </NineSlicePanel>
 
+        {/* Find Opponents / Opponents List */}
+        {opponents.length === 0 ? (
+          <Button
+            variant="primary"
+            onClick={handleFindOpponents}
+            disabled={isSearching}
+            className="w-full py-5 font-display tracking-widest shrink-0"
+          >
+            {isSearching ? 'BUSCANDO...' : 'BUSCAR ADVERSARIO'}
+          </Button>
+        ) : (
+          <div className="space-y-2 shrink-0">
+            <div className="flex items-center gap-2 px-1">
+              <Sword size={12} className="text-[#F5C76B]" />
+              <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">ADVERSARIOS DISPONIBLES</span>
+            </div>
+            {opponents.map((opp) => (
+              <NineSlicePanel
+                key={opp.opponentId}
+                type="border"
+                variant="default"
+                className="p-3 flex items-center justify-between glass-frosted hover:border-[#F5C76B]/40 cursor-pointer group"
+                onClick={() => setSelectedOpponent(opp)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                    <Users size={16} className="text-white/40" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-white uppercase font-display">{opp.opponentName}</h4>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={`text-[9px] font-black uppercase ${RANK_TIER_COLORS[opp.opponentRankTier] || 'text-white/40'}`}>
+                        {opp.opponentRankTier}
+                      </span>
+                      <span className="text-[9px] text-white/30">·</span>
+                      <span className="text-[9px] text-white/40">{opp.opponentPoints} pts</span>
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-white/20 group-hover:text-[#F5C76B] transition-colors" />
+              </NineSlicePanel>
+            ))}
+            <Button variant="ghost" size="sm" onClick={() => setOpponents([])} className="w-full text-[10px]">
+              BUSCAR OTROS
+            </Button>
+          </div>
+        )}
+
         {/* Leaderboard */}
-        <div className="flex-1 flex flex-col gap-3 overflow-hidden">
-           <div className="flex items-center gap-2 px-2 shrink-0">
-              <Trophy size={14} className="text-[#F5C76B]" />
-              <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] font-stats">TOP CLASIFICATORIA</h3>
-           </div>
-
-           {leaderboard.length === 0 ? (
-             <div className="flex-1 flex items-center justify-center">
-               <div className="text-center space-y-3">
-                 <Trophy size={48} className="text-white/20 mx-auto" />
-                 <p className="text-sm font-bold text-white/40">Sistema de Arena en desarrollo</p>
-                 <p className="text-[10px] text-white/20">El tablero de clasificación estará disponible pronto</p>
-               </div>
-             </div>
-           ) : (
-             <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-               {leaderboard.map((entry, idx) => (
-                 <motion.div
-                   key={entry.username}
-                   initial={{ opacity: 0, x: -10 }}
-                   animate={{ opacity: 1, x: 0 }}
-                   transition={{ delay: idx * 0.05 }}
-                 >
-                   <NineSlicePanel
-                     type="border"
-                     variant="default"
-                     className="p-3.5 flex items-center justify-between glass-frosted hover:border-[#F5C76B]/40 cursor-pointer group rounded-2xl"
-                     onClick={() => setSelectedOpponent(entry)}
-                   >
-                      <div className="flex items-center gap-4">
-                         <div className="w-8 h-8 rounded-lg bg-black/40 border border-white/5 flex items-center justify-center font-display text-[#F5C76B]">
-                            {entry.rank}
-                         </div>
-                         <div>
-                            <h4 className="text-sm font-black text-white uppercase font-display leading-none">{entry.username}</h4>
-                            <div className="flex items-center gap-2 mt-1">
-                               <Sword size={10} className="text-white/20" />
-                               <span className="text-[10px] font-black text-white/40 font-stats">{entry.power.toLocaleString()}</span>
-                            </div>
-                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                         <Star size={12} className="text-[#F5C76B] fill-[#F5C76B] opacity-20 group-hover:opacity-100 transition-opacity" />
-                         <span className="text-[9px] font-black text-white/20 uppercase font-stats">DESAFIAR</span>
-                      </div>
-                   </NineSlicePanel>
-                 </motion.div>
-               ))}
-             </div>
-           )}
+        <div className="flex-1 flex flex-col gap-2 overflow-hidden min-h-0">
+          <div className="flex items-center gap-2 px-1 shrink-0">
+            <Trophy size={12} className="text-[#F5C76B]" />
+            <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">CLASIFICACIÓN</span>
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+            {leaderboard.length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-[10px] text-white/30">Sin clasificación disponible</p>
+              </div>
+            ) : (
+              leaderboard.map((entry) => (
+                <div key={entry.playerId} className="flex items-center gap-3 p-2 rounded-xl bg-white/[0.02]">
+                  <span className="w-6 text-center text-[10px] font-black text-white/40">{entry.rankNum}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-black text-white truncate">{entry.playerName}</p>
+                  </div>
+                  <span className={`text-[9px] font-black uppercase ${RANK_TIER_COLORS[entry.rankTier] || 'text-white/40'}`}>
+                    {entry.rankTier}
+                  </span>
+                  <span className="text-[10px] font-black text-white/60 tabular-nums">{entry.points}</span>
+                </div>
+              ))
+            )}
+          </div>
         </div>
-
-        {/* Action Button */}
-        <Button variant="primary" className="w-full py-6 font-display text-lg tracking-[0.2em] shrink-0">
-          BUSCAR ADVERSARIO
-        </Button>
       </div>
 
-      {/* Opponent Modal */}
+      {/* Opponent Detail Modal */}
       <AnimatePresence>
         {selectedOpponent && (
           <motion.div
@@ -152,33 +195,42 @@ export function ArenaView({ onBack, playerPower = 5000 }: ArenaViewProps) {
             className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-8"
             onClick={() => setSelectedOpponent(null)}
           >
-             <motion.div
-               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
-               onClick={e => e.stopPropagation()}
-               className="w-full max-w-xs"
-             >
-                <NineSlicePanel type="panel" variant="default" className="p-8 text-center glass-frosted frame-earthstone">
-                   <Users size={48} className="text-[#F5C76B] mx-auto mb-6" />
-                   <h3 className="text-2xl font-black text-white uppercase font-display mb-1">{selectedOpponent.username}</h3>
-                   <p className="text-[10px] text-[#F5C76B] font-black uppercase tracking-widest mb-6">Poder de Combate: {selectedOpponent.power}</p>
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-xs"
+            >
+              <NineSlicePanel type="panel" variant="default" className="p-8 text-center glass-frosted frame-earthstone">
+                <Users size={40} className="text-[#F5C76B] mx-auto mb-4" />
+                <h3 className="text-xl font-black text-white uppercase font-display mb-1">{selectedOpponent.opponentName}</h3>
+                <p className={`text-[10px] font-black uppercase tracking-widest mb-4 ${RANK_TIER_COLORS[selectedOpponent.opponentRankTier]}`}>
+                  {selectedOpponent.opponentRankTier} · {selectedOpponent.opponentPoints} pts
+                </p>
 
-                   <div className="grid grid-cols-2 gap-3 mb-8">
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                         <p className="text-[8px] text-white/40 uppercase">VICTORIAS</p>
-                         <p className="text-lg font-black text-white font-stats">{selectedOpponent.wins}</p>
-                      </div>
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                         <p className="text-[8px] text-white/40 uppercase">RANGO</p>
-                         <p className="text-sm font-black text-white uppercase font-stats">{selectedOpponent.rank_tier}</p>
-                      </div>
-                   </div>
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                    <p className="text-[8px] text-white/40 uppercase">VICTORIAS</p>
+                    <p className="text-lg font-black text-green-400 font-stats">{selectedOpponent.opponentWins}</p>
+                  </div>
+                  <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                    <p className="text-[8px] text-white/40 uppercase">DERROTAS</p>
+                    <p className="text-lg font-black text-red-400 font-stats">{selectedOpponent.opponentLosses}</p>
+                  </div>
+                </div>
 
-                   <div className="space-y-3">
-                      <Button variant="primary" className="w-full">INICIAR DUELO</Button>
-                      <Button variant="secondary" className="w-full" onClick={() => setSelectedOpponent(null)}>CANCELAR</Button>
-                   </div>
-                </NineSlicePanel>
-             </motion.div>
+                <div className="space-y-3">
+                  <Button variant="primary" className="w-full" onClick={() => handleStartBattle(selectedOpponent)}>
+                    <div className="flex items-center justify-center gap-2">
+                      <Zap size={16} />
+                      INICIAR DUELO
+                    </div>
+                  </Button>
+                  <Button variant="secondary" className="w-full" onClick={() => setSelectedOpponent(null)}>
+                    CANCELAR
+                  </Button>
+                </div>
+              </NineSlicePanel>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

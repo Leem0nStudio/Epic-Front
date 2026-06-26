@@ -402,7 +402,27 @@ export class ProgressionService {
       finalStats.agi = Math.floor(finalStats.agi * transBonus);
     }
 
-    // TODO: Add potential bonuses (would need to fetch from potentials table)
+    // Add potential bonuses (fetch from potentials table)
+    const potentialsUnlocked = unit.potentials_unlocked || [];
+    if (potentialsUnlocked.length > 0) {
+      const { data: potentials } = await supabase
+        .from('potentials')
+        .select('stat_bonus')
+        .in('id', potentialsUnlocked);
+
+      if (potentials) {
+        for (const pot of potentials) {
+          if (pot.stat_bonus) {
+            finalStats.hp += pot.stat_bonus.hp || 0;
+            finalStats.atk += pot.stat_bonus.atk || 0;
+            finalStats.def += pot.stat_bonus.def || 0;
+            finalStats.matk += pot.stat_bonus.matk || 0;
+            finalStats.mdef += pot.stat_bonus.mdef || 0;
+            finalStats.agi += pot.stat_bonus.agi || 0;
+          }
+        }
+      }
+    }
 
     return finalStats;
   }

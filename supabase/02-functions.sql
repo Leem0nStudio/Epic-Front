@@ -85,8 +85,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- SECTION 2: GACHA SYSTEM
 -- =====================================================
 
-CREATE OR REPLACE FUNCTION rpc_pull_gacha(p_amount INTEGER, p_currency_type TEXT)
-RETURNS TABLE(res_item_id TEXT, res_item_name TEXT, res_item_rarity TEXT, res_item_type TEXT) AS $$
+CREATE OR REPLACE FUNCTION rpc_pull_gacha(p_amount INTEGER, p_currency_type TEXT, p_banner_id TEXT DEFAULT 'standard')
+RETURNS TABLE(res_item_id TEXT, res_item_name TEXT, res_item_rarity TEXT, res_item_type TEXT, res_spark_count INTEGER) AS $$
 DECLARE
     v_user_id UUID := auth.uid();
     v_cost_per_pull INTEGER;
@@ -94,113 +94,210 @@ DECLARE
     v_balance BIGINT;
     v_p_epic INTEGER;
     v_p_leg INTEGER;
+    v_spark_count INTEGER := 0;
     v_active_version TEXT;
     v_roll FLOAT;
     v_rarity TEXT;
     v_target_id TEXT;
     v_target_name TEXT;
     v_target_type TEXT;
+    v_banner RECORD;
+    v_banner_costs JSONB;
+    v_use_banner_pity BOOLEAN := FALSE;
+    v_featured_rarity TEXT;
+    v_has_featured_items BOOLEAN := FALSE;
+    v_featured_item RECORD;
 BEGIN
+    -- Load banner config
+    SELECT * INTO v_banner FROM banners WHERE id = p_banner_id AND is_active = true;
+    IF NOT FOUND THEN
+        -- Fallback to standard behavior if banner not found
+        v_banner := NULL;
+    END IF;
+
+    -- Determine costs from banner or defaults
+    IF v_banner IS NOT NULL THEN
+        v_banner_costs := v_banner.currency_cost;
+        IF p_currency_type = 'premium' THEN
+            v_cost_per_pull := (v_banner_costs->'premium'->>'single')::INTEGER;
+        ELSE
+            v_cost_per_pull := (v_banner_costs->'soft'->>'single')::INTEGER;
+        END IF;
+    ELSE
+        IF p_currency_type = 'premium' THEN
+            v_cost_per_pull := 300;
+        ELSE
+            v_cost_per_pull := 100;
+        END IF;
+    END IF;
+
+    -- Get balance
     IF p_currency_type = 'premium' THEN
-        v_cost_per_pull := 50;
         SELECT premium_currency INTO v_balance FROM players WHERE id = v_user_id;
     ELSE
-        v_cost_per_pull := 100;
         SELECT currency INTO v_balance FROM players WHERE id = v_user_id;
     END IF;
 
-    v_total_cost := CASE WHEN p_amount >= 10 THEN (p_amount - 1) * v_cost_per_pull ELSE p_amount * v_cost_per_pull END;
+    -- Apply 10% discount for 10+ pulls
+    v_total_cost := CASE WHEN p_amount >= 10 THEN floor(p_amount * v_cost_per_pull * 0.9)::INTEGER ELSE p_amount * v_cost_per_pull END;
 
     IF v_balance < v_total_cost THEN
         RAISE EXCEPTION 'Moneda insuficiente';
     END IF;
 
-SELECT version INTO v_active_version FROM game_configs WHERE is_active = true LIMIT 1;
+    -- Get active version
+    SELECT version INTO v_active_version FROM game_configs WHERE is_active = true LIMIT 1;
     IF v_active_version IS NULL THEN
         v_active_version := 'v1.0';
     END IF;
 
-    SELECT pulls_since_epic, pulls_since_legendary INTO v_p_epic, v_p_leg
-    FROM gacha_state WHERE player_id = v_user_id;
+    -- Load pity counters (per-banner or global)
+    IF v_banner IS NOT NULL AND v_banner.pity_carry_over = false THEN
+        -- Per-banner pity
+        SELECT pulls_since_epic, pulls_since_legendary, spark_count
+        INTO v_p_epic, v_p_leg, v_spark_count
+        FROM banner_pity WHERE player_id = v_user_id AND banner_id = p_banner_id;
 
-    IF NOT FOUND THEN
-        INSERT INTO gacha_state (player_id, pulls_since_epic, pulls_since_legendary)
-        VALUES (v_user_id, 0, 0);
-        v_p_epic := 0;
-        v_p_leg := 0;
+        IF NOT FOUND THEN
+            INSERT INTO banner_pity (player_id, banner_id, pulls_since_epic, pulls_since_legendary, spark_count)
+            VALUES (v_user_id, p_banner_id, 0, 0, 0);
+            v_p_epic := 0;
+            v_p_leg := 0;
+            v_spark_count := 0;
+        END IF;
+        v_use_banner_pity := TRUE;
+    ELSE
+        -- Global pity (standard banner or carry-over)
+        SELECT pulls_since_epic, pulls_since_legendary INTO v_p_epic, v_p_leg
+        FROM gacha_state WHERE player_id = v_user_id;
+
+        IF NOT FOUND THEN
+            INSERT INTO gacha_state (player_id, pulls_since_epic, pulls_since_legendary)
+            VALUES (v_user_id, 0, 0);
+            v_p_epic := 0;
+            v_p_leg := 0;
+        END IF;
     END IF;
+
+    -- Check if banner has featured items for this rarity
+    v_featured_rarity := v_banner.featured_rarity;
 
     FOR i IN 1..p_amount LOOP
         v_p_epic := v_p_epic + 1;
         v_p_leg := v_p_leg + 1;
+        v_spark_count := v_spark_count + 1;
         v_roll := random();
 
         -- Determine rarity based on pity system
-        IF v_p_leg >= 50 OR random() < 0.02 THEN
+        IF v_p_leg >= 80 THEN
             v_rarity := 'legendary';
             v_p_leg := 0;
-        ELSIF v_p_epic >= 25 OR random() < 0.08 THEN
+            v_p_epic := 0;
+        ELSIF v_p_leg >= 70 AND random() < (0.03 + (v_p_leg - 70) * 0.05) THEN
+            v_rarity := 'legendary';
+            v_p_leg := 0;
+            v_p_epic := 0;
+        ELSIF v_p_epic >= 15 THEN
+            v_rarity := 'epic';
+            v_p_epic := 0;
+        ELSIF random() < 0.03 THEN
+            v_rarity := 'legendary';
+            v_p_leg := 0;
+            v_p_epic := 0;
+        ELSIF random() < 0.12 THEN
             v_rarity := 'epic';
             v_p_epic := 0;
         ELSIF random() < 0.25 THEN
             v_rarity := 'rare';
-        ELSIF random() < 0.50 THEN
+        ELSIF random() < 0.20 THEN
             v_rarity := 'uncommon';
         ELSE
             v_rarity := 'common';
         END IF;
 
-        -- Determine item type
-        v_roll := random();
-        IF v_rarity = 'legendary' AND random() < 0.15 THEN
-            v_target_type := 'job_core';
-        ELSIF v_roll < 0.4 THEN
-            v_target_type := 'card';
-        ELSIF v_roll < 0.7 THEN
-            v_target_type := 'weapon';
-        ELSE
-            v_target_type := 'skill';
+        -- Check if this rarity matches banner's featured rarity
+        IF v_banner IS NOT NULL AND v_rarity = v_featured_rarity THEN
+            -- Check if banner has featured items
+            SELECT EXISTS(
+                SELECT 1 FROM banner_featured_items WHERE banner_id = p_banner_id
+            ) INTO v_has_featured_items;
+
+            IF v_has_featured_items THEN
+                -- Pick a featured item from this banner
+                SELECT bfi.item_id, bfi.item_type INTO v_target_id, v_target_type
+                FROM banner_featured_items bfi
+                WHERE bfi.banner_id = p_banner_id
+                ORDER BY random() LIMIT 1;
+
+                IF v_target_id IS NOT NULL THEN
+                    -- Get item name from the appropriate table
+                    IF v_target_type = 'card' THEN
+                        SELECT name INTO v_target_name FROM cards WHERE id = v_target_id;
+                    ELSIF v_target_type = 'weapon' THEN
+                        SELECT name INTO v_target_name FROM weapons WHERE id = v_target_id;
+                    ELSIF v_target_type = 'skill' THEN
+                        SELECT name INTO v_target_name FROM skills WHERE id = v_target_id;
+                    ELSE
+                        SELECT name INTO v_target_name FROM job_cores WHERE id = v_target_id;
+                    END IF;
+                END IF;
+            END IF;
         END IF;
 
-        -- Query item from appropriate table
-        IF v_target_type = 'card' THEN
-            SELECT id, name INTO v_target_id, v_target_name
-            FROM cards WHERE rarity = v_rarity AND (version = v_active_version OR version IS NULL)
-            ORDER BY random() LIMIT 1;
-        ELSIF v_target_type = 'weapon' THEN
-            SELECT id, name INTO v_target_id, v_target_name
-            FROM weapons WHERE rarity = v_rarity AND (version = v_active_version OR version IS NULL)
-            ORDER BY random() LIMIT 1;
-        ELSIF v_target_type = 'skill' THEN
-            SELECT id, name INTO v_target_id, v_target_name
-            FROM skills WHERE rarity = v_rarity AND (version = v_active_version OR version IS NULL)
-            ORDER BY random() LIMIT 1;
-        ELSE
-            SELECT id, name INTO v_target_id, v_target_name
-            FROM job_cores WHERE rarity = v_rarity AND (version = v_active_version OR version IS NULL)
-            ORDER BY random() LIMIT 1;
-        END IF;
-
-        -- If no item found with rarity, try fallback to common
+        -- If no featured item picked, use standard pool
         IF v_target_id IS NULL THEN
+            -- Determine item type
+            v_roll := random();
+            IF v_rarity = 'legendary' AND random() < 0.15 THEN
+                v_target_type := 'job_core';
+            ELSIF v_roll < 0.4 THEN
+                v_target_type := 'card';
+            ELSIF v_roll < 0.7 THEN
+                v_target_type := 'weapon';
+            ELSE
+                v_target_type := 'skill';
+            END IF;
+
+            -- Query item from appropriate table
             IF v_target_type = 'card' THEN
                 SELECT id, name INTO v_target_id, v_target_name
-                FROM cards WHERE rarity = 'common' AND (version = v_active_version OR version IS NULL)
+                FROM cards WHERE rarity = v_rarity AND (version = v_active_version OR version IS NULL)
                 ORDER BY random() LIMIT 1;
             ELSIF v_target_type = 'weapon' THEN
                 SELECT id, name INTO v_target_id, v_target_name
-                FROM weapons WHERE rarity = 'common' AND (version = v_active_version OR version IS NULL)
+                FROM weapons WHERE rarity = v_rarity AND (version = v_active_version OR version IS NULL)
                 ORDER BY random() LIMIT 1;
             ELSIF v_target_type = 'skill' THEN
                 SELECT id, name INTO v_target_id, v_target_name
-                FROM skills WHERE rarity = 'common' AND (version = v_active_version OR version IS NULL)
+                FROM skills WHERE rarity = v_rarity AND (version = v_active_version OR version IS NULL)
                 ORDER BY random() LIMIT 1;
             ELSE
                 SELECT id, name INTO v_target_id, v_target_name
-                FROM job_cores WHERE rarity = 'common' AND (version = v_active_version OR version IS NULL)
+                FROM job_cores WHERE rarity = v_rarity AND (version = v_active_version OR version IS NULL)
                 ORDER BY random() LIMIT 1;
             END IF;
-            v_rarity := 'common';
+
+            -- Fallback to common if no item found
+            IF v_target_id IS NULL THEN
+                IF v_target_type = 'card' THEN
+                    SELECT id, name INTO v_target_id, v_target_name
+                    FROM cards WHERE rarity = 'common' AND (version = v_active_version OR version IS NULL)
+                    ORDER BY random() LIMIT 1;
+                ELSIF v_target_type = 'weapon' THEN
+                    SELECT id, name INTO v_target_id, v_target_name
+                    FROM weapons WHERE rarity = 'common' AND (version = v_active_version OR version IS NULL)
+                    ORDER BY random() LIMIT 1;
+                ELSIF v_target_type = 'skill' THEN
+                    SELECT id, name INTO v_target_id, v_target_name
+                    FROM skills WHERE rarity = 'common' AND (version = v_active_version OR version IS NULL)
+                    ORDER BY random() LIMIT 1;
+                ELSE
+                    SELECT id, name INTO v_target_id, v_target_name
+                    FROM job_cores WHERE rarity = 'common' AND (version = v_active_version OR version IS NULL)
+                    ORDER BY random() LIMIT 1;
+                END IF;
+                v_rarity := 'common';
+            END IF;
         END IF;
 
         IF v_target_id IS NOT NULL THEN
@@ -214,8 +311,14 @@ SELECT version INTO v_active_version FROM game_configs WHERE is_active = true LI
             res_item_name := v_target_name;
             res_item_rarity := v_rarity;
             res_item_type := v_target_type;
+            res_spark_count := v_spark_count;
             RETURN NEXT;
         END IF;
+
+        -- Reset for next iteration
+        v_target_id := NULL;
+        v_target_name := NULL;
+        v_target_type := NULL;
     END LOOP;
 
     -- Deduct currency
@@ -226,9 +329,16 @@ SELECT version INTO v_active_version FROM game_configs WHERE is_active = true LI
     END IF;
 
     -- Update pity counters
-    UPDATE gacha_state
-    SET pulls_since_epic = v_p_epic, pulls_since_legendary = v_p_leg, last_pull_at = NOW()
-    WHERE player_id = v_user_id;
+    IF v_use_banner_pity THEN
+        UPDATE banner_pity
+        SET pulls_since_epic = v_p_epic, pulls_since_legendary = v_p_leg,
+            spark_count = v_spark_count, last_pull_at = NOW()
+        WHERE player_id = v_user_id AND banner_id = p_banner_id;
+    ELSE
+        UPDATE gacha_state
+        SET pulls_since_epic = v_p_epic, pulls_since_legendary = v_p_leg, last_pull_at = NOW()
+        WHERE player_id = v_user_id;
+    END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -358,22 +468,31 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION rpc_refill_energy_with_gems(p_gem_cost INTEGER DEFAULT 30)
+CREATE OR REPLACE FUNCTION rpc_refill_energy_with_gems(p_gem_cost INTEGER DEFAULT NULL)
 RETURNS BOOLEAN AS $$
 DECLARE
     v_user_id UUID := auth.uid();
     v_current_gems BIGINT;
+    v_refill_count INTEGER;
+    v_actual_cost INTEGER;
 BEGIN
+    -- Calculate scaling cost: base 50 + 25 per refill today
+    SELECT COALESCE(refill_count_today, 0) INTO v_refill_count
+    FROM players WHERE id = v_user_id;
+    
+    v_actual_cost := COALESCE(p_gem_cost, 50 + (v_refill_count * 25));
+    
     SELECT premium_currency INTO v_current_gems FROM players WHERE id = v_user_id;
 
-    IF v_current_gems < p_gem_cost THEN
+    IF v_current_gems < v_actual_cost THEN
         RAISE EXCEPTION 'Insufficient gems';
     END IF;
 
     UPDATE players
-    SET premium_currency = premium_currency - p_gem_cost,
+    SET premium_currency = premium_currency - v_actual_cost,
         energy = max_energy,
-        last_energy_regen = NOW()
+        last_energy_regen = NOW(),
+        refill_count_today = COALESCE(refill_count_today, 0) + 1
     WHERE id = v_user_id;
 
     RETURN FOUND;
@@ -1208,6 +1327,782 @@ BEGIN
         'potentialId', p_potential_id,
         'potentialName', v_potential.name,
         'statBonus', v_potential.stat_bonus
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
+-- SECTION 13: GACHA BANNER SYSTEM
+-- =====================================================
+
+-- Get active banners for display
+CREATE OR REPLACE FUNCTION rpc_get_active_banners()
+RETURNS TABLE(
+    banner_id TEXT,
+    banner_name TEXT,
+    banner_description TEXT,
+    banner_type TEXT,
+    featured_rarity TEXT,
+    rate_up_multiplier NUMERIC,
+    end_date TIMESTAMP WITH TIME ZONE,
+    spark_cost INTEGER,
+    currency_cost JSONB,
+    featured_items JSONB
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        b.id,
+        b.name,
+        b.description,
+        b.banner_type,
+        b.featured_rarity,
+        b.rate_up_multiplier,
+        b.end_date,
+        b.spark_cost,
+        b.currency_cost,
+        COALESCE(
+            (SELECT jsonb_agg(jsonb_build_object(
+                'itemId', bfi.item_id,
+                'itemType', bfi.item_type,
+                'rateUpMultiplier', bfi.rate_up_multiplier,
+                'displayOrder', bfi.display_order
+            ) ORDER BY bfi.display_order)
+            FROM banner_featured_items bfi WHERE bfi.banner_id = b.id),
+            '[]'::JSONB
+        )
+    FROM banners b
+    WHERE b.is_active = true
+      AND (b.start_date IS NULL OR b.start_date <= NOW())
+      AND (b.end_date IS NULL OR b.end_date > NOW())
+    ORDER BY b.display_order;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Claim spark reward (guaranteed featured item after N pulls)
+CREATE OR REPLACE FUNCTION rpc_claim_spark(p_banner_id TEXT, p_selected_item_id TEXT)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_banner RECORD;
+    v_pity RECORD;
+    v_item RECORD;
+BEGIN
+    -- Get banner
+    SELECT * INTO v_banner FROM banners WHERE id = p_banner_id AND is_active = true;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Banner not found or inactive';
+    END IF;
+
+    IF v_banner.spark_cost IS NULL THEN
+        RAISE EXCEPTION 'This banner does not support spark';
+    END IF;
+
+    -- Get pity state
+    SELECT * INTO v_pity FROM banner_pity
+    WHERE player_id = v_user_id AND banner_id = p_banner_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'No pulls recorded for this banner';
+    END IF;
+
+    IF v_pity.spark_count < v_banner.spark_cost THEN
+        RAISE EXCEPTION 'Insufficient pulls for spark: %/%', v_pity.spark_count, v_banner.spark_cost;
+    END IF;
+
+    -- Verify selected item is a valid featured item
+    IF NOT EXISTS (
+        SELECT 1 FROM banner_featured_items
+        WHERE banner_id = p_banner_id AND item_id = p_selected_item_id
+    ) THEN
+        RAISE EXCEPTION 'Selected item is not a featured item on this banner';
+    END IF;
+
+    -- Get item type from featured items
+    SELECT item_type INTO v_item FROM banner_featured_items
+    WHERE banner_id = p_banner_id AND item_id = p_selected_item_id;
+
+    -- Add item to inventory
+    INSERT INTO inventory (player_id, item_id, item_type)
+    VALUES (v_user_id, p_selected_item_id, v_item.item_type)
+    ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = inventory.quantity + 1;
+
+    -- Reset spark counter
+    UPDATE banner_pity SET spark_count = 0
+    WHERE player_id = v_user_id AND banner_id = p_banner_id;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'itemId', p_selected_item_id,
+        'itemType', v_item.item_type,
+        'newSparkCount', 0
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Get player's pity state for a banner
+CREATE OR REPLACE FUNCTION rpc_get_banner_pity(p_banner_id TEXT)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_pity RECORD;
+    v_banner RECORD;
+BEGIN
+    SELECT * INTO v_banner FROM banners WHERE id = p_banner_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Banner not found';
+    END IF;
+
+    SELECT * INTO v_pity FROM banner_pity
+    WHERE player_id = v_user_id AND banner_id = p_banner_id;
+
+    IF NOT FOUND THEN
+        RETURN jsonb_build_object(
+            'pullsSinceEpic', 0,
+            'pullsSinceLegendary', 0,
+            'sparkCount', 0,
+            'sparkCost', v_banner.spark_cost
+        );
+    END IF;
+
+    RETURN jsonb_build_object(
+        'pullsSinceEpic', v_pity.pulls_since_epic,
+        'pullsSinceLegendary', v_pity.pulls_since_legendary,
+        'sparkCount', v_pity.spark_count,
+        'sparkCost', v_banner.spark_cost
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Get global pity state (standard banner)
+CREATE OR REPLACE FUNCTION rpc_get_global_pity()
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_pity RECORD;
+BEGIN
+    SELECT * INTO v_pity FROM gacha_state WHERE player_id = v_user_id;
+
+    IF NOT FOUND THEN
+        INSERT INTO gacha_state (player_id) VALUES (v_user_id);
+        RETURN jsonb_build_object(
+            'pullsSinceEpic', 0,
+            'pullsSinceLegendary', 0
+        );
+    END IF;
+
+    RETURN jsonb_build_object(
+        'pullsSinceEpic', v_pity.pulls_since_epic,
+        'pullsSinceLegendary', v_pity.pulls_since_legendary
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
+-- SECTION 14: ARENA PVP SYSTEM
+-- =====================================================
+
+-- Find arena opponents (matchmaking by points ±200)
+CREATE OR REPLACE FUNCTION rpc_arena_find_opponents()
+RETURNS TABLE(
+    opponent_id UUID,
+    opponent_name TEXT,
+    opponent_power BIGINT,
+    opponent_points INTEGER,
+    opponent_wins INTEGER,
+    opponent_losses INTEGER,
+    opponent_rank_tier TEXT
+) AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_user_points INTEGER;
+    v_season_id TEXT;
+BEGIN
+    -- Get current season
+    SELECT id INTO v_season_id FROM arena_seasons WHERE is_active = true LIMIT 1;
+    IF v_season_id IS NULL THEN
+        RAISE EXCEPTION 'No active arena season';
+    END IF;
+
+    -- Get or create player ranking
+    SELECT points INTO v_user_points FROM arena_rankings
+    WHERE player_id = v_user_id AND season_id = v_season_id;
+
+    IF NOT FOUND THEN
+        INSERT INTO arena_rankings (player_id, season_id, points, rank_tier)
+        VALUES (v_user_id, v_season_id, 1000, 'bronce');
+        v_user_points := 1000;
+    END IF;
+
+    -- Find 3 opponents within ±200 points
+    RETURN QUERY
+    SELECT
+        p.id,
+        COALESCE(p.username, 'Héroe Anónimo'),
+        COALESCE(
+            (SELECT SUM((b->>'hp')::BIGINT + (b->>'atk')::BIGINT * 2 + (b->>'def')::BIGINT)
+             FROM jsonb_array_elements('[]'::JSONB) b),
+            5000::BIGINT
+        ),
+        ar.points,
+        ar.wins,
+        ar.losses,
+        ar.rank_tier
+    FROM players p
+    JOIN arena_rankings ar ON ar.player_id = p.id AND ar.season_id = v_season_id
+    WHERE p.id != v_user_id
+      AND ar.points BETWEEN v_user_points - 200 AND v_user_points + 200
+    ORDER BY ABS(ar.points - v_user_points)
+    LIMIT 3;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Get or initialize arena ranking
+CREATE OR REPLACE FUNCTION rpc_arena_get_ranking()
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_season_id TEXT;
+    v_ranking RECORD;
+BEGIN
+    SELECT id INTO v_season_id FROM arena_seasons WHERE is_active = true LIMIT 1;
+    IF v_season_id IS NULL THEN
+        RETURN jsonb_build_object('error', 'No active arena season');
+    END IF;
+
+    SELECT * INTO v_ranking FROM arena_rankings
+    WHERE player_id = v_user_id AND season_id = v_season_id;
+
+    IF NOT FOUND THEN
+        INSERT INTO arena_rankings (player_id, season_id, points, rank_tier)
+        VALUES (v_user_id, v_season_id, 1000, 'bronce');
+        RETURN jsonb_build_object(
+            'points', 1000,
+            'wins', 0,
+            'losses', 0,
+            'streak', 0,
+            'rankTier', 'bronce',
+            'rewardClaimed', false
+        );
+    END IF;
+
+    RETURN jsonb_build_object(
+        'points', v_ranking.points,
+        'wins', v_ranking.wins,
+        'losses', v_ranking.losses,
+        'streak', v_ranking.streak,
+        'rankTier', v_ranking.rank_tier,
+        'rewardClaimed', v_ranking.reward_claimed
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Submit arena battle result
+CREATE OR REPLACE FUNCTION rpc_arena_submit_result(
+    p_defender_id UUID,
+    p_result TEXT
+)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_season_id TEXT;
+    v_attacker_points INTEGER;
+    v_defender_points INTEGER;
+    v_points_change INTEGER;
+    v_match_id UUID;
+BEGIN
+    IF p_result NOT IN ('win', 'loss', 'draw') THEN
+        RAISE EXCEPTION 'Invalid result: %', p_result;
+    END IF;
+
+    SELECT id INTO v_season_id FROM arena_seasons WHERE is_active = true LIMIT 1;
+    IF v_season_id IS NULL THEN
+        RAISE EXCEPTION 'No active arena season';
+    END IF;
+
+    -- Get attacker points
+    SELECT points INTO v_attacker_points FROM arena_rankings
+    WHERE player_id = v_user_id AND season_id = v_season_id;
+    IF NOT FOUND THEN v_attacker_points := 1000; END IF;
+
+    -- Get defender points
+    SELECT points INTO v_defender_points FROM arena_rankings
+    WHERE player_id = p_defender_id AND season_id = v_season_id;
+    IF NOT FOUND THEN v_defender_points := 1000; END IF;
+
+    -- Calculate points change (±25 for win/loss, 0 for draw)
+    CASE p_result
+        WHEN 'win' THEN v_points_change := 25;
+        WHEN 'loss' THEN v_points_change := -25;
+        ELSE v_points_change := 0;
+    END CASE;
+
+    -- Record match
+    INSERT INTO arena_matches (attacker_id, defender_id, season_id, result, attacker_points_change, defender_points_change)
+    VALUES (v_user_id, p_defender_id, v_season_id, p_result, v_points_change, -v_points_change)
+    RETURNING id INTO v_match_id;
+
+    -- Update attacker ranking
+    INSERT INTO arena_rankings (player_id, season_id, points, wins, losses, streak, rank_tier, last_match_at)
+    VALUES (v_user_id, v_season_id,
+            GREATEST(0, v_attacker_points + v_points_change),
+            CASE WHEN p_result = 'win' THEN 1 ELSE 0 END,
+            CASE WHEN p_result = 'loss' THEN 1 ELSE 0 END,
+            CASE WHEN p_result = 'win' THEN 1 ELSE 0 END,
+            'bronce', NOW())
+    ON CONFLICT (player_id, season_id) DO UPDATE SET
+        points = GREATEST(0, arena_rankings.points + v_points_change),
+        wins = arena_rankings.wins + CASE WHEN p_result = 'win' THEN 1 ELSE 0 END,
+        losses = arena_rankings.losses + CASE WHEN p_result = 'loss' THEN 1 ELSE 0 END,
+        streak = CASE WHEN p_result = 'win' THEN arena_rankings.streak + 1 ELSE 0 END,
+        rank_tier = CASE
+            WHEN GREATEST(0, arena_rankings.points + v_points_change) >= 2000 THEN 'leyenda'
+            WHEN GREATEST(0, arena_rankings.points + v_points_change) >= 1500 THEN 'diamante'
+            WHEN GREATEST(0, arena_rankings.points + v_points_change) >= 1200 THEN 'oro'
+            WHEN GREATEST(0, arena_rankings.points + v_points_change) >= 1000 THEN 'plata'
+            ELSE 'bronce'
+        END,
+        last_match_at = NOW();
+
+    -- Update defender ranking
+    INSERT INTO arena_rankings (player_id, season_id, points, wins, losses, streak, rank_tier, last_match_at)
+    VALUES (p_defender_id, v_season_id,
+            GREATEST(0, v_defender_points - v_points_change),
+            CASE WHEN p_result = 'loss' THEN 1 ELSE 0 END,
+            CASE WHEN p_result = 'win' THEN 1 ELSE 0 END,
+            0,
+            'bronce', NOW())
+    ON CONFLICT (player_id, season_id) DO UPDATE SET
+        points = GREATEST(0, arena_rankings.points - v_points_change),
+        wins = arena_rankings.wins + CASE WHEN p_result = 'loss' THEN 1 ELSE 0 END,
+        losses = arena_rankings.losses + CASE WHEN p_result = 'win' THEN 1 ELSE 0 END,
+        streak = 0,
+        rank_tier = CASE
+            WHEN GREATEST(0, arena_rankings.points - v_points_change) >= 2000 THEN 'leyenda'
+            WHEN GREATEST(0, arena_rankings.points - v_points_change) >= 1500 THEN 'diamante'
+            WHEN GREATEST(0, arena_rankings.points - v_points_change) >= 1200 THEN 'oro'
+            WHEN GREATEST(0, arena_rankings.points - v_points_change) >= 1000 THEN 'plata'
+            ELSE 'bronce'
+        END,
+        last_match_at = NOW();
+
+    RETURN jsonb_build_object(
+        'matchId', v_match_id,
+        'result', p_result,
+        'pointsChange', v_points_change,
+        'newPoints', GREATEST(0, v_attacker_points + v_points_change)
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Get arena leaderboard
+CREATE OR REPLACE FUNCTION rpc_arena_get_leaderboard(p_limit INTEGER DEFAULT 20)
+RETURNS TABLE(
+    rank_num BIGINT,
+    player_id UUID,
+    player_name TEXT,
+    points INTEGER,
+    wins INTEGER,
+    losses INTEGER,
+    rank_tier TEXT
+) AS $$
+DECLARE
+    v_season_id TEXT;
+BEGIN
+    SELECT id INTO v_season_id FROM arena_seasons WHERE is_active = true LIMIT 1;
+    IF v_season_id IS NULL THEN RETURN; END IF;
+
+    RETURN QUERY
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY ar.points DESC),
+        ar.player_id,
+        COALESCE(p.username, 'Héroe Anónimo'),
+        ar.points,
+        ar.wins,
+        ar.losses,
+        ar.rank_tier
+    FROM arena_rankings ar
+    JOIN players p ON p.id = ar.player_id
+    WHERE ar.season_id = v_season_id
+    ORDER BY ar.points DESC
+    LIMIT p_limit;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
+-- SECTION 15: INFINITE TOWER SYSTEM
+-- =====================================================
+
+-- Get tower progress
+CREATE OR REPLACE FUNCTION rpc_tower_get_progress()
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_season_id TEXT;
+    v_progress RECORD;
+BEGIN
+    SELECT id INTO v_season_id FROM tower_seasons WHERE is_active = true LIMIT 1;
+    IF v_season_id IS NULL THEN
+        RETURN jsonb_build_object('error', 'No active tower season');
+    END IF;
+
+    SELECT * INTO v_progress FROM tower_progress
+    WHERE player_id = v_user_id AND season_id = v_season_id;
+
+    IF NOT FOUND THEN
+        INSERT INTO tower_progress (player_id, season_id)
+        VALUES (v_user_id, v_season_id);
+        RETURN jsonb_build_object(
+            'highestFloor', 0,
+            'floorsCompleted', '[]'::JSONB,
+            'rewardClaimedUpTo', 0,
+            'seasonId', v_season_id
+        );
+    END IF;
+
+    RETURN jsonb_build_object(
+        'highestFloor', v_progress.highest_floor,
+        'floorsCompleted', v_progress.floors_completed,
+        'rewardClaimedUpTo', v_progress.reward_claimed_up_to,
+        'seasonId', v_season_id
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Complete a tower floor
+CREATE OR REPLACE FUNCTION rpc_tower_complete_floor(
+    p_floor INTEGER,
+    p_stars INTEGER
+)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_season_id TEXT;
+    v_energy_cost INTEGER;
+    v_currency_reward INTEGER;
+    v_exp_reward INTEGER;
+    v_highest INTEGER;
+BEGIN
+    SELECT id INTO v_season_id FROM tower_seasons WHERE is_active = true LIMIT 1;
+    IF v_season_id IS NULL THEN
+        RAISE EXCEPTION 'No active tower season';
+    END IF;
+
+    -- Energy cost: 3 base + 1 per 10 floors
+    v_energy_cost := 3 + (p_floor / 10);
+
+    -- Rewards scale with floor
+    v_currency_reward := 50 + (p_floor * 15);
+    v_exp_reward := 30 + (p_floor * 10);
+
+    -- Deduct energy
+    IF NOT rpc_deduct_energy(v_energy_cost) THEN
+        RAISE EXCEPTION 'Insufficient energy';
+    END IF;
+
+    -- Update progress
+    INSERT INTO tower_progress (player_id, season_id, highest_floor, floors_completed)
+    VALUES (v_user_id, v_season_id, p_floor, jsonb_build_array(jsonb_build_object('floor', p_floor, 'stars', p_stars)))
+    ON CONFLICT (player_id, season_id) DO UPDATE SET
+        highest_floor = GREATEST(tower_progress.highest_floor, p_floor),
+        floors_completed = tower_progress.floors_completed || jsonb_build_object('floor', p_floor, 'stars', p_stars);
+
+    -- Award rewards
+    UPDATE players SET currency = currency + v_currency_reward WHERE id = v_user_id;
+    PERFORM rpc_add_player_exp(v_user_id, v_exp_reward);
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'floor', p_floor,
+        'stars', p_stars,
+        'currencyReward', v_currency_reward,
+        'expReward', v_exp_reward
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
+-- SECTION 16: SHOP SYSTEM
+-- =====================================================
+
+-- Get available shop items
+CREATE OR REPLACE FUNCTION rpc_shop_get_items()
+RETURNS TABLE(
+    item_id TEXT,
+    item_name TEXT,
+    item_description TEXT,
+    item_type TEXT,
+    content JSONB,
+    price_gems INTEGER,
+    price_money TEXT,
+    display_order INTEGER,
+    max_purchases_per_day INTEGER,
+    current_purchases INTEGER
+) AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+BEGIN
+    RETURN QUERY
+    SELECT
+        si.id,
+        si.name,
+        si.description,
+        si.item_type,
+        si.content,
+        si.price_gems,
+        si.price_money,
+        si.display_order,
+        si.max_purchases_per_day,
+        COALESCE(sp.purchase_count, 0)
+    FROM shop_items si
+    LEFT JOIN shop_purchases sp ON sp.item_id = si.id AND sp.player_id = v_user_id
+        AND sp.last_purchase_at >= CURRENT_DATE
+    WHERE si.is_available = true
+    ORDER BY si.display_order;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Purchase shop item with gems
+CREATE OR REPLACE FUNCTION rpc_shop_purchase(p_item_id TEXT)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_item RECORD;
+    v_player_gems BIGINT;
+    v_purchase RECORD;
+    v_today_purchases INTEGER := 0;
+BEGIN
+    -- Get shop item
+    SELECT * INTO v_item FROM shop_items WHERE id = p_item_id AND is_available = true;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Item not found or unavailable';
+    END IF;
+
+    IF v_item.price_gems IS NULL THEN
+        RAISE EXCEPTION 'This item cannot be purchased with gems';
+    END IF;
+
+    -- Check daily purchase limit
+    IF v_item.max_purchases_per_day IS NOT NULL THEN
+        SELECT COALESCE(purchase_count, 0) INTO v_today_purchases
+        FROM shop_purchases
+        WHERE player_id = v_user_id AND item_id = p_item_id
+          AND last_purchase_at >= CURRENT_DATE;
+
+        IF v_today_purchases >= v_item.max_purchases_per_day THEN
+            RAISE EXCEPTION 'Daily purchase limit reached';
+        END IF;
+    END IF;
+
+    -- Check gems
+    SELECT premium_currency INTO v_player_gems FROM players WHERE id = v_user_id;
+    IF v_player_gems < v_item.price_gems THEN
+        RAISE EXCEPTION 'Insufficient gems';
+    END IF;
+
+    -- Deduct gems
+    UPDATE players SET premium_currency = premium_currency - v_item.price_gems WHERE id = v_user_id;
+
+    -- Grant content
+    IF (v_item.content->>'currency')::INTEGER > 0 THEN
+        UPDATE players SET currency = currency + (v_item.content->>'currency')::INTEGER WHERE id = v_user_id;
+    END IF;
+
+    IF (v_item.content->>'gems')::INTEGER > 0 THEN
+        UPDATE players SET premium_currency = premium_currency + (v_item.content->>'gems')::INTEGER WHERE id = v_user_id;
+    END IF;
+
+    IF (v_item.content->>'energy')::INTEGER > 0 THEN
+        UPDATE players SET energy = LEAST(max_energy, energy + (v_item.content->>'energy')::INTEGER) WHERE id = v_user_id;
+    END IF;
+
+    -- Record purchase
+    INSERT INTO shop_purchases (player_id, item_id, purchase_count, last_purchase_at)
+    VALUES (v_user_id, p_item_id, 1, NOW())
+    ON CONFLICT (player_id, item_id) DO UPDATE SET
+        purchase_count = shop_purchases.purchase_count + 1,
+        last_purchase_at = NOW();
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'itemId', p_item_id,
+        'gemsSpent', v_item.price_gems
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
+-- SECTION 17: GUILD SYSTEM
+-- =====================================================
+
+-- Create guild (costs 500 gems)
+CREATE OR REPLACE FUNCTION rpc_guild_create(p_name TEXT, p_description TEXT DEFAULT NULL)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_gems BIGINT;
+    v_guild_id UUID;
+BEGIN
+    SELECT premium_currency INTO v_gems FROM players WHERE id = v_user_id;
+    IF v_gems < 500 THEN
+        RAISE EXCEPTION 'Insufficient gems (need 500)';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM guild_members WHERE player_id = v_user_id) THEN
+        RAISE EXCEPTION 'Already in a guild';
+    END IF;
+
+    IF LENGTH(p_name) < 3 OR LENGTH(p_name) > 20 THEN
+        RAISE EXCEPTION 'Guild name must be 3-20 characters';
+    END IF;
+
+    UPDATE players SET premium_currency = premium_currency - 500 WHERE id = v_user_id;
+
+    INSERT INTO guilds (name, description, leader_id)
+    VALUES (p_name, p_description, v_user_id)
+    RETURNING id INTO v_guild_id;
+
+    INSERT INTO guild_members (player_id, guild_id, role)
+    VALUES (v_user_id, v_guild_id, 'leader');
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'guildId', v_guild_id,
+        'name', p_name
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Join guild
+CREATE OR REPLACE FUNCTION rpc_guild_join(p_guild_id UUID)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_guild RECORD;
+BEGIN
+    IF EXISTS (SELECT 1 FROM guild_members WHERE player_id = v_user_id) THEN
+        RAISE EXCEPTION 'Already in a guild';
+    END IF;
+
+    SELECT * INTO v_guild FROM guilds WHERE id = p_guild_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Guild not found';
+    END IF;
+
+    IF v_guild.member_count >= v_guild.max_members THEN
+        RAISE EXCEPTION 'Guild is full';
+    END IF;
+
+    INSERT INTO guild_members (player_id, guild_id, role)
+    VALUES (v_user_id, p_guild_id, 'member');
+
+    UPDATE guilds SET member_count = member_count + 1 WHERE id = p_guild_id;
+
+    RETURN jsonb_build_object('success', true, 'guildName', v_guild.name);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Leave guild
+CREATE OR REPLACE FUNCTION rpc_guild_leave()
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_guild_id UUID;
+    v_role TEXT;
+BEGIN
+    SELECT guild_id, role INTO v_guild_id, v_role
+    FROM guild_members WHERE player_id = v_user_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Not in a guild';
+    END IF;
+
+    IF v_role = 'leader' THEN
+        RAISE EXCEPTION 'Leader cannot leave. Transfer leadership or dissolve guild.';
+    END IF;
+
+    DELETE FROM guild_members WHERE player_id = v_user_id;
+    UPDATE guilds SET member_count = member_count - 1 WHERE id = v_guild_id;
+
+    RETURN jsonb_build_object('success', true);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Donate to guild (currency, gives guild exp)
+CREATE OR REPLACE FUNCTION rpc_guild_donate(p_amount INTEGER DEFAULT 100)
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_guild_id UUID;
+    v_currency BIGINT;
+BEGIN
+    SELECT gm.guild_id INTO v_guild_id
+    FROM guild_members gm WHERE gm.player_id = v_user_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Not in a guild';
+    END IF;
+
+    SELECT currency INTO v_currency FROM players WHERE id = v_user_id;
+    IF v_currency < p_amount THEN
+        RAISE EXCEPTION 'Insufficient currency';
+    END IF;
+
+    UPDATE players SET currency = currency - p_amount WHERE id = v_user_id;
+
+    -- Contribution goes to player and guild exp
+    UPDATE guild_members SET contribution = contribution + p_amount WHERE player_id = v_user_id;
+    UPDATE guilds SET exp = exp + p_amount WHERE id = v_guild_id;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'donated', p_amount,
+        'guildExp', (SELECT exp FROM guilds WHERE id = v_guild_id)
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Get guild info
+CREATE OR REPLACE FUNCTION rpc_guild_get_info()
+RETURNS JSONB AS $$
+DECLARE
+    v_user_id UUID := auth.uid();
+    v_guild_id UUID;
+    v_guild RECORD;
+    v_members JSONB;
+BEGIN
+    SELECT gm.guild_id INTO v_guild_id
+    FROM guild_members gm WHERE gm.player_id = v_user_id;
+
+    IF v_guild_id IS NULL THEN
+        RETURN jsonb_build_object('inGuild', false);
+    END IF;
+
+    SELECT * INTO v_guild FROM guilds WHERE id = v_guild_id;
+
+    SELECT jsonb_agg(jsonb_build_object(
+        'playerId', gm.player_id,
+        'username', COALESCE(p.username, 'Anónimo'),
+        'role', gm.role,
+        'contribution', gm.contribution,
+        'joinedAt', gm.joined_at
+    ) ORDER BY gm.contribution DESC)
+    INTO v_members
+    FROM guild_members gm
+    JOIN players p ON p.id = gm.player_id
+    WHERE gm.guild_id = v_guild_id;
+
+    RETURN jsonb_build_object(
+        'inGuild', true,
+        'guildId', v_guild.id,
+        'name', v_guild.name,
+        'description', v_guild.description,
+        'level', v_guild.level,
+        'exp', v_guild.exp,
+        'memberCount', v_guild.member_count,
+        'maxMembers', v_guild.max_members,
+        'leaderId', v_guild.leader_id,
+        'members', COALESCE(v_members, '[]'::JSONB)
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

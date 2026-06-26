@@ -1,17 +1,43 @@
 'use client';
 
-import React from 'react';
-import { Coins, Diamond, Zap, Bell } from 'lucide-react';
+import React, { useState } from 'react';
+import { Coins, Diamond, Zap, Bell, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
+import { supabase } from '@/lib/supabase';
 import type { ViewType, PlayerProfile } from '@/lib/types/game-types';
 
 interface GlobalHeaderProps {
   profile: PlayerProfile | null;
   onNavigate: (view: ViewType) => void;
+  onRefillComplete?: () => void;
 }
 
-export function GlobalHeader({ profile, onNavigate }: GlobalHeaderProps) {
+export function GlobalHeader({ profile, onNavigate, onRefillComplete }: GlobalHeaderProps) {
+  const [refillCost, setRefillCost] = useState<number | null>(null);
+  const [showRefillConfirm, setShowRefillConfirm] = useState(false);
+
   if (!profile) return null;
+
+  const handleRefillClick = () => {
+    // Estimate cost: base 50 + 25 * estimated refills today
+    const estimatedCost = 50; // Will be calculated server-side
+    setRefillCost(estimatedCost);
+    setShowRefillConfirm(true);
+  };
+
+  const handleConfirmRefill = async () => {
+    try {
+      const { error } = await supabase.rpc('rpc_refill_energy_with_gems');
+      if (error) throw error;
+      setShowRefillConfirm(false);
+      onRefillComplete?.();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Error al restaurar energía';
+      alert(msg);
+    }
+  };
+
+  const isEnergyFull = (profile.energy || 0) >= (profile.max_energy || 100);
 
   return (
     <header className="w-full px-4 py-3 flex items-center justify-between z-50 bg-gradient-to-b from-[#0B1A2A] to-transparent pointer-events-none">
@@ -30,7 +56,17 @@ export function GlobalHeader({ profile, onNavigate }: GlobalHeaderProps) {
       </div>
 
       <div className="flex items-center gap-1 sm:gap-3 pointer-events-auto">
-        <ResourceItem icon={Zap} value={profile.energy || 0} maxValue={profile.max_energy || 100} color="text-blue-400" />
+        <div className="relative">
+          <ResourceItem icon={Zap} value={profile.energy || 0} maxValue={profile.max_energy || 100} color="text-blue-400" />
+          {!isEnergyFull && (
+            <button
+              onClick={handleRefillClick}
+              className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-400 transition-colors border border-[#0B1A2A]"
+            >
+              <Plus size={10} className="text-white" />
+            </button>
+          )}
+        </div>
         <ResourceItem icon={Coins} value={profile.currency || 0} color="text-[#F5C76B]" />
         <ResourceItem icon={Diamond} value={profile.premium_currency || 0} color="text-cyan-400" />
 
@@ -42,6 +78,36 @@ export function GlobalHeader({ profile, onNavigate }: GlobalHeaderProps) {
           <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-[#0B1A2A]" />
         </button>
       </div>
+
+      {/* Refill Confirm Modal */}
+      {showRefillConfirm && (
+        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm pointer-events-auto">
+          <div className="bg-[#0B1A2A] border border-white/10 rounded-2xl p-6 max-w-xs w-full">
+            <h3 className="text-lg font-black text-white uppercase font-display mb-2">Restaurar Energía</h3>
+            <p className="text-sm text-white/60 mb-4">
+              Tu energía se restaurará al máximo. El costo se calcula según tus refills diarios.
+            </p>
+            <div className="flex items-center gap-2 mb-4 bg-white/5 rounded-xl p-3">
+              <Diamond size={16} className="text-cyan-400" />
+              <span className="text-sm font-black text-white">~{refillCost} CRISTALES</span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowRefillConfirm(false)}
+                className="flex-1 py-2 rounded-xl bg-white/10 text-white/60 text-sm font-black uppercase"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmRefill}
+                className="flex-1 py-2 rounded-xl bg-blue-500 text-white text-sm font-black uppercase"
+              >
+                Restaurar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

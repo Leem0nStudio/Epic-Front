@@ -11,6 +11,11 @@ export const GACHA_DATABASE: Record<string, AnyGachaItem> = {
         description: 'Increases physical damage by 10%.',
         effectType: 'statBoost', effectTarget: 'atk', effectValue: 0.10, applicableJobs: ['ALL']
     },
+    'card_hobgoblin': {
+        id: 'card_hobgoblin', name: 'Hobgoblin Card', type: 'card', rarity: 'uncommon', version: 'v1.0',
+        description: 'Increases physical damage by 15%.',
+        effectType: 'statBoost', effectTarget: 'atk', effectValue: 0.15, applicableJobs: ['ALL']
+    },
     'card_zombie': {
         id: 'card_zombie', name: 'Zombie Card', type: 'card', rarity: 'common', version: 'v1.0',
         description: 'Increases Max HP by 15%.',
@@ -64,6 +69,11 @@ export const GACHA_DATABASE: Record<string, AnyGachaItem> = {
         id: 'wpn_blade', name: 'Iron Blade', type: 'weapon', rarity: 'common', version: 'v1.0',
         description: 'A standard iron sword.', weaponCategory: 'sword',
         statBonuses: { atk: 50, def: 5 }
+    },
+    'wpn_steel_blade': {
+        id: 'wpn_steel_blade', name: 'Steel Blade', type: 'weapon', rarity: 'uncommon', version: 'v1.0',
+        description: 'A reinforced steel sword.', weaponCategory: 'sword',
+        statBonuses: { atk: 80, def: 8 }
     },
     'wpn_wand': {
         id: 'wpn_wand', name: 'Apprentice Wand', type: 'weapon', rarity: 'common', version: 'v1.0',
