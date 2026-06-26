@@ -117,7 +117,7 @@ export function ViewShell({
       )}
 
       {/* Content */}
-      <div className="relative z-10 flex-1 overflow-y-auto overflow-x-hidden pb-6">
+      <div className="relative z-10 flex-1 overflow-y-hidden overflow-x-hidden pb-6">
         {!children && emptyMessage ? (
           <div className="flex flex-col items-center justify-center h-full p-8 text-center">
             <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4 border border-white/10">

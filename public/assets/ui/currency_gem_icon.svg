@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <circle cx="32" cy="32" r="28" fill="#0E7490"/>
+  <circle cx="32" cy="32" r="24" fill="#22D3EE"/>
+  <circle cx="32" cy="32" r="20" fill="#22D3EE" stroke="#06B6D4" stroke-width="2"/>
+  <polygon points="32,14 40,28 36,48 28,48 24,28" fill="#67E8F9" opacity="0.6"/>
+  <text x="32" y="38" text-anchor="middle" fill="#164E63" font-size="16" font-family="sans-serif" font-weight="bold">G</text>
+</svg>

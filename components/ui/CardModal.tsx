@@ -7,6 +7,7 @@ import { Button } from './Button';
 import { RarityIcon } from './RarityIcon';
 import { AssetService } from '@/lib/services/asset-service';
 import { NineSlicePanel } from './NineSlicePanel';
+import { RARITY_COLORS, getRarityCode } from '@/lib/config/assets-config';
 
 interface CardModalProps {
   card: any;
@@ -18,25 +19,29 @@ interface CardModalProps {
 export function CardModal({ card, onClose, onEquip, isEquipped }: CardModalProps) {
   if (!card) return null;
 
-  const rarityColors: Record<string, string> = {
-    'C': 'from-slate-400 to-slate-600',
-    'UC': 'from-green-400 to-green-600',
-    'R': 'from-blue-400 to-blue-600',
-    'SR': 'from-purple-400 to-purple-600',
-    'SSR': 'from-orange-400 to-orange-600',
-    'UR': 'from-red-400 to-red-600',
+  const rarityCode = getRarityCode(card.def?.rarity || card.rarity || 'C');
+  const rarityColor = RARITY_COLORS[rarityCode] || RARITY_COLORS.C;
+
+  // Generate gradient classes from the centralized rarity color
+  const rarityGradientMap: Record<string, string> = {
+    C: 'from-slate-400 to-slate-600',
+    R: 'from-blue-400 to-blue-600',
+    SR: 'from-purple-400 to-purple-600',
+    UR: 'from-amber-400 to-amber-600',
+    MR: 'from-red-400 to-red-600',
+  };
+  const rarityGlowMap: Record<string, string> = {
+    C: 'shadow-[0_0_20px_rgba(156,163,175,0.3)]',
+    R: 'shadow-[0_0_20px_rgba(59,130,246,0.3)]',
+    SR: 'shadow-[0_0_20px_rgba(217,70,239,0.3)]',
+    UR: 'shadow-[0_0_20px_rgba(245,158,11,0.3)]',
+    MR: 'shadow-[0_0_20px_rgba(239,68,68,0.3)]',
   };
 
-  const glowColors: Record<string, string> = {
-    'C': 'shadow-[0_0_20px_rgba(148,163,184,0.3)]',
-    'UC': 'shadow-[0_0_20px_rgba(74,222,128,0.3)]',
-    'R': 'shadow-[0_0_20px_rgba(96,165,250,0.3)]',
-    'SR': 'shadow-[0_0_20px_rgba(192,132,252,0.3)]',
-    'SSR': 'shadow-[0_0_20px_rgba(251,146,60,0.3)]',
-    'UR': 'shadow-[0_0_20px_rgba(248,113,113,0.3)]',
-  };
+  const rarityGradient = rarityGradientMap[rarityCode] || rarityGradientMap.C;
+  const rarityGlow = rarityGlowMap[rarityCode] || rarityGlowMap.C;
 
-  const rarity = card.def?.rarity || card.rarity || 'C';
+  const rarity = rarityCode;
 
   return (
     <AnimatePresence>
@@ -56,7 +61,7 @@ export function CardModal({ card, onClose, onEquip, isEquipped }: CardModalProps
         >
           {/* Background Effects */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-gradient-to-b ${rarityColors[rarity]} opacity-10 blur-[80px]`} />
+            <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-gradient-to-b ${rarityGradient} opacity-10 blur-[80px]`} />
             <div className="absolute bottom-0 left-0 w-full h-full bg-[url('/ui/grid-pattern.png')] opacity-5" />
           </div>
 
@@ -64,7 +69,7 @@ export function CardModal({ card, onClose, onEquip, isEquipped }: CardModalProps
             {/* Header */}
             <div className="flex items-center justify-between p-6">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 ${glowColors[rarity]}`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 ${rarityGlow}`}>
                   <Sparkles className="text-[#F5C76B]" size={20} />
                 </div>
                 <div>
@@ -85,7 +90,7 @@ export function CardModal({ card, onClose, onEquip, isEquipped }: CardModalProps
             <div className="flex-1 overflow-y-auto px-6 pb-8 custom-scrollbar">
               {/* Card Visual */}
               <div className="relative aspect-[3/4] w-full max-w-[280px] mx-auto mb-8 rounded-[2rem] overflow-hidden group shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                <div className={`absolute inset-0 bg-gradient-to-br ${rarityColors[rarity]} opacity-20`} />
+                <div className={`absolute inset-0 bg-gradient-to-br ${rarityGradient} opacity-20`} />
                 
                 {/* Image Container */}
                 <div className="absolute inset-2 rounded-[1.5rem] bg-black/40 backdrop-blur-md border border-white/5 flex flex-col items-center justify-center text-center overflow-hidden">

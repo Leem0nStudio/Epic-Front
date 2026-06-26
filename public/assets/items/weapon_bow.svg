@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" fill="#0B1A2A"/>
+  <path d="M20 12 Q12 32 20 52" stroke="#10B981" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <line x1="20" y1="12" x2="20" y2="52" stroke="#10B981" stroke-width="1.5"/>
+  <line x1="20" y1="32" x2="48" y2="32" stroke="#6EE7B7" stroke-width="2" stroke-linecap="round"/>
+  <polygon points="48,32 44,28 44,36" fill="#6EE7B7"/>
+  <text x="32" y="56" text-anchor="middle" fill="#10B981" font-size="8" font-family="sans-serif" font-weight="bold">BOW</text>
+</svg>

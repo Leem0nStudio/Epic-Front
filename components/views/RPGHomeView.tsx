@@ -10,7 +10,6 @@ import {
   Bell,
   Mail,
   Zap,
-  Sparkles,
   UserPlus,
   Sword,
   Star,
@@ -121,11 +120,11 @@ const CharacterSlot = ({ unit, scale = 1, zIndex = 1, emphasized = false, flippe
           style={{ borderColor: `${color}44` }}
         >
           <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-[#0B1A2A] border border-white/10 px-3 py-0.5 rounded-full shadow-lg z-10">
-             <span className="text-[10px] font-black text-white uppercase tracking-tighter">LV.{unit.level || 60}</span>
+             <span className="text-xs font-black text-white uppercase tracking-tighter">LV.{unit.level || 60}</span>
           </div>
-          <h4 className="text-center text-white text-[11px] font-black tracking-widest uppercase truncate mb-2 mt-1 drop-shadow-md">{unit.name}</h4>
+          <h4 className="text-center text-white text-sm font-black tracking-widest uppercase truncate mb-2 mt-1 drop-shadow-md">{unit.name}</h4>
 
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[9px] font-stats font-bold">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs font-stats font-bold">
              <div className="flex items-center justify-between border-b border-white/5 pb-0.5">
                 <span className="text-pink-400/80 uppercase">HP</span>
                 <span className="text-white">{(unit.base_stats?.hp || unit.baseStats?.hp || 300)}</span>
@@ -189,7 +188,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
               <div className="w-14 h-14 rounded-full border-2 border-[#F5C76B]/60 bg-gradient-to-b from-[#2a3b5c] to-[#1a253a] flex items-center justify-center shadow-2xl relative overflow-hidden">
                 <span className="text-xl font-black text-white italic">{saveData.profile?.username?.charAt(0).toUpperCase() || 'A'}</span>
               </div>
-              <div className="absolute -bottom-1 -right-1 bg-[#F5C76B] text-[#0B1A2A] text-[9px] font-black px-1.5 py-0.5 rounded-md border border-[#0B1A2A] shadow-md">
+              <div className="absolute -bottom-1 -right-1 bg-[#F5C76B] text-[#0B1A2A] text-xs font-black px-1.5 py-0.5 rounded-md border border-[#0B1A2A] shadow-md">
                 {playerLevel}
               </div>
            </div>
@@ -217,7 +216,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
                className="bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-3 pl-3 pr-1 py-1 min-w-[110px] shadow-lg"
              >
                <Coins size={14} className="text-[#F5C76B] drop-shadow-[0_0_5px_rgba(245,199,107,0.5)]" />
-               <span className="text-[11px] font-black text-white font-stats flex-1 text-center">{displayCurrency.toLocaleString()}</span>
+               <span className="text-sm font-black text-white font-stats flex-1 text-center">{displayCurrency.toLocaleString()}</span>
                <button className="w-5 h-5 rounded-lg bg-[#F5C76B]/20 text-[#F5C76B] flex items-center justify-center hover:bg-[#F5C76B]/30 transition-colors">
                  <span className="text-xs font-black">+</span>
                </button>
@@ -228,7 +227,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
                 className="bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-3 pl-3 pr-1 py-1 min-w-[110px] shadow-lg"
               >
                 <Diamond size={14} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
-                <span className="text-[11px] font-black text-white font-stats flex-1 text-center">{displayGems.toLocaleString()}</span>
+                <span className="text-sm font-black text-white font-stats flex-1 text-center">{displayGems.toLocaleString()}</span>
                 <button className="w-5 h-5 rounded-lg bg-cyan-400/20 text-cyan-400 flex items-center justify-center hover:bg-cyan-400/30 transition-colors">
                   <span className="text-xs font-black">+</span>
                 </button>
@@ -267,7 +266,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
             onClick={() => onNavigate('campaign')}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
-            className="btn-premium-blue px-16 py-5 text-2xl font-black font-display tracking-[0.2em] uppercase z-10 flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(79,172,254,0.4)]"
+            className="btn-primary px-16 py-5 text-2xl font-black font-display tracking-[0.2em] uppercase z-10 flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(245,199,107,0.4)]"
           >
             <Sword size={24} className="animate-pulse" />
             BATTLE
@@ -326,7 +325,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
                 <btn.icon size={20} className={`${btn.color} mb-0.5 drop-shadow-[0_0_5px_currentColor]`} />
                 <span className="text-[7px] font-black text-white/90 uppercase tracking-[0.2em] font-stats">{btn.label}</span>
                 {btn.badge && (
-                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full border-2 border-[#0B1A2A] flex items-center justify-center text-[10px] font-black text-white shadow-lg animate-bounce">
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full border-2 border-[#0B1A2A] flex items-center justify-center text-xs font-black text-white shadow-lg animate-bounce">
                     {btn.badge}
                   </div>
                 )}
@@ -339,57 +338,6 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
       {/* Bottom Area: Objective & Nav */}
       <div className="absolute bottom-0 left-0 right-0 z-40 flex flex-col items-center pb-8 pt-20 pointer-events-none bg-gradient-to-t from-black via-black/80 to-transparent">
 
-          {/* Bottom Dock Navigation */}
-          <div className="w-full px-6 flex justify-center pointer-events-auto">
-            <div className="flex max-w-xl w-full justify-between gap-3 bg-black/40 backdrop-blur-2xl p-2 rounded-[2rem] border border-white/5 shadow-2xl">
-              {[
-                { id: 'party', icon: Users, label: 'PARTY', active: true },
-                { id: 'tavern', icon: UserPlus, label: 'RECRUIT', badge: 'new' },
-                { id: 'gacha', icon: Sparkles, label: 'GACHA', badge: '1', activeGlow: true },
-                { id: 'inventory', icon: Sword, label: 'EQUIP', action: 'inventory' }
-              ].map((btn) => (
-                <motion.button
-                  key={btn.id}
-                  onClick={() => onNavigate(btn.id as any)}
-                  whileHover={{ y: -5 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`flex-1 h-20 flex flex-col items-center justify-center gap-1.5 relative rounded-2xl transition-all border ${
-                    btn.active
-                      ? 'bg-gradient-to-b from-[#2a3b5c] to-[#1a253a] border-[#F5C76B]/60 shadow-[0_0_20px_rgba(245,199,107,0.15)]'
-                      : 'bg-white/5 border-transparent hover:bg-white/10'
-                  }`}
-                >
-                  <div className={`relative ${btn.active ? 'scale-110' : ''} transition-transform`}>
-                    <btn.icon size={24} className={btn.active ? 'text-[#F5C76B]' : 'text-white/40'} />
-                    {btn.activeGlow && (
-                      <motion.div
-                        animate={{ opacity: [0.2, 0.5, 0.2] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="absolute inset-0 bg-cyan-400 blur-md rounded-full -z-10"
-                      />
-                    )}
-                  </div>
-                  <span className={`text-[9px] font-black tracking-widest uppercase font-stats ${btn.active ? 'text-[#F5C76B]' : 'text-white/30'}`}>
-                    {btn.label}
-                  </span>
-
-                  {btn.badge && (
-                    <div className={`absolute -top-1 -right-1 ${btn.badge === 'new' ? 'bg-orange-500 rounded px-1.5 py-0.5' : 'w-5 h-5 bg-red-500 rounded-full flex items-center justify-center'} border-2 border-[#0B1A2A] text-[8px] font-black text-white uppercase tracking-tighter shadow-lg`}>
-                      {btn.badge}
-                    </div>
-                  )}
-
-                  {btn.active && (
-                    <motion.div
-                      layoutId="active-indicator"
-                      className="absolute -bottom-1 w-8 h-1 bg-[#F5C76B] rounded-full shadow-[0_0_10px_#F5C76B]"
-                    />
-                  )}
-                </motion.button>
-              ))}
-            </div>
-          </div>
-
           {/* Contextual Feature Buttons - Unlock based on level */}
           {playerLevel >= 15 && (
             <motion.div
@@ -398,7 +346,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
               transition={{ delay: 0.3 }}
               className="px-6 pb-4"
             >
-              <div className="text-white/30 text-[9px] font-bold uppercase tracking-widest text-center mb-2">
+              <div className="text-white/30 text-xs font-bold uppercase tracking-widest text-center mb-2">
                 Available Features
               </div>
               <div className="flex gap-2 justify-center">

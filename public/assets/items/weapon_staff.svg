@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" fill="#0B1A2A"/>
+  <line x1="32" y1="8" x2="32" y2="56" stroke="#A855F7" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="32" cy="12" r="6" fill="#A855F7" opacity="0.8"/>
+  <circle cx="32" cy="12" r="3" fill="#D8B4FE"/>
+  <text x="32" y="48" text-anchor="middle" fill="#A855F7" font-size="8" font-family="sans-serif" font-weight="bold">STAFF</text>
+</svg>

@@ -501,17 +501,17 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
       <div className="relative z-30 px-3 pt-10 pb-2">
         {/* Controls row */}
         <div className="flex justify-between items-center mb-2">
-          <Button onClick={() => { if (isBattleOver) { onBack(); } else { setShowExitConfirm(true); } }} variant="ghost" size="sm" className="w-9 h-9 rounded-lg bg-[#0A1630] border-2 border-[#E0B45E]/40 flex items-center justify-center text-[#E0B45E] active:scale-90"><ChevronLeft size={18} /></Button>
+          <Button onClick={() => { if (isBattleOver) { onBack(); } else { setShowExitConfirm(true); } }} variant="ghost" size="sm" className="w-9 h-9 rounded-lg bg-[#0A1630] border-2 border-[#F5C76B]/40 flex items-center justify-center text-[#F5C76B] active:scale-90"><ChevronLeft size={18} /></Button>
           
           {/* Stage & Turn info */}
-          <div className="bg-[#0A1630]/90 border-2 border-[#E0B45E]/50 rounded-lg px-3 py-1.5 shadow-[0_0_15px_rgba(224,180,94,0.1)]">
+          <div className="bg-[#0A1630]/90 border-2 border-[#F5C76B]/50 rounded-lg px-3 py-1.5 shadow-[0_0_15px_rgba(245,199,107,0.1)]">
             <div className="flex items-center gap-2 justify-center">
-              <Swords size={11} className="text-[#E0B45E]" />
-              <span className="text-[10px] font-black text-[#E0B45E] uppercase tracking-[0.15em]">STAGE {stageId?.replace('stage_', '').replace('_', '-')}</span>
+              <Swords size={11} className="text-[#F5C76B]" />
+              <span className="text-xs font-black text-[#F5C76B] uppercase tracking-[0.15em]">STAGE {stageId?.replace('stage_', '').replace('_', '-')}</span>
             </div>
             <div className="flex items-center justify-center gap-2 mt-0.5">
               <span className="text-[7px] font-black text-white/50 uppercase tracking-widest">R{round}</span>
-              <div className="w-0.5 h-0.5 rounded-full bg-[#E0B45E]/40" />
+              <div className="w-0.5 h-0.5 rounded-full bg-[#F5C76B]/40" />
               <span className="text-[7px] font-black text-white/50 uppercase tracking-widest">T{stats.totalTurns}</span>
             </div>
           </div>
@@ -528,18 +528,18 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
           )}
 
           <div className="flex items-center gap-1">
-            <Button onClick={() => setAutoBattle(!autoBattle)} variant="ghost" size="sm" className={`w-9 h-9 rounded-lg border-2 flex items-center justify-center active:scale-90 ${autoBattle ? 'bg-green-900/60 border-green-500/50 text-green-300' : 'bg-[#0A1630] border-[#E0B45E]/30 text-[#E0B45E]/50'}`} title="Auto-battle">
+            <Button onClick={() => setAutoBattle(!autoBattle)} variant="ghost" size="sm" className={`w-9 h-9 rounded-lg border-2 flex items-center justify-center active:scale-90 ${autoBattle ? 'bg-green-900/60 border-green-500/50 text-green-300' : 'bg-[#0A1630] border-[#F5C76B]/30 text-[#F5C76B]/50'}`} title="Auto-battle">
               <Zap size={16} className={autoBattle ? 'animate-pulse' : ''} />
             </Button>
-            <Button onClick={() => setBattleSpeed(s => s === '1x' ? '2x' : '1x')} variant="ghost" size="sm" className={`w-9 h-9 rounded-lg border-2 flex items-center justify-center active:scale-90 ${battleSpeed === '2x' ? 'bg-cyan-900/60 border-cyan-500/50 text-cyan-300' : 'bg-[#0A1630] border-[#E0B45E]/30 text-[#E0B45E]/50'}`}>
-              <span className="text-[9px] font-black">{battleSpeed}</span>
+            <Button onClick={() => setBattleSpeed(s => s === '1x' ? '2x' : '1x')} variant="ghost" size="sm" className={`w-9 h-9 rounded-lg border-2 flex items-center justify-center active:scale-90 ${battleSpeed === '2x' ? 'bg-cyan-900/60 border-cyan-500/50 text-cyan-300' : 'bg-[#0A1630] border-[#F5C76B]/30 text-[#F5C76B]/50'}`}>
+              <span className="text-xs font-black">{battleSpeed}</span>
             </Button>
           </div>
         </div>
 
         {/* BOSS HP BAR — Gold framed, glossy red */}
         <div className="relative">
-          <div className="relative h-7 bg-black rounded-sm overflow-hidden border-2 border-[#E0B45E]/60 shadow-[0_4px_20px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
+          <div className="relative h-7 bg-black rounded-sm overflow-hidden border-2 border-[#F5C76B]/60 shadow-[0_4px_20px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
             <motion.div 
               initial={{ width: '100%' }}
               animate={{ width: `${Math.min((totalEnemyHp / maxEnemyHp) * 100, 100)}%` }}
@@ -561,15 +561,15 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
                 </div>
               )}
             </motion.div>
-            <div className="absolute inset-0 flex items-center justify-center text-[11px] font-black tracking-[0.15em] drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+            <div className="absolute inset-0 flex items-center justify-center text-sm font-black tracking-[0.15em] drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
               {totalEnemyHp.toLocaleString()} <span className="mx-1 text-white/40">/</span> {maxEnemyHp.toLocaleString()}
             </div>
           </div>
           {/* Gold corner accents */}
-          <div className="absolute -top-px -left-px w-2 h-2 border-t-2 border-l-2 border-[#E0B45E]" />
-          <div className="absolute -top-px -right-px w-2 h-2 border-t-2 border-r-2 border-[#E0B45E]" />
-          <div className="absolute -bottom-px -left-px w-2 h-2 border-b-2 border-l-2 border-[#E0B45E]" />
-          <div className="absolute -bottom-px -right-px w-2 h-2 border-b-2 border-r-2 border-[#E0B45E]" />
+          <div className="absolute -top-px -left-px w-2 h-2 border-t-2 border-l-2 border-[#F5C76B]" />
+          <div className="absolute -top-px -right-px w-2 h-2 border-t-2 border-r-2 border-[#F5C76B]" />
+          <div className="absolute -bottom-px -left-px w-2 h-2 border-b-2 border-l-2 border-[#F5C76B]" />
+          <div className="absolute -bottom-px -right-px w-2 h-2 border-b-2 border-r-2 border-[#F5C76B]" />
         </div>
 
         {/* Player HP Bar — Gold framed, glossy green */}
@@ -578,7 +578,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
             <motion.div initial={{ width: '100%' }} animate={{ width: `${Math.min((totalPlayerHp / maxPlayerHp) * 100, 100)}%` }} className="h-full bg-gradient-to-b from-[#6F6] via-[#4ade80] to-[#166534] relative">
               <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.3)_0%,transparent_40%,rgba(0,0,0,0.2)_100%)]" />
             </motion.div>
-            <div className="absolute inset-0 flex items-center justify-center text-[9px] font-black tracking-[0.15em] drop-shadow-[0_2px_3px_rgba(0,0,0,1)]">
+            <div className="absolute inset-0 flex items-center justify-center text-xs font-black tracking-[0.15em] drop-shadow-[0_2px_3px_rgba(0,0,0,1)]">
               {totalPlayerHp.toLocaleString()} <span className="mx-1 text-white/40">/</span> {maxPlayerHp.toLocaleString()}
             </div>
           </div>
@@ -601,9 +601,9 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="absolute top-2 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 bg-[#0A1630]/90 border-2 border-[#E0B45E]/50 rounded-lg"
+            className="absolute top-2 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 bg-[#0A1630]/90 border-2 border-[#F5C76B]/50 rounded-lg"
           >
-            <span className="text-[9px] font-black text-[#E0B45E] uppercase tracking-wider">⚔ SELECCIONA ENEMIGO</span>
+            <span className="text-xs font-black text-[#F5C76B] uppercase tracking-wider">⚔ SELECCIONA ENEMIGO</span>
           </motion.div>
         )}
 
@@ -746,7 +746,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
                   textShadow: '0 4px 8px rgba(0,0,0,1), 0 0 20px rgba(0,0,0,0.5)',
                 }}
               >
-                {d.isCrit && <span className="text-[10px] uppercase tracking-[0.3em] mb-[-4px] text-[#E0B45E] font-black" style={{ WebkitTextStroke: '1px black' }}>CRITICAL</span>}
+                {d.isCrit && <span className="text-xs uppercase tracking-[0.3em] mb-[-4px] text-[#F5C76B] font-black" style={{ WebkitTextStroke: '1px black' }}>CRITICAL</span>}
                 {d.value}
               </motion.div>
             ))}
@@ -772,7 +772,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
                      initial={{ scale: 0 }}
                      animate={{ scale: 1 }}
                      exit={{ scale: 0 }}
-                     className={`w-6 h-6 rounded-lg border flex items-center justify-center text-[8px] font-black ${
+                     className={`w-6 h-6 rounded-lg border flex items-center justify-center text-2xs font-black ${
                        effect.type === 'buff' ? 'bg-blue-500/30 border-blue-500/40 text-blue-400' :
                        effect.type === 'debuff' ? 'bg-red-500/30 border-red-500/40 text-red-400' :
                        effect.type === 'dot' ? 'bg-purple-500/30 border-purple-500/40 text-purple-400' :
@@ -830,7 +830,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
                       >
                         {comboCount}
                       </motion.span>
-                      <span className="text-orange-200 text-[8px] font-bold uppercase tracking-[0.2em]">COMBO</span>
+                      <span className="text-orange-200 text-2xs font-bold uppercase tracking-[0.2em]">COMBO</span>
                     </div>
                     
                     {/* CRITICAL indicator */}
@@ -885,16 +885,16 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
           </AnimatePresence>
 
           {/* Combat Log — JRPG gold frame */}
-          <div className="bg-[#0A1630]/90 rounded-lg p-2.5 max-w-[180px] border border-[#E0B45E]/30 shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
-            <div className="text-[#E0B45E]/60 text-[7px] font-black uppercase tracking-wider mb-1">Combat Log</div>
+          <div className="bg-[#0A1630]/90 rounded-lg p-2.5 max-w-[180px] border border-[#F5C76B]/30 shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+            <div className="text-[#F5C76B]/60 text-[7px] font-black uppercase tracking-wider mb-1">Combat Log</div>
             <AnimatePresence>
               {combatLog.slice().reverse().map((log, idx) => (
                 <motion.div
                   key={log.time}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className={`text-[10px] font-bold py-0.5 border-b border-[#E0B45E]/10 last:border-0 ${
-                    log.type === 'crit' ? 'text-[#E0B45E]' : 
+                  className={`text-xs font-bold py-0.5 border-b border-[#F5C76B]/10 last:border-0 ${
+                    log.type === 'crit' ? 'text-[#F5C76B]' : 
                     log.type === 'combo' ? 'text-orange-400' :
                     'text-white/60'
                   }`}
@@ -911,14 +911,14 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
        {/* ═══ TURN TIMELINE — Gold framed ═══ */}
        {!isBattleOver && !isInitializing && turnOrder.length > 0 && (
          <div className="relative z-30 px-3 pb-1">
-           <div className="flex items-center gap-1.5 justify-center bg-[#0A1630]/80 border border-[#E0B45E]/20 rounded-lg px-3 py-1">
-             <span className="text-[6px] font-black text-[#E0B45E]/60 uppercase tracking-widest mr-1">NEXT:</span>
+           <div className="flex items-center gap-1.5 justify-center bg-[#0A1630]/80 border border-[#F5C76B]/20 rounded-lg px-3 py-1">
+             <span className="text-[6px] font-black text-[#F5C76B]/60 uppercase tracking-widest mr-1">NEXT:</span>
              {nextTurns.map((u, i) => (
                <div key={u.id} className="flex items-center gap-0.5">
                  <div className={`w-6 h-6 rounded border ${u.side === 'enemy' ? 'border-red-500/40 bg-red-900/40' : 'border-cyan-500/40 bg-cyan-900/40'} flex items-center justify-center overflow-hidden`}>
                    <img src={AssetService.getSpriteUrl(u.sprite_id || '')} className="w-5 h-5 object-contain" alt="" style={{ imageRendering: 'pixelated' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                  </div>
-                 {i < nextTurns.length - 1 && <span className="text-[#E0B45E]/30 text-[6px]">▸</span>}
+                 {i < nextTurns.length - 1 && <span className="text-[#F5C76B]/30 text-[6px]">▸</span>}
                </div>
              ))}
            </div>
@@ -935,14 +935,14 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
          </div>
 
          {/* Action Bar — Dark metallic panel with gold accents */}
-         <div className="relative bg-[#0A1630]/90 border-2 border-[#E0B45E]/40 rounded-lg p-3 flex items-center gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+         <div className="relative bg-[#0A1630]/90 border-2 border-[#F5C76B]/40 rounded-lg p-3 flex items-center gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
            {/* Gold top border glow */}
-           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#E0B45E]/50 to-transparent" />
+           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#F5C76B]/50 to-transparent" />
            {/* Gold corner accents */}
-           <div className="absolute -top-px -left-px w-3 h-3 border-t-2 border-l-2 border-[#E0B45E]/70 rounded-tl" />
-           <div className="absolute -top-px -right-px w-3 h-3 border-t-2 border-r-2 border-[#E0B45E]/70 rounded-tr" />
-           <div className="absolute -bottom-px -left-px w-3 h-3 border-b-2 border-l-2 border-[#E0B45E]/70 rounded-bl" />
-           <div className="absolute -bottom-px -right-px w-3 h-3 border-b-2 border-r-2 border-[#E0B45E]/70 rounded-br" />
+           <div className="absolute -top-px -left-px w-3 h-3 border-t-2 border-l-2 border-[#F5C76B]/70 rounded-tl" />
+           <div className="absolute -top-px -right-px w-3 h-3 border-t-2 border-r-2 border-[#F5C76B]/70 rounded-tr" />
+           <div className="absolute -bottom-px -left-px w-3 h-3 border-b-2 border-l-2 border-[#F5C76B]/70 rounded-bl" />
+           <div className="absolute -bottom-px -right-px w-3 h-3 border-b-2 border-r-2 border-[#F5C76B]/70 rounded-br" />
            
            <div className="flex-1 flex gap-2">
              {currentActor?.side === 'player' && currentActor.skills.map((skill, idx) => (
@@ -972,7 +972,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
                    <div className={`w-full h-full bg-[#0A1630] rounded-full flex flex-col items-center justify-center border-3 ${
                      currentActor.bbLevel >= 3 && (currentActor?.burst || 0) >= 100 ? 'border-purple-500' :
                      currentActor.bbLevel >= 2 && (currentActor?.burst || 0) >= 100 ? 'border-yellow-400' :
-                     (currentActor?.burst || 0) >= 100 ? 'border-red-400' : 'border-[#E0B45E]/30'
+                     (currentActor?.burst || 0) >= 100 ? 'border-red-400' : 'border-[#F5C76B]/30'
                    }`}>
                       {isBurstActive ? (
                         <motion.div
@@ -995,7 +995,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
                           <span className={`text-[7px] font-black uppercase tracking-widest leading-none mb-0.5 ${(currentActor?.burst || 0) >= 100 ? 'text-yellow-300' : 'text-white/60'}`}>
                             {currentActor.bbLevel >= 3 ? 'UBB' : currentActor.bbLevel >= 2 ? 'SBB' : 'BB'}
                           </span>
-                          <span className={`text-[11px] font-black uppercase leading-none italic drop-shadow-lg ${(currentActor?.burst || 0) >= 100 ? 'text-yellow-300' : 'text-white'}`}>
+                          <span className={`text-sm font-black uppercase leading-none italic drop-shadow-lg ${(currentActor?.burst || 0) >= 100 ? 'text-yellow-300' : 'text-white'}`}>
                             {currentActor.bbLevel >= 3 ? 'ULTIMATE' : currentActor.bbLevel >= 2 ? 'SUPER' : 'BRAVE'}
                           </span>
                           <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-black/40 rounded-full overflow-hidden">
@@ -1022,18 +1022,18 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
            <div className="flex flex-col items-end gap-1">
               <button
                 onClick={() => setShowBattleLog(!showBattleLog)}
-                className="pointer-events-auto text-[7px] font-black uppercase tracking-widest px-3 py-1 bg-[#0A1630]/80 border border-[#E0B45E]/30 rounded text-[#E0B45E]/70 hover:text-[#E0B45E] transition-colors"
+                className="pointer-events-auto text-[7px] font-black uppercase tracking-widest px-3 py-1 bg-[#0A1630]/80 border border-[#F5C76B]/30 rounded text-[#F5C76B]/70 hover:text-[#F5C76B] transition-colors"
               >
                 {showBattleLog ? 'OCULTAR LOG' : 'VER LOG'}
               </button>
              {showBattleLog && (
-               <div className="w-full max-h-[80px] overflow-y-auto flex flex-col gap-0.5 p-2 bg-[#0A1630]/90 border border-[#E0B45E]/20 rounded-lg">
+               <div className="w-full max-h-[80px] overflow-y-auto flex flex-col gap-0.5 p-2 bg-[#0A1630]/90 border border-[#F5C76B]/20 rounded-lg">
                   {battleLog.slice(-5).map(log => (
                     <motion.div 
                       key={log.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="border-l-2 border-[#E0B45E]/30 pl-1.5 py-0.5"
+                      className="border-l-2 border-[#F5C76B]/30 pl-1.5 py-0.5"
                       style={{ lineHeight: '1.2' }}
                     >
                       <span className="text-[6px] font-mono text-white/60 uppercase tracking-wider">{log.text}</span>
@@ -1055,19 +1055,19 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
             onClick={() => setShowExitConfirm(false)}
           >
             <div onClick={(e) => e.stopPropagation()}>
-            <div className="relative bg-[#0A1630] border-2 border-[#E0B45E]/60 rounded-lg p-8 mx-4 max-w-sm w-full shadow-[0_0_40px_rgba(0,0,0,0.8)]">
+            <div className="relative bg-[#0A1630] border-2 border-[#F5C76B]/60 rounded-lg p-8 mx-4 max-w-sm w-full shadow-[0_0_40px_rgba(0,0,0,0.8)]">
               {/* Gold corner accents */}
-              <div className="absolute -top-px -left-px w-4 h-4 border-t-2 border-l-2 border-[#E0B45E] rounded-tl" />
-              <div className="absolute -top-px -right-px w-4 h-4 border-t-2 border-r-2 border-[#E0B45E] rounded-tr" />
-              <div className="absolute -bottom-px -left-px w-4 h-4 border-b-2 border-l-2 border-[#E0B45E] rounded-bl" />
-              <div className="absolute -bottom-px -right-px w-4 h-4 border-b-2 border-r-2 border-[#E0B45E] rounded-br" />
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#E0B45E]/40 to-transparent" />
+              <div className="absolute -top-px -left-px w-4 h-4 border-t-2 border-l-2 border-[#F5C76B] rounded-tl" />
+              <div className="absolute -top-px -right-px w-4 h-4 border-t-2 border-r-2 border-[#F5C76B] rounded-tr" />
+              <div className="absolute -bottom-px -left-px w-4 h-4 border-b-2 border-l-2 border-[#F5C76B] rounded-bl" />
+              <div className="absolute -bottom-px -right-px w-4 h-4 border-b-2 border-r-2 border-[#F5C76B] rounded-br" />
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#F5C76B]/40 to-transparent" />
               
-              <h3 className="text-lg font-black text-[#E0B45E] text-center mb-2 uppercase tracking-wider">¿Abandonar batalla?</h3>
-              <p className="text-[10px] text-white/50 text-center mb-6">Perderás el progreso de esta batalla.</p>
+              <h3 className="text-lg font-black text-[#F5C76B] text-center mb-2 uppercase tracking-wider">¿Abandonar batalla?</h3>
+              <p className="text-xs text-white/50 text-center mb-6">Perderás el progreso de esta batalla.</p>
               <div className="flex gap-3">
-                <button onClick={() => setShowExitConfirm(false)} className="flex-1 py-3 text-[9px] font-black uppercase tracking-widest bg-[#0A1630] border-2 border-[#E0B45E]/30 rounded-lg text-white/70 hover:border-[#E0B45E]/60 hover:text-white transition-all active:scale-95">Cancelar</button>
-                <button onClick={() => { setShowExitConfirm(false); onBack(); }} className="flex-1 py-3 text-[9px] font-black uppercase tracking-widest bg-red-900/80 border-2 border-red-500/50 rounded-lg text-red-200 hover:bg-red-800 hover:border-red-400 transition-all active:scale-95">Salir</button>
+                <button onClick={() => setShowExitConfirm(false)} className="flex-1 py-3 text-xs font-black uppercase tracking-widest bg-[#0A1630] border-2 border-[#F5C76B]/30 rounded-lg text-white/70 hover:border-[#F5C76B]/60 hover:text-white transition-all active:scale-95">Cancelar</button>
+                <button onClick={() => { setShowExitConfirm(false); onBack(); }} className="flex-1 py-3 text-xs font-black uppercase tracking-widest bg-red-900/80 border-2 border-red-500/50 rounded-lg text-red-200 hover:bg-red-800 hover:border-red-400 transition-all active:scale-95">Salir</button>
               </div>
             </div>
             </div>
@@ -1121,13 +1121,13 @@ function EnemySprite({ enemy, isTargeted, onTarget }: { enemy: CombatUnit, isTar
     >
       {/* Enemy info plate — Gold framed */}
       <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-24 flex flex-col items-center gap-0.5">
-        <div className="flex items-center gap-1 bg-[#0A1630]/80 border border-[#E0B45E]/30 rounded px-1.5 py-0.5">
+        <div className="flex items-center gap-1 bg-[#0A1630]/80 border border-[#F5C76B]/30 rounded px-1.5 py-0.5">
            <ElementBadge element={enemy.element} />
-           <span className="text-[7px] font-black text-[#E0B45E] uppercase tracking-wider truncate">{enemy.name}</span>
+           <span className="text-[7px] font-black text-[#F5C76B] uppercase tracking-wider truncate">{enemy.name}</span>
         </div>
         {/* HP bar — gold frame, glossy red */}
         <div className="w-full relative">
-          <div className="h-2.5 bg-black rounded-sm overflow-hidden border border-[#E0B45E]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+          <div className="h-2.5 bg-black rounded-sm overflow-hidden border border-[#F5C76B]/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
             <div className="h-full bg-gradient-to-b from-[#F55] via-[#D83B32] to-[#8B1A1A] relative" style={{ width: `${(enemy.currentHp / enemy.maxHp) * 100}%` }}>
               <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.3)_0%,transparent_40%,rgba(0,0,0,0.2)_100%)]" />
             </div>
@@ -1144,12 +1144,12 @@ function EnemySprite({ enemy, isTargeted, onTarget }: { enemy: CombatUnit, isTar
           <motion.div 
             animate={{ opacity: [0.4, 1, 0.4] }}
             transition={{ repeat: Infinity, duration: 1 }}
-            className="absolute -inset-4 border-2 border-[#E0B45E] rounded-lg pointer-events-none"
+            className="absolute -inset-4 border-2 border-[#F5C76B] rounded-lg pointer-events-none"
           />
           <motion.div
             animate={{ scale: [0.9, 1.1, 0.9] }}
             transition={{ repeat: Infinity, duration: 1.5 }}
-            className="absolute -top-2 left-1/2 -translate-x-1/2 text-[#E0B45E] text-lg font-black drop-shadow-[0_0_10px_rgba(224,180,94,0.8)]"
+            className="absolute -top-2 left-1/2 -translate-x-1/2 text-[#F5C76B] text-lg font-black drop-shadow-[0_0_10px_rgba(245,199,107,0.8)]"
           >
             ⊕
           </motion.div>
@@ -1163,7 +1163,7 @@ function EnemySprite({ enemy, isTargeted, onTarget }: { enemy: CombatUnit, isTar
         <div className="w-36 h-36 flex items-center justify-center bg-red-900/20 border-2 border-red-500/30 rounded-lg">
           <div className="text-center">
             <div className="text-4xl mb-2">?</div>
-            <span className="text-[8px] font-black text-red-400 uppercase">{enemy.name}</span>
+            <span className="text-2xs font-black text-red-400 uppercase">{enemy.name}</span>
           </div>
         </div>
       ) : (
@@ -1196,12 +1196,12 @@ function PlayerSprite({ unit, isActive }: { unit: CombatUnit, isActive: boolean 
            <motion.div 
              animate={{ rotate: 360 }}
              transition={{ repeat: Infinity, duration: 6, ease: 'linear' }}
-             className="absolute bottom-[-12px] left-1/2 -translate-x-1/2 w-28 h-10 border-2 border-[#E0B45E]/40 rounded-full bg-[#E0B45E]/5 z-0"
+             className="absolute bottom-[-12px] left-1/2 -translate-x-1/2 w-28 h-10 border-2 border-[#F5C76B]/40 rounded-full bg-[#F5C76B]/5 z-0"
            />
            <motion.div 
              animate={{ opacity: [0.3, 0.7, 0.3] }}
              transition={{ repeat: Infinity, duration: 2 }}
-             className="absolute bottom-[-8px] left-1/2 -translate-x-1/2 w-20 h-6 bg-[#E0B45E]/20 rounded-full blur-md z-0"
+             className="absolute bottom-[-8px] left-1/2 -translate-x-1/2 w-20 h-6 bg-[#F5C76B]/20 rounded-full blur-md z-0"
            />
          </>
        )}
@@ -1211,14 +1211,14 @@ function PlayerSprite({ unit, isActive }: { unit: CombatUnit, isActive: boolean 
       
       <img 
         src={AssetService.getSpriteUrl(unit.sprite_id || AssetService.getJobSpriteId('novice'))}
-        className={`w-32 h-32 object-contain transform origin-bottom drop-shadow-[0_10px_25px_rgba(0,0,0,0.8)] z-10 transition-all ${isActive ? 'brightness-125 drop-shadow-[0_0_20px_rgba(224,180,94,0.3)]' : 'brightness-100'}`}
+        className={`w-32 h-32 object-contain transform origin-bottom drop-shadow-[0_10px_25px_rgba(0,0,0,0.8)] z-10 transition-all ${isActive ? 'brightness-125 drop-shadow-[0_0_20px_rgba(245,199,107,0.3)]' : 'brightness-100'}`}
         style={{ imageRendering: 'pixelated' }}
       />
 
       {/* Active unit name tag */}
       {isActive && (
-        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-[#0A1630]/90 border border-[#E0B45E]/40 rounded px-2 py-0.5 z-20">
-          <span className="text-[7px] font-black text-[#E0B45E] uppercase tracking-wider whitespace-nowrap">{unit.name}</span>
+        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-[#0A1630]/90 border border-[#F5C76B]/40 rounded px-2 py-0.5 z-20">
+          <span className="text-[7px] font-black text-[#F5C76B] uppercase tracking-wider whitespace-nowrap">{unit.name}</span>
         </div>
       )}
     </motion.div>
@@ -1228,19 +1228,19 @@ function PlayerSprite({ unit, isActive }: { unit: CombatUnit, isActive: boolean 
 function UnitCard({ unit, isActive }: { unit: CombatUnit, isActive: boolean }) {
   return (
     <div
-      className={`relative flex flex-col p-2 overflow-hidden rounded-lg ${isActive ? 'ring-2 ring-[#E0B45E] shadow-[0_0_15px_rgba(224,180,94,0.3)]' : ''}`}
+      className={`relative flex flex-col p-2 overflow-hidden rounded-lg ${isActive ? 'ring-2 ring-[#F5C76B] shadow-[0_0_15px_rgba(245,199,107,0.3)]' : ''}`}
       style={{
-        backgroundColor: isActive ? 'rgba(224,180,94,0.1)' : 'rgba(10,22,48,0.9)',
-        border: `1.5px solid ${isActive ? 'rgba(224,180,94,0.6)' : 'rgba(224,180,94,0.2)'}`,
+        backgroundColor: isActive ? 'rgba(245,199,107,0.1)' : 'rgba(10,22,48,0.9)',
+        border: `1.5px solid ${isActive ? 'rgba(245,199,107,0.6)' : 'rgba(245,199,107,0.2)'}`,
       }}
     >
       {/* Glossy top edge */}
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#E0B45E]/30 to-transparent" />
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#F5C76B]/30 to-transparent" />
       
       {/* Unit Name & Element */}
       <div className="flex items-center gap-1 mb-1 relative z-10">
          <ElementBadge element={unit.element} />
-         <span className="text-[8px] font-black text-white uppercase tracking-wider truncate flex-1">{unit.name}</span>
+         <span className="text-2xs font-black text-white uppercase tracking-wider truncate flex-1">{unit.name}</span>
          {unit.bbLevel >= 2 && (
            <span className={`text-[5px] font-black px-1 rounded border ${unit.bbLevel >= 3 ? 'border-purple-500/40 bg-purple-500/20 text-purple-300' : 'border-yellow-400/40 bg-yellow-400/20 text-yellow-300'}`}>
              {unit.bbLevel >= 3 ? 'UBB' : 'SBB'}
@@ -1251,7 +1251,7 @@ function UnitCard({ unit, isActive }: { unit: CombatUnit, isActive: boolean }) {
       {/* HP Bar — Gold framed, glossy green */}
       <div className="space-y-1 relative z-10 mt-auto">
         <div className="relative">
-          <div className="h-2.5 bg-black rounded-sm overflow-hidden border border-[#E0B45E]/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+          <div className="h-2.5 bg-black rounded-sm overflow-hidden border border-[#F5C76B]/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
             <motion.div 
               animate={{ width: `${Math.min((unit.currentHp / unit.maxHp) * 100, 100)}%` }}
               className="h-full bg-gradient-to-b from-[#6F6] via-[#4ade80] to-[#166534] relative"
@@ -1267,8 +1267,8 @@ function UnitCard({ unit, isActive }: { unit: CombatUnit, isActive: boolean }) {
         
         {/* BB Bar — cyan/gold */}
         <div className="flex items-center gap-1">
-          <span className="text-[5px] font-black text-[#E0B45E]/60 uppercase">BB</span>
-          <div className="flex-1 h-1.5 bg-black/60 rounded-sm overflow-hidden border border-[#E0B45E]/20">
+          <span className="text-[5px] font-black text-[#F5C76B]/60 uppercase">BB</span>
+          <div className="flex-1 h-1.5 bg-black/60 rounded-sm overflow-hidden border border-[#F5C76B]/20">
             <motion.div 
               animate={{ width: `${unit.burst}%` }} 
               className={`h-full ${unit.burst >= 100 ? 'bg-gradient-to-r from-cyan-400 to-cyan-300 shadow-[0_0_6px_rgba(103,232,249,0.6)]' : 'bg-cyan-600'}`} 
@@ -1278,10 +1278,10 @@ function UnitCard({ unit, isActive }: { unit: CombatUnit, isActive: boolean }) {
       </div>
 
       {/* Gold corner accents */}
-      <div className="absolute -top-px -left-px w-1.5 h-1.5 border-t border-l border-[#E0B45E]/60" />
-      <div className="absolute -top-px -right-px w-1.5 h-1.5 border-t border-r border-[#E0B45E]/60" />
-      <div className="absolute -bottom-px -left-px w-1.5 h-1.5 border-b border-l border-[#E0B45E]/60" />
-      <div className="absolute -bottom-px -right-px w-1.5 h-1.5 border-b border-r border-[#E0B45E]/60" />
+      <div className="absolute -top-px -left-px w-1.5 h-1.5 border-t border-l border-[#F5C76B]/60" />
+      <div className="absolute -top-px -right-px w-1.5 h-1.5 border-t border-r border-[#F5C76B]/60" />
+      <div className="absolute -bottom-px -left-px w-1.5 h-1.5 border-b border-l border-[#F5C76B]/60" />
+      <div className="absolute -bottom-px -right-px w-1.5 h-1.5 border-b border-r border-[#F5C76B]/60" />
     </div>
   );
 }
@@ -1305,24 +1305,24 @@ function SkillButton({ skill, onUse, cooldown }: { skill: SkillDefinition, onUse
       whileTap={!cooldown ? { scale: 0.9 } : {}}
     >
       {/* Gold frame */}
-      <div className="absolute inset-0 rounded-lg border-2 border-[#E0B45E]/50 pointer-events-none z-20" />
+      <div className="absolute inset-0 rounded-lg border-2 border-[#F5C76B]/50 pointer-events-none z-20" />
       
       {getIcon()}
       
       {/* Skill Name */}
       <div className="absolute inset-x-0 bottom-0 bg-[#0A1630]/90 py-0.5 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity z-20">
-         <span className="text-[5px] font-black text-[#E0B45E] uppercase text-center block tracking-tighter">{skill.name}</span>
+         <span className="text-[5px] font-black text-[#F5C76B] uppercase text-center block tracking-tighter">{skill.name}</span>
       </div>
 
       {cooldown && (
         <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center rounded-lg z-30">
-           <span className="text-[14px] font-black text-[#E0B45E] leading-none">{cooldown}</span>
-           <span className="text-[5px] font-black text-[#E0B45E]/50 uppercase tracking-tighter">TURNOS</span>
+           <span className="text-base font-black text-[#F5C76B] leading-none">{cooldown}</span>
+           <span className="text-[5px] font-black text-[#F5C76B]/50 uppercase tracking-tighter">TURNOS</span>
         </div>
       )}
       
       {!cooldown && (
-        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_0%,rgba(224,180,94,0.08)_50%,transparent_100%)] animate-shimmer rounded-lg" />
+        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_0%,rgba(245,199,107,0.08)_50%,transparent_100%)] animate-shimmer rounded-lg" />
       )}
     </ActionButton>
   );
@@ -1400,12 +1400,12 @@ function BattleResult({ winner, completionData, isRecording, recordingTimeout, r
             {(recordingTimeout || recordingFailed) ? (
               <motion.div className="flex flex-col items-center gap-2">
                 <AlertTriangle size={20} className="text-yellow-400" />
-                <p className="text-[10px] font-black text-yellow-400 uppercase tracking-widest text-center">Tiempo de espera agotado</p>
-                <p className="text-[8px] font-black text-white/40 uppercase tracking-widest text-center">Las recompensas se otorgarán al reconectar</p>
+                <p className="text-xs font-black text-yellow-400 uppercase tracking-widest text-center">Tiempo de espera agotado</p>
+                <p className="text-2xs font-black text-white/40 uppercase tracking-widest text-center">Las recompensas se otorgarán al reconectar</p>
               </motion.div>
             ) : (
               <>
-                <p className="text-[11px] font-black text-white/40 uppercase tracking-widest">Sincronizando recompensas...</p>
+                <p className="text-sm font-black text-white/40 uppercase tracking-widest">Sincronizando recompensas...</p>
                 {isRecording && (
                   <motion.div
                     animate={{ opacity: [0.3, 1, 0.3] }}
@@ -1413,7 +1413,7 @@ function BattleResult({ winner, completionData, isRecording, recordingTimeout, r
                     className="flex items-center gap-2"
                   >
                     <Terminal size={12} className="text-[#F5C76B]" />
-                    <span className="text-[8px] font-black text-[#F5C76B] uppercase tracking-[0.5em]">Registrando...</span>
+                    <span className="text-2xs font-black text-[#F5C76B] uppercase tracking-[0.5em]">Registrando...</span>
                   </motion.div>
                 )}
               </>
@@ -1450,7 +1450,7 @@ function BattleResult({ winner, completionData, isRecording, recordingTimeout, r
              <div className="flex items-center justify-center gap-3 mb-6 text-[#F5C76B]">
                 <div className="h-px w-8 bg-[#F5C76B]/40" />
                 <Gift size={18} />
-                <span className="text-[10px] font-black uppercase tracking-[0.4em]">Rewards</span>
+                <span className="text-xs font-black uppercase tracking-[0.4em]">Rewards</span>
                 <div className="h-px w-8 bg-[#F5C76B]/40" />
              </div>
 
@@ -1479,7 +1479,7 @@ function BattleResult({ winner, completionData, isRecording, recordingTimeout, r
               {/* Materials / Loot Display */}
               {completionData.rewards.materials && completionData.rewards.materials.length > 0 && (
                 <div className="mt-6 w-full">
-                  <div className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-3">Loot</div>
+                  <div className="text-2xs font-black text-white/30 uppercase tracking-widest mb-3">Loot</div>
                   <div className="flex flex-wrap justify-center gap-2">
                     {completionData.rewards.materials.map((mat: any, idx: number) => (
                       <div key={idx} className="flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-2 rounded-lg">
@@ -1487,8 +1487,8 @@ function BattleResult({ winner, completionData, isRecording, recordingTimeout, r
                            <Sparkles size={14} className="text-purple-400" />
                         </div>
                         <div className="text-left">
-                          <span className="text-[10px] font-black text-white">{mat.itemId}</span>
-                          <span className="text-[8px] font-black text-purple-400 ml-1">x{mat.amount}</span>
+                          <span className="text-xs font-black text-white">{mat.itemId}</span>
+                          <span className="text-2xs font-black text-purple-400 ml-1">x{mat.amount}</span>
                         </div>
                       </div>
                     ))}
@@ -1517,14 +1517,14 @@ function BattleResult({ winner, completionData, isRecording, recordingTimeout, r
             className="flex items-center gap-2"
           >
              <Terminal size={12} className="text-[#F5C76B]" />
-             <span className="text-[9px] font-black text-[#F5C76B] uppercase tracking-[0.5em]">Synchronizing Records</span>
+             <span className="text-xs font-black text-[#F5C76B] uppercase tracking-[0.5em]">Synchronizing Records</span>
           </motion.div>
         )}
         
         <Button
           onClick={onConfirm}
           variant="primary"
-          className="font-black py-4 px-20 rounded-full tracking-[0.3em] uppercase text-[10px] shadow-2xl hover:scale-105 active:scale-95 transition-transform"
+          className="font-black py-4 px-20 rounded-full tracking-[0.3em] uppercase text-xs shadow-2xl hover:scale-105 active:scale-95 transition-transform"
         >
           Continue Expedition
         </Button>

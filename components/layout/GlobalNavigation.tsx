@@ -27,7 +27,8 @@ export function GlobalNavigation({ currentView, onNavigate }: GlobalNavigationPr
     if (['party', 'unit_details', 'training'].includes(currentView)) return 'party';
     if (['tavern'].includes(currentView)) return 'tavern';
     if (['gacha'].includes(currentView)) return 'gacha';
-    // Default to home for other views like inventory, rewards, etc.
+    if (['inventory'].includes(currentView)) return 'party';
+    // Default to home for other views like rewards, etc.
     return 'home';
   };
 

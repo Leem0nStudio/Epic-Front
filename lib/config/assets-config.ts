@@ -112,13 +112,14 @@ export const UI_ASSETS = {
  */
 export const BG_ASSETS = {
   SCREENS: {
-    HOME: 'home_bg.png',
-    PARTY: 'partybg.png',
-    GACHA: 'home_bg.png',
-    BATTLE: 'battle_scenic.png',
-    CAMPAIGN: 'home_bg.png',
-    TAVERN: 'home_bg.png',
-    INVENTORY: 'home_bg.png',
+    HOME: 'bg_home_1920.jpg',
+    PARTY: 'bg_party_1920.jpg',
+    GACHA: 'gachabg.png',
+    BATTLE: 'bg_battle_scenic_1920.jpg',
+    CAMPAIGN: 'bg_battle_party_1920.jpg',
+    TAVERN: 'homebg.png',
+    INVENTORY: 'loginbg.png',
+    QUEST: 'losebg.png',
   },
   PARALLAX: {
     LAYER_1: 'parallax_layer_1.png', // Distant layer
@@ -221,6 +222,9 @@ export const RARITY_TEXT_TO_CODE: Record<string, RarityCode> = {
   // Legacy names (mapping to new system)
   'epic': 'SR',      // Epic → Super Rare
   'legendary': 'UR', // Legendary → Ultra Rare
+  // CardModal legacy codes
+  'uc': 'C',         // Uncommon → Common (closest match)
+  'ssr': 'UR',       // SSR → Ultra Rare
 };
 
 /**

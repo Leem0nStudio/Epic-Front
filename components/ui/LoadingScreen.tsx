@@ -59,7 +59,7 @@ export function LoadingScreen({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-[#020508] via-[#0B1A2A] to-[#020508]"
         >
           <div className="text-center space-y-8">
            {/* Spinner animado */}
@@ -79,7 +79,7 @@ export function LoadingScreen({
             {/* Barra de progreso */}
             {showProgress && (
               <div className="w-80 mx-auto space-y-2">
-                <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-[#0B1A2A] rounded-full h-2 overflow-hidden border border-white/5">
                   <motion.div
                      className="h-full bg-gradient-to-r from-[#F5C76B] to-amber-500 rounded-full"
                     initial={{ width: 0 }}
@@ -87,7 +87,7 @@ export function LoadingScreen({
                     transition={{ duration: 0.3 }}
                   />
                 </div>
-                <div className="text-sm text-slate-400">
+                <div className="text-sm text-white/40">
                   {progressPercentage}%
                 </div>
               </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface TooltipProps {
@@ -12,6 +12,14 @@ interface TooltipProps {
 export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
 
+  // Auto-hide after 2s on touch devices
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => setIsVisible(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible]);
+
   const positionClasses = {
     top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
     bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
@@ -20,10 +28,12 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
   };
 
   return (
-    <div 
+    <div
       className="relative inline-flex"
       onMouseEnter={() => setIsVisible(true)}
       onMouseLeave={() => setIsVisible(false)}
+      onTouchStart={() => setIsVisible(true)}
+      onClick={() => setIsVisible(prev => !prev)}
     >
       {children}
       <AnimatePresence>

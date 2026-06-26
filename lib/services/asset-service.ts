@@ -52,34 +52,34 @@ export class AssetService {
   };
 
   private static UI_ICON_MAP: Record<string, string> = {
-    'currency_gold': 'currency_gold_icon.png',
-    'currency_gem': 'currency_gem_icon.png',
+    'currency_gold': 'currency_gold_icon.svg',
+    'currency_gem': 'currency_gem_icon.svg',
     'tab_party': 'tab_icon_party.png',
     'tab_guild': 'tab_icon_guild.png',
     'world': 'world_button_base.png',
     'logo': 'logo.png'
   };
 
-  // Background mappings (follows naming convention: bg_[name]_1920.jpg)
+  // Background mappings — unique background per screen type
   private static BACKGROUND_MAP: Record<BackgroundKey, string> = {
     'home': 'bg_home_1920.jpg',
     'party': 'bg_party_1920.jpg',
-    'gacha': 'bg_home_1920.jpg',
+    'gacha': 'gachabg.png',
     'battle': 'bg_battle_scenic_1920.jpg',
-    'campaign': 'bg_home_1920.jpg',
-    'tavern': 'bg_home_1920.jpg',
-    'inventory': 'bg_home_1920.jpg',
-    'quest': 'bg_home_1920.jpg'
+    'campaign': 'bg_battle_party_1920.jpg',
+    'tavern': 'homebg.png',
+    'inventory': 'loginbg.png',
+    'quest': 'losebg.png'
   };
 
   // Weapon icons
   private static WEAPON_MAP: Record<string, string> = {
     'sword': 'weapon_sword.png',
-    'staff': 'weapon_staff.png',
-    'bow': 'weapon_bow.png',
-    'hammer': 'weapon_hammer.png',
-    'spear': 'weapon_spear.png',
-    'dagger': 'weapon_dagger.png'
+    'staff': 'weapon_staff.svg',
+    'bow': 'weapon_bow.svg',
+    'hammer': 'weapon_hammer.svg',
+    'spear': 'weapon_spear.svg',
+    'dagger': 'weapon_dagger.svg'
   };
 
   // Skill icons

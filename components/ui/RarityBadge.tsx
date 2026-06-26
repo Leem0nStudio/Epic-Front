@@ -14,17 +14,17 @@ interface RarityBadgeProps {
 const RARITY_ICONS: Record<string, string> = {
   C: '◆',  // Common
   R: '★',  // Rare
-  E: '✦',  // Epic
-  L: '▲',  // Legendary
-  M: '◈',  // Mythic
+  SR: '✦', // Super Rare
+  UR: '▲', // Ultra Rare
+  MR: '◈', // Mythic
 };
 
 const RARITY_LABELS: Record<string, string> = {
   C: 'COMÚN',
   R: 'RARO',
-  E: 'ÉPICO',
-  L: 'LEGENDARIO',
-  M: 'MÍTICO',
+  SR: 'SUPER RARO',
+  UR: 'ULTRA RARO',
+  MR: 'MÍTICO',
 };
 
 export function RarityBadge({ rarity, size = 'md', showIcon = true, showLabel = true, className = '' }: RarityBadgeProps) {

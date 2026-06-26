@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" fill="#0B1A2A"/>
+  <line x1="32" y1="8" x2="32" y2="56" stroke="#78716C" stroke-width="2.5" stroke-linecap="round"/>
+  <polygon points="32,6 26,20 38,20" fill="#D6D3D1"/>
+  <text x="32" y="56" text-anchor="middle" fill="#A8A29E" font-size="8" font-family="sans-serif" font-weight="bold">SPEAR</text>
+</svg>
