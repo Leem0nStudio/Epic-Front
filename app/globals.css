@@ -189,25 +189,6 @@ a:focus-visible,
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
 
-  /* === VISUAL ALCHEMY: Earthstone Frame + Glassmorphism Core === */
-  .frame-earthstone {
-    border: 2px solid rgba(245, 199, 107, 0.3);
-    border-radius: 0.75rem;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      0 4px 12px rgba(0, 0, 0, 0.4),
-      0 0 20px rgba(245, 199, 107, 0.1);
-    position: relative;
-  }
-  .frame-earthstone::before {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border: 1px solid rgba(245, 199, 107, 0.1);
-    border-radius: 1rem;
-    pointer-events: none;
-  }
-
   .glass-core {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
     backdrop-filter: blur(16px) saturate(150%);
@@ -216,13 +197,6 @@ a:focus-visible,
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.05),
       0 8px 32px rgba(0, 0, 0, 0.3);
-  }
-
-  .glass-frosted {
-    background: rgba(11, 26, 42, 0.6);
-    backdrop-filter: blur(20px) saturate(120%);
-    -webkit-backdrop-filter: blur(20px) saturate(120%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .glass-crystal {
@@ -571,10 +545,6 @@ a:focus-visible,
     0%, 100% { transform: rotate(0deg); }
     25% { transform: rotate(15deg); }
     75% { transform: rotate(-15deg); }
-  }
-
-  .perspective-1000 {
-    perspective: 1000px;
   }
 
   /* === PREMIUM JRPG/GACHA VISUAL SYSTEM === */
@@ -933,10 +903,6 @@ a:focus-visible,
   image-rendering: crisp-edges;
 }
 
-.font-display {
-  font-family: 'Cinzel', serif;
-}
-
 /* === TOUCH OPTIMIZATION === */
 * {
   -webkit-tap-highlight-color: transparent;
@@ -981,27 +947,6 @@ button, a, [role="button"] {
   margin-top: -6%;
   filter: drop-shadow(0 14px 30px rgba(0,0,0,0.6));
   image-rendering: pixelated;
-}
-
-.portrait-hero {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  overflow: visible;
-  padding-top: 12%;
-}
-
-.portrait-hero img {
-  transform: scale(1.16);
-  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.8));
-  position: relative;
-  z-index: 2;
-}
-
-.pedestal-glow::after {
-  bottom: -12px;
-  height: 18px;
 }
 
 /* Responsive sprite overlap positioning */

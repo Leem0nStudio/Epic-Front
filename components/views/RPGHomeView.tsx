@@ -1,25 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React from 'react';
+import { motion } from 'motion/react';
 import {
   Users,
-  Coins,
-  Diamond,
   Calendar,
-  Bell,
   Mail,
   Zap,
-  UserPlus,
   Sword,
   Star,
   BookOpen,
   Heart,
   Shield,
-  Info,
-  ChevronRight,
-  TrendingUp,
-  Gift,
   Trophy,
   Crown,
   Castle,
@@ -28,10 +20,7 @@ import {
 import { AssetService } from '@/lib/services/asset-service';
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
-import { Button } from '@/components/ui/Button';
-import { LevelProgress } from '@/components/ui/LevelProgress';
 import { RarityBadge } from '@/components/ui/RarityBadge';
-import { getExpForNextLevel, getUnlockForLevel } from '@/lib/config/level-curve';
 import { RARITY_COLORS, getRarityCode } from '@/lib/config/assets-config';
 
 interface RPGHomeViewProps {
@@ -157,21 +146,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
   const leftUnit = sortedUnits[1] || validUnits[1] || null;
   const rightUnit = sortedUnits[2] || validUnits[2] || null;
 
-  const [displayCurrency, setDisplayCurrency] = useState<number>(saveData.profile?.currency || 0);
-  const [displayGems, setDisplayGems] = useState<number>(saveData.profile?.premium_currency || 0);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (displayCurrency < (saveData.profile?.currency || 0)) setDisplayCurrency(prev => Math.min(saveData.profile?.currency || 0, prev + 100));
-      if (displayGems < (saveData.profile?.premium_currency || 0)) setDisplayGems(prev => Math.min(saveData.profile?.premium_currency || 0, prev + 10));
-    }, 30);
-      return () => clearTimeout(timer);
-  }, [saveData.profile?.currency, saveData.profile?.premium_currency, displayCurrency, displayGems]);
-
   const playerLevel = saveData.profile?.level || 1;
-  const playerExp = saveData.profile?.exp || 0;
-  const nextLevelExp = playerLevel * 100;
-  const expProgress = Math.min((playerExp / nextLevelExp) * 100, 100);
 
   return (
     <div
@@ -180,81 +155,8 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A2A]/40 via-transparent to-[#020508]/95 pointer-events-none" />
 
-      {/* Top Bar - 8px Grid Spacing */}
-      <div className="w-full shrink-0 flex items-center justify-between px-6 z-30 pt-8 gap-4">
-        {/* Left: Player Profile */}
-        <div className="relative flex items-center gap-4">
-           <div className="relative group cursor-pointer" onClick={() => onNavigate('profile')}>
-              <div className="absolute inset-0 bg-[#F5C76B] blur-md opacity-20 group-hover:opacity-40 transition-opacity rounded-full" />
-              <div className="w-14 h-14 rounded-full border-2 border-[#F5C76B]/60 bg-gradient-to-b from-[#2a3b5c] to-[#1a253a] flex items-center justify-center shadow-2xl relative overflow-hidden">
-                <span className="text-xl font-black text-white italic">{saveData.profile?.username?.charAt(0).toUpperCase() || 'A'}</span>
-              </div>
-              <div className="absolute -bottom-1 -right-1 bg-[#F5C76B] text-[#0B1A2A] text-xs font-black px-1.5 py-0.5 rounded-md border border-[#0B1A2A] shadow-md">
-                {playerLevel}
-              </div>
-           </div>
-
-<div className="flex flex-col gap-1">
-               <h2 className="text-white text-sm font-black tracking-widest uppercase italic drop-shadow-md">
-                 {saveData.profile?.username || "Commander"}
-               </h2>
-               <div className="w-40">
-                 <LevelProgress
-                   level={playerLevel}
-                   currentExp={playerExp}
-                   showUnlocks={true}
-                   compact={true}
-                 />
-               </div>
-            </div>
-        </div>
-
-        {/* Right: Currencies */}
-        <div className="flex items-center gap-3">
-          <div className="flex flex-col gap-2">
-             <motion.div
-               whileHover={{ scale: 1.05 }}
-               className="bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-3 pl-3 pr-1 py-1 min-w-[110px] shadow-lg"
-             >
-               <Coins size={14} className="text-[#F5C76B] drop-shadow-[0_0_5px_rgba(245,199,107,0.5)]" />
-               <span className="text-sm font-black text-white font-stats flex-1 text-center">{displayCurrency.toLocaleString()}</span>
-               <button className="w-5 h-5 rounded-lg bg-[#F5C76B]/20 text-[#F5C76B] flex items-center justify-center hover:bg-[#F5C76B]/30 transition-colors">
-                 <span className="text-xs font-black">+</span>
-               </button>
-             </motion.div>
-
-<motion.div
-                whileHover={{ scale: 1.05 }}
-                className="bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-3 pl-3 pr-1 py-1 min-w-[110px] shadow-lg"
-              >
-                <Diamond size={14} className="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
-                <span className="text-sm font-black text-white font-stats flex-1 text-center">{displayGems.toLocaleString()}</span>
-                <button className="w-5 h-5 rounded-lg bg-cyan-400/20 text-cyan-400 flex items-center justify-center hover:bg-cyan-400/30 transition-colors">
-                  <span className="text-xs font-black">+</span>
-                </button>
-              </motion.div>
-
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => onNavigate('daily_rewards')}
-                className="relative p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl border border-purple-400 shadow-lg"
-                title="Daily Rewards"
-              >
-                <Gift size={20} className="text-white" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse" />
-              </motion.button>
-          </div>
-
-          <button className="p-3 bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl text-white/60 hover:text-white transition-all active:scale-90 relative shadow-xl">
-            <Bell size={20} />
-            <div className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#0B1A2A]" />
-          </button>
-        </div>
-      </div>
-
       {/* Battle CTA - Main Focus */}
-      <div className="w-full flex flex-col items-center mt-12 z-40">
+      <div className="w-full flex flex-col items-center mt-6 z-40 shrink-0">
         <div className="relative group">
           {/* Pulse Glow Effect */}
           <motion.div
@@ -409,27 +311,5 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
           )}
       </div>
     </div>
-  );
-}
-
-// Helper icons for objective panel
-function Target(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="12" r="6" />
-      <circle cx="12" cy="12" r="2" />
-    </svg>
   );
 }

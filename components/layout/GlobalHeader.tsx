@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Coins, Diamond, Zap, Bell, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
 import { supabase } from '@/lib/supabase';
+import { Modal } from '@/components/ui/Modal';
 import type { ViewType, PlayerProfile } from '@/lib/types/game-types';
 
 interface GlobalHeaderProps {
@@ -19,8 +20,7 @@ export function GlobalHeader({ profile, onNavigate, onRefillComplete }: GlobalHe
   if (!profile) return null;
 
   const handleRefillClick = () => {
-    // Estimate cost: base 50 + 25 * estimated refills today
-    const estimatedCost = 50; // Will be calculated server-side
+    const estimatedCost = 50;
     setRefillCost(estimatedCost);
     setShowRefillConfirm(true);
   };
@@ -79,35 +79,36 @@ export function GlobalHeader({ profile, onNavigate, onRefillComplete }: GlobalHe
         </button>
       </div>
 
-      {/* Refill Confirm Modal */}
-      {showRefillConfirm && (
-        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm pointer-events-auto">
-          <div className="bg-[#0B1A2A] border border-white/10 rounded-2xl p-6 max-w-xs w-full">
-            <h3 className="text-lg font-black text-white uppercase font-display mb-2">Restaurar Energía</h3>
-            <p className="text-sm text-white/60 mb-4">
-              Tu energía se restaurará al máximo. El costo se calcula según tus refills diarios.
-            </p>
-            <div className="flex items-center gap-2 mb-4 bg-white/5 rounded-xl p-3">
-              <Diamond size={16} className="text-cyan-400" />
-              <span className="text-sm font-black text-white">~{refillCost} CRISTALES</span>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowRefillConfirm(false)}
-                className="flex-1 py-2 rounded-xl bg-white/10 text-white/60 text-sm font-black uppercase"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleConfirmRefill}
-                className="flex-1 py-2 rounded-xl bg-blue-500 text-white text-sm font-black uppercase"
-              >
-                Restaurar
-              </button>
-            </div>
+      <Modal
+        isOpen={showRefillConfirm}
+        onClose={() => setShowRefillConfirm(false)}
+        title="Restaurar Energía"
+        size="sm"
+      >
+        <div className="p-6">
+          <p className="text-sm text-white/60 mb-4">
+            Tu energía se restaurará al máximo. El costo se calcula según tus refills diarios.
+          </p>
+          <div className="flex items-center gap-2 mb-4 bg-white/5 rounded-xl p-3">
+            <Diamond size={16} className="text-cyan-400" />
+            <span className="text-sm font-black text-white">~{refillCost} CRISTALES</span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowRefillConfirm(false)}
+              className="flex-1 py-2 rounded-xl bg-white/10 text-white/60 text-sm font-black uppercase"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleConfirmRefill}
+              className="flex-1 py-2 rounded-xl bg-blue-500 text-white text-sm font-black uppercase"
+            >
+              Restaurar
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
     </header>
   );
 }

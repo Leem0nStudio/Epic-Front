@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'motion/react';
-import { MapIcon, Users, UserPlus, Sparkles, Sword, BookOpen } from 'lucide-react';
+import { MapIcon, Users, UserPlus, Sparkles, Sword, BookOpen, ShoppingBag } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 import type { ViewType } from '@/lib/types/game-types';
 
@@ -17,18 +17,17 @@ export function GlobalNavigation({ currentView, onNavigate }: GlobalNavigationPr
     { id: 'quests', icon: BookOpen, label: 'MISIONES', tooltip: 'Ver misiones' },
     { id: 'party', icon: Users, label: 'EQUIPO', tooltip: 'Gestionar equipo' },
     { id: 'home', icon: Sword, label: 'INICIO', tooltip: 'Volver al inicio' },
-    { id: 'tavern', icon: UserPlus, label: 'TABERNA', tooltip: 'Reclutar héroes' },
     { id: 'gacha', icon: Sparkles, label: 'INVOCAR', tooltip: 'Obtener personajes' },
+    { id: 'shop', icon: ShoppingBag, label: 'TIENDA', tooltip: 'Tienda del juego' },
   ];
 
   const getActiveTab = () => {
     if (['campaign', 'stage_details'].includes(currentView)) return 'campaign';
     if (['quests'].includes(currentView)) return 'quests';
-    if (['party', 'unit_details', 'training'].includes(currentView)) return 'party';
-    if (['tavern'].includes(currentView)) return 'tavern';
+    if (['party', 'unit_details', 'training', 'tavern'].includes(currentView)) return 'party';
     if (['gacha'].includes(currentView)) return 'gacha';
+    if (['shop'].includes(currentView)) return 'shop';
     if (['inventory'].includes(currentView)) return 'party';
-    // Default to home for other views like rewards, etc.
     return 'home';
   };
 
