@@ -4,18 +4,12 @@ import React from 'react';
 import { motion } from 'motion/react';
 import {
   Users,
-  Calendar,
-  Mail,
-  Zap,
   Sword,
   Star,
-  BookOpen,
   Heart,
   Shield,
   Trophy,
-  Crown,
-  Castle,
-  ShoppingBag
+  Castle
 } from 'lucide-react';
 import { AssetService } from '@/lib/services/asset-service';
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback';
@@ -206,42 +200,11 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
             <CharacterSlot unit={rightUnit} onSelectUnit={onSelectUnit} scale={0.95} zIndex={10} />
           </div>
         </div>
-
-        {/* Floating Sidebar Actions */}
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-6 z-50">
-          {[
-            { icon: Calendar, label: 'DAILY', badge: saveData.canClaimDaily ? '!' : null, view: 'daily_rewards', color: 'text-yellow-400' },
-            { icon: BookOpen, label: 'TRAIN', badge: null, view: 'training', color: 'text-cyan-400' },
-            { icon: Mail, label: 'NOTIFS', badge: '1', view: 'quests', color: 'text-white' }
-          ].map((btn, i) => (
-            <motion.div
-              key={i}
-              whileHover={{ scale: 1.1, x: -5 }}
-              className="flex flex-col items-center gap-1.5 group cursor-pointer relative"
-              onClick={() => onNavigate(btn.view as any)}
-            >
-              <NineSlicePanel
-                type="border"
-                variant="fancy"
-                className="w-14 h-14 flex flex-col items-center justify-center glass-frosted frame-earthstone group-hover:border-[#F5C76B] transition-all shadow-2xl"
-              >
-                <btn.icon size={20} className={`${btn.color} mb-0.5 drop-shadow-[0_0_5px_currentColor]`} />
-                <span className="text-[7px] font-black text-white/90 uppercase tracking-[0.2em] font-stats">{btn.label}</span>
-                {btn.badge && (
-                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full border-2 border-[#0B1A2A] flex items-center justify-center text-xs font-black text-white shadow-lg animate-bounce">
-                    {btn.badge}
-                  </div>
-                )}
-              </NineSlicePanel>
-            </motion.div>
-          ))}
-        </div>
       </div>
 
-      {/* Bottom Area: Objective & Nav */}
+      {/* Bottom Area: Level-Gated Features */}
       <div className="absolute bottom-0 left-0 right-0 z-40 flex flex-col items-center pb-8 pt-20 pointer-events-none bg-gradient-to-t from-black via-black/80 to-transparent">
 
-          {/* Contextual Feature Buttons - Unlock based on level */}
           {playerLevel >= 15 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -260,7 +223,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
                   className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-xl border border-indigo-500/30 flex flex-col items-center gap-1"
                 >
                   <Users size={18} className="text-indigo-400" />
-                  <span className="text-[8px] font-bold text-indigo-300 uppercase">Guild</span>
+                  <span className="text-[8px] font-black text-indigo-300 uppercase">Guild</span>
                 </motion.button>
 
                 {playerLevel >= 30 && (
@@ -271,7 +234,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
                     className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-xl border border-red-500/30 flex flex-col items-center gap-1"
                   >
                     <Trophy size={18} className="text-red-400" />
-                    <span className="text-[8px] font-bold text-red-300 uppercase">Arena PvP</span>
+                    <span className="text-[8px] font-black text-red-300 uppercase">Arena PvP</span>
                   </motion.button>
                 )}
 
@@ -283,29 +246,9 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
                     className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-xl border border-amber-500/30 flex flex-col items-center gap-1"
                   >
                     <Castle size={18} className="text-amber-400" />
-                    <span className="text-[8px] font-bold text-amber-300 uppercase">Tower</span>
+                    <span className="text-[8px] font-black text-amber-300 uppercase">Tower</span>
                   </motion.button>
                 )}
-
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => onNavigate('shop')}
-                  className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-xl border border-cyan-500/30 flex flex-col items-center gap-1"
-                >
-                  <ShoppingBag size={18} className="text-cyan-400" />
-                  <span className="text-[8px] font-bold text-cyan-300 uppercase">Shop</span>
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => onNavigate('daily_rewards')}
-                  className="flex-1 max-w-[140px] py-2.5 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl border border-green-500/30 flex flex-col items-center gap-1"
-                >
-                  <Gift size={18} className="text-green-400" />
-                  <span className="text-[8px] font-bold text-green-300 uppercase">Daily</span>
-                </motion.button>
               </div>
             </motion.div>
           )}

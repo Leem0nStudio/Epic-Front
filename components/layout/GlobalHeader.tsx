@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Coins, Diamond, Zap, Bell, Plus } from 'lucide-react';
+import { Coins, Diamond, Zap, Gift, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
 import { supabase } from '@/lib/supabase';
 import { Modal } from '@/components/ui/Modal';
@@ -74,7 +74,7 @@ export function GlobalHeader({ profile, onNavigate, onRefillComplete }: GlobalHe
           onClick={() => onNavigate('daily_rewards')}
           className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors relative"
         >
-          <Bell size={18} className="text-white/60" />
+          <Gift size={18} className="text-[#F5C76B]" />
           <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-[#0B1A2A]" />
         </button>
       </div>
