@@ -34,7 +34,8 @@ export class GuildService {
       p_description: description,
     });
     if (error) throw error;
-    return data.guildId;
+    if (data?.error) throw new Error(data.error);
+    return data?.guildId || data;
   }
 
   static async join(guildId: string): Promise<void> {

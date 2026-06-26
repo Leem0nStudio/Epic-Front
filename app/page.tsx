@@ -159,12 +159,10 @@ export default function Applet() {
       case 'arena':
         return <ArenaView 
                   onBack={() => actions.navigateTo('home')}
-                  playerPower={state.profile?.power || 5000}
                 />;
       case 'tower':
         return <TowerView 
                   onBack={() => actions.navigateTo('home')}
-                  playerPower={state.profile?.power || 5000}
                 />;
       case 'guild':
         return <GuildView 

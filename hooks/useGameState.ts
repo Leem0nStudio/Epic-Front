@@ -9,7 +9,7 @@ import { SpriteConfigService } from '@/lib/services/sprite-config-service';
 
 type ToastFn = (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
 
-export type ViewType = 'home' | 'tavern' | 'party' | 'unit_details' | 'gacha' | 'inventory' | 'battle' | 'campaign' | 'quests' | 'stage_details' | 'training' | 'daily_rewards' | 'arena' | 'tower' | 'guild' | 'skill_detail' | 'card_detail';
+export type { ViewType } from '@/lib/types/game-types';
 
 export function useGameState(toast?: ToastFn) {
   const store = useGameStore();
