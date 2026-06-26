@@ -258,7 +258,7 @@ export function UnitDetailsView({
                  <Briefcase size={14} className="text-[#F5C76B]" />
                  <h3 className="text-[11px] font-black text-[#F5C76B] uppercase tracking-[0.2em] font-display">ARSENAL DE COMBATE</h3>
               </div>
-              <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">ESPACIOS: 1/5</span>
+               <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">ESPACIOS: 1/5</span>
            </div>
 
            <div className="flex items-center justify-start gap-4 px-1">
@@ -404,7 +404,7 @@ function StatBox({ icon: Icon, label, value, color, iconColor }: any) {
           <Icon size={16} className={color} />
        </div>
        <span className="text-lg font-black text-white leading-none">{value}</span>
-       <span className="text-[8px] font-bold text-white/30 uppercase tracking-[0.2em]">{label}</span>
+        <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">{label}</span>
     </div>
   );
 }
@@ -469,7 +469,7 @@ function EvolutionCard({ job, onClick }: any) {
        </div>
        <div className="flex-1">
           <h4 className="text-[10px] font-black text-white uppercase tracking-wider">{job.name}</h4>
-          <p className="text-[8px] font-bold text-[#F5C76B] uppercase tracking-widest mt-0.5">TIER 1</p>
+          <p className="text-[8px] font-black text-[#F5C76B] uppercase tracking-widest mt-0.5">TIER 1</p>
        </div>
        <ArrowUpCircle size={14} className="absolute top-2 right-2 text-[#F5C76B]/40 group-hover:text-[#F5C76B] transition-colors" />
     </div>

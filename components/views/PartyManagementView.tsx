@@ -94,14 +94,14 @@ export function PartyManagementView({
               className="flex-1 flex flex-col gap-3 overflow-hidden"
             >
               <div className="flex items-center justify-between shrink-0">
-                <h3 className="text-[10px] font-bold text-[#F5C76B] uppercase tracking-[0.2em] flex items-center gap-2 font-stats">
+                <h3 className="text-[10px] font-black text-[#F5C76B] uppercase tracking-[0.2em] flex items-center gap-2 font-stats">
                   <ArrowRight size={14} className="text-[#F5C76B]" /> Asignar Ranura {selectedSlot + 1}
                 </h3>
                 <Button
                   onClick={() => setSelectedSlot(null)}
                   variant="ghost"
                   size="sm"
-                  className="text-[9px] font-bold text-white/40 uppercase hover:text-white transition-colors"
+                   className="text-[9px] font-black text-white/40 uppercase hover:text-white transition-colors"
                 >
                   Cancelar
                 </Button>
@@ -113,7 +113,7 @@ export function PartyManagementView({
                     onClick={() => { onRemoveFromParty(selectedSlot); setSelectedSlot(null); }}
                     variant="danger"
                     size="sm"
-                    className="w-full flex items-center justify-center gap-2 font-bold uppercase"
+                    className="w-full flex items-center justify-center gap-2 font-black uppercase"
                   >
                     <UserMinus size={16} /> Retirar de Formación
                   </Button>
@@ -176,7 +176,7 @@ export function PartyManagementView({
               animate={{ opacity: 1 }}
               className="flex-1 flex flex-col gap-3 overflow-hidden"
             >
-              <h3 className="text-[10px] font-bold text-white/40 tracking-[0.3em] uppercase shrink-0 flex items-center gap-2 font-stats">
+              <h3 className="text-[10px] font-black text-white/40 tracking-[0.3em] uppercase shrink-0 flex items-center gap-2 font-stats">
                 <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
                 Reserva General ({saveData?.roster?.length || 0})
               </h3>

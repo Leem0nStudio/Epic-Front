@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { Sword, Trophy, Users, Star, Shield, ChevronRight, Zap } from 'lucide-react';
 import { ViewShell } from '@/components/ui/ViewShell';
+import { Modal } from '@/components/ui/Modal';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { Button } from '@/components/ui/Button';
 import { ArenaService, type ArenaOpponent, type ArenaRanking, type LeaderboardEntry } from '@/lib/services/arena-service';
@@ -188,52 +189,40 @@ export function ArenaView({ onBack, onBattleStart }: ArenaViewProps) {
       </div>
 
       {/* Opponent Detail Modal */}
-      <AnimatePresence>
-        {selectedOpponent && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-8"
-            onClick={() => setSelectedOpponent(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
-              onClick={e => e.stopPropagation()}
-              className="w-full max-w-xs"
-            >
-              <NineSlicePanel type="panel" variant="default" className="p-8 text-center glass-frosted frame-earthstone">
-                <Users size={40} className="text-[#F5C76B] mx-auto mb-4" />
-                <h3 className="text-xl font-black text-white uppercase font-display mb-1">{selectedOpponent.opponentName}</h3>
-                <p className={`text-[10px] font-black uppercase tracking-widest mb-4 ${RANK_TIER_COLORS[selectedOpponent.opponentRankTier]}`}>
-                  {selectedOpponent.opponentRankTier} · {selectedOpponent.opponentPoints} pts
-                </p>
+      <Modal
+        isOpen={!!selectedOpponent}
+        onClose={() => setSelectedOpponent(null)}
+        title={selectedOpponent?.opponentName}
+        subtitle={selectedOpponent ? `${selectedOpponent.opponentRankTier} · ${selectedOpponent.opponentPoints} pts` : undefined}
+        size="sm"
+      >
+        <div className="p-6 text-center">
+          <Users size={40} className="text-[#F5C76B] mx-auto mb-4" />
 
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                    <p className="text-[8px] text-white/40 uppercase">VICTORIAS</p>
-                    <p className="text-lg font-black text-green-400 font-stats">{selectedOpponent.opponentWins}</p>
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                    <p className="text-[8px] text-white/40 uppercase">DERROTAS</p>
-                    <p className="text-lg font-black text-red-400 font-stats">{selectedOpponent.opponentLosses}</p>
-                  </div>
-                </div>
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+              <p className="text-[8px] text-white/40 uppercase">VICTORIAS</p>
+              <p className="text-lg font-black text-green-400 font-stats">{selectedOpponent?.opponentWins}</p>
+            </div>
+            <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+              <p className="text-[8px] text-white/40 uppercase">DERROTAS</p>
+              <p className="text-lg font-black text-red-400 font-stats">{selectedOpponent?.opponentLosses}</p>
+            </div>
+          </div>
 
-                <div className="space-y-3">
-                  <Button variant="primary" className="w-full" onClick={() => handleStartBattle(selectedOpponent)}>
-                    <div className="flex items-center justify-center gap-2">
-                      <Zap size={16} />
-                      INICIAR DUELO
-                    </div>
-                  </Button>
-                  <Button variant="secondary" className="w-full" onClick={() => setSelectedOpponent(null)}>
-                    CANCELAR
-                  </Button>
-                </div>
-              </NineSlicePanel>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          <div className="space-y-3">
+            <Button variant="primary" className="w-full" onClick={() => selectedOpponent && handleStartBattle(selectedOpponent)}>
+              <div className="flex items-center justify-center gap-2">
+                <Zap size={16} />
+                INICIAR DUELO
+              </div>
+            </Button>
+            <Button variant="secondary" className="w-full" onClick={() => setSelectedOpponent(null)}>
+              CANCELAR
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </ViewShell>
   );
 }

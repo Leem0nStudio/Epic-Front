@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { ViewShell } from '@/components/ui/ViewShell';
+import { Modal } from '@/components/ui/Modal';
 
 interface TrainingViewProps {
   unitId: string;
@@ -116,27 +117,24 @@ export function TrainingView({ unitId, unitName, onBack, onUpdate }: TrainingVie
         </AnimatePresence>
 
         {/* Results Modal */}
-        <AnimatePresence>
-          {result && (
-            <motion.div
-               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-               className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-8"
-            >
-               <NineSlicePanel type="panel" variant="default" className="p-10 text-center glass-frosted frame-earthstone w-full max-w-xs">
-                  <Sparkles size={48} className="text-cyan-400 mx-auto mb-6" />
-                  <h3 className="text-2xl font-black text-white uppercase font-display mb-2">¡EXITO!</h3>
-                  <p className="text-[10px] text-white/40 uppercase tracking-widest mb-8">La unidad ha ganado experiencia</p>
+        <Modal
+          isOpen={!!result}
+          onClose={() => setResult(null)}
+          title="¡EXITO!"
+          subtitle="La unidad ha ganado experiencia"
+          size="sm"
+        >
+          <div className="p-10 text-center">
+            <Sparkles size={48} className="text-cyan-400 mx-auto mb-6" />
 
-                  <div className="flex flex-col items-center gap-2 mb-8">
-                     <span className="text-4xl font-black text-cyan-400 font-stats">+{result.expGained}</span>
-                     <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">PUNTOS DE EXP</span>
-                  </div>
+            <div className="flex flex-col items-center gap-2 mb-8">
+               <span className="text-4xl font-black text-cyan-400 font-stats">+{result?.expGained}</span>
+               <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">PUNTOS DE EXP</span>
+            </div>
 
-                  <Button onClick={() => setResult(null)} variant="primary" className="w-full">CONTINUAR</Button>
-               </NineSlicePanel>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            <Button onClick={() => setResult(null)} variant="primary" className="w-full">CONTINUAR</Button>
+          </div>
+        </Modal>
       </div>
     </ViewShell>
   );

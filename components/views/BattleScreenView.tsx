@@ -830,7 +830,7 @@ export function BattleScreenView({ squad, stageId, onBack, onRefresh }: BattleSc
                       >
                         {comboCount}
                       </motion.span>
-                      <span className="text-orange-200 text-2xs font-bold uppercase tracking-[0.2em]">COMBO</span>
+                       <span className="text-orange-200 text-2xs font-black uppercase tracking-[0.2em]">COMBO</span>
                     </div>
                     
                     {/* CRITICAL indicator */}
@@ -1458,7 +1458,7 @@ function BattleResult({ winner, completionData, isRecording, recordingTimeout, r
                <div className="flex flex-col items-center gap-2">
                  <div className="w-16 h-16 rounded-3xl bg-black/40 border border-white/10 flex items-center justify-center shadow-2xl hover:border-[#F5C76B]/40 transition-colors">
                     <div className="w-8 h-8 rounded-full bg-yellow-500/20 border border-yellow-500/50 flex items-center justify-center">
-                       <span className="text-yellow-500 font-bold text-xs">Z</span>
+                       <span className="text-yellow-500 font-black text-xs">Z</span>
                     </div>
                  </div>
                  <span className="text-sm font-black text-white">+{completionData.rewards.currency}</span>

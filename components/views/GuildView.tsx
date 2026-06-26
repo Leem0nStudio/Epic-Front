@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { Users, Crown, Shield, Sword, Gift, MessageCircle, ChevronRight, UserPlus, LogOut } from 'lucide-react';
 import { ViewShell } from '@/components/ui/ViewShell';
+import { Modal } from '@/components/ui/Modal';
 import { NineSlicePanel } from '@/components/ui/NineSlicePanel';
 import { Button } from '@/components/ui/Button';
 import { GuildService, type GuildInfo, type GuildMember } from '@/lib/services/guild-service';
@@ -112,38 +113,28 @@ export function GuildView({ onBack }: GuildViewProps) {
         </div>
 
         {/* Create Guild Modal */}
-        <AnimatePresence>
-          {showCreateModal && (
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-8"
-              onClick={() => setShowCreateModal(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.9 }} animate={{ scale: 1 }}
-                onClick={e => e.stopPropagation()}
-                className="w-full max-w-xs"
-              >
-                <NineSlicePanel type="panel" variant="default" className="p-6 glass-frosted frame-earthstone">
-                  <h3 className="text-lg font-black text-white uppercase font-display mb-4">Crear Gremio</h3>
-                  <p className="text-[10px] text-white/40 mb-4">Costo: 500 Cristales</p>
-                  <input
-                    type="text"
-                    value={guildName}
-                    onChange={e => setGuildName(e.target.value)}
-                    placeholder="Nombre del gremio"
-                    maxLength={20}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-black placeholder-white/20 outline-none focus:border-[#F5C76B]/40 mb-4"
-                  />
-                  <div className="flex gap-2">
-                    <Button variant="secondary" className="flex-1" onClick={() => setShowCreateModal(false)}>CANCELAR</Button>
-                    <Button variant="primary" className="flex-1" onClick={handleCreateGuild}>CREAR</Button>
-                  </div>
-                </NineSlicePanel>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <Modal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          title="Crear Gremio"
+          size="sm"
+        >
+          <div className="p-6">
+            <p className="text-[10px] text-white/40 mb-4">Costo: 500 Cristales</p>
+            <input
+              type="text"
+              value={guildName}
+              onChange={e => setGuildName(e.target.value)}
+              placeholder="Nombre del gremio"
+              maxLength={20}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-black placeholder-white/20 outline-none focus:border-[#F5C76B]/40 mb-4"
+            />
+            <div className="flex gap-2">
+              <Button variant="secondary" className="flex-1" onClick={() => setShowCreateModal(false)}>CANCELAR</Button>
+              <Button variant="primary" className="flex-1" onClick={handleCreateGuild}>CREAR</Button>
+            </div>
+          </div>
+        </Modal>
       </ViewShell>
     );
   }

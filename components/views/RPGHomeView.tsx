@@ -249,7 +249,7 @@ export function RPGHomeView({ saveData, activePartyUnits, onNavigate, onSelectUn
               transition={{ delay: 0.3 }}
               className="px-6 pb-4"
             >
-              <div className="text-white/30 text-xs font-bold uppercase tracking-widest text-center mb-2">
+              <div className="text-white/30 text-xs font-black uppercase tracking-widest text-center mb-2">
                 Available Features
               </div>
               <div className="flex gap-2 justify-center">
